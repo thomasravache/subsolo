@@ -4,7 +4,7 @@ title: Repositório e ferramentas
 tier: full
 type: foundation
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
@@ -29,7 +29,7 @@ Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .
 **Motivação:** sem estrutura, convenções e verificação automática desde o primeiro commit, cada agente faz de um jeito, e o processo depende da memória do modelo.
 
 **Objetivos (dentro do escopo):**
-- Organização `subsolo-br` e repositório público `subsolo-br/subsolo` no GitHub, branch `main`, CODEOWNERS e proteção da `main` (ADR-0007).
+- Repositório público `thomasravache/subsolo` no GitHub (Emenda v1; transferência para a organização `subsolo-br` no go-live), branch `main`, CODEOWNERS e proteção da `main` (ADR-0007).
 - Estrutura: `src/`, `tests/`, `web/`, `infra/`, `docs/` (specs, adr, runbooks), `tools/sdd/`.
 - `Subsolo.slnx` com .NET 10 SDK fixado em `global.json`; `Directory.Build.props` (nullable, warnings como erro, analisadores) e `Directory.Packages.props` (Central Package Management + lockfiles) — ADR-0006/ADR-0009.
 - `web/` criado com Next.js 16 + TypeScript strict + ESLint + Prettier + Tailwind 4, gerenciado com pnpm e Node 24 LTS (`.nvmrc`, `packageManager`).
@@ -45,7 +45,7 @@ Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .
 ## 3. Dependências
 - **Implementações necessárias:** N/A — primeira spec da fundação.
 - **Contratos consumidos:** N/A
-- **Pré-requisitos externos:** organização `subsolo-br` criada pelo Thomas no GitHub (plano Free) e `gh` autenticado na máquina; .NET 10 SDK, Node 24 LTS, pnpm e Docker instalados localmente; Python 3.8+ para `tools/sdd`.
+- **Pré-requisitos externos:** `gh` autenticado na conta `thomasravache` (repositório criado pelo Architect com autorização do Thomas); .NET 10 SDK, Node 24 LTS, pnpm e Docker instalados localmente; Python 3.8+ para `tools/sdd`.
 
 ## 4. Decisão Arquitetural
 **Contexto:** projeto novo; padrão definido nos ADRs de fundação (ADR-0001, ADR-0006, ADR-0007, ADR-0009).
@@ -142,7 +142,7 @@ Erros:
 
 ## 9. Questões em Aberto
 - [x] O repositório no GitHub será público ou privado? — Público: proteção da `main`, CodeQL e GHCR gratuitos; nenhum segredo no código (Thomas, 2026-10-13)
-- [x] Onde fica o repositório? — Na organização gratuita `subsolo-br` (o nome `subsolo` já estava ocupado no GitHub em 2026-10-13): `subsolo-br/subsolo` (Thomas, 2026-10-13)
+- [x] Onde fica o repositório? — Na organização gratuita `subsolo-br` (o nome `subsolo` já estava ocupado no GitHub em 2026-10-13): `subsolo-br/subsolo` (Thomas, 2026-10-13). **Alterado pela Emenda v1:** repositório público na conta pessoal, `thomasravache/subsolo`; a organização `subsolo-br` é criada e o repositório transferido no go-live (SPEC-0003) (Thomas, 2026-10-13)
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
@@ -163,7 +163,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Validar: build + suíte + lint (G2/G3 — G3 N/A até a SPEC-0007 criar a suíte de arquitetura)
 
 **Fase 3: GitHub**
-- [ ] Repositório público `subsolo-br/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
+- [ ] Repositório público `thomasravache/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -189,7 +189,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
-| IMP-01 | 2026-10-13 | G5 | externo | Organização subsolo-br não existe no GitHub; a API do github.com não permite criá-la (só pela interface web) | gh api orgs/subsolo-br → 404; criação de organização via API só existe no GitHub Enterprise Server | Thomas: criar a organização gratuita subsolo-br em https://github.com/account/organizations/new?plan=free |  |  |
+| IMP-01 | 2026-10-13 | G5 | externo | Organização subsolo-br não existe no GitHub; a API do github.com não permite criá-la (só pela interface web) | gh api orgs/subsolo-br → 404; criação de organização via API só existe no GitHub Enterprise Server | Thomas: criar a organização gratuita subsolo-br em https://github.com/account/organizations/new?plan=free | Emenda v1 — repositório criado em thomasravache/subsolo; organização subsolo-br e transferência movidas para o go-live (SPEC-0003), decisão do Thomas em 2026-10-13 | 2026-10-13 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -230,3 +230,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0004`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 | 2026-10-13 | Repositório criado em `thomasravache/subsolo` (conta pessoal) em vez de `subsolo-br/subsolo`; organização e transferência movidas para o go-live (SPEC-0003). Contrato inalterado. | Thomas preferiu não depender da criação da organização agora | SPEC-0003 | thomas (chat, 2026-10-13) |

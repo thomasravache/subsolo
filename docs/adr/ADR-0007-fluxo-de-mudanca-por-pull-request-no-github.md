@@ -30,7 +30,7 @@ Push direto e merges locais tiram a revisão e os checks do caminho, e a rastrea
 - Repositório privado no Free, sem proteção (a disciplina fica só nos hooks e no CI)
 
 ## Resultado da Decisão
-**Opção escolhida:** pull request obrigatório na `main`, com proteção de branch. **Repositório público `subsolo-br/subsolo`** (escolha do Thomas em 2026-10-13, seguindo a recomendação): gratuito, com proteção de branch, CodeQL e GHCR sem custo; nenhum segredo fica no código (ADR-0008).
+**Opção escolhida:** pull request obrigatório na `main`, com proteção de branch. **Repositório público `thomasravache/subsolo`** (escolha do Thomas em 2026-10-13; transferido para a organização `subsolo-br` no go-live, SPEC-0003 — Emenda v1 da SPEC-0004): gratuito, com proteção de branch, CodeQL e GHCR sem custo; nenhum segredo fica no código (ADR-0008).
 
 - PR com título em Conventional Commits, gerado por `spec_graph.py pr`; commits com `Refs: SPEC-NNNN`.
 - Checks obrigatórios: `build`, `test`, `e2e`, `lint`, `security` e `sdd` (validate + pr-check).
