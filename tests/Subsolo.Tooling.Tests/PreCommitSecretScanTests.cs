@@ -2,7 +2,8 @@ namespace Subsolo.Tooling.Tests;
 
 /// <summary>
 /// SPEC-0004 IT-02 — o pre-commit (gitleaks, por binário ou imagem Docker) bloqueia um arquivo staged com uma
-/// chave fictícia no formato AWS; sem o segredo, o commit passa.
+/// chave fictícia no formato AWS; sem o segredo, o commit passa. Também confere que o <c>.gitignore</c> da raiz cobre
+/// <c>.env*</c> e <c>appsettings.*.local.json</c> (seção 5 da spec).
 /// </summary>
 public sealed class PreCommitSecretScanTests
 {
@@ -41,5 +42,38 @@ public sealed class PreCommitSecretScanTests
 
         result.ExitCode.ShouldBe(0, $"arquivo sem segredo deveria ser commitado:{Environment.NewLine}{result}");
         (await sandbox.CommitCountAsync(ct)).ShouldBe(1);
+    }
+
+    [Theory]
+    [Trait("Spec", "SPEC-0004:IT-02")]
+    [Trait("Kind", "Integration")]
+    [InlineData(".env", true)]
+    [InlineData(".env.local", true)]
+    [InlineData("web/.env.production", true)]
+    [InlineData("src/Subsolo.Api/appsettings.Development.local.json", true)]
+    [InlineData("web/package.json", false)]
+    [InlineData("src/Subsolo.Api/appsettings.Development.json", false)]
+    public async Task GitignoreCoversEnvFilesAndLocalSettings(string path, bool shouldBeIgnored)
+    {
+        var ct = TestContext.Current.CancellationToken;
+
+        // --no-index: avalia só as regras, mesmo que o caminho não exista ou já esteja rastreado.
+        // core.excludesFile vazio: o gitignore global da máquina não pode mascarar uma lacuna do .gitignore do repositório.
+        var result = await ProcessRunner.RunAsync(
+            "git",
+            ["-c", "core.excludesFile=", "check-ignore", "-q", "--no-index", "--", path],
+            RepositoryRoot.Path,
+            TimeSpan.FromMinutes(1),
+            cancellationToken: ct);
+
+        result.ExitCode.ShouldBeOneOf([0, 1], $"git check-ignore falhou para '{path}':{Environment.NewLine}{result}");
+        if (shouldBeIgnored)
+        {
+            result.ExitCode.ShouldBe(0, $"'{path}' deveria ser ignorado pelo .gitignore (segredos/configuração local, ADR-0008)");
+        }
+        else
+        {
+            result.ExitCode.ShouldBe(1, $"'{path}' é fonte versionável e não deveria ser ignorado pelo .gitignore");
+        }
     }
 }
