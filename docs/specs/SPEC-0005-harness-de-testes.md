@@ -9,7 +9,7 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx]
 adrs: [ADR-0005, ADR-0002]
 external: []
@@ -85,7 +85,8 @@ TypeScript
   Tag: test("SPEC-NNNN:E2E-01 descrição", ...)
 
 Comandos (sdd-config)
-  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture" && (cd web && pnpm test)
+  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test)
+                     # Emenda v3: testes Kind=GitHubVerification (SPEC-0006) rodam só sob demanda, com SDD_GITHUB_VERIFY=1
   test_integration = dotnet test Subsolo.slnx --filter "Kind=Integration"
   arch_test        = dotnet test tests/Subsolo.ArchitectureTests
   test_e2e         = (cd e2e && pnpm test)   # e2e/package.json fixa o mesmo pnpm de web/
@@ -196,6 +197,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-13 | G1 | spec | Contrato v2: 'test' roda toda a solution; os testes de verificação no GitHub da SPEC-0006 (Kind=GitHubVerification) falham de propósito sem SDD_GITHUB_VERIFY=1, deixando a suíte padrão e o job test do CI sempre vermelhos | Test-writer da SPEC-0006 confirmou que '--filter "Kind!=GitHubVerification"' funciona com o runner MTP (20 → 14 testes no CiPolicy) | Architect + Thomas: Emenda v3 da SPEC-0005 — test = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test) | Emenda v3 — test exclui Kind=GitHubVerification; SPEC-0006 consome SPEC-0005@3; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -236,4 +238,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-13 | Comando `test` passa a excluir `Kind=GitHubVerification` (`--filter "Category!=Architecture&Kind!=GitHubVerification"`); essas verificações rodam sob demanda com `SDD_GITHUB_VERIFY=1` | IMP-01: as verificações reais no GitHub da SPEC-0006 falham de propósito sem a variável e deixariam a suíte padrão e o CI vermelhos | SPEC-0006 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |
