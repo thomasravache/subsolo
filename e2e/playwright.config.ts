@@ -13,12 +13,16 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
+  // ADR-0005: nunca retry-até-passar; uma falha é uma falha.
+  retries: 0,
   workers: isCI ? 1 : undefined,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
-    trace: "on-first-retry",
+    // Artefatos para diagnosticar falhas (o CI publica test-results/).
+    trace: "retain-on-failure",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
