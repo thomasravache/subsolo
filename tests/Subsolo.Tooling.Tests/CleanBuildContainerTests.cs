@@ -7,11 +7,16 @@ namespace Subsolo.Tooling.Tests;
 /// </summary>
 public sealed class CleanBuildContainerTests
 {
-    private const string SdkImage = "mcr.microsoft.com/dotnet/sdk:10.0";
+    /// <summary>Imagem com tag fixa (ADR-0009), na mesma faixa de SDK do global.json (10.0.4xx).</summary>
+    private const string SdkImage = "mcr.microsoft.com/dotnet/sdk:10.0.402";
+
+    /// <summary>Node.js 24 LTS "Krypton" fixado (ADR-0009); o tarball é conferido contra o SHASUMS256.txt oficial.</summary>
+    private const string NodeVersion = "24.21.0";
     private static readonly TimeSpan ContainerTimeout = TimeSpan.FromMinutes(40);
 
     /// <summary>
-    /// Roda no container: copia o snapshot (montado só-leitura) para /work, instala o Node 24 oficial, habilita o
+    /// Roda no container: copia o snapshot (montado só-leitura) para /work, instala o Node fixado (<c>NODE_VERSION</c>)
+    /// após conferir o SHA-256 do tarball contra o SHASUMS256.txt oficial da versão, habilita o
     /// corepack sem preparar/ativar nenhuma versão de pnpm e executa <c>./tools/build.sh</c>. Depois confere, de dentro
     /// de web/, qual pnpm o corepack resolve (deve ser o fixado no <c>packageManager</c>).
     /// </summary>
@@ -25,9 +30,14 @@ public sealed class CleanBuildContainerTests
           aarch64) node_arch=arm64 ;;
           *) echo "arquitetura não suportada: $(uname -m)" >&2; exit 2 ;;
         esac
-        node_dist=https://nodejs.org/dist/latest-v24.x
-        node_tarball=$(curl -fsSL "$node_dist/SHASUMS256.txt" | grep -m1 -o "node-v24[^ ]*-linux-$node_arch.tar.gz")
-        curl -fsSL "$node_dist/$node_tarball" | tar -xz -C /usr/local --strip-components=1
+        node_dist="https://nodejs.org/dist/v$NODE_VERSION"
+        node_tarball="node-v$NODE_VERSION-linux-$node_arch.tar.gz"
+        node_tmp=$(mktemp -d)
+        curl -fsSL -o "$node_tmp/SHASUMS256.txt" "$node_dist/SHASUMS256.txt"
+        curl -fsSL -o "$node_tmp/$node_tarball" "$node_dist/$node_tarball"
+        (cd "$node_tmp" && grep -E "^[0-9a-f]{64}  $node_tarball\$" SHASUMS256.txt > expected.sha256 && sha256sum -c expected.sha256)
+        tar -xzf "$node_tmp/$node_tarball" -C /usr/local --strip-components=1
+        rm -rf "$node_tmp"
         export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
         corepack enable
         echo "node $(node --version) / dotnet $(dotnet --version)"
@@ -61,6 +71,7 @@ public sealed class CleanBuildContainerTests
                 "-e", "DOTNET_NOLOGO=1",
                 "-e", "NEXT_TELEMETRY_DISABLED=1",
                 "-e", "CI=true",
+                "-e", $"NODE_VERSION={NodeVersion}",
                 SdkImage,
                 "bash", "-c", ContainerScript,
             ],
@@ -70,6 +81,7 @@ public sealed class CleanBuildContainerTests
 
         result.ExitCode.ShouldBe(0, $"./tools/build.sh falhou no clone limpo:{Environment.NewLine}{result}");
         result.StandardOutput.ShouldContain(">>> OK");
+        result.StandardOutput.ShouldContain($"node v{NodeVersion} / dotnet ", Case.Sensitive, $"o container não usou o Node fixado ({NodeVersion}):{Environment.NewLine}{result}");
         result.StandardOutput.ShouldContain($">>> pnpm em web/: {pinnedPnpm}", Case.Sensitive, $"o corepack não resolveu o pnpm fixado ({pinnedPnpm}) em web/:{Environment.NewLine}{result}");
     }
 
