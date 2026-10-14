@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 — testes de integração de exemplo do harness .NET (IT-01..IT-04, IT-06) e o teste de contrato dos
+    comandos de teste do sdd-config (CT-01). Usam Docker (Testcontainers).
+    Regras de build vêm de Directory.Build.props; versões NuGet, de Directory.Packages.props (ADR-0009).
+    O runner (Microsoft.Testing.Platform) é selecionado pelo global.json da raiz.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Examples.IntegrationTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- A definição da coleção precisa estar no assembly de teste (regra do xUnit). -->
+    <Compile Include="../../Subsolo.IntegrationTests.Common/PostgresCollection.cs" Link="PostgresCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
+    <!-- IT-04 roda este programa num processo separado; a referência só garante que ele esteja compilado. -->
+    <ProjectReference Include="../Subsolo.Examples.DockerProbe/Subsolo.Examples.DockerProbe.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

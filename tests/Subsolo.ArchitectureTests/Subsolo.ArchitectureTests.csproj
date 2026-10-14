@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <!-- SPEC-0005 IT-05: assembly de exemplo com uma violação proposital do ADR-0001. -->
+    <ProjectReference Include="../Examples/Subsolo.Examples.ArchitectureSamples/Subsolo.Examples.ArchitectureSamples.csproj" />
   </ItemGroup>
 
 </Project>

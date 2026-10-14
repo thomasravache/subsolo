@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 — testes unitários de exemplo do harness .NET (UT-01, UT-02): o modelo a copiar nas specs de módulo.
+    Regras de build vêm de Directory.Build.props; versões NuGet, de Directory.Packages.props (ADR-0009).
+    O runner (Microsoft.Testing.Platform) é selecionado pelo global.json da raiz.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Examples.UnitTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <ProjectReference Include="../Subsolo.Examples.Sample/Subsolo.Examples.Sample.csproj" />
+  </ItemGroup>
+
+</Project>

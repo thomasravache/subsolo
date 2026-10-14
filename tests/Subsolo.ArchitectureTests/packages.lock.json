@@ -229,6 +229,9 @@
           "xunit.v3.runner.common": "[4.0.2]"
         }
       },
+      "subsolo.examples.architecturesamples": {
+        "type": "Project"
+      },
       "subsolo.unittests.common": {
         "type": "Project",
         "dependencies": {
