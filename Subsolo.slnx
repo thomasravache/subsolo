@@ -1,5 +1,11 @@
 <Solution>
   <Folder Name="/tests/">
+    <Project Path="tests/Subsolo.ArchitectureTests/Subsolo.ArchitectureTests.csproj" />
+    <Project Path="tests/Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
     <Project Path="tests/Subsolo.Tooling.Tests/Subsolo.Tooling.Tests.csproj" />
+    <Project Path="tests/Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+  </Folder>
+  <Folder Name="/tests/Examples/">
+    <Project Path="tests/Examples/Subsolo.Examples.Sample/Subsolo.Examples.Sample.csproj" />
   </Folder>
 </Solution>

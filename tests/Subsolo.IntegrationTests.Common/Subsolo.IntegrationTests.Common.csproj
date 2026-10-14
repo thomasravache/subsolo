@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 — fixtures dos testes de integração (ADR-0005, ADR-0002): PostgreSQL 18 real e servidor SMTP de
+    teste (Mailpit), em containers efêmeros via Testcontainers, compartilhados por coleção de testes.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <RootNamespace>Subsolo.IntegrationTests.Common</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+  </ItemGroup>
+
+</Project>
