@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
 contract_version: 3
-touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx]
+touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs]
 adrs: [ADR-0005, ADR-0002]
 external: []
 size: M
@@ -198,6 +198,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
 | IMP-01 | 2026-10-13 | G1 | spec | Contrato v2: 'test' roda toda a solution; os testes de verificação no GitHub da SPEC-0006 (Kind=GitHubVerification) falham de propósito sem SDD_GITHUB_VERIFY=1, deixando a suíte padrão e o job test do CI sempre vermelhos | Test-writer da SPEC-0006 confirmou que '--filter "Kind!=GitHubVerification"' funciona com o runner MTP (20 → 14 testes no CiPolicy) | Architect + Thomas: Emenda v3 da SPEC-0005 — test = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test) | Emenda v3 — test exclui Kind=GitHubVerification; SPEC-0006 consome SPEC-0005@3; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
+| IMP-02 | 2026-10-13 | G2 | spec | CT-01 da SPEC-0005 roda a suíte inteira aninhada; ela inclui o CT-01 da SPEC-0004 (tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs), que roda ./tools/build.sh (next build) ao mesmo tempo que a execução externa → 'Another next build process is already running' e test/test_integration com exit 2 (falha estável em 2 execuções) | Cada comando isolado passa; test_integration com SUBSOLO_SPEC0005_CT01_NESTED=1 passa (23 ok, 5 skipped); descartadas gambiarras de espera/ordem e lock no next build | Architect + Thomas: Emenda v4 — incluir tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs nos touches da SPEC-0005 para o Test-writer pular o CT-01 da SPEC-0004 quando SUBSOLO_SPEC0005_CT01_NESTED=1 | Emenda v4 (escopo) — CT-01 da SPEC-0004 pula quando SUBSOLO_SPEC0005_CT01_NESTED=1; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -238,5 +239,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 (escopo, contrato inalterado) | 2026-10-13 | Emenda v4: `tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs` (CT-01 da SPEC-0004) entra nos `touches` para pular quando `SUBSOLO_SPEC0005_CT01_NESTED=1` (só na execução aninhada; a execução normal continua rodando-o) | IMP-02: o CT-01 aninhado da SPEC-0005 disparava um segundo `next build` simultâneo pelo CT-01 da SPEC-0004 | SPEC-0004 (teste de ferramentas, comportamento inalterado fora da execução aninhada) | thomas (chat, 2026-10-13) |
 | 3 | 2026-10-13 | Comando `test` passa a excluir `Kind=GitHubVerification` (`--filter "Category!=Architecture&Kind!=GitHubVerification"`); essas verificações rodam sob demanda com `SDD_GITHUB_VERIFY=1` | IMP-01: as verificações reais no GitHub da SPEC-0006 falham de propósito sem a variável e deixariam a suíte padrão e o CI vermelhos | SPEC-0006 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |

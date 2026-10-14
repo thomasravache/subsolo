@@ -38,7 +38,7 @@ Dependências vulneráveis ou fora de suporte viram risco silencioso, e atualiza
 - Calendário de fim de suporte: .NET 10 (2028-11-14), PostgreSQL 18 (2030-11-14) e Node 24 LTS, revisado a cada 6 meses; cada migração de versão vira spec.
 
 **Regras (verificáveis):**
-- Varredura de vulnerabilidades no CI; severidade alta ou crítica bloqueia o merge.
+- Varredura de vulnerabilidades no CI; severidade alta ou crítica bloqueia o merge. No front (npm): High/Critical bloqueiam em dependências de **produção**; em dependências só de **desenvolvimento** (lint, build, testes), Critical bloqueia e High vira aviso no PR, acompanhado pelo Dependabot até sair correção (decisão do Thomas em 2026-10-13, a partir do `braces` GHSA-vfj7-8cjw-p6xm sem correção, que só entra pelo ESLint).
 - Atualização de dependências automatizada (Dependabot) com revisão, pelo menos semanal.
 - Nenhuma dependência ou runtime fora de suporte (EOL); o calendário de fim de suporte é revisado a cada 6 meses e cada item vira spec.
 - Lockfiles versionados (`packages.lock.json`, `pnpm-lock.yaml`).

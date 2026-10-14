@@ -143,8 +143,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 0: Design no Stitch (aprovação do Thomas)**
-- [ ] Projeto "Subsolo" no Stitch com design system escuro e as telas Agenda da cidade, Página do show (estrutura) e Shell, em mobile e desktop
-- [ ] Thomas aprova as telas; links e capturas em `docs/design/DESIGN.md`
+- [x] Projeto "Subsolo — Agenda de shows underground" no Stitch (id 15194126668426659178, https://stitch.withgoogle.com/projects/15194126668426659178) com o design system "Subsolo Dark" (asset 16563151862933382783: fundo #0B0B0C, texto #E8E2D4, destaque #D7263D, adiado #F2A93B, cancelado #FF5A5F; Anton/Inter/Space Grotesk; cantos 4px) e as telas Agenda da cidade e Página do show em mobile e desktop, com o shell (cabeçalho, navegação inferior no mobile, rodapé com Apoie) — adiantado em paralelo à onda 2, a pedido do Thomas
+- [x] Thomas aprovou as telas em 2026-10-13; o registro dos links e capturas em `docs/design/DESIGN.md` é feito pelo Implementer na Fase 1 (onda 5)
 
 **Fase 1: Tokens e componentes**
 - [ ] Red: UT-01..UT-04 e CT-01 com a tag `SPEC-0011:<ID>`, falhando pelo motivo certo
