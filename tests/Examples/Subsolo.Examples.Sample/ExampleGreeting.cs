@@ -4,5 +4,5 @@ namespace Subsolo.Examples.Sample;
 public static class ExampleGreeting
 {
     /// <summary>Saudação exibida para <paramref name="name"/>: "Bem-vindo ao {name}".</summary>
-    public static string For(string name) => throw new NotImplementedException();
+    public static string For(string name) => $"Bem-vindo ao {name}";
 }

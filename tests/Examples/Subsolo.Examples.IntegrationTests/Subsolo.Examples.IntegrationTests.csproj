@@ -12,6 +12,11 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>Subsolo.Examples.IntegrationTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup>
