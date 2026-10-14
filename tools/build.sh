@@ -7,10 +7,11 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-echo '>>> dotnet build Subsolo.slnx -warnaserror'
+echo '>>> dotnet build Subsolo.slnx -warnaserror -nologo'
 dotnet build Subsolo.slnx -warnaserror -nologo
+echo '>>> cd web'
 cd web
-echo '>>> pnpm -C web install --frozen-lockfile'
+echo '>>> pnpm install --frozen-lockfile'
 pnpm install --frozen-lockfile
-echo '>>> pnpm -C web build'
+echo '>>> pnpm build'
 pnpm build
