@@ -7,7 +7,10 @@ namespace Subsolo.Tooling.Tests.CiPolicy;
 /// SPEC-0006 UT-01 — política do <c>.github/workflows/ci.yml</c>: os 8 jobs do contrato, permissões mínimas do
 /// <c>GITHUB_TOKEN</c> (<c>security-events: write</c> só no <c>codeql</c>), <c>timeout-minutes</c> em todo job,
 /// actions de terceiros fixadas por SHA de 40 caracteres, gatilhos do contrato e <c>concurrency</c> que cancela
-/// execuções antigas.
+/// execuções antigas. Guardas de segurança: nenhum <c>${{ github.event… }}</c>/<c>${{ github.head_ref }}</c> dentro de
+/// <c>run:</c> (o <c>sdd</c> recebe título/corpo do PR por <c>env</c>), a política de auditoria do <c>security</c>
+/// (Emenda v3: npm bloqueante em produção High/Critical e em Critical, aviso para High só de desenvolvimento; NuGet com
+/// <c>--no-restore</c>) e imagens Docker fixadas por digest <c>@sha256</c>.
 /// </summary>
 public sealed partial class CiWorkflowPolicyTests
 {
@@ -15,6 +18,20 @@ public sealed partial class CiWorkflowPolicyTests
     private static readonly string[] ContractTriggers = ["pull_request", "push", "workflow_dispatch"];
     private static readonly string[] BranchFilteredTriggers = ["pull_request", "push"];
     private static readonly string[] MainOnly = ["main"];
+
+    private static readonly string[] BlockingNpmAudits =
+    [
+        "(cd web && pnpm audit --prod --audit-level=high)",
+        "(cd web && pnpm audit --audit-level=critical)",
+    ];
+
+    /// <summary>Opções do <c>docker run</c> que consomem o argumento seguinte (as demais são flags booleanas).</summary>
+    private static readonly HashSet<string> DockerOptionsWithValue = new(StringComparer.Ordinal)
+    {
+        "-e", "--env", "--env-file", "-v", "--volume", "--mount", "-w", "--workdir", "-u", "--user", "--name",
+        "--entrypoint", "--network", "--net", "-p", "--publish", "--platform", "-l", "--label", "--cpus", "-m",
+        "--memory", "--add-host", "--cap-add", "--cap-drop", "--security-opt", "--tmpfs", "--pull", "-h", "--hostname",
+    };
 
     [Fact]
     [Trait("Spec", "SPEC-0006:UT-01")]
@@ -145,6 +162,178 @@ public sealed partial class CiWorkflowPolicyTests
             $"`concurrency.cancel-in-progress` deve ser true (ou expressão que o liga nos PRs); valor: '{value}'");
     }
 
+    [Fact]
+    [Trait("Spec", "SPEC-0006:UT-01")]
+    public void RunScriptsNeverInterpolateUntrustedEventData()
+    {
+        var workflow = CiWorkflowDocument.Load();
+
+        var injectable = workflow.AllRunSteps()
+            .Where(s => UntrustedExpression().IsMatch(s.Run))
+            .Select(s => $"{s.Job}: {StepName(s.Step)} → {UntrustedExpression().Match(s.Run).Value}")
+            .ToList();
+        injectable.ShouldBeEmpty(
+            "nenhum `run:` pode interpolar ${{ github.event… }} ou ${{ github.head_ref }} (script injection): " +
+            "passe o valor por `env:` e leia a variável no script");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0006:UT-01")]
+    public void SddJobReceivesPullRequestTitleAndBodyThroughEnv()
+    {
+        var workflow = CiWorkflowDocument.Load();
+        var sdd = workflow.Job("sdd");
+
+        var prCheck = CiWorkflowDocument.Steps(sdd)
+            .SingleOrDefault(step => CiWorkflowDocument.Child(step, "run") is YamlScalarNode run
+                && (run.Value ?? string.Empty).Contains("pr-check", StringComparison.Ordinal));
+        prCheck.ShouldNotBeNull("job `sdd` deve ter exatamente um step `run:` com o `spec_graph.py pr-check`");
+        var env = CiWorkflowDocument.Child(prCheck, "env") as YamlMappingNode;
+        env.ShouldNotBeNull("o step do pr-check deve receber PR_TITLE/PR_BODY por `env:`");
+        foreach (var (name, expression) in new[] { ("PR_TITLE", "github.event.pull_request.title"), ("PR_BODY", "github.event.pull_request.body") })
+        {
+            var value = CiWorkflowDocument.Child(env, name) as YamlScalarNode;
+            value.ShouldNotBeNull($"o step do pr-check deve declarar `env.{name}`");
+            CiWorkflowDocument.NormalizeWhitespace(value.Value ?? string.Empty).ShouldBe(
+                $"${{{{ {expression} }}}}", $"`env.{name}` do pr-check deve vir de {expression}");
+        }
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0006:UT-01")]
+    public void SecurityJobRunsTheContractAuditPolicy()
+    {
+        var workflow = CiWorkflowDocument.Load();
+        var steps = CiWorkflowDocument.Steps(workflow.Job("security"))
+            .Select(step => (Step: step, Run: CiWorkflowDocument.Child(step, "run") is YamlScalarNode run
+                ? CiWorkflowDocument.NormalizeWhitespace(run.Value ?? string.Empty)
+                : null))
+            .Where(s => s.Run is not null)
+            .Select(s => (s.Step, Run: s.Run!))
+            .ToList();
+
+        foreach (var command in BlockingNpmAudits)
+        {
+            var blocking = steps.Where(s => s.Run.Contains(command, StringComparison.Ordinal)).ToList();
+            blocking.ShouldNotBeEmpty($"job `security` deve rodar `{command}` (SPEC-0006 v3, bloqueante)");
+            blocking.ShouldAllBe(
+                s => !ContinuesOnError(s.Step) && !s.Run.Contains("|| true", StringComparison.Ordinal),
+                $"`{command}` é bloqueante: o step não pode usar continue-on-error nem `|| true`");
+        }
+
+        var devOnly = steps
+            .Where(s => DevOnlyHighAudit().IsMatch(s.Run) && !BlockingNpmAudits.Any(c => s.Run.Contains(c, StringComparison.Ordinal)))
+            .ToList();
+        devOnly.ShouldNotBeEmpty(
+            "job `security` deve ter o step de aviso `(cd web && pnpm audit --audit-level=high)` para High só de desenvolvimento");
+        devOnly.ShouldAllBe(
+            s => ContinuesOnError(s.Step) || s.Run.EndsWith("exit 0", StringComparison.Ordinal),
+            "o step de High só de desenvolvimento é aviso: não pode falhar o job (termine com `exit 0` ou use continue-on-error)");
+
+        var nuget = steps.Where(s => s.Run.Contains("dotnet list package --vulnerable", StringComparison.Ordinal)).ToList();
+        nuget.ShouldNotBeEmpty("job `security` deve rodar `dotnet list package --vulnerable`");
+        nuget.ShouldAllBe(
+            s => s.Run.Contains("--include-transitive", StringComparison.Ordinal)
+                && s.Run.Contains("--no-restore", StringComparison.Ordinal)
+                && !ContinuesOnError(s.Step),
+            "`dotnet list package --vulnerable` deve usar --include-transitive e --no-restore (sem restore implícito com " +
+            "auditoria) e ser bloqueante");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0006:UT-01")]
+    public void DockerImagesArePinnedByDigest()
+    {
+        var workflow = CiWorkflowDocument.Load();
+        var images = new List<(string Where, string Image)>();
+
+        foreach (var (job, jobNode, step, run) in workflow.AllRunSteps())
+        {
+            var script = run.Replace("\\\r\n", " ", StringComparison.Ordinal).Replace("\\\n", " ", StringComparison.Ordinal);
+            foreach (Match match in DockerRun().Matches(script))
+            {
+                var image = DockerRunImage(match.Groups["args"].Value);
+                image.ShouldNotBeNull($"{job}: {StepName(step)} — não foi possível achar a imagem do `docker run`: {match.Value}");
+                images.Add(($"{job}: {StepName(step)}", ResolveVariable(workflow, jobNode, step, image)));
+            }
+        }
+
+        foreach (var (job, uses) in workflow.AllUses().Where(u => u.Uses.StartsWith("docker://", StringComparison.Ordinal)))
+        {
+            images.Add(($"{job}: uses", uses["docker://".Length..]));
+        }
+
+        foreach (var jobId in workflow.JobIds)
+        {
+            var jobNode = workflow.Job(jobId);
+            if (CiWorkflowDocument.Child(jobNode, "container") is { } container)
+            {
+                images.Add(($"{jobId}: container", ContainerImage(container)));
+            }
+
+            if (CiWorkflowDocument.Child(jobNode, "services") is YamlMappingNode services)
+            {
+                foreach (var (name, service) in services.Children)
+                {
+                    images.Add(($"{jobId}: services.{CiWorkflowDocument.Scalar(name)}", ContainerImage(service)));
+                }
+            }
+        }
+
+        images.Where(i => !PinnedByDigest().IsMatch(i.Image)).Select(i => $"{i.Where} → {i.Image}").ToList().ShouldBeEmpty(
+            "toda imagem Docker do workflow (docker run, docker://, container, services) deve ser fixada por digest " +
+            "(imagem[:tag]@sha256:<64 hex>)");
+    }
+
+    private static string StepName(YamlMappingNode step) =>
+        CiWorkflowDocument.Child(step, "name") is YamlScalarNode name ? name.Value ?? "(sem nome)" : "(sem nome)";
+
+    private static bool ContinuesOnError(YamlMappingNode step) =>
+        CiWorkflowDocument.Child(step, "continue-on-error") is YamlScalarNode value
+        && !string.Equals(value.Value, "false", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Primeiro argumento posicional do <c>docker run</c> (a imagem), pulando opções e seus valores.</summary>
+    private static string? DockerRunImage(string arguments)
+    {
+        var tokens = ShellToken().Matches(arguments).Select(m => m.Value).ToList();
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            var token = tokens[i];
+            if (!token.StartsWith('-'))
+            {
+                return token;
+            }
+
+            if (!token.Contains('=', StringComparison.Ordinal) && DockerOptionsWithValue.Contains(token))
+            {
+                i++;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Resolve <c>"$NOME"</c>/<c>${NOME}</c> pelo <c>env</c> do step, do job ou do workflow.</summary>
+    private static string ResolveVariable(CiWorkflowDocument workflow, YamlMappingNode job, YamlMappingNode step, string token)
+    {
+        var unquoted = token.Trim('"', '\'');
+        var variable = ShellVariable().Match(unquoted);
+        if (!variable.Success)
+        {
+            return unquoted;
+        }
+
+        var name = variable.Groups["name"].Value;
+        return workflow.EnvValue(job, step, name) ?? $"${name} (variável sem valor no env do step/job/workflow)";
+    }
+
+    private static string ContainerImage(YamlNode node) => node switch
+    {
+        YamlScalarNode scalar => scalar.Value ?? string.Empty,
+        YamlMappingNode map when CiWorkflowDocument.Child(map, "image") is YamlScalarNode image => image.Value ?? string.Empty,
+        _ => node.ToString(),
+    };
+
     private static Dictionary<string, string> PermissionMap(YamlMappingNode permissions) =>
         permissions.Children.ToDictionary(
             p => CiWorkflowDocument.Scalar(p.Key),
@@ -153,4 +342,22 @@ public sealed partial class CiWorkflowPolicyTests
 
     [GeneratedRegex("^[^@\\s]+@[0-9a-f]{40}$")]
     private static partial Regex PinnedBySha();
+
+    [GeneratedRegex(@"\$\{\{\s*github\.(?:event\b|head_ref\b)[^}]*\}\}")]
+    private static partial Regex UntrustedExpression();
+
+    [GeneratedRegex(@"\(cd web && pnpm audit --audit-level=high\)")]
+    private static partial Regex DevOnlyHighAudit();
+
+    [GeneratedRegex(@"\bdocker\s+run\b(?<args>[^\n;|&]*)")]
+    private static partial Regex DockerRun();
+
+    [GeneratedRegex(@"(?:""(?:[^""\\]|\\.)*""|'[^']*'|[^\s""'])+")]
+    private static partial Regex ShellToken();
+
+    [GeneratedRegex(@"^\$(?:\{(?<name>[A-Za-z_][A-Za-z0-9_]*)\}|(?<name>[A-Za-z_][A-Za-z0-9_]*))$")]
+    private static partial Regex ShellVariable();
+
+    [GeneratedRegex("^[^@\\s]+@sha256:[0-9a-f]{64}$")]
+    private static partial Regex PinnedByDigest();
 }

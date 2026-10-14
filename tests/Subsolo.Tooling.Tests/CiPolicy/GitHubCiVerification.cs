@@ -231,6 +231,21 @@ internal sealed class GitHubCiVerification : IAsyncDisposable
             .Where(m => m.Length > 0 && !m.StartsWith("Process completed with exit code", StringComparison.Ordinal))];
     }
 
+    /// <summary>
+    /// Texto que identifica os achados do check: log das etapas que falharam mais título e mensagem de cada anotação
+    /// (o título carrega o id da regra, ex.: "CodeQL cs/sql-injection", "Semgrep csharp.lang.security.sqli…").
+    /// </summary>
+    public async Task<string> FindingsTextAsync(PullRequestCheck check, CancellationToken ct)
+    {
+        check.JobId.ShouldNotBeNull($"id do check run não encontrado no link do check {check}");
+        var result = await Gh(["api", $"repos/{Repository}/check-runs/{check.JobId}/annotations"], WorkTree, ShortTimeout, ct);
+        result.ExitCode.ShouldBe(0, $"não foi possível ler as anotações do check {check}:{Environment.NewLine}{result}");
+        using var json = JsonDocument.Parse(result.StandardOutput);
+        var annotations = json.RootElement.EnumerateArray().Select(a =>
+            $"{(a.TryGetProperty("title", out var t) ? t.GetString() : null)}: {(a.TryGetProperty("message", out var m) ? m.GetString() : null)}");
+        return string.Join(Environment.NewLine, [.. annotations, await FailedLogAsync(check, ct)]);
+    }
+
     /// <summary>Marca o PR como pronto (rascunho não tem estado de merge) e devolve o mergeStateStatus.</summary>
     public async Task<string> MarkReadyAndReadMergeStateAsync(CancellationToken ct)
     {
@@ -257,29 +272,70 @@ internal sealed class GitHubCiVerification : IAsyncDisposable
         return state;
     }
 
-    /// <summary>Fecha o PR sem merge e apaga a branch remota; roda mesmo quando o teste falhou ou foi cancelado.</summary>
+    /// <summary>
+    /// Fecha o PR sem merge e apaga a branch remota; roda mesmo quando o teste falhou ou foi cancelado. Nunca lança:
+    /// uma limpeza que falha só é registrada (saída de diagnóstico do teste e stderr) para remoção manual.
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         try
         {
             if (PullRequestNumber is { } number)
             {
-                await Gh(
+                await CleanupAsync(
+                    $"fechar o PR #{number}",
                     ["pr", "close", number.ToString(CultureInfo.InvariantCulture), "--repo", Repository,
-                     "--comment", "Verificação de CI da SPEC-0006 concluída; PR descartável fechado sem merge."],
-                    RepositoryRoot.Path, ShortTimeout, CancellationToken.None);
+                     "--comment", "Verificação de CI da SPEC-0006 concluída; PR descartável fechado sem merge."]);
             }
 
             if (_pushed)
             {
-                await Gh(["api", "-X", "DELETE", $"repos/{Repository}/git/refs/heads/{Branch}"],
-                    RepositoryRoot.Path, ShortTimeout, CancellationToken.None);
+                await CleanupAsync(
+                    $"apagar a branch remota {Branch}",
+                    ["api", "-X", "DELETE", $"repos/{Repository}/git/refs/heads/{Branch}"]);
             }
         }
         finally
         {
             _root.Dispose();
         }
+    }
+
+    private static async Task CleanupAsync(string action, IReadOnlyList<string> arguments)
+    {
+        string? failure;
+        try
+        {
+            var result = await Gh(arguments, RepositoryRoot.Path, ShortTimeout, CancellationToken.None);
+            failure = result.ExitCode == 0 ? null : $"código {result.ExitCode}:{Environment.NewLine}{result}";
+        }
+#pragma warning disable CA1031 // limpeza best-effort: qualquer falha vira diagnóstico, nunca exceção no Dispose
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            failure = exception.ToString();
+        }
+
+        if (failure is not null)
+        {
+            ReportCleanupFailure($"limpeza da verificação de CI: falhou ao {action} (gh {string.Join(' ', arguments)}) — " +
+                $"faça a remoção manualmente. {failure}");
+        }
+    }
+
+    private static void ReportCleanupFailure(string message)
+    {
+        Console.Error.WriteLine(message);
+#pragma warning disable CA1031 // sem contexto de teste ativo o diagnóstico fica só no stderr
+        try
+        {
+            TestContext.Current.SendDiagnosticMessage(message);
+            TestContext.Current.TestOutputHelper?.WriteLine(message);
+        }
+        catch (Exception)
+        {
+        }
+#pragma warning restore CA1031
     }
 
     private string RequirePullRequest()

@@ -90,6 +90,43 @@ internal sealed class CiWorkflowDocument
             .OfType<YamlScalarNode>()
             .Select(run => NormalizeWhitespace(run.Value ?? string.Empty))];
 
+    /// <summary>Todos os steps com <c>run:</c> do workflow, com o script como está no YAML (sem normalizar).</summary>
+    public IEnumerable<(string Job, YamlMappingNode JobNode, YamlMappingNode Step, string Run)> AllRunSteps()
+    {
+        foreach (var (key, value) in Jobs.Children)
+        {
+            if (value is not YamlMappingNode job)
+            {
+                continue;
+            }
+
+            foreach (var step in Steps(job))
+            {
+                if (Child(step, "run") is YamlScalarNode run)
+                {
+                    yield return (Scalar(key), job, step, run.Value ?? string.Empty);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Valor de uma variável de ambiente visível no step, na precedência do Actions: <c>env</c> do step, do job e do
+    /// workflow (null quando nenhum nível a declara).
+    /// </summary>
+    public string? EnvValue(YamlMappingNode job, YamlMappingNode step, string name)
+    {
+        foreach (var scope in new[] { step, job, Root })
+        {
+            if (Child(scope, "env") is YamlMappingNode env && Child(env, name) is YamlScalarNode value)
+            {
+                return value.Value;
+            }
+        }
+
+        return null;
+    }
+
     public static YamlNode? Child(YamlMappingNode node, string key) =>
         node.Children.TryGetValue(new YamlScalarNode(key), out var child) ? child : null;
 

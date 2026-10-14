@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Subsolo.Tooling.Tests.CiPolicy;
 
 /// <summary>
@@ -9,7 +11,7 @@ namespace Subsolo.Tooling.Tests.CiPolicy;
 /// Excluídas da suíte padrão pelo filtro <c>--filter-not-trait "Kind=GitHubVerification"</c>.
 /// </para>
 /// </summary>
-public sealed class GitHubCiVerificationTests
+public sealed partial class GitHubCiVerificationTests
 {
     private const string ValidChangeFile = "tests/Subsolo.Tooling.Tests/CiPolicy/CiWorkflowDocument.cs";
 
@@ -217,11 +219,15 @@ public sealed class GitHubCiVerificationTests
 
         var codeql = run.ChecksOf(checks, "codeql").Where(c => c.Failed).ToList();
         codeql.ShouldNotBeEmpty($"check `codeql` deveria falhar com a injeção de SQL ({run.PullRequestUrl})");
-        (await run.FailedLogAsync(codeql[0], ct)).ShouldContain("sql", Case.Insensitive, "o job `codeql` deve citar o alerta de SQL");
+        // Pela regra (não por "sql", que casaria com o caminho SqlInjectionSample do próprio cenário).
+        (await run.FindingsTextAsync(codeql[0], ct)).ShouldContain(
+            "cs/sql-injection", Case.Sensitive, "o job `codeql` deve citar o alerta pela regra cs/sql-injection");
 
         var security = run.ChecksOf(checks, "security").Where(c => c.Failed).ToList();
         security.ShouldNotBeEmpty($"o Semgrep no check `security` deveria falhar com a injeção de SQL ({run.PullRequestUrl})");
-        (await run.FailedLogAsync(security[0], ct)).ShouldContain("sql", Case.Insensitive, "o Semgrep deve citar o achado de SQL");
+        var semgrepFindings = await run.FindingsTextAsync(security[0], ct);
+        SemgrepSqlInjectionRule().IsMatch(semgrepFindings).ShouldBeTrue(
+            $"o Semgrep deve citar o achado pelo id de regra de SQL injection (…sqli…, anotação \"Semgrep <regra>\"):{Environment.NewLine}{semgrepFindings}");
     }
 
     /// <summary>
@@ -242,4 +248,8 @@ public sealed class GitHubCiVerificationTests
 
             """;
     }
+
+    /// <summary>Id de regra do Semgrep (pontuado, minúsculo) com "sqli", ex.: csharp.lang.security.sqli.csharp-sqli.</summary>
+    [GeneratedRegex(@"\bSemgrep (?:[a-z0-9_-]+\.)+[a-z0-9_.-]*sqli[a-z0-9_.-]*")]
+    private static partial Regex SemgrepSqlInjectionRule();
 }
