@@ -31,10 +31,10 @@ A jornada mais fina possível, passando por todas as camadas: o fã abre `/{cida
 **Objetivos (dentro do escopo):**
 - Módulo `Events` mínimo: entidade `City` (slug, nome, UF, fuso horário), migração no schema `events` e seed de desenvolvimento com uma cidade de exemplo (`cidade-exemplo`).
 - Feature `GetCityAgenda`: `GET /api/v1/cities/{slug}/agenda?from=&to=` retorna a cidade e a lista de shows (vazia nesta spec; o contrato do item de show já é definido).
-- Cliente TypeScript gerado do OpenAPI (`openapi-typescript` + `openapi-fetch`) em `web/src/api/`, com geração e verificação em `pnpm -C web api:check`.
+- Cliente TypeScript gerado do OpenAPI (`openapi-typescript` + `openapi-fetch`) em `web/src/api/`, com geração e verificação em `(cd web && pnpm api:check)`.
 - Página `web/app/(public)/[cidade]/page.tsx` com SSR, título "Agenda {Cidade}", estado vazio e 404 para cidade inexistente; layout mínimo escuro (o design system completo vem na SPEC-0011).
 - Publicação: `AddDockerComposeEnvironment("compose")` no AppHost; `aspire publish -o artifacts/compose` gera o `docker-compose.yaml` e o `.env`; script `tools/compose-up.sh` sobe localmente com o Caddy na frente (`/api` → API, resto → web) em `http://localhost:8080`.
-- `smoke_test` do sdd-config: `pnpm -C e2e test --grep @smoke` contra uma `BASE_URL`.
+- `smoke_test` do sdd-config: `(cd e2e && pnpm test --grep @smoke)` contra uma `BASE_URL`.
 - `critical_journeys` no sdd-config: `agenda: "Fã vê a agenda da cidade no celular"`.
 
 **Não-objetivos (fora do escopo):**
@@ -130,7 +130,7 @@ Compose local:
 - **IT-04** — Dado o servidor Next.js com `API_URL` apontando para uma porta sem serviço, quando `/cidade-exemplo` é requisitada, então o status é 503 e o HTML contém a mensagem de indisponibilidade.
 
 ### 7.4 Testes de Contrato
-- **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` (SPEC-0007), quando `pnpm -C web api:check` roda, então o cliente gerado é idêntico ao versionado; uma mudança no OpenAPI sem regenerar o cliente faz o check falhar.
+- **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` (SPEC-0007), quando `(cd web && pnpm api:check)` roda, então o cliente gerado é idêntico ao versionado; uma mudança no OpenAPI sem regenerar o cliente faz o check falhar.
 
 ### 7.5 Testes E2E
 - **E2E-01** — Dado o app subido pelo AppHost, quando o fã abre `/cidade-exemplo` no projeto mobile, então vê "Agenda Cidade Exemplo" e o estado vazio, sem violações do axe; ao abrir `/cidade-inexistente`, vê "Cidade não encontrada" [jornada: agenda] @smoke.
@@ -241,3 +241,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C`. Contrato HTTP e de tela inalterados. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

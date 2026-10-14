@@ -22,6 +22,7 @@ Levar o Subsolo, já redondo localmente, para produção em `agendasubsolo.com.b
 ## 2. Escopo
 **Objetivos (dentro do escopo):**
 - Decisão de custos: revisar e aprovar a estimativa do ADR-0012 (domínio, uso da VPS, e-mail, backup, monitor).
+- Criar a organização gratuita `subsolo-br` no GitHub e transferir `thomasravache/subsolo` para ela (Emenda v1 da SPEC-0004); conferir redirecionamentos, GHCR e segredos.
 - Registro do domínio `agendasubsolo.com.br` e do DNS (raiz + `staging`).
 - Provisionamento da VPS como código (`infra/`): usuário de deploy, Docker, firewall, Caddy com TLS público, Seq de produção.
 - Pipeline de deploy (`deploy.yml`): imagens, migrações por bundle EF, staging automático com smoke + E2E, produção com aprovação; rollback ensaiado.

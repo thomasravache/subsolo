@@ -9,7 +9,7 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx]
 adrs: [ADR-0005, ADR-0002]
 external: []
@@ -85,10 +85,10 @@ TypeScript
   Tag: test("SPEC-NNNN:E2E-01 descrição", ...)
 
 Comandos (sdd-config)
-  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture" && pnpm -C web test
+  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture" && (cd web && pnpm test)
   test_integration = dotnet test Subsolo.slnx --filter "Kind=Integration"
   arch_test        = dotnet test tests/Subsolo.ArchitectureTests
-  test_e2e         = pnpm -C e2e test
+  test_e2e         = (cd e2e && pnpm test)   # e2e/package.json fixa o mesmo pnpm de web/
   coverage         = ./tools/coverage.sh   (coverlet + ReportGenerator; % das linhas alteradas vs origin/main)
 Erros
   Docker indisponível → IT falha logo, com a mensagem "Docker não encontrado: inicie o Docker para rodar testes de integração"
@@ -108,7 +108,7 @@ Erros
 | E-mail de teste | envio SMTP para o Mailpit | mensagem recuperável por destinatário | IT-02 |
 | Docker ausente | Docker parado | falha imediata com mensagem clara | IT-04 |
 | Regra de arquitetura viola | assembly de exemplo depende do proibido | teste de arquitetura falha | IT-05 |
-| Unitário do front | `pnpm -C web test` | componente de exemplo renderiza e passa | UT-03 |
+| Unitário do front | `(cd web && pnpm test)` | componente de exemplo renderiza e passa | UT-03 |
 | E2E com axe | página de exemplo com e sem violação | sem violação passa; com violação falha | E2E-01 |
 | Cobertura | `./tools/coverage.sh` | relatório com % das linhas alteradas | IT-06 |
 
@@ -236,3 +236,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |

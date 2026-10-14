@@ -4,13 +4,13 @@ title: Repositório e ferramentas
 tier: full
 type: foundation
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-contract_version: 1
-touches: [README.md, CLAUDE.md, AGENTS.md, CHANGELOG.md, Subsolo.slnx, global.json, Directory.Build.props, Directory.Packages.props, .editorconfig, .gitignore, .gitattributes, .semgrep.yml, .gitleaks.toml, .githooks/**, .github/pull_request_template.md, .github/CODEOWNERS, .github/dependabot.yml, tools/**, web/**, tests/Subsolo.Tooling.Tests/**]
+contract_version: 2
+touches: [README.md, CLAUDE.md, AGENTS.md, CHANGELOG.md, Subsolo.slnx, global.json, Directory.Build.props, Directory.Packages.props, .editorconfig, .gitignore, .gitattributes, .nvmrc, .semgrep.yml, .gitleaks.toml, .githooks/**, .github/pull_request_template.md, .github/CODEOWNERS, .github/dependabot.yml, tools/**, web/**, tests/Subsolo.Tooling.Tests/**]
 adrs: [ADR-0001, ADR-0006, ADR-0007, ADR-0009]
 external: []
 size: M
@@ -29,7 +29,7 @@ Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .
 **Motivação:** sem estrutura, convenções e verificação automática desde o primeiro commit, cada agente faz de um jeito, e o processo depende da memória do modelo.
 
 **Objetivos (dentro do escopo):**
-- Organização `subsolo-br` e repositório público `subsolo-br/subsolo` no GitHub, branch `main`, CODEOWNERS e proteção da `main` (ADR-0007).
+- Repositório público `thomasravache/subsolo` no GitHub (Emenda v1; transferência para a organização `subsolo-br` no go-live), branch `main`, CODEOWNERS e proteção da `main` (ADR-0007).
 - Estrutura: `src/`, `tests/`, `web/`, `infra/`, `docs/` (specs, adr, runbooks), `tools/sdd/`.
 - `Subsolo.slnx` com .NET 10 SDK fixado em `global.json`; `Directory.Build.props` (nullable, warnings como erro, analisadores) e `Directory.Packages.props` (Central Package Management + lockfiles) — ADR-0006/ADR-0009.
 - `web/` criado com Next.js 16 + TypeScript strict + ESLint + Prettier + Tailwind 4, gerenciado com pnpm e Node 24 LTS (`.nvmrc`, `packageManager`).
@@ -45,7 +45,7 @@ Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .
 ## 3. Dependências
 - **Implementações necessárias:** N/A — primeira spec da fundação.
 - **Contratos consumidos:** N/A
-- **Pré-requisitos externos:** organização `subsolo-br` criada pelo Thomas no GitHub (plano Free) e `gh` autenticado na máquina; .NET 10 SDK, Node 24 LTS, pnpm e Docker instalados localmente; Python 3.8+ para `tools/sdd`.
+- **Pré-requisitos externos:** `gh` autenticado na conta `thomasravache` (repositório criado pelo Architect com autorização do Thomas); .NET 10 SDK, Node 24 LTS, pnpm e Docker instalados localmente; Python 3.8+ para `tools/sdd`.
 
 ## 4. Decisão Arquitetural
 **Contexto:** projeto novo; padrão definido nos ADRs de fundação (ADR-0001, ADR-0006, ADR-0007, ADR-0009).
@@ -73,12 +73,13 @@ Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .
 
 ```text
 Comandos (raiz do repositório):
-  dotnet build Subsolo.slnx -warnaserror      → exit 0 numa máquina limpa
-  dotnet format Subsolo.slnx --verify-no-changes → exit 0 se formatado; exit ≠ 0 caso contrário
-  pnpm -C web install --frozen-lockfile      → exit 0
-  pnpm -C web lint                           → eslint + prettier --check + tsc --noEmit
-  pnpm -C web build                          → exit 0
-  ./tools/lint.sh                            → roda os 4 acima; é o comando `lint` do sdd-config
+  ./tools/build.sh   → dotnet build Subsolo.slnx -warnaserror ; (cd web && pnpm install --frozen-lockfile && pnpm build)
+                       exit 0 numa máquina limpa; é o comando `build` do sdd-config
+  ./tools/lint.sh    → dotnet build -warnaserror + dotnet format Subsolo.slnx --verify-no-changes
+                       + (cd web && pnpm lint: eslint + prettier --check + tsc --noEmit) + semgrep quando instalado;
+                       roda TODAS as verificações e lista todas as falhas; é o comando `lint` do sdd-config
+  pnpm é sempre chamado de dentro de web/, para o corepack respeitar o `packageManager` fixado em web/package.json
+  (Emenda v2: o `pnpm -C web` a partir da raiz usava o pnpm padrão da máquina e quebrava o lockfile)
 
 Convenções:
   Commit: Conventional Commits + "Refs: SPEC-NNNN"; hook commit-msg rejeita fora do padrão (exit 1).
@@ -97,7 +98,7 @@ Erros:
 ### 6.1 Mapa de Comportamentos
 | Cenário | Condição / Entrada | Resultado esperado | Testes |
 |---|---|---|---|
-| Build limpo | clone novo + comandos do contrato | build .NET e web com exit 0 | IT-01 |
+| Build limpo | clone novo + `./tools/build.sh` | build .NET e web com exit 0, com o pnpm fixado | IT-01 |
 | Formatação divergente | arquivo C# ou TS fora do padrão | `lint` falha listando o arquivo | IT-03 |
 | Segredo commitado | arquivo staged com chave fictícia no formato AWS/Google | pre-commit bloqueia o commit | IT-02 |
 | Commit fora do padrão | mensagem "ajustes" sem tipo e sem `Refs:` | commit-msg rejeita | UT-01, IT-04 |
@@ -113,7 +114,7 @@ Erros:
 - **UT-01** — Dada a regra de validação de mensagem do hook commit-msg, quando avaliada com uma tabela de mensagens (`feat(events): x` + `Refs: SPEC-0004` válida; `ajustes`, `feat: x` sem `Refs`, tipo inexistente `feature: x` inválidas), então aceita apenas as válidas.
 
 ### 7.3 Testes de Integração
-- **IT-01** — Dado um clone limpo num container com .NET 10 SDK e Node 24, quando os comandos de build do contrato são executados, então todos terminam com exit 0.
+- **IT-01** — Dado um clone limpo num container com .NET 10 SDK, Node 24 e corepack habilitado (sem pnpm global fixado), quando `./tools/build.sh` é executado, então termina com exit 0 usando a versão do pnpm fixada em `web/package.json` (Emenda v2).
 - **IT-02** — Dado um repositório temporário com os hooks instalados, quando um arquivo com uma chave fictícia é commitado, então o pre-commit falha com o achado do gitleaks; sem o segredo, o commit passa.
 - **IT-03** — Dado um arquivo C# e um TS fora da formatação, quando `./tools/lint.sh` roda, então termina com exit ≠ 0 e lista os dois arquivos.
 - **IT-04** — Dado o hook commit-msg, quando a mensagem não segue Conventional Commits ou não tem `Refs: SPEC-NNNN`, então o commit é rejeitado; com a mensagem correta, é aceito.
@@ -142,7 +143,7 @@ Erros:
 
 ## 9. Questões em Aberto
 - [x] O repositório no GitHub será público ou privado? — Público: proteção da `main`, CodeQL e GHCR gratuitos; nenhum segredo no código (Thomas, 2026-10-13)
-- [x] Onde fica o repositório? — Na organização gratuita `subsolo-br` (o nome `subsolo` já estava ocupado no GitHub em 2026-10-13): `subsolo-br/subsolo` (Thomas, 2026-10-13)
+- [x] Onde fica o repositório? — Na organização gratuita `subsolo-br` (o nome `subsolo` já estava ocupado no GitHub em 2026-10-13): `subsolo-br/subsolo` (Thomas, 2026-10-13). **Alterado pela Emenda v1:** repositório público na conta pessoal, `thomasravache/subsolo`; a organização `subsolo-br` é criada e o repositório transferido no go-live (SPEC-0003) (Thomas, 2026-10-13)
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
@@ -163,7 +164,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Validar: build + suíte + lint (G2/G3 — G3 N/A até a SPEC-0007 criar a suíte de arquitetura)
 
 **Fase 3: GitHub**
-- [ ] Repositório público `subsolo-br/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
+- [ ] Repositório público `thomasravache/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -176,7 +177,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
+| G1 Red | PASS | verify G1: PASS — f15f104 | 2026-10-13 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -189,7 +190,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
-| IMP-01 | 2026-10-13 | G5 | externo | Organização subsolo-br não existe no GitHub; a API do github.com não permite criá-la (só pela interface web) | gh api orgs/subsolo-br → 404; criação de organização via API só existe no GitHub Enterprise Server | Thomas: criar a organização gratuita subsolo-br em https://github.com/account/organizations/new?plan=free |  |  |
+| IMP-01 | 2026-10-13 | G5 | externo | Organização subsolo-br não existe no GitHub; a API do github.com não permite criá-la (só pela interface web) | gh api orgs/subsolo-br → 404; criação de organização via API só existe no GitHub Enterprise Server | Thomas: criar a organização gratuita subsolo-br em https://github.com/account/organizations/new?plan=free | Emenda v1 — repositório criado em thomasravache/subsolo; organização subsolo-br e transferência movidas para o go-live (SPEC-0003), decisão do Thomas em 2026-10-13 | 2026-10-13 |
+| IMP-02 | 2026-10-13 | G2 | spec | Contrato usa 'pnpm -C web ...' a partir da raiz: o corepack ignora o packageManager de web/package.json e usa o pnpm padrão da máquina (10.23 local), que não lê o lockfile do pnpm 12 → comando literal do contrato falha; IT-01 só passa enquanto o pin coincide com o pnpm mais recente do corepack | Implementer: scripts tools/build.sh e tools/lint.sh fazem 'cd web' antes do pnpm (funciona); README documenta corepack install -g pnpm@12.11.2 | Architect + Thomas: Emenda v2 (contrato passa a ser tools/build.sh e tools/lint.sh; IT-01 roda tools/build.sh; .nvmrc entra em touches) | Emenda v2 — contrato de comandos passa a ser tools/build.sh e tools/lint.sh (pnpm sempre de dentro de web/), IT-01 roda tools/build.sh, .nvmrc em touches; SPEC-0005 v2, SPEC-0006 e SPEC-0008 ajustadas; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -230,3 +232,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0004`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 | 2026-10-13 | Repositório criado em `thomasravache/subsolo` (conta pessoal) em vez de `subsolo-br/subsolo`; organização e transferência movidas para o go-live (SPEC-0003). Contrato inalterado. | Thomas preferiu não depender da criação da organização agora | SPEC-0003 | thomas (chat, 2026-10-13) |
+| 2 | 2026-10-13 | Contrato de comandos passa a ser `./tools/build.sh` e `./tools/lint.sh` (pnpm sempre chamado de dentro de `web/`); IT-01 roda `./tools/build.sh`; `.nvmrc` na raiz entra em `touches`; `tests/Subsolo.Tooling.Tests` usa YamlDotNet (ADR-0005). | IMP-02: `pnpm -C web` da raiz ignorava o pnpm fixado e quebrava o lockfile; IT-01 dependia da versão mais recente do corepack | SPEC-0005, SPEC-0006 (comandos `build`/`lint` do sdd-config) | thomas (chat, 2026-10-13) |

@@ -8,7 +8,7 @@ status: approved
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
-consumes_contract: [SPEC-0005@1]
+consumes_contract: [SPEC-0005@2]
 contract_version: 1
 touches: [.github/workflows/**, tests/Subsolo.Tooling.Tests/CiPolicy/**]
 adrs: [ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0009]
@@ -72,7 +72,7 @@ Cria o pipeline de CI no GitHub Actions, que roda em todo PR e em todo push na `
 ```text
 on: pull_request (main), push (main), workflow_dispatch
 jobs (nomes = checks obrigatórios na proteção da main):
-  build        → dotnet build -warnaserror ; pnpm -C web build
+  build        → ./tools/build.sh (contrato v2 da SPEC-0004)
   lint         → ./tools/lint.sh
   test         → sdd-config.test + arch_test + coverage (publica o relatório)
   integration  → sdd-config.test_integration
@@ -220,3 +220,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 | 2026-10-13 | Job `build` chama `./tools/build.sh`; passa a consumir SPEC-0005@2 (comandos pnpm de dentro de `web/`/`e2e/`). Contrato desta spec inalterado. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

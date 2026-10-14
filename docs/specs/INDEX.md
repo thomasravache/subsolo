@@ -5,8 +5,8 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 12 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 8
-- Impedimentos: **0 aberto(s)**, 0 resolvido(s)
+- Specs: approved 7, in-progress 1
+- Impedimentos: **0 aberto(s)**, 2 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -38,13 +38,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0004  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0004
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0004 | Repositório e ferramentas | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0004 | Repositório e ferramentas | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0005 | Harness de testes | full/M | approved | ⛔ aguarda implementação de SPEC-0004 |  |
 | 2 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | approved | ⛔ aguarda implementação de SPEC-0004 |  |
 | 3 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
@@ -68,7 +68,7 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 ```mermaid
 flowchart LR
   subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
-    S0004["SPEC-0004<br/>Repositório e ferramentas"]:::approved
+    S0004["SPEC-0004<br/>Repositório e ferramentas"]:::inprogress
     S0005["SPEC-0005<br/>Harness de testes"]:::approved
     S0006["SPEC-0006<br/>Pipeline de CI no GitHub Actions"]:::approved
     S0007["SPEC-0007<br/>Base do monólito modular com Aspire"]:::approved
@@ -79,7 +79,7 @@ flowchart LR
   end
   S0004 --> S0005
   S0004 --> S0006
-  S0005 -. contrato v1 .-> S0006
+  S0005 -. contrato v2 .-> S0006
   S0005 --> S0007
   S0006 --> S0008
   S0007 --> S0008
@@ -100,9 +100,9 @@ flowchart LR
 | [SPEC-0001](SPEC-0001-fundacao-do-subsolo.md) | Fundação do Subsolo | epic | foundation | approved | 2026-10-13 | — | — | — |
 | [SPEC-0002](SPEC-0002-agenda-subsolo-lancamento-mvp.md) | Agenda Subsolo — lançamento (MVP) | epic | feature | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0003](SPEC-0003-go-live-producao-na-vps-e-servicos-pagos.md) | Go-live: produção na VPS e serviços pagos | epic | foundation | proposed | 2026-10-13 | — | SPEC-0001 | — |
-| [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | approved | 2026-10-13 | SPEC-0001 | — | — |
+| [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
-| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@1 |
+| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@2 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
 | [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
 | [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
