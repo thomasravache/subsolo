@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
 contract_version: 3
-touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs]
+touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs, tests/Subsolo.Tooling.Tests/packages.lock.json]
 adrs: [ADR-0005, ADR-0002]
 external: []
 size: M
@@ -239,6 +239,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
-| 3 (escopo, contrato inalterado) | 2026-10-13 | Emenda v4: `tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs` (CT-01 da SPEC-0004) entra nos `touches` para pular quando `SUBSOLO_SPEC0005_CT01_NESTED=1` (só na execução aninhada; a execução normal continua rodando-o) | IMP-02: o CT-01 aninhado da SPEC-0005 disparava um segundo `next build` simultâneo pelo CT-01 da SPEC-0004 | SPEC-0004 (teste de ferramentas, comportamento inalterado fora da execução aninhada) | thomas (chat, 2026-10-13) |
+| 3 (escopo, contrato inalterado) | 2026-10-13 | Emenda v4: `tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs` (CT-01 da SPEC-0004) entra nos `touches` para pular quando `SUBSOLO_SPEC0005_CT01_NESTED=1` (só na execução aninhada; a execução normal continua rodando-o), e `tests/Subsolo.Tooling.Tests/packages.lock.json` (regenerado pelo CPM ao adicionar pacotes) | IMP-02: o CT-01 aninhado da SPEC-0005 disparava um segundo `next build` simultâneo pelo CT-01 da SPEC-0004 | SPEC-0004 (teste de ferramentas, comportamento inalterado fora da execução aninhada) | thomas (chat, 2026-10-13) |
 | 3 | 2026-10-13 | Comando `test` passa a excluir `Kind=GitHubVerification` (`--filter "Category!=Architecture&Kind!=GitHubVerification"`); essas verificações rodam sob demanda com `SDD_GITHUB_VERIFY=1` | IMP-01: as verificações reais no GitHub da SPEC-0006 falham de propósito sem a variável e deixariam a suíte padrão e o CI vermelhos | SPEC-0006 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |
