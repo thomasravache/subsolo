@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 14 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 6, in-progress 2, implemented 1
+- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Specs: proposed 1, approved 6, in-progress 2, implemented 1
 - Impedimentos: **0 aberto(s)**, 5 resolvido(s)
 
 ## Cobertura de Pilares
@@ -52,12 +52,13 @@ Perfil: **padrao**
 | 4 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 4 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 4 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
+| 5 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | proposed | ⏳ aguardando aprovação (H1) | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006; saiu da onda 2: arquivos em comum com SPEC-0012; saiu da onda 3: arquivos em comum com SPEC-0008; saiu da onda 4: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
-| SPEC-0001 | Fundação do Subsolo | approved | 1/9 implementadas |
+| SPEC-0001 | Fundação do Subsolo | approved | 1/10 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | proposed | 0/0 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
@@ -77,6 +78,7 @@ flowchart LR
     S0010["SPEC-0010<br/>Segurança base"]:::approved
     S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
     S0012["SPEC-0012<br/>Ajustes menores do tooling apontados na…"]:::approved
+    S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::proposed
   end
   S0004 --> S0005
   S0004 --> S0006
@@ -110,6 +112,7 @@ flowchart LR
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | approved | 2026-10-13 | SPEC-0001 | — | — |
+| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | proposed | 2026-10-14 | SPEC-0001 | — | — |
 
 ## ADRs
 
