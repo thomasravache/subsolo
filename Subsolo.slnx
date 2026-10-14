@@ -6,6 +6,10 @@
     <Project Path="tests/Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
   </Folder>
   <Folder Name="/tests/Examples/">
+    <Project Path="tests/Examples/Subsolo.Examples.ArchitectureSamples/Subsolo.Examples.ArchitectureSamples.csproj" />
+    <Project Path="tests/Examples/Subsolo.Examples.DockerProbe/Subsolo.Examples.DockerProbe.csproj" />
+    <Project Path="tests/Examples/Subsolo.Examples.IntegrationTests/Subsolo.Examples.IntegrationTests.csproj" />
     <Project Path="tests/Examples/Subsolo.Examples.Sample/Subsolo.Examples.Sample.csproj" />
+    <Project Path="tests/Examples/Subsolo.Examples.UnitTests/Subsolo.Examples.UnitTests.csproj" />
   </Folder>
 </Solution>
