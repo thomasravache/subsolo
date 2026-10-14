@@ -36,6 +36,8 @@ Push direto e merges locais tiram a revisão e os checks do caminho, e a rastrea
 - Checks obrigatórios: `build`, `test`, `e2e`, `lint`, `security` e `sdd` (validate + pr-check).
 - **Revisão humana:** o GitHub não deixa o autor aprovar o próprio PR. Como os agentes usam a conta do Thomas, a exigência de "1 aprovação" na proteção fica em 0, e a revisão humana é garantida por: (1) só o Thomas faz o merge; (2) o H2 do Thomas registrado na spec e verificado pelo `pr-check`. Se no futuro os agentes passarem a usar um bot (GitHub App), a regra muda para 1 aprovação obrigatória.
 
+- **Autorização permanente (Thomas, 2026-10-13):** o Architect (agente) pode criar PRs e fazer o merge com merge commit, **sempre depois do H2 do Thomas registrado na spec** (aprovação de integração por onda continua humana). Deploy em produção continua exigindo confirmação por release.
+
 **Regras (verificáveis):**
 - Toda mudança entra na `main` por pull request.
 - Checks obrigatórios (build, testes, `sdd`) e aprovação humana registrada (H2) antes do merge.
