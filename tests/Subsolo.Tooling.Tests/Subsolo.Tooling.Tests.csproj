@@ -2,32 +2,15 @@
 
   <!--
     SPEC-0004 — testes das ferramentas do repositório (hooks, lint, build limpo, analisadores).
-    Autossuficiente de propósito: compila antes e depois de Directory.Build.props/Directory.Packages.props existirem.
+    Regras de build vêm de Directory.Build.props; versões NuGet, de Directory.Packages.props (ADR-0009).
+    O runner (Microsoft.Testing.Platform) é selecionado pelo global.json da raiz.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>Subsolo.Tooling.Tests</RootNamespace>
-    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-
-  <!--
-    Runner do `dotnet test` no .NET 10: com global.json selecionando o Microsoft.Testing.Platform
-    ("test": { "runner": "Microsoft.Testing.Platform" }) o projeto roda como aplicação MTP (padrão do xunit.v3);
-    sem isso, cai no VSTest pelo xunit.runner.visualstudio — assim `dotnet test tests/Subsolo.Tooling.Tests`
-    funciona antes e depois de o global.json da raiz existir.
-  -->
-  <PropertyGroup>
-    <_SubsoloGlobalJson>$([MSBuild]::GetPathOfFileAbove('global.json', '$(MSBuildProjectDirectory)'))</_SubsoloGlobalJson>
-    <_SubsoloMtpRunner Condition="'$(_SubsoloGlobalJson)' != '' and $([System.IO.File]::ReadAllText('$(_SubsoloGlobalJson)').Contains('Microsoft.Testing.Platform'))">true</_SubsoloMtpRunner>
-    <IsTestingPlatformApplication Condition="'$(_SubsoloMtpRunner)' != 'true'">false</IsTestingPlatformApplication>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,14 +21,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
-    <PackageReference Include="xunit.v3" Version="4.0.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 
 </Project>
