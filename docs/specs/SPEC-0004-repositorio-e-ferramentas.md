@@ -182,7 +182,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS — f15f104 | 2026-10-13 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (duration: 42s 901ms); lint exit 0 ($ next typegen && tsc --noEmit) — c687f4d | 2026-10-13 |
 | G3 Arquitetura | N/A | suíte de arquitetura ainda não existe: criada pela SPEC-0005 (projeto) e SPEC-0007 (regras do ADR-0001); SPEC-0004 não tem código de produção | 2026-10-13 |
-| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 4fc3e94 — major: projeto de testes fora do Central Package Management (ADR-0009), com propriedades e hack de runner duplicados; 8 minor (licenças fora da allowlist, eslint 9 sem registro, imagem/Node do IT-01 sem versão fixa e sem checksum, eco enganoso no build.sh, .gitignore sem teste, commit-msg aceita SPEC fora do Refs, dependabot sem alvos ainda, pastas adiadas) | 2026-10-13 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em 76e4fbd — 0 blocker/major; minors: .env.example ignorado por .env*, UT-01 sem as linhas da Emenda v3, só chave AWS testada, comentário de scaffold em web/next.config.ts, dependabot/pastas adiadas (relatório) — 76e4fbd | 2026-10-13 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
