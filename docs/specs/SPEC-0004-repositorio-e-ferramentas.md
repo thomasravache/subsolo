@@ -9,7 +9,7 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 touches: [README.md, CLAUDE.md, AGENTS.md, CHANGELOG.md, Subsolo.slnx, global.json, Directory.Build.props, Directory.Packages.props, .editorconfig, .gitignore, .gitattributes, .nvmrc, .semgrep.yml, .gitleaks.toml, .githooks/**, .github/pull_request_template.md, .github/CODEOWNERS, .github/dependabot.yml, tools/**, web/**, tests/Subsolo.Tooling.Tests/**]
 adrs: [ADR-0001, ADR-0006, ADR-0007, ADR-0009]
 external: []
@@ -82,7 +82,9 @@ Comandos (raiz do repositório):
   (Emenda v2: o `pnpm -C web` a partir da raiz usava o pnpm padrão da máquina e quebrava o lockfile)
 
 Convenções:
-  Commit: Conventional Commits + "Refs: SPEC-NNNN"; hook commit-msg rejeita fora do padrão (exit 1).
+  Commit: Conventional Commits + referência a SPEC-NNNN (convenção da ferramenta SDD: preferencialmente no rodapé "Refs:",
+          aceita em qualquer parte da mensagem; "[no-spec]" no assunto para mudanças sem comportamento, como typo e formatação);
+          hook commit-msg rejeita fora do padrão (exit 1). O CI (pr-check) continua exigindo spec aprovada em todo PR. (Emenda v3)
   Pre-commit: gitleaks protect --staged; spec_graph validate --staged para docs/specs e docs/adr.
   Pastas: src/ (back), tests/ (testes .NET), web/ (front e seus testes), e2e/ (Playwright), infra/, docs/.
 Erros:
@@ -178,9 +180,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS — f15f104 | 2026-10-13 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (duration: 42s 901ms); lint exit 0 ($ next typegen && tsc --noEmit) — c687f4d | 2026-10-13 |
+| G3 Arquitetura | N/A | suíte de arquitetura ainda não existe: criada pela SPEC-0005 (projeto) e SPEC-0007 (regras do ADR-0001); SPEC-0004 não tem código de produção | 2026-10-13 |
+| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 4fc3e94 — major: projeto de testes fora do Central Package Management (ADR-0009), com propriedades e hack de runner duplicados; 8 minor (licenças fora da allowlist, eslint 9 sem registro, imagem/Node do IT-01 sem versão fixa e sem checksum, eco enganoso no build.sh, .gitignore sem teste, commit-msg aceita SPEC fora do Refs, dependabot sem alvos ainda, pastas adiadas) | 2026-10-13 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -234,3 +236,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|---|---|
 | 1 | 2026-10-13 | Repositório criado em `thomasravache/subsolo` (conta pessoal) em vez de `subsolo-br/subsolo`; organização e transferência movidas para o go-live (SPEC-0003). Contrato inalterado. | Thomas preferiu não depender da criação da organização agora | SPEC-0003 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Contrato de comandos passa a ser `./tools/build.sh` e `./tools/lint.sh` (pnpm sempre chamado de dentro de `web/`); IT-01 roda `./tools/build.sh`; `.nvmrc` na raiz entra em `touches`; `tests/Subsolo.Tooling.Tests` usa YamlDotNet (ADR-0005). | IMP-02: `pnpm -C web` da raiz ignorava o pnpm fixado e quebrava o lockfile; IT-01 dependia da versão mais recente do corepack | SPEC-0005, SPEC-0006 (comandos `build`/`lint` do sdd-config) | thomas (chat, 2026-10-13) |
+| 3 | 2026-10-13 | Convenção de commit = a da ferramenta SDD: referência `SPEC-NNNN` aceita em qualquer parte da mensagem (preferência pelo rodapé `Refs:`) e `[no-spec]` para mudanças sem comportamento; o `pr-check` do CI segue exigindo spec aprovada. | Achado minor #7 da revisão G4: o hook vendorizado era mais flexível que o texto do contrato | — | thomas (chat, 2026-10-13) |
