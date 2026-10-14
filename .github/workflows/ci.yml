@@ -11,6 +11,8 @@ name: ci
 on:
   pull_request:
     branches: [main]
+    # edited: corrigir título/corpo do PR reexecuta o `sdd` (o pr-check lê PR_TITLE/PR_BODY do evento).
+    types: [opened, edited, synchronize, reopened]
   push:
     branches: [main]
   workflow_dispatch:
@@ -303,12 +305,14 @@ jobs:
           cd web
           pnpm --version
 
-      # Restore sem a auditoria do NuGet (que viraria erro com TreatWarningsAsErrors): quem reporta é o passo seguinte.
+      # Restore sem a auditoria do NuGet (que viraria erro com TreatWarningsAsErrors): quem reporta é o list package.
+      # --no-restore é obrigatório: no .NET 10 o list package faria um restore implícito COM auditoria, que falha em
+      # NU1901–NU1904 e deixaria só `problems` no JSON (Moderate/Low bloqueariam e o pacote não seria citado).
       - name: Vulnerabilidades .NET (High/Critical falham)
         if: ${{ !cancelled() }}
         run: |
           dotnet restore Subsolo.slnx -p:NuGetAudit=false
-          dotnet list package --vulnerable --include-transitive --format json > "$RUNNER_TEMP/nuget-vulnerable.json"
+          dotnet list package --vulnerable --include-transitive --no-restore --format json > "$RUNNER_TEMP/nuget-vulnerable.json"
           python3 - "$RUNNER_TEMP/nuget-vulnerable.json" <<'PY'
           import json, sys
           report = json.load(open(sys.argv[1], encoding="utf-8"))
@@ -416,6 +420,9 @@ jobs:
   # ------------------------------------------------------------------------------------------------
   # CodeQL (ADR-0006): gratuito em repositório público. O check falha quando a análise do PR tem alerta com
   # security-severity >= 7.0 (High/Critical); como a main só recebe merge com o check verde, todo alerta assim é novo.
+  # O gate lê o SARIF desta execução, não o estado dos alertas no GitHub: dispensar ("Dismiss") um alerta na interface
+  # de Code scanning NÃO libera o check. Para um falso positivo, suprima no próprio código, com o motivo na mesma linha
+  # (ADR-0006; vira `suppressions` no SARIF e é ignorado aqui) — ou corrija o código.
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 30
