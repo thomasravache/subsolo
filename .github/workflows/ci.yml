@@ -1,0 +1,525 @@
+# CI do Subsolo (SPEC-0006, ADR-0004/0005/0006/0007/0009).
+# Cada job é um check obrigatório da proteção da main (o id do job é o nome do check; o codeql usa matrix e
+# aparece como "codeql (csharp)" e "codeql (javascript-typescript)").
+# Os jobs chamam os MESMOS comandos do docs/specs/sdd-config.yml usados localmente: nenhuma lógica de build
+# existe só aqui. O YAML apenas prepara o ambiente (SDKs, caches), roda os comandos e publica artefatos.
+# Segurança: GITHUB_TOKEN só leitura (security-events: write apenas no codeql), actions de terceiros fixadas
+# por SHA completo (o comentário diz a versão; o Dependabot as atualiza), nenhum segredo usado.
+# Testes nunca são reexecutados automaticamente (ADR-0005): reexecução só manual, pela interface do Actions.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+    # edited: corrigir título/corpo do PR reexecuta o `sdd` (o pr-check lê PR_TITLE/PR_BODY do evento).
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Um push novo no mesmo PR cancela a execução anterior; na main cada commit termina a sua.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  # ------------------------------------------------------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de web/package.json)
+        id: pnpm
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd web
+          pnpm --version
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache do store do pnpm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: build (sdd-config)
+        run: ./tools/build.sh
+
+  # ------------------------------------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de web/package.json)
+        id: pnpm
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd web
+          pnpm --version
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache do store do pnpm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      # O Semgrep do lint.sh só roda quando instalado; no CI ele roda no job `security`.
+      - name: lint (sdd-config)
+        run: ./tools/lint.sh
+
+  # ------------------------------------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # coverage compara as linhas alteradas com origin/main
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de web/package.json)
+        id: pnpm
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd web
+          pnpm --version
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache do store do pnpm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+      - name: Dependências do front (lockfile)
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: test (sdd-config)
+        run: dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test)
+      - name: arch_test (sdd-config)
+        if: ${{ !cancelled() }}
+        run: dotnet test tests/Subsolo.ArchitectureTests
+      - name: coverage (sdd-config)
+        if: ${{ !cancelled() }}
+        run: ./tools/coverage.sh
+      - name: Resumo da cobertura
+        if: ${{ !cancelled() }}
+        run: |
+          summary=$(find coverage -name 'Summary*.md' -print -quit 2>/dev/null || true)
+          if [ -n "$summary" ]; then cat "$summary" >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Artefato — relatório de cobertura e TRX
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results
+          path: |
+            coverage/
+            **/TestResults/
+            **/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+  # ------------------------------------------------------------------------------------------------
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      # Imagens dos Testcontainers (PostgreSQL, Mailpit, Ryuk): salvas depois da primeira execução e
+      # recarregadas nas seguintes; a chave muda quando as fixtures de integração mudam.
+      - name: Restaura imagens Docker
+        id: docker-images
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/docker-images
+          key: docker-images-${{ runner.os }}-${{ hashFiles('tests/Subsolo.IntegrationTests.Common/**', 'Directory.Packages.props') }}
+      - name: Carrega imagens Docker
+        run: |
+          docker image ls --format '{{.Repository}}:{{.Tag}}' | sort > "$RUNNER_TEMP/images-before.txt"
+          if [ -f "$RUNNER_TEMP/docker-images/images.tar" ]; then
+            docker load --input "$RUNNER_TEMP/docker-images/images.tar"
+          fi
+
+      - name: test_integration (sdd-config)
+        run: dotnet test Subsolo.slnx --filter "Kind=Integration"
+
+      - name: Salva imagens Docker usadas pelos testes
+        id: save-images
+        if: ${{ !cancelled() && steps.docker-images.outputs.cache-hit != 'true' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker-images"
+          docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort \
+            | comm -13 "$RUNNER_TEMP/images-before.txt" - > "$RUNNER_TEMP/images-new.txt"
+          if [ -s "$RUNNER_TEMP/images-new.txt" ]; then
+            xargs docker image save --output "$RUNNER_TEMP/docker-images/images.tar" < "$RUNNER_TEMP/images-new.txt"
+            echo "saved=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: ${{ !cancelled() && steps.save-images.outputs.saved == 'true' }}
+        with:
+          path: ${{ runner.temp }}/docker-images
+          key: ${{ steps.docker-images.outputs.cache-primary-key }}
+
+      - name: Artefato — TRX da integração
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: integration-results
+          path: |
+            **/TestResults/
+            **/*.trx
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ------------------------------------------------------------------------------------------------
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de e2e/package.json)
+        id: pnpm
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd e2e
+          pnpm --version
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache do store do pnpm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+      - name: Cache dos navegadores do Playwright
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+      - name: Dependências e navegadores do Playwright
+        working-directory: e2e
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium webkit
+
+      - name: test_e2e (sdd-config)
+        run: (cd e2e && pnpm test)
+
+      - name: Artefato — relatório e traces do Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ------------------------------------------------------------------------------------------------
+  # Todas as varreduras rodam mesmo depois de uma falha (como o lint.sh): o autor vê todos os achados de uma vez.
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITLEAKS_IMAGE: zricethezav/gitleaks:v8.24.3@sha256:e1b35e12a8c6fa8901f060459cfb6b2fc4c484d3afbe3b029733a3bbfab07055
+      SEMGREP_IMAGE: semgrep/semgrep:1.178.0@sha256:32e459968daabe7ab86968184a29109b9564aa00392401156f9788452b42786b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks varre os commits do PR
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de web/package.json)
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd web
+          pnpm --version
+
+      # Restore sem a auditoria do NuGet (que viraria erro com TreatWarningsAsErrors): quem reporta é o list package.
+      # --no-restore é obrigatório: no .NET 10 o list package faria um restore implícito COM auditoria, que falha em
+      # NU1901–NU1904 e deixaria só `problems` no JSON (Moderate/Low bloqueariam e o pacote não seria citado).
+      - name: Vulnerabilidades .NET (High/Critical falham)
+        if: ${{ !cancelled() }}
+        run: |
+          dotnet restore Subsolo.slnx -p:NuGetAudit=false
+          dotnet list package --vulnerable --include-transitive --no-restore --format json > "$RUNNER_TEMP/nuget-vulnerable.json"
+          python3 - "$RUNNER_TEMP/nuget-vulnerable.json" <<'PY'
+          import json, sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          blocking, other = [], []
+          for problem in report.get("problems", []):
+              print(f"::error title=dotnet list package::{problem.get('text', problem)}")
+              blocking.append("problem")
+          for project in report.get("projects", []):
+              for framework in project.get("frameworks", []):
+                  for kind in ("topLevelPackages", "transitivePackages"):
+                      for package in framework.get(kind, []):
+                          for vuln in package.get("vulnerabilities", []):
+                              line = (f"{package['id']} {package.get('resolvedVersion', '?')} ({vuln.get('severity')}, "
+                                      f"{'transitivo' if kind == 'transitivePackages' else 'direto'}) "
+                                      f"em {project['path']} [{framework['framework']}]: {vuln.get('advisoryurl')}")
+                              if vuln.get("severity", "").lower() in ("high", "critical"):
+                                  print(f"::error title=Pacote NuGet vulnerável::{line}")
+                                  blocking.append(line)
+                              else:
+                                  print(f"::warning title=Pacote NuGet vulnerável::{line}")
+                                  other.append(line)
+          print(f"dotnet list package --vulnerable: {len(blocking)} bloqueante(s) (High/Critical), {len(other)} aviso(s)")
+          sys.exit(1 if blocking else 0)
+          PY
+
+      # Política npm (SPEC-0006 v3): bloqueia High/Critical em dependências de produção e Critical em qualquer
+      # dependência; High só de desenvolvimento vira aviso (anotação com pacote e advisory), sem falhar o check.
+      - name: Vulnerabilidades do front — produção High/Critical (bloqueante)
+        if: ${{ !cancelled() }}
+        run: (cd web && pnpm audit --prod --audit-level=high)
+
+      - name: Vulnerabilidades do front — Critical em qualquer dependência (bloqueante)
+        if: ${{ !cancelled() }}
+        run: (cd web && pnpm audit --audit-level=critical)
+
+      - name: Vulnerabilidades do front — High de desenvolvimento (aviso)
+        if: ${{ !cancelled() }}
+        run: |
+          if (cd web && pnpm audit --audit-level=high); then
+            exit 0
+          fi
+          (cd web && pnpm audit --audit-level=high --json > "$RUNNER_TEMP/pnpm-audit.json") || true
+          python3 - "$RUNNER_TEMP/pnpm-audit.json" <<'PY' || echo "::warning title=pnpm audit::achados High fora de produção — veja o log acima"
+          import json, sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          for adv in report.get("advisories", {}).values():
+              if adv.get("severity") not in ("high", "critical"):
+                  continue
+              paths = sorted({p for f in adv.get("findings", []) for p in f.get("paths", [])})
+              print(f"::warning title=pnpm audit (dev) {adv.get('module_name')}::{adv.get('module_name')} "
+                    f"{adv.get('vulnerable_versions')} — {adv.get('github_advisory_id')} ({adv.get('severity')}): "
+                    f"{adv.get('title')} — {adv.get('url')} — via {'; '.join(paths[:3])}")
+          PY
+          exit 0
+
+      - name: Segredos (gitleaks nos commits do PR)
+        if: ${{ !cancelled() }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          # PR: commits do PR; push: commits novos; workflow_dispatch ou branch nova: histórico inteiro.
+          range=""
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            range="$PR_BASE_SHA..$PR_HEAD_SHA"
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            range="$PUSH_BEFORE..$PUSH_SHA"
+          fi
+          log_opts=()
+          if [ -n "$range" ]; then log_opts=(--log-opts="$range"); fi
+          echo "gitleaks: ${range:-histórico inteiro}"
+          if ! docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -v "$GITHUB_WORKSPACE:/repo" -w /repo \
+              -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+              "$GITLEAKS_IMAGE" git --redact --no-banner --verbose --config .gitleaks.toml "${log_opts[@]}" /repo; then
+            echo "::error title=gitleaks::segredo encontrado nos commits verificados — veja o arquivo e a linha (File/Line) no log acima e remova o segredo"
+            exit 1
+          fi
+
+      - name: SAST (Semgrep CE)
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          docker run --rm \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP:/out" -w /src \
+            "$SEMGREP_IMAGE" semgrep scan \
+              --config .semgrep.yml --config p/csharp --config p/typescript --config p/secrets \
+              --error --metrics off --json-output=/out/semgrep.json || status=$?
+          # Anotações no PR: uma por achado, no arquivo e linha.
+          if [ -f "$RUNNER_TEMP/semgrep.json" ]; then
+            python3 - "$RUNNER_TEMP/semgrep.json" <<'PY'
+          import json, sys
+          for r in json.load(open(sys.argv[1], encoding="utf-8")).get("results", []):
+              msg = " ".join(r["extra"].get("message", "").split()).replace("%", "%25")
+              print(f"::error file={r['path']},line={r['start']['line']},title=Semgrep {r['check_id']}::{msg}")
+          PY
+          fi
+          exit "$status"
+
+  # ------------------------------------------------------------------------------------------------
+  # CodeQL (ADR-0006): gratuito em repositório público. O check falha quando a análise do PR tem alerta com
+  # security-severity >= 7.0 (High/Critical); como a main só recebe merge com o check verde, todo alerta assim é novo.
+  # O gate lê o SARIF desta execução, não o estado dos alertas no GitHub: dispensar ("Dismiss") um alerta na interface
+  # de Code scanning NÃO libera o check. Para um falso positivo, suprima no próprio código, com o motivo na mesma linha
+  # (ADR-0006; vira `suppressions` no SARIF e é ignorado aqui) — ou corrija o código.
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        if: ${{ matrix.language == 'csharp' }}
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - name: Build .NET para o CodeQL
+        if: ${{ matrix.build-mode == 'manual' }}
+        run: dotnet build Subsolo.slnx -nologo
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          category: /language:${{ matrix.language }}
+          output: ${{ runner.temp }}/codeql-sarif
+      - name: Alertas High/Critical falham o check
+        run: |
+          python3 - "$RUNNER_TEMP/codeql-sarif" <<'PY'
+          import json, pathlib, sys
+          blocking = 0
+          for sarif in pathlib.Path(sys.argv[1]).glob("*.sarif"):
+              for run in json.loads(sarif.read_text(encoding="utf-8")).get("runs", []):
+                  tool = run.get("tool", {})
+                  rules = {}
+                  for component in [tool.get("driver", {})] + tool.get("extensions", []):
+                      for rule in component.get("rules", []):
+                          rules[rule.get("id")] = rule
+                  for result in run.get("results", []):
+                      if result.get("suppressions"):
+                          continue
+                      rule = rules.get(result.get("ruleId"), {})
+                      try:
+                          severity = float(rule.get("properties", {}).get("security-severity", "0"))
+                      except ValueError:
+                          severity = 0.0
+                      if severity < 7.0:
+                          continue
+                      blocking += 1
+                      loc = (result.get("locations") or [{}])[0].get("physicalLocation", {})
+                      path = loc.get("artifactLocation", {}).get("uri", "?")
+                      line = loc.get("region", {}).get("startLine", 1)
+                      msg = " ".join(result.get("message", {}).get("text", "").split()).replace("%", "%25")
+                      print(f"::error file={path},line={line},title=CodeQL {result.get('ruleId')} "
+                            f"(security-severity {severity})::{msg}")
+          print(f"CodeQL: {blocking} alerta(s) High/Critical")
+          sys.exit(1 if blocking else 0)
+          PY
+
+  # ------------------------------------------------------------------------------------------------
+  # SDD (gerado a partir de `spec_graph.py vendor --ci github`): specs/ADRs válidos e, no PR, spec aprovada,
+  # gates G0–G4, TDD e escopo. Em GitHub Actions o spec_graph.py emite as falhas como anotações ::error.
+  sdd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # histórico completo: verify/pr-check comparam com a branch alvo
+          persist-credentials: false
+
+      - name: Specs e ADRs válidos (G0)
+        run: |
+          python3 tools/sdd/spec_graph.py validate --exclude-drafts || {
+            echo "::error title=SDD validate::specs/ADRs inválidos — veja os erros acima (spec_graph.py validate)"
+            exit 1
+          }
+
+      # Título/corpo do PR entram por variável de ambiente, nunca interpolados no script (evita script injection).
+      - name: PR ligado a specs aprovadas, gates G0–G4, TDD e escopo
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          python3 tools/sdd/spec_graph.py pr-check --base "origin/${BASE_REF}" || {
+            echo "::error title=SDD pr-check::o PR não cumpre o processo SDD (spec aprovada, gates G0–G4, TDD, escopo) — veja as falhas acima"
+            exit 1
+          }
