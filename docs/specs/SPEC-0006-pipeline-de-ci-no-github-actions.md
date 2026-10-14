@@ -9,7 +9,7 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: [SPEC-0005@3]
-contract_version: 1
+contract_version: 3
 touches: [.github/workflows/**, tests/Subsolo.Tooling.Tests/CiPolicy/**]
 adrs: [ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0009]
 external: []
@@ -29,7 +29,7 @@ Cria o pipeline de CI no GitHub Actions, que roda em todo PR e em todo push na `
 **Motivação:** o CI é o portão final que funciona mesmo quando o agente esquece o processo; sem ele, a `main` deixa de ser confiável.
 
 **Objetivos (dentro do escopo):**
-- `.github/workflows/ci.yml` com os jobs `build`, `lint`, `test` (unitário + arquitetura), `integration` (Testcontainers no runner Ubuntu), `e2e` (Playwright contra a aplicação subida via Aspire/Compose a partir da SPEC-0008; até lá, contra o exemplo da SPEC-0005), `security` (`dotnet list package --vulnerable --include-transitive`, `pnpm audit --audit-level=high`, gitleaks, Semgrep CE), `codeql` (C# e TypeScript, gratuito no repositório público, ADR-0006) e `sdd` (vendor `--ci github`).
+- `.github/workflows/ci.yml` com os jobs `build`, `lint`, `test` (unitário + arquitetura), `integration` (Testcontainers no runner Ubuntu), `e2e` (Playwright contra a aplicação subida via Aspire/Compose a partir da SPEC-0008; até lá, contra o exemplo da SPEC-0005), `security` (`dotnet list package --vulnerable --include-transitive`, `(cd web && pnpm audit --prod --audit-level=high)` bloqueante + `(cd web && pnpm audit --audit-level=critical)` bloqueante + aviso para High só de desenvolvimento, gitleaks, Semgrep CE — Emenda v3), `codeql` (C# e TypeScript, gratuito no repositório público, ADR-0006) e `sdd` (vendor `--ci github`).
 - Cache de NuGet, pnpm, navegadores do Playwright e imagens Docker.
 - Artefatos de falha: trace/vídeo do Playwright, relatório de cobertura e TRX.
 - `concurrency` para cancelar execuções antigas do mesmo PR.
@@ -78,7 +78,10 @@ jobs (nomes = checks obrigatórios na proteção da main):
   integration  → sdd-config.test_integration
   e2e          → sdd-config.test_e2e (artefato: playwright-report, traces)
   security     → dotnet list package --vulnerable --include-transitive (falha em High/Critical)
-                 pnpm audit --audit-level=high ; gitleaks detect ; semgrep ci --config .semgrep.yml
+                 (cd web && pnpm audit --prod --audit-level=high)   → falha em High/Critical de produção
+                 (cd web && pnpm audit --audit-level=critical)      → falha em Critical de qualquer dependência
+                 (cd web && pnpm audit --audit-level=high) só de dev → aviso (::warning), não falha   (Emenda v3)
+                 gitleaks detect ; semgrep ci --config .semgrep.yml
   codeql       → github/codeql-action (csharp, javascript-typescript); alerta High/Critical novo falha o check
   sdd          → python3 tools/sdd/spec_graph.py validate --exclude-drafts && pr-check (PR_TITLE/PR_BODY)
 Saídas: status por job; anotações no PR (sdd, semgrep)
@@ -183,6 +186,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-13 | G2 | decisão | pnpm audit --audit-level=high falha em main: braces GHSA-vfj7-8cjw-p6xm (high, sem versão corrigida) só em dependência de desenvolvimento (eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch > braces); dependências de produção limpas (pnpm audit --prod) | Implementer SPEC-0006 e Architect reproduziram localmente; nenhuma versão corrigida para override | Thomas: escolher a política de auditoria do front (bloquear High só em produção + Critical em dev, ou exceção pontual por GHSA) | Opção A (Thomas, 2026-10-13): Emenda v3 — npm bloqueia High/Critical só em produção e Critical em dev; High de dev vira aviso; nota no ADR-0009 | 2026-10-13 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -223,5 +227,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-13 | Auditoria npm do job `security`: bloqueia High/Critical em dependências de produção (`--prod --audit-level=high`) e Critical em qualquer dependência; High só de desenvolvimento vira aviso. NuGet continua bloqueando High/Critical. | IMP-01: `braces` (GHSA-vfj7-8cjw-p6xm, High, sem correção) só via ESLint; produção limpa | — | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Passa a consumir SPEC-0005@3 (comando `test` exclui `Kind=GitHubVerification`); IT-01..IT-06 rodam com `SDD_GITHUB_VERIFY=1`, depois do G4. Contrato desta spec inalterado. | IMP-01 da SPEC-0005 | — | thomas (chat, 2026-10-13) |
 | 1 | 2026-10-13 | Job `build` chama `./tools/build.sh`; passa a consumir SPEC-0005@2 (comandos pnpm de dentro de `web/`/`e2e/`). Contrato desta spec inalterado. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

@@ -6,7 +6,7 @@
 
 - Validação (G0): **1 erro(s), 13 aviso(s)** — rode `spec_graph.py validate`
 - Specs: approved 6, in-progress 2, implemented 1
-- Impedimentos: **0 aberto(s)**, 3 resolvido(s)
+- Impedimentos: **0 aberto(s)**, 4 resolvido(s)
 
 ## Cobertura de Pilares
 
