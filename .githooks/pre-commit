@@ -1,0 +1,54 @@
+#!/bin/sh
+# Subsolo pre-commit (SPEC-0004):
+#   1. gitleaks nas mudanças staged — binário `gitleaks` se estiver no PATH, senão a imagem Docker fixada;
+#   2. SDD: valida specs/ADRs alterados no commit (rascunhos 'proposed' ficam de fora).
+# Roda todas as verificações e só então decide: o desenvolvedor vê todos os problemas de uma vez.
+GITLEAKS_IMAGE="zricethezav/gitleaks:v8.24.3"
+
+top=$(git rev-parse --show-toplevel) || exit 1
+cd "$top" || exit 1
+status=0
+
+# --- 1. segredos ---------------------------------------------------------------------------------
+config_args=""
+[ -f .gitleaks.toml ] && config_args="--config .gitleaks.toml"
+
+if command -v gitleaks >/dev/null 2>&1; then
+  # shellcheck disable=SC2086 # config_args é vazio ou duas palavras, de propósito
+  gitleaks git --staged --redact --no-banner --verbose $config_args . || status=1
+elif command -v docker >/dev/null 2>&1; then
+  # O container precisa ver o repositório e o diretório git comum (worktrees apontam para fora da pasta)
+  # nos mesmos caminhos absolutos; o índice do commit em andamento vem de GIT_INDEX_FILE quando o git o define.
+  common_dir=$(cd "$(git rev-parse --git-common-dir)" && pwd -P) || exit 1
+  index_env=""
+  if [ -n "${GIT_INDEX_FILE:-}" ]; then
+    case "$GIT_INDEX_FILE" in
+      /*) index_file="$GIT_INDEX_FILE" ;;
+      *) index_file="$top/$GIT_INDEX_FILE" ;;
+    esac
+    index_env="-e GIT_INDEX_FILE=$index_file"
+  fi
+  # shellcheck disable=SC2086 # index_env/config_args são vazios ou palavras simples, de propósito
+  docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    -v "$top:$top" -v "$common_dir:$common_dir" -w "$top" \
+    -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+    $index_env \
+    "$GITLEAKS_IMAGE" git --staged --redact --no-banner --verbose $config_args "$top" || status=1
+else
+  echo "pre-commit: gitleaks não encontrado — instale o binário (https://github.com/gitleaks/gitleaks) ou o Docker" >&2
+  status=1
+fi
+if [ "$status" -ne 0 ]; then
+  echo "pre-commit: a verificação de segredos (gitleaks) bloqueou o commit — veja o achado acima e remova o segredo" >&2
+fi
+
+# --- 2. SDD --------------------------------------------------------------------------------------
+if git diff --cached --name-only | grep -Eq '^docs/(specs|adr)/'; then
+  if ! python3 tools/sdd/spec_graph.py validate --staged; then
+    echo "pre-commit: corrija os erros de validação SDD acima antes de commitar" >&2
+    status=1
+  fi
+fi
+
+exit "$status"
