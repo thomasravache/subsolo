@@ -27,8 +27,11 @@ step "dotnet-format" dotnet format Subsolo.slnx --verify-no-changes --verbosity 
 step "dotnet-build" dotnet build Subsolo.slnx -warnaserror -nologo --verbosity quiet
 
 # Front: dependências do lockfile e lint (eslint + prettier --check + tsc --noEmit).
-if step "web-install" pnpm -C web install --frozen-lockfile --reporter=silent; then
-  step "web-lint" pnpm -C web lint
+# O pnpm roda de dentro de web/ para respeitar o `packageManager` de web/package.json (o pnpm instalado
+# troca para a versão fixada; com `-C web` a partir da raiz ele não faz essa troca).
+web() { (cd web && pnpm "$@"); }
+if step "web-install" web install --frozen-lockfile --reporter=silent; then
+  step "web-lint" web lint
 else
   failed+=("web-lint (não executado: dependências não instaladas)")
 fi

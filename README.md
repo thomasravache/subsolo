@@ -25,7 +25,9 @@ Pastas ainda vazias são criadas pela spec que as usa pela primeira vez.
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download) — a versão é fixada em `global.json` (10.0.4xx ou mais nova da mesma linha).
 - [Node.js 24 LTS](https://nodejs.org/) — ver `.nvmrc` (`nvm use`).
-- [pnpm](https://pnpm.io/) — a versão é fixada em `web/package.json` (`packageManager`); com o Corepack: `corepack enable pnpm`.
+- [pnpm](https://pnpm.io/) — a versão é fixada em `web/package.json` (`packageManager`, pnpm 12). Com o Corepack
+  (`corepack enable pnpm`) ou com um pnpm 10+ instalado, rodar o pnpm de dentro de `web/` usa a versão fixada;
+  `pnpm -C web ...` a partir da raiz usa o pnpm do `PATH`, que precisa ser o 12 (os scripts de `tools/` já entram em `web/`).
 - [Docker](https://docs.docker.com/get-docker/) — usado pelo gitleaks no hook de pre-commit (quando o binário `gitleaks` não está no `PATH`) e pelos testes de integração.
 - Python 3.8+ — para `tools/sdd/spec_graph.py`.
 
@@ -38,8 +40,8 @@ Todos os comandos rodam na raiz do repositório.
 ./tools/lint.sh           # dotnet format --verify-no-changes, build com analisadores, eslint, prettier, tsc (e semgrep, se instalado)
 dotnet test tests/Subsolo.Tooling.Tests   # testes das ferramentas do repositório (alguns usam Docker)
 
-pnpm -C web dev           # front em modo desenvolvimento (http://localhost:3000)
-pnpm -C web format        # formata o front com o Prettier
+(cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
+(cd web && pnpm format)   # formata o front com o Prettier
 dotnet format Subsolo.slnx  # formata o C# conforme o .editorconfig
 ```
 
