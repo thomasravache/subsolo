@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 IT-05 — assembly de exemplo (dublê) para as regras de arquitetura. Dois módulos fictícios no layout
+    do ADR-0001 (<M>.Domain, <M>.Infrastructure): "Leaky", cujo Domain referencia o Infrastructure (violação), e
+    "Tidy", em que só o Infrastructure depende do Domain (correto). Não é código de produção.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Subsolo.Examples.ArchitectureSamples</RootNamespace>
+  </PropertyGroup>
+
+</Project>

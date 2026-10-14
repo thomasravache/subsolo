@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 IT-04 — programa auxiliar do teste "Docker ausente": inicializa o PostgresFixture num processo
+    separado (o teste o roda com DOCKER_HOST apontando para um socket inexistente) e imprime o erro.
+    Processo separado porque o Testcontainers resolve o endpoint do Docker uma vez por processo.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <RootNamespace>Subsolo.Examples.DockerProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
+  </ItemGroup>
+
+</Project>
