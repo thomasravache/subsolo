@@ -42,7 +42,7 @@ Dependências vulneráveis ou fora de suporte viram risco silencioso, e atualiza
 - Atualização de dependências automatizada (Dependabot) com revisão, pelo menos semanal.
 - Nenhuma dependência ou runtime fora de suporte (EOL); o calendário de fim de suporte é revisado a cada 6 meses e cada item vira spec.
 - Lockfiles versionados (`packages.lock.json`, `pnpm-lock.yaml`).
-- Licenças compatíveis: permitidas MIT, Apache-2.0, BSD, ISC, PostgreSQL e MPL-2.0; LGPL só para binários nativos ligados dinamicamente (ex.: libvips); qualquer licença comercial, RPL ou "split license" exige ADR.
+- Licenças compatíveis: permitidas MIT, Apache-2.0, BSD, 0BSD, ISC, PostgreSQL, MPL-2.0, CC0-1.0, BlueOak-1.0.0 e Python-2.0; CC-BY-4.0 apenas para pacotes de dados (ex.: `caniuse-lite`); LGPL só para binários nativos ligados dinamicamente (ex.: libvips, sharp-libvips); qualquer licença comercial, RPL ou "split license" exige ADR. (Lista ampliada pelo Thomas em 2026-10-13, a partir da revisão G4 da SPEC-0004.)
 
 ### Consequências
 - **Boa**, porque as vulnerabilidades aparecem no PR, e o risco de licença é tratado antes de entrar.

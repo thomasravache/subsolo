@@ -57,6 +57,7 @@ Comando `lint` do sdd-config no CI e no G2; configuração em `Directory.Build.p
 | Velocidade (1) | média | alta (Biome) |
 
 ## Mais Informações
+- Versões efetivamente adotadas na SPEC-0004 (2026-10-13): ESLint 9.39.5, porque o `eslint-plugin-react` usado pela configuração do Next.js 16.4 só suporta ESLint até 9.x — migrar para o 10 quando o Next suportar (acompanhado pelo Dependabot); TypeScript 6.0.3, porque o typescript-eslint exige TS < 6.1 e o TS 7 não tem a API clássica do compilador.
 - eslint 10.12.0; typescript 7.0.2 (verificar a compatibilidade com o Next.js 16.4 no SPEC de repositório; se ainda não for suportado, fixar a última 6.x) — registry.npmjs.org (verificado em 2026-10-13).
 - Semgrep Community Edition (LGPL-2.1) — https://semgrep.dev/docs/ (não reverificado nesta data).
 - Referência neutra: regras publicadas das próprias ferramentas.
