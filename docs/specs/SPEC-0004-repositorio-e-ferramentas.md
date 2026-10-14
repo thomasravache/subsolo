@@ -23,7 +23,7 @@ approved_at: 2026-10-13
 <!-- type: feature | fix | refactor | migration | foundation. user_facing: true quando a mudança altera uma jornada do usuário (UI ou API pública) — exige teste E2E. Substitua todos os marcadores com chaves duplas: o G0 (`spec_graph.py validate`) reprova a spec enquanto restar algum. As seções de Checklist em diante são preenchidas depois da aprovação, sem marcadores. -->
 
 ## 1. Visão Geral
-Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .NET, o projeto Next.js vazio, a formatação e o lint automáticos, as convenções (Conventional Commits, Keep a Changelog, SemVer) e o controle de SDD instalado (`tools/sdd`, hooks, template de PR, bloco nos arquivos de agentes). Ao final, `dotnet build` e `pnpm -C web build` passam numa máquina limpa, e qualquer agente que abrir o repositório sabe como trabalhar.
+Cria o repositório do Subsolo no GitHub com a estrutura de pastas, a solution .NET, o projeto Next.js vazio, a formatação e o lint automáticos, as convenções (Conventional Commits, Keep a Changelog, SemVer) e o controle de SDD instalado (`tools/sdd`, hooks, template de PR, bloco nos arquivos de agentes). Ao final, `./tools/build.sh` e `./tools/lint.sh` passam numa máquina limpa (Emenda v2), e qualquer agente que abrir o repositório sabe como trabalhar.
 
 ## 2. Motivação & Escopo
 **Motivação:** sem estrutura, convenções e verificação automática desde o primeiro commit, cada agente faz de um jeito, e o processo depende da memória do modelo.
@@ -183,7 +183,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (duration: 42s 901ms); lint exit 0 ($ next typegen && tsc --noEmit) — c687f4d | 2026-10-13 |
 | G3 Arquitetura | N/A | suíte de arquitetura ainda não existe: criada pela SPEC-0005 (projeto) e SPEC-0007 (regras do ADR-0001); SPEC-0004 não tem código de produção | 2026-10-13 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em 76e4fbd — 0 blocker/major; minors: .env.example ignorado por .env*, UT-01 sem as linhas da Emenda v3, só chave AWS testada, comentário de scaffold em web/next.config.ts, dependabot/pastas adiadas (relatório) — 76e4fbd | 2026-10-13 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (duration: 45s 527ms) — d5323da | 2026-10-13 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
