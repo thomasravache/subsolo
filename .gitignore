@@ -1,0 +1,38 @@
+# Build .NET
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+.vs/
+
+# Testes e cobertura
+TestResults/
+coverage/
+*.trx
+
+# Front (web/)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.pnpm-debug.log*
+npm-debug.log*
+
+# Segredos e configuração local — nunca versionar (ADR-0008)
+.env*
+appsettings.*.local.json
+*.pem
+*.pfx
+
+# Editores e sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Python (tools/sdd)
+__pycache__/
+*.pyc

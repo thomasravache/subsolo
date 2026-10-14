@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0004 — testes das ferramentas do repositório (hooks, lint, build limpo, analisadores).
+    Regras de build vêm de Directory.Build.props; versões NuGet, de Directory.Packages.props (ADR-0009).
+    O runner (Microsoft.Testing.Platform) é selecionado pelo global.json da raiz.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Tooling.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Projetos de exemplo compilados pelos próprios testes (IT-05); nunca fazem parte deste assembly. -->
+    <Compile Remove="Fixtures/**" />
+    <None Remove="Fixtures/**" />
+    <Content Remove="Fixtures/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+</Project>

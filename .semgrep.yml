@@ -1,0 +1,24 @@
+# Semgrep CE do Subsolo (ADR-0006).
+# Rulesets do registro, passados pelo comando (o formato de configuração não importa rulesets):
+#   semgrep scan --config p/csharp --config p/typescript --config p/secrets --config .semgrep.yml --error
+# Este arquivo guarda as regras próprias do projeto. Uso: tools/lint.sh (quando instalado) e CI (SPEC-0006).
+rules:
+  - id: subsolo-csharp-suppression-without-reason
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      ADR-0006: suprimir um aviso exige o motivo na própria linha
+      (ex.: `#pragma warning disable CA1062 // motivo`).
+    paths:
+      include: ["*.cs"]
+    pattern-regex: '#pragma\s+warning\s+disable\b(?![^\n]*//)[^\n]*'
+
+  - id: subsolo-eslint-disable-without-reason
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      ADR-0006: desabilitar uma regra do ESLint exige o motivo na própria linha
+      (ex.: `// eslint-disable-next-line regra -- motivo`).
+    paths:
+      include: ["*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs"]
+    pattern-regex: 'eslint-disable(?:-next-line|-line)?\b(?![^\n]*\s--\s)[^\n]*'

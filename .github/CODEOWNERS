@@ -1,0 +1,17 @@
+# Donos do código (ADR-0007). Toda mudança passa por PR revisado.
+* @thomasravache
+
+# Arquivos de controle do processo e da qualidade: revisão obrigatória do dono.
+/docs/specs/ @thomasravache
+/docs/adr/ @thomasravache
+/tools/ @thomasravache
+/.githooks/ @thomasravache
+/.github/ @thomasravache
+/Directory.Build.props @thomasravache
+/Directory.Packages.props @thomasravache
+/global.json @thomasravache
+/.editorconfig @thomasravache
+/.semgrep.yml @thomasravache
+/.gitleaks.toml @thomasravache
+/CLAUDE.md @thomasravache
+/AGENTS.md @thomasravache
