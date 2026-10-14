@@ -27,7 +27,8 @@ Pastas ainda vazias são criadas pela spec que as usa pela primeira vez.
 - [Node.js 24 LTS](https://nodejs.org/) — ver `.nvmrc` (`nvm use`).
 - [pnpm](https://pnpm.io/) — a versão é fixada em `web/package.json` (`packageManager`, pnpm 12). Com o Corepack
   (`corepack enable pnpm`) ou com um pnpm 10+ instalado, rodar o pnpm de dentro de `web/` usa a versão fixada;
-  `pnpm -C web ...` a partir da raiz usa o pnpm do `PATH`, que precisa ser o 12 (os scripts de `tools/` já entram em `web/`).
+  `pnpm -C web ...` a partir da raiz usa o pnpm padrão do `PATH`, que precisa ser o mesmo (os scripts de `tools/` já
+  entram em `web/`). Com o Corepack, alinhe o padrão global uma vez: `corepack install -g pnpm@12.11.2`.
 - [Docker](https://docs.docker.com/get-docker/) — usado pelo gitleaks no hook de pre-commit (quando o binário `gitleaks` não está no `PATH`) e pelos testes de integração.
 - Python 3.8+ — para `tools/sdd/spec_graph.py`.
 
