@@ -184,8 +184,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G3 Arquitetura | N/A | suíte de arquitetura ainda não existe: criada pela SPEC-0005 (projeto) e SPEC-0007 (regras do ADR-0001); SPEC-0004 não tem código de produção | 2026-10-13 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em 76e4fbd — 0 blocker/major; minors: .env.example ignorado por .env*, UT-01 sem as linhas da Emenda v3, só chave AWS testada, comentário de scaffold em web/next.config.ts, dependabot/pastas adiadas (relatório) — 76e4fbd | 2026-10-13 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (duration: 45s 527ms) — d5323da | 2026-10-13 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
+| H2 Integração aprovada | PASS | aprovado por thomas | 2026-10-13 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live: deploy, staging e produção chegam com SPEC-0003 (decisão de custo do Thomas, ADR-0012); SPEC-0004 entrega só ferramentas de repositório | 2026-10-13 |
 | G7 Pronto & Docs | PENDING | | |
 
 ## 13. Registro de Impedimentos
@@ -199,36 +199,51 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
 
 ### O que foi entregue
-<!-- comportamento entregue do ponto de vista do usuário/sistema -->
+O repositório público `thomasravache/subsolo` pronto para receber código com qualidade automática:
+- Solution .NET 10 (`Subsolo.slnx`, SDK fixado em `global.json` com o runner Microsoft Testing Platform), regras compartilhadas em `Directory.Build.props` (nullable, warnings como erro, analisadores, lockfiles) e Central Package Management em `Directory.Packages.props`.
+- App Next.js 16.4 vazio em `web/` (React 19.3, TypeScript 6.0.3 strict, ESLint 9.39.5, Prettier, Tailwind 4.3), com pnpm 12.11.2 fixado e Node 24 (`.nvmrc`).
+- `tools/build.sh` e `tools/lint.sh` (contrato v3), gravados no `sdd-config` como `build` e `lint`.
+- Hooks em `.githooks/`: `commit-msg` (Conventional Commits + referência à spec, convenção da ferramenta SDD) e `pre-commit` (gitleaks em staged, pelo binário ou pela imagem Docker fixada, + `validate --staged`).
+- Ferramenta SDD vendorizada em `tools/sdd/`, bloco SDD em `CLAUDE.md`/`AGENTS.md`, template de PR, `CHANGELOG.md`, `README.md`, `.semgrep.yml`, `.gitleaks.toml`, `.github/dependabot.yml` e `.github/CODEOWNERS`.
+- No GitHub: repositório público, somente merge commit (squash e rebase desligados) e proteção da `main` (PR obrigatório, vale para administradores, sem force-push e sem exclusão).
 
 ### Como foi feito
-<!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (red f15f104) → Implementer (0f50f38…c3fcac6) → Test-writer (IT-01 da Emenda v2, 4fc3e94) → Reviewer 1 (CHANGES_REQUESTED: projeto de testes fora do CPM) → Implementer (6d77698, 179aab1) e Test-writer (9ff59e2, c687f4d) → Reviewer 2 (APPROVED em 76e4fbd).
+- Emendas: v1 (repositório na conta pessoal, organização `subsolo-br` no go-live), v2 (contrato de comandos via `tools/*.sh`, com o pnpm sempre chamado de dentro de `web/`; IMP-02) e v3 (convenção de commit da ferramenta SDD).
+- Decisões registradas: ADR-0005 (YamlDotNet, só em teste), ADR-0006 (ESLint 9.39.5 e TS 6.0.3, com o motivo) e ADR-0009 (lista de licenças ampliada).
+- Dívidas aceitas: o Dependabot tem os alvos `docker` e `github-actions` sem arquivos até as SPEC-0006/0007 (vai acusar "nada encontrado" até lá); as pastas `src/`, `infra/`, `e2e/` e `docs/runbooks/` nascem com as specs que as usam; o Semgrep só roda localmente se estiver instalado (no CI, a partir da SPEC-0006).
 
 ### Prova de Correção
-<!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
-<!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | regra do commit-msg aceita só mensagens válidas (4 casos) | PASS | `gate G2 --run` test exit 0 em c687f4d; `gate G5 --run` em d5323da |
+| IT-01 | `./tools/build.sh` num clone limpo em container (sdk:10.0.402, Node 24.21.0 com checksum, pnpm fixado) | PASS | G2 em c687f4d; Reviewer 2 executou isoladamente (~25 s) em 76e4fbd |
+| IT-02 | pre-commit bloqueia segredo e libera arquivo limpo; `.gitignore` cobre `.env*` e `appsettings.*.local.json` | PASS | G2 em c687f4d; G5 em d5323da |
+| IT-03 | `./tools/lint.sh` falha listando o C# e o TS mal formatados | PASS | G2 em c687f4d; G5 em d5323da |
+| IT-04 | hook commit-msg rejeita fora do padrão e aceita no padrão | PASS | G2 em c687f4d; G5 em d5323da |
+| IT-05 | CS8602 tratado como erro pelo `Directory.Build.props` | PASS | G2 em c687f4d; G5 em d5323da |
+| CT-01 | comandos `build` e `lint` do sdd-config com exit 0 na raiz | PASS | G2 em c687f4d (build e lint exit 0); G5 em d5323da |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — suíte verde em d5323da; arquitetura N/A (suíte criada pelas SPEC-0005/0007); CI ainda inexistente (SPEC-0006), por isso G5 local
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo desta spec é a `main`: fica disponível com o merge do PR #1 pelo Thomas; G6 N/A (sem ambiente implantado até a SPEC-0003)
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
 - [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
-<!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #1 (https://github.com/thomasravache/subsolo/pull/1), merge commit feito pelo Thomas após H2 (2026-10-13).
 
 ### Pendências
-<!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
+- SPEC-0012 — ajustes menores apontados na 2ª revisão: liberar `.env.example`, casos da Emenda v3 no UT-01, chave falsa no formato Google no pre-commit e comentário de scaffold em `web/next.config.ts`.
 
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0004`. -->

@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 12 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 7, in-progress 1
+- Validação (G0): **1 erro(s), 13 aviso(s)** — rode `spec_graph.py validate`
+- Specs: proposed 1, approved 7, in-progress 1
 - Impedimentos: **0 aberto(s)**, 2 resolvido(s)
 
 ## Cobertura de Pilares
@@ -48,6 +48,7 @@ Perfil: **padrao**
 | 2 | SPEC-0005 | Harness de testes | full/M | approved | ⛔ aguarda implementação de SPEC-0004 |  |
 | 2 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | approved | ⛔ aguarda implementação de SPEC-0004 |  |
 | 3 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
+| 3 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | proposed | ⏳ aguardando aprovação (H1) | saiu da onda 1: arquivos em comum com SPEC-0004; saiu da onda 2: arquivos em comum com SPEC-0006 |
 | 4 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | approved | ⛔ aguarda implementação de SPEC-0006; aguarda implementação de SPEC-0007 |  |
 | 5 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 5 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
@@ -57,7 +58,7 @@ Perfil: **padrao**
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
-| SPEC-0001 | Fundação do Subsolo | approved | 0/8 implementadas |
+| SPEC-0001 | Fundação do Subsolo | approved | 0/9 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | proposed | 0/0 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
@@ -76,6 +77,7 @@ flowchart LR
     S0009["SPEC-0009<br/>Observabilidade base"]:::approved
     S0010["SPEC-0010<br/>Segurança base"]:::approved
     S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
+    S0012["SPEC-0012<br/>Ajustes menores do tooling apontados na…"]:::proposed
   end
   S0004 --> S0005
   S0004 --> S0006
@@ -108,6 +110,7 @@ flowchart LR
 | [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | proposed | 2026-10-13 | SPEC-0001 | — | — |
 
 ## ADRs
 
