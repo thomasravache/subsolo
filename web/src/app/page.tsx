@@ -3,7 +3,7 @@ export default function Home() {
     <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
       <h1 className="text-4xl font-semibold tracking-tight">Subsolo</h1>
       <p className="max-w-md text-lg text-foreground/70">
-        A agenda do rock e do metal independente. Em construção.
+        Agenda de shows de metal underground por cidade. Em construção.
       </p>
     </main>
   );

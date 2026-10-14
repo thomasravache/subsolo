@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Subsolo",
-  description: "A agenda do rock e do metal independente da sua cidade.",
+  description: "Agenda de shows de metal underground por cidade.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
