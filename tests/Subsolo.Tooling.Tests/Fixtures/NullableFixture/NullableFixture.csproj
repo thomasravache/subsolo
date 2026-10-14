@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Fixture do SPEC-0004 IT-05. Não define Nullable nem TreatWarningsAsErrors de propósito:
+    essas regras precisam vir do Directory.Build.props do repositório.
+    Não faz parte de nenhuma solution; o teste copia este diretório para fora e o compila.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>

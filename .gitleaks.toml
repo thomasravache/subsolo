@@ -1,0 +1,14 @@
+# Configuração do gitleaks (ADR-0006, ADR-0008): regras padrão do gitleaks + exceções do Subsolo.
+# Usada pelo hook .githooks/pre-commit (gitleaks git --staged) e pelo CI (SPEC-0006).
+# Falso positivo pontual: adicione o fingerprint ao .gitleaksignore, nunca afrouxe as regras sem motivo.
+title = "Subsolo"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Arquivos gerados que não contêm segredos (hashes de integridade de pacotes)"
+paths = [
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)packages\.lock\.json$''',
+]

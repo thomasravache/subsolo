@@ -1,0 +1,23 @@
+# Normaliza finais de linha: LF no repositório e no checkout (scripts e hooks quebram com CRLF).
+* text=auto eol=lf
+
+*.sh text eol=lf
+.githooks/* text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Lockfiles: diff gerado, merge manual
+pnpm-lock.yaml -diff linguist-generated=true
+packages.lock.json -diff linguist-generated=true
