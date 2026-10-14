@@ -4,7 +4,7 @@ title: Repositório e ferramentas
 tier: full
 type: foundation
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
@@ -154,25 +154,25 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Esqueleto do repositório**
-- [ ] Red: escrever UT-01 e IT-01, IT-05 com a tag `SPEC-0004:<ID>` e confirmar que falham pelo motivo certo (repositório ainda sem solution, sem `Directory.Build.props`)
-- [ ] Green: `Subsolo.slnx`, `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `.gitignore`, `.gitattributes`, `web/` (Next.js 16 + TS strict + ESLint + Prettier + Tailwind 4, pnpm, Node 24)
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte (G2)
+- [x] Red: escrever UT-01 e IT-01, IT-05 com a tag `SPEC-0004:<ID>` e confirmar que falham pelo motivo certo (repositório ainda sem solution, sem `Directory.Build.props`)
+- [x] Green: `Subsolo.slnx`, `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `.gitignore`, `.gitattributes`, `web/` (Next.js 16 + TS strict + ESLint + Prettier + Tailwind 4, pnpm, Node 24)
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte (G2)
 
 **Fase 2: Lint, hooks e segurança local**
-- [ ] Red: IT-02, IT-03, IT-04 e CT-01 falhando
-- [ ] Green: `tools/lint.sh`, `.semgrep.yml`, `.gitleaks.toml`, `vendor --agents --ci github --pr-template github --hooks --changelog` (hooks usam gitleaks via binário ou imagem Docker), `.github/dependabot.yml`, `CODEOWNERS`, README, comandos `build`/`lint` no sdd-config
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + lint (G2/G3 — G3 N/A até a SPEC-0007 criar a suíte de arquitetura)
+- [x] Red: IT-02, IT-03, IT-04 e CT-01 falhando
+- [x] Green: `tools/lint.sh`, `.semgrep.yml`, `.gitleaks.toml`, `vendor --agents --ci github --pr-template github --hooks --changelog` (hooks usam gitleaks via binário ou imagem Docker), `.github/dependabot.yml`, `CODEOWNERS`, README, comandos `build`/`lint` no sdd-config
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + lint (G2/G3 — G3 N/A até a SPEC-0007 criar a suíte de arquitetura)
 
 **Fase 3: GitHub**
-- [ ] Repositório público `thomasravache/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
+- [x] Repositório público `thomasravache/subsolo` criado, `main` publicada, proteção da `main` (merge commit, sem force-push; checks obrigatórios adicionados pela SPEC-0006)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -186,7 +186,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (duration: 45s 527ms) — d5323da | 2026-10-13 |
 | H2 Integração aprovada | PASS | aprovado por thomas | 2026-10-13 |
 | G6 Deploy | N/A | sem ambiente implantado até o go-live: deploy, staging e produção chegam com SPEC-0003 (decisão de custo do Thomas, ADR-0012); SPEC-0004 entrega só ferramentas de repositório | 2026-10-13 |
-| G7 Pronto & Docs | PENDING | | |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 7f944ee | 2026-10-13 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -234,13 +234,13 @@ N/A — type foundation.
 - [x] Review independente sem achados blocker/major (G4)
 - [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
 - [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo desta spec é a `main`: fica disponível com o merge do PR #1 pelo Thomas; G6 N/A (sem ambiente implantado até a SPEC-0003)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo desta spec é a `main`: disponível pelo merge do PR #1 (merge commit ef89a00, 2026-10-13); G6 N/A (sem ambiente implantado até a SPEC-0003)
 - [x] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — README e CLAUDE.md/AGENTS.md entregues pela própria spec; entrada no CHANGELOG
 - [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
-Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #1 (https://github.com/thomasravache/subsolo/pull/1), merge commit feito pelo Thomas após H2 (2026-10-13).
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #1 (https://github.com/thomasravache/subsolo/pull/1), merge commit ef89a00 em 2026-10-13, após o H2 do Thomas (merge executado pelo Architect com a autorização permanente registrada no ADR-0007).
 
 ### Pendências
 - SPEC-0012 — ajustes menores apontados na 2ª revisão: liberar `.env.example`, casos da Emenda v3 no UT-01, chave falsa no formato Google no pre-commit e comentário de scaffold em `web/next.config.ts`.
