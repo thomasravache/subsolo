@@ -4,9 +4,9 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 13 aviso(s)** — rode `spec_graph.py validate`
+- Validação (G0): **1 erro(s), 14 aviso(s)** — rode `spec_graph.py validate`
 - Specs: approved 6, in-progress 2, implemented 1
-- Impedimentos: **0 aberto(s)**, 4 resolvido(s)
+- Impedimentos: **0 aberto(s)**, 5 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -47,7 +47,7 @@ Perfil: **padrao**
 | 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🔄 em andamento |  |
 | 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
-| 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0006 |
+| 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006 |
 | 3 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | approved | ⛔ aguarda implementação de SPEC-0006; aguarda implementação de SPEC-0007 |  |
 | 4 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 4 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
