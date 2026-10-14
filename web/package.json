@@ -15,7 +15,8 @@
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:format": "prettier --check .",
     "lint:types": "next typegen && tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "16.4.0",
