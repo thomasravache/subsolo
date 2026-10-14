@@ -4,7 +4,7 @@ title: Ajustes menores do tooling apontados na revisão da SPEC-0004
 tier: lite
 type: fix
 user_facing: false
-status: proposed
+status: approved
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
@@ -13,8 +13,8 @@ touches: [.gitignore, web/next.config.ts, tests/Subsolo.Tooling.Tests/**]
 adrs: [ADR-0005, ADR-0008]
 external: []
 size: S
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-13
 ---
 
 # SPEC-0012 — Ajustes menores do tooling apontados na revisão da SPEC-0004
@@ -60,11 +60,23 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
+**Fase 1: Regressão e guardas**
+- [ ] Red: IT-01 (`.env.example` e `.claude/` no `.gitignore`) falhando pelo motivo certo; UT-01 e IT-02 escritos como guarda (passam antes da mudança), com a tag `SPEC-0012:<ID>`
+- [ ] Green: `.gitignore` com `!.env.example`/`!**/.env.example` e `.claude/`; remover o comentário de scaffold de `web/next.config.ts`
+- [ ] Validar: build + suíte completa + lint (G2); G3 N/A até a suíte de arquitetura (SPEC-0007)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live (SPEC-0003)
+- [ ] Relatório de Entrega e CHANGELOG (G7)
+
+
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
-| G0 Spec | PENDING | | |
+| G0 Spec | PASS | validate: 0 erro(s) — 7f944ee (árvore suja) | 2026-10-13 |
 | G1 Red | PENDING | | |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
