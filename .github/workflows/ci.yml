@@ -334,9 +334,35 @@ jobs:
           sys.exit(1 if blocking else 0)
           PY
 
-      - name: Vulnerabilidades do front (pnpm audit)
+      # Política npm (SPEC-0006 v3): bloqueia High/Critical em dependências de produção e Critical em qualquer
+      # dependência; High só de desenvolvimento vira aviso (anotação com pacote e advisory), sem falhar o check.
+      - name: Vulnerabilidades do front — produção High/Critical (bloqueante)
         if: ${{ !cancelled() }}
-        run: (cd web && pnpm audit --audit-level=high)
+        run: (cd web && pnpm audit --prod --audit-level=high)
+
+      - name: Vulnerabilidades do front — Critical em qualquer dependência (bloqueante)
+        if: ${{ !cancelled() }}
+        run: (cd web && pnpm audit --audit-level=critical)
+
+      - name: Vulnerabilidades do front — High de desenvolvimento (aviso)
+        if: ${{ !cancelled() }}
+        run: |
+          if (cd web && pnpm audit --audit-level=high); then
+            exit 0
+          fi
+          (cd web && pnpm audit --audit-level=high --json > "$RUNNER_TEMP/pnpm-audit.json") || true
+          python3 - "$RUNNER_TEMP/pnpm-audit.json" <<'PY' || echo "::warning title=pnpm audit::achados High fora de produção — veja o log acima"
+          import json, sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          for adv in report.get("advisories", {}).values():
+              if adv.get("severity") not in ("high", "critical"):
+                  continue
+              paths = sorted({p for f in adv.get("findings", []) for p in f.get("paths", [])})
+              print(f"::warning title=pnpm audit (dev) {adv.get('module_name')}::{adv.get('module_name')} "
+                    f"{adv.get('vulnerable_versions')} — {adv.get('github_advisory_id')} ({adv.get('severity')}): "
+                    f"{adv.get('title')} — {adv.get('url')} — via {'; '.join(paths[:3])}")
+          PY
+          exit 0
 
       - name: Segredos (gitleaks nos commits do PR)
         if: ${{ !cancelled() }}
