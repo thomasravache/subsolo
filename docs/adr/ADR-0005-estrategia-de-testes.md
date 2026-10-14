@@ -40,6 +40,7 @@ Sem uma estratégia explícita, os testes ficam desbalanceados (muitos E2E inst�
 - Cobertura das linhas alteradas ≥ 80% quando a medição estiver configurada.
 - Tempo controlado nos testes: relógio injetado (`TimeProvider`), nunca `DateTime.Now`; o "lembrete na véspera" é testado com tempo falso.
 - Asserções com Shouldly (BSD-2); FluentAssertions 8+ tem licença comercial e não é usado.
+- Auxiliar só de teste: YamlDotNet (MIT) para ler o `sdd-config.yml` nos testes de contrato de ferramentas (aprovado pelo Thomas em 2026-10-13, Emenda v2 da SPEC-0004); não é usado em código de produção.
 
 **Ferramenta por nível:**
 | Nível | Ferramenta / abordagem | Por quê | Onde roda |
@@ -67,6 +68,6 @@ Comandos `test`, `test_integration`, `test_e2e`, `arch_test` e `coverage` do sdd
 | Licença (2) | toda aberta | aberta |
 
 ## Mais Informações
-- xunit.v3 4.0.2; Testcontainers.PostgreSql 4.16.0; Shouldly 4.3.0 — https://www.nuget.org (API https://api.nuget.org/v3-flatcontainer/, verificado em 2026-10-13).
+- xunit.v3 4.0.2; Testcontainers.PostgreSql 4.16.0; Shouldly 4.3.0; YamlDotNet 18.1.0 — https://www.nuget.org (API https://api.nuget.org/v3-flatcontainer/, verificado em 2026-10-13).
 - @playwright/test 1.64.0; vitest 5.0.4; @axe-core/playwright 4.13.0; openapi-typescript 7.13.0 — https://registry.npmjs.org (verificado em 2026-10-13).
 - Referências neutras: pirâmide de testes; references/testing.md da skill.
