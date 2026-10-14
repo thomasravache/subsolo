@@ -19,6 +19,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      O xUnit só encontra uma [CollectionDefinition] no próprio assembly de teste. Por isso PostgresCollection.cs não
+      é compilado aqui: cada projeto de teste de integração o inclui como link
+      (<Compile Include="…/Subsolo.IntegrationTests.Common/PostgresCollection.cs" Link="PostgresCollection.cs" />).
+    -->
+    <Compile Remove="PostgresCollection.cs" />
+    <None Include="PostgresCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
   </ItemGroup>
 
