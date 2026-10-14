@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
 contract_version: 3
-touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs, tests/Subsolo.Tooling.Tests/packages.lock.json]
+touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, web/pnpm-lock.yaml, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs, tests/Subsolo.Tooling.Tests/packages.lock.json]
 adrs: [ADR-0005, ADR-0002]
 external: []
 size: M
@@ -185,9 +185,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — cc247d8 | 2026-10-13 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 535aa1b | 2026-10-13 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 555ms) — 535aa1b | 2026-10-13 |
+| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 535aa1b — blocker: web/pnpm-lock.yaml (regenerado ao adicionar devDependencies em web/package.json, que está no escopo) fora de touches → verify G4 FAIL; sem mudança de código. Minors: coverage.sh usa mapfile (bash 4+), base do coverage checada só no fim, static-server sem try no decodeURIComponent, OnlyReferences sem teste, e2e/ fora do lint.sh, MIT-0 (transitivo do jsdom) não citado no ADR-0009, testes de contrato aninhados deixam o test em ~4 min | 2026-10-14 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -239,6 +239,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 (escopo, contrato inalterado) | 2026-10-14 | Emenda v5: `web/pnpm-lock.yaml` entra nos `touches` (regenerado pelo pnpm ao adicionar as devDependencies de teste em `web/package.json`, já no escopo) | G4 FAIL: verify apontou o lockfile fora dos `touches`; sem mudança de código | Nenhuma | thomas (chat, 2026-10-14) |
 | 3 (escopo, contrato inalterado) | 2026-10-13 | Emenda v4: `tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs` (CT-01 da SPEC-0004) entra nos `touches` para pular quando `SUBSOLO_SPEC0005_CT01_NESTED=1` (só na execução aninhada; a execução normal continua rodando-o), e `tests/Subsolo.Tooling.Tests/packages.lock.json` (regenerado pelo CPM ao adicionar pacotes) | IMP-02: o CT-01 aninhado da SPEC-0005 disparava um segundo `next build` simultâneo pelo CT-01 da SPEC-0004 | SPEC-0004 (teste de ferramentas, comportamento inalterado fora da execução aninhada) | thomas (chat, 2026-10-13) |
 | 3 | 2026-10-13 | Comando `test` passa a excluir `Kind=GitHubVerification` (`--filter "Category!=Architecture&Kind!=GitHubVerification"`); essas verificações rodam sob demanda com `SDD_GITHUB_VERIFY=1` | IMP-01: as verificações reais no GitHub da SPEC-0006 falham de propósito sem a variável e deixariam a suíte padrão e o CI vermelhos | SPEC-0006 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |
