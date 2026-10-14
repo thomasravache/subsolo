@@ -187,7 +187,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — cc247d8 | 2026-10-13 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 535aa1b | 2026-10-13 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 555ms) — 535aa1b | 2026-10-13 |
-| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 535aa1b — blocker: web/pnpm-lock.yaml (regenerado ao adicionar devDependencies em web/package.json, que está no escopo) fora de touches → verify G4 FAIL; sem mudança de código. Minors: coverage.sh usa mapfile (bash 4+), base do coverage checada só no fim, static-server sem try no decodeURIComponent, OnlyReferences sem teste, e2e/ fora do lint.sh, MIT-0 (transitivo do jsdom) não citado no ADR-0009, testes de contrato aninhados deixam o test em ~4 min | 2026-10-14 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED após Emenda v5 — único blocker do 1º review (web/pnpm-lock.yaml fora de touches) resolvido só por escopo, sem mudança de código; WARN de testes fora de commits red justificado no 1º review (infra do harness na fase green: fixtures, configs, exemplos); minors viram spec de pendências — 434de58 | 2026-10-14 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
