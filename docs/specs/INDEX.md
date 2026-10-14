@@ -6,7 +6,14 @@
 
 - Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
 - Specs: proposed 1, approved 6, in-progress 2, implemented 1
-- Impedimentos: **0 aberto(s)**, 5 resolvido(s)
+- Impedimentos: **2 aberto(s)**, 5 resolvido(s)
+
+## Impedimentos Abertos
+
+| Spec | ID | Tipo | Fase/Gate | Responsável | Aberto em | Idade | Descrição |
+|---|---|---|---|---|---|---|---|
+| SPEC-0005 | IMP-03 | decisão | G5 | Thomas: escolher entre Kind próprio fora do test/test_integration (Emenda v6) ou instalar tudo nos jobs test/integration | 2026-10-14 | 0d | CI do PR #4: os testes de contrato que rodam todos os comandos do sdd-config aninhados (CT-01 da SPEC-0004 e da SPEC-0005) falham nos jobs test e integration por falta de pnpm/Playwright no job (pnpm: command not found); localmente passam. No CI cada comando já é um job próprio, então o teste aninhado é redundante e deixa o test em ~4 min |
+| SPEC-0006 | IMP-02 | decisão | G5 | Thomas: corrigir a ferramenta da skill (Refs: tem precedência) ou outra saída | 2026-10-14 | 0d | pr-check do PR #4 conta o commit abc979d (Refs: SPEC-0006) também como da SPEC-0005, porque o corpo cita 'SPEC-0005@2'; com isso os arquivos CiPolicy aparecem fora dos touches da SPEC-0005 (job sdd vermelho) |
 
 ## Cobertura de Pilares
 
@@ -38,14 +45,14 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0005, SPEC-0006  
-**Paradas por impedimento:** —  
+**Em andamento:** —  
+**Paradas por impedimento:** SPEC-0005, SPEC-0006  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🔄 em andamento |  |
-| 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🚧 parada por impedimento: IMP-03 (decisão → Thomas: escolher entre Kind próprio fora do test/test_integration (Emenda v6) ou instalar tudo nos jobs test/integration, 0d) |  |
+| 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | in-progress | 🚧 parada por impedimento: IMP-02 (decisão → Thomas: corrigir a ferramenta da skill (Refs: tem precedência) ou outra saída, 0d) |  |
 | 2 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
 | 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006 |
 | 3 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | approved | ⛔ aguarda implementação de SPEC-0006; aguarda implementação de SPEC-0007 |  |
