@@ -1,8 +1,9 @@
 namespace Subsolo.Tooling.Tests;
 
 /// <summary>
-/// SPEC-0004 IT-01 — num clone limpo dentro de um container com .NET 10 SDK e Node 24 (pnpm via corepack),
-/// os comandos de build do contrato terminam com exit 0.
+/// SPEC-0004 IT-01 (Emenda v2) — num clone limpo dentro de um container com .NET 10 SDK, Node 24 e corepack habilitado
+/// (sem pnpm global fixado/preparado), <c>./tools/build.sh</c> termina com exit 0 usando o pnpm fixado em
+/// <c>web/package.json</c>. O teste não pode depender de o pnpm padrão/mais recente do corepack coincidir com o fixado.
 /// </summary>
 public sealed class CleanBuildContainerTests
 {
@@ -10,8 +11,9 @@ public sealed class CleanBuildContainerTests
     private static readonly TimeSpan ContainerTimeout = TimeSpan.FromMinutes(40);
 
     /// <summary>
-    /// Roda no container: copia o snapshot (montado só-leitura) para /work, instala o Node 24 oficial, habilita o pnpm
-    /// fixado no packageManager via corepack e executa os comandos de build do contrato, nesta ordem.
+    /// Roda no container: copia o snapshot (montado só-leitura) para /work, instala o Node 24 oficial, habilita o
+    /// corepack sem preparar/ativar nenhuma versão de pnpm e executa <c>./tools/build.sh</c>. Depois confere, de dentro
+    /// de web/, qual pnpm o corepack resolve (deve ser o fixado no <c>packageManager</c>).
     /// </summary>
     private const string ContainerScript = """
         set -euo pipefail
@@ -27,14 +29,11 @@ public sealed class CleanBuildContainerTests
         node_tarball=$(curl -fsSL "$node_dist/SHASUMS256.txt" | grep -m1 -o "node-v24[^ ]*-linux-$node_arch.tar.gz")
         curl -fsSL "$node_dist/$node_tarball" | tar -xz -C /usr/local --strip-components=1
         export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-        corepack enable pnpm
-        echo "node $(node --version) / pnpm $(pnpm --version) / dotnet $(dotnet --version)"
-        echo '>>> dotnet build Subsolo.slnx -warnaserror'
-        dotnet build Subsolo.slnx -warnaserror
-        echo '>>> pnpm -C web install --frozen-lockfile'
-        pnpm -C web install --frozen-lockfile
-        echo '>>> pnpm -C web build'
-        pnpm -C web build
+        corepack enable
+        echo "node $(node --version) / dotnet $(dotnet --version)"
+        echo '>>> ./tools/build.sh'
+        ./tools/build.sh
+        echo ">>> pnpm em web/: $(cd web && pnpm --version)"
         echo '>>> OK'
         """;
 
@@ -44,9 +43,8 @@ public sealed class CleanBuildContainerTests
     public async Task ContractBuildCommandsSucceedOnCleanCloneInContainer()
     {
         var ct = TestContext.Current.CancellationToken;
-        File.Exists(RepositoryRoot.Combine("Subsolo.slnx")).ShouldBeTrue("Subsolo.slnx ausente na raiz do repositório");
-        File.Exists(RepositoryRoot.Combine("web", "package.json")).ShouldBeTrue("web/package.json ausente (projeto Next.js não criado)");
-        File.Exists(RepositoryRoot.Combine("web", "pnpm-lock.yaml")).ShouldBeTrue("web/pnpm-lock.yaml ausente (install --frozen-lockfile exige lockfile)");
+        File.Exists(RepositoryRoot.Combine("tools", "build.sh")).ShouldBeTrue("tools/build.sh ausente (comando `build` do contrato v2)");
+        var pinnedPnpm = ReadPinnedPnpmVersion();
 
         var docker = await ProcessRunner.RunAsync("docker", ["version", "--format", "{{.Server.Version}}"], RepositoryRoot.Path, TimeSpan.FromMinutes(1), cancellationToken: ct);
         docker.ExitCode.ShouldBe(0, $"Docker indisponível — IT-01 exige um daemon Docker local:{Environment.NewLine}{docker}");
@@ -70,7 +68,23 @@ public sealed class CleanBuildContainerTests
             ContainerTimeout,
             cancellationToken: ct);
 
-        result.ExitCode.ShouldBe(0, $"comandos de build do contrato falharam no clone limpo:{Environment.NewLine}{result}");
+        result.ExitCode.ShouldBe(0, $"./tools/build.sh falhou no clone limpo:{Environment.NewLine}{result}");
         result.StandardOutput.ShouldContain(">>> OK");
+        result.StandardOutput.ShouldContain($">>> pnpm em web/: {pinnedPnpm}", Case.Sensitive, $"o corepack não resolveu o pnpm fixado ({pinnedPnpm}) em web/:{Environment.NewLine}{result}");
+    }
+
+    /// <summary>Lê a versão do pnpm fixada no campo <c>packageManager</c> de web/package.json (ex.: <c>pnpm@12.11.2</c>).</summary>
+    private static string ReadPinnedPnpmVersion()
+    {
+        var packageJson = RepositoryRoot.Combine("web", "package.json");
+        File.Exists(packageJson).ShouldBeTrue("web/package.json ausente (projeto Next.js não criado)");
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(packageJson));
+        document.RootElement.TryGetProperty("packageManager", out var packageManager)
+            .ShouldBeTrue("web/package.json sem o campo packageManager (pnpm não fixado)");
+        var value = packageManager.GetString() ?? string.Empty;
+        value.ShouldStartWith("pnpm@", customMessage: $"packageManager deveria fixar o pnpm, mas é '{value}'");
+        var version = value["pnpm@".Length..];
+        var hashIndex = version.IndexOf('+', StringComparison.Ordinal);
+        return hashIndex >= 0 ? version[..hashIndex] : version;
     }
 }
