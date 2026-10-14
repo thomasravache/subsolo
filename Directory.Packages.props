@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    Central Package Management (ADR-0009): a versão de cada pacote NuGet é declarada aqui, uma única vez.
+    Os projetos usam <PackageReference Include="..." /> sem Version.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+</Project>
