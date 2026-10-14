@@ -4,11 +4,11 @@ title: Pipeline de CI no GitHub Actions
 tier: full
 type: foundation
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
-consumes_contract: [SPEC-0005@2]
+consumes_contract: [SPEC-0005@3]
 contract_version: 1
 touches: [.github/workflows/**, tests/Subsolo.Tooling.Tests/CiPolicy/**]
 adrs: [ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0009]
@@ -152,12 +152,15 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Refactor mantendo tudo verde
 - [ ] Validar: build + suíte (G2)
 
-**Fase 2: Verificação no GitHub**
-- [ ] IT-01..IT-06 com PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
-- [ ] Checks obrigatórios configurados na proteção da `main`; comando `ci` no sdd-config
+
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
+
+**Fase 2: Verificação no GitHub** (depois do G4: o job `sdd` só passa com G0–G4 registrados)
+- [ ] Checks obrigatórios configurados na proteção da `main` (pré-requisito do IT-02); comando `ci` no sdd-config
+- [ ] IT-01..IT-06 com `SDD_GITHUB_VERIFY=1` e PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
+
 - [ ] Integração + CI verde (G5) e aprovação (H2)
 - [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
@@ -167,7 +170,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — abc979d | 2026-10-13 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -220,4 +223,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-13 | Passa a consumir SPEC-0005@3 (comando `test` exclui `Kind=GitHubVerification`); IT-01..IT-06 rodam com `SDD_GITHUB_VERIFY=1`, depois do G4. Contrato desta spec inalterado. | IMP-01 da SPEC-0005 | — | thomas (chat, 2026-10-13) |
 | 1 | 2026-10-13 | Job `build` chama `./tools/build.sh`; passa a consumir SPEC-0005@2 (comandos pnpm de dentro de `web/`/`e2e/`). Contrato desta spec inalterado. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |
