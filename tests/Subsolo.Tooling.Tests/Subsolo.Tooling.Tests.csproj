@@ -29,6 +29,7 @@
     </PackageReference>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
 </Project>
