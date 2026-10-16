@@ -58,6 +58,7 @@ test_paths:
 scope_exempt:
   - "docs/specs/**"
   - "docs/adr/**"
+  - "tools/sdd/**"   # cópia vendorizada da skill sdd-management, mantida pelo Architect (`vendor`)
 # Mudança nesses arquivos sem ADR na spec gera alerta no G4 (lib/framework nova precisa de ADR).
 # Omitido = padrão da skill (package.json, *.csproj, pyproject.toml, go.mod, pom.xml, ...).
 dependency_manifests: []
