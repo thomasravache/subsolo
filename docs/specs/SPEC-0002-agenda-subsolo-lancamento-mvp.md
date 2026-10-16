@@ -112,6 +112,7 @@ Os IDs de teste são definidos quando as filhas forem criadas; cada critério ab
 - [x] Lista de estilos? — Começa com death, black, grind, doom e thrash; o admin adiciona outros pelo painel; um show pode ter vários estilos (Thomas, 2026-10-13)
 - [x] Apoio via Pix e marca apoiadora no lançamento? — Página "Apoie" estática com chave/QR Pix e lista de apoiadores, com link discreto no rodapé; nada no meio da agenda; sem integração de pagamento (Thomas, 2026-10-13)
 - [x] Como será feito o design das telas? — Stitch (mobile e desktop): design system escuro primeiro, depois as telas de cada spec de interface antes do H1 dela (Thomas, 2026-10-13)
+- [ ] Navegação no cliente fica ~300 ms sem `<title>` no Next 16 (metadados em bloco separado; achado na SPEC-0011, Emenda 3). Recomendação do Architect: decidir antes das telas do MVP entre `htmlLimitedBots` global, navegação completa nos links afetados ou aguardar correção do Next — com teste axe `document-title` após navegar
 
 ## 9. Aprovação (H1)
 Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com ele. Registrada no frontmatter (`approved_by`, `approved_at`) do épico e de cada filha.
