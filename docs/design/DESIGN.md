@@ -116,7 +116,7 @@ Regras que saem da tabela:
 | `Header` | `city cities onCityChange` | wordmark "Subsolo", navegação (só desktop), `CitySwitcher` |
 | `CitySwitcher` | `city cities onCityChange` | `<select>` nativo com rótulo "Cidade" (teclado e leitor de tela sem script extra) |
 | `Footer` | `links={apoie, instagram, privacidade}` | "Apoie" em destaque; Instagram abre em nova aba (avisado ao leitor de tela) |
-| `BottomNav` | `city current?` | navegação inferior fixa, só no celular (< 768 px), com `aria-current` |
+| `BottomNav` | `city current?` | navegação inferior fixa, só no celular (< 768 px), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque |
 | `AppShell` | `cities` | link "Pular para o conteúdo", `Header`, conteúdo, `Footer`, `BottomNav`; a cidade atual vem da URL |
 
 Ícones: SVG de traço inline (`icons.tsx`), decorativos (`aria-hidden`), sempre ao lado de um texto.

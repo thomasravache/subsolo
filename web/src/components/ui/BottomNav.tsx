@@ -14,8 +14,11 @@ const item =
 
 /** SPEC-0011 — navegação inferior fixa, só no celular (< 768 px); no desktop a navegação fica no cabeçalho. */
 export function BottomNav({ city, current }: BottomNavProps) {
+  // Ativo: texto claro com ícone e barra no destaque (o destaque não tem contraste para texto pequeno).
   const tone = (name: BottomNavProps["current"]) =>
-    current === name ? "text-accent" : "text-text-muted hover:text-text";
+    current === name
+      ? "text-text shadow-[inset_0_2px_0_var(--color-accent)] [&>svg]:text-accent"
+      : "text-text-muted hover:text-text";
   return (
     <nav
       aria-label="Navegação inferior"
