@@ -4,7 +4,7 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
 - Specs: approved 1, in-progress 3, implemented 6
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
@@ -20,7 +20,7 @@ Perfil: **padrao**
 | Entrega contínua e ambientes | coberto | ADR-0004 |
 | Fluxo de mudança | coberto | ADR-0007 |
 | Segredos e dados sensíveis | coberto | ADR-0008 |
-| Identidade e acesso | coberto | ADR-0003 |
+| Identidade e acesso | coberto | ADR-0003, ADR-0017 |
 | Dependências e ciclo de vida da stack | coberto | ADR-0009 |
 | Observabilidade | coberto | ADR-0010 |
 | Resiliência e recuperação | coberto | ADR-0011 |
@@ -45,9 +45,9 @@ Perfil: **padrao**
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0009 | Observabilidade base | full/M | in-progress | 🔄 em andamento |  |
-| 1 | SPEC-0010 | Segurança base | full/M | in-progress | 🔄 em andamento |  |
 | 1 | SPEC-0011 | Design system escuro e shell do app | full/M | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
+| 2 | SPEC-0010 | Segurança base | full/M | in-progress | 🔄 em andamento | saiu da onda 1: arquivos em comum com SPEC-0009 |
+| 3 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0009, SPEC-0011; saiu da onda 2: arquivos em comum com SPEC-0010 |
 
 ## Épicos
 
@@ -118,3 +118,4 @@ flowchart LR
 | [ADR-0014](../adr/ADR-0014-avisos-por-web-push-e-e-mail.md) | Avisos por Web Push e e-mail | accepted | teste de arquitetura (canais só implementam INotificationChannel no módulo Notifications) + testes de integração com Mailpit e servidor de push falso |
 | [ADR-0015](../adr/ADR-0015-armazenamento-e-processamento-de-flyers.md) | Armazenamento e processamento de flyers | accepted | teste de arquitetura (só Common.Infrastructure referencia NetVips e o sistema de arquivos) + testes de integração de upload |
 | [ADR-0016](../adr/ADR-0016-status-http-das-paginas-ssr-via-proxy-do-next-js.md) | Status HTTP das páginas SSR via proxy do Next.js | accepted | E2E-01 (404 da cidade inexistente) e IT-04 (503 com a API fora) da SPEC-0008, rodando em todo PR |
+| [ADR-0017](../adr/ADR-0017-csp-com-nonce-e-paginas-renderizadas-por-requisicao.md) | CSP com nonce e páginas renderizadas por requisição | accepted | UT-02, IT-05 e E2E-01 da SPEC-0010 (CSP com nonce presente e nenhuma violação de CSP no navegador em `/`, na agenda e na página de não encontrado) |

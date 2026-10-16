@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 2
-touches: [src/Modules/Events/Subsolo.Modules.Events.Application/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/Cities/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/layout.tsx, web/src/app/globals.css, web/src/app/(public)/[cidade]/**, web/src/app/icon.png, web/src/app/favicon.ico, web/public/icons/**, docs/design/**, web/src/styles/**, web/src/components/ui/**, web/src/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
+touches: [src/Modules/Events/Subsolo.Modules.Events.Application/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/**, src/Modules/Events/Subsolo.Modules.Events.Domain/Cities/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/Cities/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/layout.tsx, web/src/app/globals.css, web/src/app/(public)/[cidade]/**, web/src/app/icon.png, web/src/app/favicon.ico, web/public/icons/**, docs/design/**, web/src/styles/**, web/src/components/ui/**, web/src/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
 adrs: [ADR-0013]
 external: []
 size: M
@@ -171,7 +171,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ad885b4 | 2026-10-16 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -224,5 +224,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0011`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-16 | Emenda 3 (relatório do Implementer): entra nos `touches` `src/Modules/Events/Subsolo.Modules.Events.Domain/Cities/**` (o `ListAsync` de `ICityRepository`, que pelo padrão do projeto fica no Domain); a troca de cidade no `CitySwitcher` carrega o documento novo (`window.location.assign`) em vez de navegar no cliente, porque na navegação no cliente o Next 16 entrega o `<title>` em bloco separado e a página fica ~300 ms sem título (axe `document-title`, WCAG 2.4.2). Pendência registrada para o épico SPEC-0002: o mesmo intervalo sem título vale para links internos com título dinâmico (card, navegação inferior); avaliar `htmlLimitedBots` ou correção do Next antes das telas do MVP | E2E-01 intermitente no mobile-chrome; G4 reprovava escopo | nenhuma (mesmos contratos e textos) | thomas (delegado: piloto automático, 2026-10-16, recomendação do Architect) |
 | 2 | 2026-10-16 | Emenda 2 (impedimentos do Test-writer): o `CitySwitcher` lista as cidades de um endpoint novo e público `GET /api/v1/cities` → `[{ slug, name }]` ordenado por nome (vertical slice `ListCities` no módulo Events, OpenAPI e cliente regenerados), em vez de uma lista fixa no front (a cidade é dado, sistema multi-cidade); o seed de desenvolvimento ganha a segunda cidade `outra-cidade` ("Outra Cidade", America/Sao_Paulo) usada pelo E2E-01; novo IT-02; o `Card` recebe `timeZone` (IANA) para mostrar a data no fuso da cidade | E2E-01 exigia duas cidades e uma origem para a lista | SPEC-0008 (contrato da API ganha um endpoint; nada muda no existente) | thomas (delegado: piloto automático, 2026-10-16, recomendação do Architect) |
 | 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): o app Next fica em `web/src/app/`; entram nos `touches` o layout raiz, o `globals.css`, a página da agenda (`(public)/[cidade]/**`, para aplicar o shell e os componentes sem mudar textos nem status) e os ícones do app | Estrutura real do projeto (SPEC-0008) | SPEC-0008 (mesmos textos e status; E2E-01 continua valendo) | thomas (delegado: piloto automático, 2026-10-16) |
