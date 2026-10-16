@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0007 — testes de integração da infraestrutura comum (IT-01..IT-04) contra PostgreSQL 18 real
+    (Testcontainers): outbox na mesma transação, schema por módulo, entrega entre módulos e inbox idempotente,
+    usando os módulos de exemplo Template e TemplateB (só nos testes).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Common.IntegrationTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- A definição da coleção precisa estar no assembly de teste (regra do xUnit). -->
+    <Compile Include="../../Subsolo.IntegrationTests.Common/PostgresCollection.cs" Link="PostgresCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
+    <ProjectReference Include="../Modules/Subsolo.Modules.Template/Subsolo.Modules.Template.csproj" />
+    <ProjectReference Include="../Modules/Subsolo.Modules.TemplateB/Subsolo.Modules.TemplateB.csproj" />
+  </ItemGroup>
+
+</Project>

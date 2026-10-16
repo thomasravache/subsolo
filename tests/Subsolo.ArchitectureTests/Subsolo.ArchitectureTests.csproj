@@ -31,6 +31,15 @@
     <ProjectReference Include="../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <!-- SPEC-0005 IT-05: assembly de exemplo com uma violação proposital do ADR-0001. -->
     <ProjectReference Include="../Examples/Subsolo.Examples.ArchitectureSamples/Subsolo.Examples.ArchitectureSamples.csproj" />
+    <!--
+      SPEC-0007 IT-06: as regras do ADR-0001 valem para todo assembly Subsolo.Modules.* ao lado deste projeto.
+      Cada módulo real é referenciado aqui; os módulos de exemplo Template/TemplateB existem só nos testes.
+    -->
+    <ProjectReference Include="../Common/Modules/Subsolo.Modules.Template/Subsolo.Modules.Template.csproj" />
+    <ProjectReference Include="../Common/Modules/Subsolo.Modules.Template.IntegrationEvents/Subsolo.Modules.Template.IntegrationEvents.csproj" />
+    <ProjectReference Include="../Common/Modules/Subsolo.Modules.TemplateB/Subsolo.Modules.TemplateB.csproj" />
+    <!-- SPEC-0007 IT-06: assembly de exemplo com uma violação de cada regra do ADR-0001. -->
+    <ProjectReference Include="../Common/Subsolo.Common.ArchitectureViolations/Subsolo.Common.ArchitectureViolations.csproj" />
   </ItemGroup>
 
 </Project>

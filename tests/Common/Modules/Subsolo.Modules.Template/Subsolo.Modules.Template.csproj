@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0007 — dublê de teste: módulo de exemplo "Template" (schema `template`), com as camadas do ADR-0001 nos
+    namespaces Subsolo.Modules.Template.{Domain,Application,Infrastructure}. Prova o padrão de módulo, a outbox e
+    as regras de arquitetura. Não é código de produção.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Subsolo.Modules.Template</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Template.IntegrationEvents/Subsolo.Modules.Template.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>
