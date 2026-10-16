@@ -1,5 +1,6 @@
 // SPEC-0007 — composição do host da API (ADR-0001): infraestrutura comum, módulos e endpoints.
 using System.Text.Json.Serialization;
+using Subsolo.Api.OpenApi;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Common.Presentation;
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddSchemaTransformer<ProblemDetailsCodeSchemaTransformer>());
 
 // Números só como números no JSON: o contrato (e o cliente TypeScript gerado) não aceita inteiros em string.
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);

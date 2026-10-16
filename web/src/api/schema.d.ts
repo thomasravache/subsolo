@@ -45,7 +45,11 @@ export interface components {
       status?: null | number;
       detail?: null | string;
       instance?: null | string;
+      /** @description Código estável do erro (ex.: agenda.invalid_slug, agenda.city_not_found). */
+      code?: string;
     };
+    /** @enum {unknown} */
+    ShowStatus: "scheduled" | "cancelled" | "postponed";
     ShowSummaryResponse: {
       /** Format: uuid */
       id: string;
@@ -56,7 +60,7 @@ export interface components {
       venueName: string;
       lineup: string[];
       styles: string[];
-      status: string;
+      status: components["schemas"]["ShowStatus"];
       flyerThumbUrl: null | string;
       /** Format: int32 */
       attendingCount: number;
