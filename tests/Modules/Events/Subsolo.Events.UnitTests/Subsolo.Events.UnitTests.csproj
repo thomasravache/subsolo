@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    SPEC-0008 — testes unitários do módulo Events (UT-01..UT-03): handler e validador de GetCityAgenda e o
-    período padrão da agenda no fuso da cidade (FakeTimeProvider).
+    SPEC-0008 — testes unitários do módulo Events (UT-01..UT-04): handler e validador de GetCityAgenda, o
+    período padrão da agenda no fuso da cidade (FakeTimeProvider) e a metadata do endpoint (AllowAnonymous).
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="../../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <ProjectReference Include="../../../../src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
+    <ProjectReference Include="../../../../src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
   </ItemGroup>
 
 </Project>
