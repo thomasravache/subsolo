@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/ci-check/">
+    <Project Path="ci-check/SqlInjectionSample/SqlInjectionSample.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Subsolo.ArchitectureTests/Subsolo.ArchitectureTests.csproj" />
     <Project Path="tests/Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
