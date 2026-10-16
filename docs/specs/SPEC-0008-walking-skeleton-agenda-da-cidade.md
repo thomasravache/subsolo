@@ -4,7 +4,7 @@ title: "Walking skeleton: agenda da cidade"
 tier: full
 type: foundation
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0006, SPEC-0007]
@@ -186,9 +186,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase final: Integração, entrega e documentação**
 - [x] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -199,10 +199,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — b4e70c0 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 885ms) — b4e70c0 | 2026-10-16 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (3ª rodada): APPROVED em b4e70c0 — B1 (Aspire CLI nos jobs test/integration) e M4 (matcher sem arquivos públicos) resolvidos, minors 1–3 da 2ª rodada resolvidos; lockfiles fora de red justificados. Minors: soft 404 para caminhos de um segmento com ponto (limitação registrada no ADR-0016; favicon na SPEC-0011); teste de política da CLI na SPEC-0013 (prova atual: CI) — b4e70c0 | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 1m 12s 884ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 844ms); nota: CI do PR #14 verde (10/10 checks, incluindo e2e com a pilha Compose) em 11eecff: https://github.com/thomasravache/subsolo/actions/runs/38880460959; bateria local no integrado 5a35c0e verde (E2E 23 passaram, test_commands_contract e coverage) — 11eecff | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16; integração verde (G5) em 11eecff | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; o Compose gerado sobe localmente e no CI (E2E-02); entrega na main pelo merge do PR #14 | 2026-10-16 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — dcbe2eb | 2026-10-16 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -214,36 +214,63 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+A primeira jornada ponta a ponta do Subsolo: o fã abre `/{cidade}` no celular e vê a agenda da cidade (por enquanto vazia), renderizada no servidor pelo Next.js a partir da API .NET e do PostgreSQL.
+- Módulo `Events` (vertical slice `GetCityAgenda`): entidade `City`, schema `events`, seed de desenvolvimento `cidade-exemplo`, `GET /api/v1/cities/{slug}/agenda` público (`AllowAnonymous`) com validação do slug e do período no fuso da cidade e erros `agenda.invalid_slug`, `agenda.invalid_range` e `agenda.city_not_found`.
+- Contrato OpenAPI fiel ao §6 (snapshot em `docs/api/openapi.v1.json`) e cliente TypeScript gerado (`openapi-typescript` + `openapi-fetch`) com `pnpm api:check` no CI.
+- Página SSR `web/src/app/(public)/[cidade]` com "Agenda {Cidade}", estado vazio, 404 real para cidade inexistente ou slug fora do padrão e 503 amigável com a API fora (ADR-0016), acessível (axe).
+- Compose gerado pelo Aspire (`aspire publish`) com Caddy (`/api` → API, resto → web), sem dashboard e com a API em Production por padrão; `tools/compose-up.sh` sobe tudo em `http://localhost:8080`.
+- CI: o job `e2e` sobe a pilha completa e roda as jornadas; `smoke_test` e `critical_journeys` (`agenda`) no sdd-config.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: scaffold (14c780f) → Test-writer (d3ec52f, ce9c7a3, 3c2d0c7) → Implementer (01caebe…3a8674a) → Reviewer 1 (3 majors: soft 404, ambiente da API no Compose, dashboard nightly) → testes (c3895bf, 170a395, 698ab37) e correções (4aecea6…0aab194) → Reviewer 2 (blocker: CLI do Aspire no CI; major: arquivos públicos) → testes (66b7ef8, 46450fd) e correções (5da1038…b4e70c0) → Reviewer 3 APPROVED → CI do PR apontou o Semgrep nas migrações geradas (948e733).
+- Emendas 1–7 (escopo e testes, contrato da API inalterado) e ADR-0016 (status das páginas via proxy do Next).
+- Pacotes: openapi-fetch 0.17.0 e openapi-typescript 7.13.0 (MIT), Aspire.Hosting.Docker 13.6.1 (MIT), pin transitivo de MessagePack 2.5.307 (GHSA-qhrr-8q5h-9q3h); imagem caddy:2.11.7-alpine.
+- Riscos registrados: `unstable_paramMatching` e até 3 chamadas à API por página (ADR-0016); `PublishAsPackageScript` em avaliação no Aspire 13.6; caminhos com ponto que não são arquivo recebem soft 404.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | handler retorna a cidade e lista vazia | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| UT-02 | slug e período inválidos (incluindo só `to` antes de hoje) → códigos do contrato | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| UT-03 | período padrão no fuso da cidade (13/10 → 12/12) | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| UT-04 | endpoint com `AllowAnonymous` na metadata | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| IT-01 | API real: 200 com a cidade seed e `shows: []` | PASS | `test_integration` em `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| IT-02 | slug inválido → 400 `agenda.invalid_slug` | PASS | `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| IT-03 | cidade não cadastrada → 404 `agenda.city_not_found` | PASS | `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| IT-04 | Next de produção com API fora → 503 com a mensagem | PASS | `test_e2e` em `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) (job e2e) |
+| IT-05 | Compose publicado: API em Production por padrão, sem dashboard | PASS | `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) (jobs test e integration com a Aspire CLI) |
+| CT-01 | `api:check` falha quando o cliente diverge do snapshot | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| CT-02 | snapshot OpenAPI com as restrições do §6 | PASS | `gate G2 --run` em b4e70c0; `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| E2E-01 | fã vê a agenda vazia no celular sem violações do axe; 404 para inexistente e `/Cidade_X`; cabeçalho forjado ignorado; `/robots.txt` 200 | PASS | `test_e2e` (23 passaram) em `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
+| E2E-02 | Compose local: `/health` 200, agenda carrega, p95 de 20 carregamentos < 800 ms | PASS | `gate G5 --run` em 11eecff; CI do PR #14 em 11eecff (run 38880460959, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde em 11eecff (run 38880460959)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado) — p95 < 800 ms (E2E-02), slug validado (UT-02/IT-02), AllowAnonymous (UT-04), 503 amigável (IT-04), axe (E2E-01)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — artefato Compose validado localmente e no CI; G6 N/A até a SPEC-0003; merge do PR #14 (f53fcad)
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout — rollback local com `tools/compose-up.sh <tag anterior>`; revert do merge commit
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG e README atualizados
+- [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003); o artefato de deploy (Compose gerado + Caddy) já sobe localmente e no CI. Entrega na `main` pelo PR #14 (https://github.com/thomasravache/subsolo/pull/14), merge commit f53fcad em 2026-10-16, com H2 delegado pelo Thomas (autorização de piloto automático).
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0003 — endurecimento do artefato de deploy (cabeçalhos do Caddy, web sem root, imagens base com versão completa, Seq com autenticação, sem Mailpit em produção) e telemetria do Compose para o Seq.
+- SPEC-0011 — ícones do app (favicon e PWA).
+- SPEC-0013 — teste de política da Aspire CLI nos jobs do CI.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

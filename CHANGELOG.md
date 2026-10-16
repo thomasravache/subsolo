@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Agenda da cidade, walking skeleton (SPEC-0008): `/{cidade}` renderizada no servidor a partir da API (`GET /api/v1/cities/{slug}/agenda`) e do PostgreSQL, com estado vazio, 404 e 503 reais, cliente TypeScript gerado do OpenAPI e Compose gerado pelo Aspire com Caddy (`tools/compose-up.sh`, http://localhost:8080) testado de ponta a ponta no CI.
 - Base do monólito modular (SPEC-0007): blocos Common (Result/Error, comandos e consultas com decorators de validação e log, outbox/inbox por módulo com Quartz, schema por módulo, ProblemDetails), API com OpenAPI e health checks, ServiceDefaults com OpenTelemetry e AppHost do Aspire que sobe PostgreSQL 18, Seq, Mailpit, API e front com `aspire run`; regras de arquitetura do ADR-0001 aplicadas a todo módulo.
 - Harness de testes (SPEC-0005): xUnit v3 + Shouldly, PostgreSQL 18 e Mailpit reais via Testcontainers, testes de arquitetura com ArchUnitNET, Vitest + Testing Library no front, Playwright com verificação de acessibilidade (axe) em mobile e desktop, cobertura das linhas alteradas (`tools/coverage.sh`) e os comandos de teste do sdd-config.
 - Pipeline de CI no GitHub Actions (SPEC-0006): build, lint, testes unitários, de integração e E2E, segurança (gitleaks, Semgrep, auditoria NuGet/npm), CodeQL e verificação do processo SDD em todo PR, como checks obrigatórios da `main`.
