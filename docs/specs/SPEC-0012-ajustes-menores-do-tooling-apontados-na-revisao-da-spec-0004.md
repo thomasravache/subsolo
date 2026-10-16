@@ -47,7 +47,7 @@ Itens 1 e 4: padrões do scaffold e da `.gitignore` inicial não revistos. Itens
 
 ## 4. Plano de Testes (TDD)
 - Caracterização: N/A — área já coberta pelos testes da SPEC-0004.
-- **UT-01** — Dada a regra do hook commit-msg, quando avaliada com `feat(web): x` + corpo citando `SPEC-0012` fora do rodapé, e com `[no-spec] style: corrige typo`, então ambas são aceitas (exit 0) — guarda do comportamento definido na Emenda v3 da SPEC-0004 (guarda: passa antes da mudança).
+- **UT-01** — Dada a regra do hook commit-msg, quando avaliada com `feat(web): x` + corpo citando `SPEC-0012` fora do rodapé, e com `style: corrige typo [no-spec]`, então ambas são aceitas (exit 0) — guarda do comportamento definido na Emenda v3 da SPEC-0004 (guarda: passa antes da mudança).
 - **IT-01** — Dado o `.gitignore` do repositório, quando `git check-ignore --no-index` avalia `.env.example` e `web/.env.example`, então nenhum dos dois é ignorado, enquanto `.env` e `.env.local` continuam ignorados, e `.claude/worktrees/x` passa a ser ignorado (falha antes da correção).
 - **IT-02** — Dado o hook pre-commit num repositório temporário, quando um arquivo com chave falsa no formato Google API (`AIza` + 35 caracteres) é commitado, então o commit é bloqueado (guarda: passa antes da mudança).
 
@@ -122,3 +122,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (texto do plano, sem mudança de contrato) | 2026-10-16 | Exemplo do UT-01 corrigido de `[no-spec] style: corrige typo` para `style: corrige typo [no-spec]` | O hook (contrato v3 da SPEC-0004) exige o tipo no início do assunto; a forma antiga nunca foi aceita, então não seria guarda | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
