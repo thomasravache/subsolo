@@ -4,7 +4,7 @@ title: Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 
 tier: lite
 type: fix
 user_facing: false
-status: proposed
+status: approved
 created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
@@ -13,8 +13,9 @@ touches: [tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, to
 adrs: [ADR-0005, ADR-0006, ADR-0009]
 external: []
 size: S
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-16
+approved_via: "delegado: autorização de piloto automático (2026-10-16, seguir as recomendações)"
 ---
 
 # SPEC-0013 — Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006

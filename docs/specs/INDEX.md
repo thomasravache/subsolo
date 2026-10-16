@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
-- Specs: proposed 1, approved 6, implemented 3
+- Validação (G0): **1 erro(s), 18 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 7, implemented 3
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
@@ -50,7 +50,7 @@ Perfil: **padrao**
 | 3 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 3 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 3 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
-| 4 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | proposed | ⏳ aguardando aprovação (H1) | saiu da onda 1: arquivos em comum com SPEC-0012; saiu da onda 2: arquivos em comum com SPEC-0008; saiu da onda 3: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
+| 4 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0012; saiu da onda 2: arquivos em comum com SPEC-0008; saiu da onda 3: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
 
 ## Épicos
 
@@ -75,7 +75,7 @@ flowchart LR
     S0010["SPEC-0010<br/>Segurança base"]:::approved
     S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
     S0012["SPEC-0012<br/>Ajustes menores do tooling apontados na…"]:::approved
-    S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::proposed
+    S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::approved
   end
   S0005 -. contrato v4 .-> S0006
   S0005 --> S0007
@@ -107,7 +107,7 @@ flowchart LR
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | approved | 2026-10-13 | SPEC-0001 | — | — |
-| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | proposed | 2026-10-14 | SPEC-0001 | — | — |
+| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | approved | 2026-10-14 | SPEC-0001 | — | — |
 
 ## ADRs
 
