@@ -9,8 +9,8 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
-contract_version: 1
-touches: [web/src/app/layout.tsx, web/src/app/globals.css, web/src/app/(public)/[cidade]/**, web/src/app/icon.png, web/src/app/favicon.ico, web/public/icons/**, docs/design/**, web/src/styles/**, web/src/components/ui/**, web/src/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
+contract_version: 2
+touches: [src/Modules/Events/Subsolo.Modules.Events.Application/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/Cities/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/layout.tsx, web/src/app/globals.css, web/src/app/(public)/[cidade]/**, web/src/app/icon.png, web/src/app/favicon.ico, web/public/icons/**, docs/design/**, web/src/styles/**, web/src/components/ui/**, web/src/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
 adrs: [ADR-0013]
 external: []
 size: M
@@ -111,6 +111,7 @@ Estados da agenda: lista de Cards | EmptyState "Nenhum show anunciado ainda em {
 - **UT-04** — Dado o `CitySwitcher` com duas cidades, quando o usuário escolhe a outra, então `onCityChange` é chamado com o slug escolhido.
 
 ### 7.3 Testes de Integração
+- **IT-02** — Dadas as duas cidades seed num PostgreSQL real, quando `GET /api/v1/cities` é chamado (público, `AllowAnonymous`), então a resposta é 200 com `[{ slug, name }]` ordenada por nome (Emenda 2).
 - **IT-01** — Dado o build de produção do Next.js, quando `/cidade-exemplo` é renderizada no servidor, então o HTML contém o shell (`header`, `main`, `footer` com o link "Apoie") e o CSS da página fica abaixo de 30 kB gzip.
 
 ### 7.4 Testes de Contrato
@@ -223,4 +224,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0011`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-16 | Emenda 2 (impedimentos do Test-writer): o `CitySwitcher` lista as cidades de um endpoint novo e público `GET /api/v1/cities` → `[{ slug, name }]` ordenado por nome (vertical slice `ListCities` no módulo Events, OpenAPI e cliente regenerados), em vez de uma lista fixa no front (a cidade é dado, sistema multi-cidade); o seed de desenvolvimento ganha a segunda cidade `outra-cidade` ("Outra Cidade", America/Sao_Paulo) usada pelo E2E-01; novo IT-02; o `Card` recebe `timeZone` (IANA) para mostrar a data no fuso da cidade | E2E-01 exigia duas cidades e uma origem para a lista | SPEC-0008 (contrato da API ganha um endpoint; nada muda no existente) | thomas (delegado: piloto automático, 2026-10-16, recomendação do Architect) |
 | 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): o app Next fica em `web/src/app/`; entram nos `touches` o layout raiz, o `globals.css`, a página da agenda (`(public)/[cidade]/**`, para aplicar o shell e os componentes sem mudar textos nem status) e os ícones do app | Estrutura real do projeto (SPEC-0008) | SPEC-0008 (mesmos textos e status; E2E-01 continua valendo) | thomas (delegado: piloto automático, 2026-10-16) |
