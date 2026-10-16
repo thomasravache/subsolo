@@ -197,31 +197,31 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Common (Domain/Application/Presentation)**
-- [ ] Red: UT-01..UT-04 com a tag `SPEC-0007:<ID>`, falhando pelo motivo certo (scaffold `chore` com as assinaturas do contrato)
-- [ ] Green: `Result`/`Error`, `Entity`, abstrações de comando/consulta, decorators de validação e log, mapeamento `Result` → `ProblemDetails`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte (G2)
+- [x] Red: UT-01..UT-04 com a tag `SPEC-0007:<ID>`, falhando pelo motivo certo (scaffold `chore` com as assinaturas do contrato)
+- [x] Green: `Result`/`Error`, `Entity`, abstrações de comando/consulta, decorators de validação e log, mapeamento `Result` → `ProblemDetails`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte (G2)
 
 **Fase 2: Infraestrutura, outbox/inbox e arquitetura**
-- [ ] Red: IT-01..IT-06 falhando
-- [ ] Green: `ModuleDbContext`, outbox/inbox por schema, jobs Quartz, `IEventBus`, `IDomainEventHandler`, regras ArchUnitNET do ADR-0001; migrações dos módulos de exemplo (dublês em `tests/Common/Modules/**`, geradas pelo Implementer — artefato gerado, não asserção)
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-06 falhando
+- [x] Green: `ModuleDbContext`, outbox/inbox por schema, jobs Quartz, `IEventBus`, `IDomainEventHandler`, regras ArchUnitNET do ADR-0001; migrações dos módulos de exemplo (dublês em `tests/Common/Modules/**`, geradas pelo Implementer — artefato gerado, não asserção)
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 2b: Emenda v2 (revisão G4)**
-- [ ] Red: UT-05, UT-06, IT-08, IT-09; trocar a espera fixa das asserções negativas por contagem de execuções do job; UT-03 conferindo `errors`; testes do `LoggingDecorator` de comando com resposta e de consulta e das fábricas de `Error`
-- [ ] Green: `IDomainEvent` com `Id`/`OccurredOnUtc` e `DomainEvent`; evento de integração do exemplo reaproveitando o Id; falha ao gravar consumer não aborta o lote; ActivitySources de comando/consulta/outbox + fonte do Quartz no ServiceDefaults; configuração própria no AppHost para banco efêmero de teste; comentários sobre instância única (sem SKIP LOCKED) e sobre não pôr dado pessoal em mensagens de exceção
-- [ ] Validar e nova revisão (G2/G3/G4)
+- [x] Red: UT-05, UT-06, IT-08, IT-09; trocar a espera fixa das asserções negativas por contagem de execuções do job; UT-03 conferindo `errors`; testes do `LoggingDecorator` de comando com resposta e de consulta e das fábricas de `Error`
+- [x] Green: `IDomainEvent` com `Id`/`OccurredOnUtc` e `DomainEvent`; evento de integração do exemplo reaproveitando o Id; falha ao gravar consumer não aborta o lote; ActivitySources de comando/consulta/outbox + fonte do Quartz no ServiceDefaults; configuração própria no AppHost para banco efêmero de teste; comentários sobre instância única (sem SKIP LOCKED) e sobre não pôr dado pessoal em mensagens de exceção
+- [x] Validar e nova revisão (G2/G3/G4)
 
 **Fase 3: Host e Aspire**
-- [ ] Pré-requisito: Aspire CLI 13.6 instalada (`dotnet tool install -g Aspire.Cli`)
-- [ ] Red: IT-07 e CT-01 falhando
-- [ ] Green: `Subsolo.Api`, `Subsolo.ServiceDefaults`, `Subsolo.AppHost` (Postgres, Seq, Mailpit, api, web), OpenAPI com snapshot em `docs/api/openapi.v1.json`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Pré-requisito: Aspire CLI 13.6 instalada (`dotnet tool install -g Aspire.Cli`)
+- [x] Red: IT-07 e CT-01 falhando
+- [x] Green: `Subsolo.Api`, `Subsolo.ServiceDefaults`, `Subsolo.AppHost` (Postgres, Seq, Mailpit, api, web), OpenAPI com snapshot em `docs/api/openapi.v1.json`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
+- [x] Review independente (G4)
 - [ ] Integração + CI verde (G5) e aprovação (H2)
 - [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
@@ -231,10 +231,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 75fec1d | 2026-10-16 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 4a59b76 | 2026-10-16 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 749ms) — 4a59b76 | 2026-10-16 |
-| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 4a59b76 — 0 blocker, 3 major: (1) IDomainEvent sem Id → retry da outbox gera evento de integração com Guid novo e duplica na inbox do outro módulo; (2) traces de comando/consulta/outbox/Quartz do §8 ausentes; (3) regras de arquitetura não detectam módulo não referenciado pelo projeto de testes. Minors: sleep fixo nas asserções negativas, cobertura de decorators/AddModule/Error, falha ao gravar consumer aborta lote, sem SKIP LOCKED (instância única), dados pessoais em mensagens de exceção, AppHost acoplado a config do Aspire.Hosting.Testing, aspire.config.json, .editorconfig de migrações, OnlyReferences × ADR-0001; fractions 7.3.0 confirmado BSD-2-Clause (permitida) | 2026-10-16 |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 2c1463c | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 4205196 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 813ms) — 4205196 | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em 4205196 — 3 majors e minors 4–9 resolvidos; arquivos de teste fora de red justificados (corpo do helper de regra, configuração do AppHost, artefatos gerados). Minors novos: N1 caminho de falha ao gravar estado sem teste e N2 OccurredOnUtc do DomainEvent fora do TimeProvider (→ SPEC-0013); N3 atividades da outbox/inbox sem teste (→ SPEC-0009) — 4205196 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |

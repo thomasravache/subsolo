@@ -61,12 +61,12 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Regressão e guardas**
-- [ ] Red: IT-01 (`.env.example` e `.claude/` no `.gitignore`) falhando pelo motivo certo; UT-01 e IT-02 escritos como guarda (passam antes da mudança), com a tag `SPEC-0012:<ID>`
-- [ ] Green: `.gitignore` com `!.env.example`/`!**/.env.example` e `.claude/`; remover o comentário de scaffold de `web/next.config.ts`
-- [ ] Validar: build + suíte completa + lint (G2); G3 N/A até a suíte de arquitetura (SPEC-0007)
+- [x] Red: IT-01 (`.env.example` e `.claude/` no `.gitignore`) falhando pelo motivo certo; UT-01 e IT-02 escritos como guarda (passam antes da mudança), com a tag `SPEC-0012:<ID>`
+- [x] Green: `.gitignore` com `!.env.example`/`!**/.env.example` e `.claude/`; remover o comentário de scaffold de `web/next.config.ts`
+- [x] Validar: build + suíte completa + lint (G2); G3 N/A até a suíte de arquitetura (SPEC-0007)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
+- [x] Review independente (G4)
 - [ ] Integração + CI (G5) e aprovação (H2)
 - [ ] Deploy: N/A até o go-live (SPEC-0003)
 - [ ] Relatório de Entrega e CHANGELOG (G7)

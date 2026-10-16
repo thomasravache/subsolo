@@ -9,7 +9,7 @@ created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-touches: [.gitignore, tests/Subsolo.ArchitectureTests/ArchitectureRules.cs, tests/Subsolo.ArchitectureTests/HarnessExamples/**, tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
+touches: [src/Common/Subsolo.Common.Domain/DomainEvent.cs, src/Common/Subsolo.Common.Domain/Entity.cs, src/Common/Subsolo.Common.Infrastructure/Messaging/**, tests/Common/Subsolo.Common.IntegrationTests/**, .gitignore, tests/Subsolo.ArchitectureTests/ArchitectureRules.cs, tests/Subsolo.ArchitectureTests/HarnessExamples/**, tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
 adrs: [ADR-0005, ADR-0006, ADR-0009]
 external: []
 size: S
@@ -42,6 +42,8 @@ Da revisão das Emendas v6 (SPEC-0005) e v4 (SPEC-0006), em 2026-10-16:
 14. A chave do cache do pnpm agora é compartilhada por quatro jobs (agrava o item 6).
 16. Revisão da SPEC-0007: `aspire.config.json` gerado na raiz pelo `aspire run` não é ignorado nem versionado.
 17. Revisão da SPEC-0007: `ArchitectureRules.OnlyReferences` (SPEC-0005) permite `<Outro>.Contracts`, mas o ADR-0001 diz `IntegrationEvents`.
+18. Revisão da SPEC-0007 (N1): o caminho de falha ao gravar o estado da mensagem em `ProcessMessagesJob` não tem teste.
+19. Revisão da SPEC-0007 (N2): `DomainEvent.OccurredOnUtc` usa `DateTime.UtcNow` em vez do `TimeProvider`.
 15. Revisão da SPEC-0012: o `<summary>` de `CommitMessageRuleTests.cs` ainda descreve só `Refs: SPEC-NNNN` (desatualizado após a Emenda v3 da SPEC-0004).
 
 ## 2. Causa Raiz
@@ -54,6 +56,7 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 - `ci.yml`: grupo de concorrência `ci-<número do PR ou github.sha>` (único por commit no push); chaves de cache `pnpm-store-web-…` e `pnpm-store-e2e-…`, cada uma com o hash do próprio lockfile.
 - IT-05 da SPEC-0006: ignorar a anotação "SDD pr-check" e exigir uma anotação que cite a spec ou a regra violada.
 - CodeQL: confirmar a supressão por comentário; se não funcionar, documentar no `ci.yml` o caminho real (`query-filters` num config do CodeQL, com o motivo).
+- `ProcessMessagesJob`: IT com `SaveChangesInterceptor` que falha uma vez ao gravar o estado (a próxima mensagem do lote é processada; a que falhou é reprocessada sem rodar o handler de novo); `DomainEvent.OccurredOnUtc` vindo do `TimeProvider` (preenchido pela entidade ou pelo interceptor).
 - `.gitignore`: ignorar `aspire.config.json` (estado local da CLI do Aspire).
 - `ArchitectureRules.OnlyReferences` e `tests/README.md` alinhados ao ADR-0001 (`<Outro>.IntegrationEvents`), com teste próprio.
 - `CommitMessageRuleTests.cs`: comentário de resumo com a regra atual (spec citada em qualquer parte da mensagem ou `[no-spec]` no assunto).

@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, e2e/tests/observability/**]
+touches: [src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, tests/Common/Subsolo.Common.IntegrationTests/Observability/**, e2e/tests/observability/**]
 adrs: [ADR-0010, ADR-0008]
 external: []
 size: M
@@ -34,6 +34,7 @@ Liga a observabilidade do ADR-0010 de ponta a ponta, localmente: logs estruturad
 - Health checks: `/health` (PostgreSQL + job da outbox executou nos últimos 60 s) e `/alive` (processo).
 - Redator de dados pessoais: e-mails, tokens e cabeçalhos `Authorization`/`Cookie` mascarados em logs e atributos de trace.
 - Seq: retenção de 30 dias; sinais salvos "Erros 5xx" e "Falha de job"; alertas por e-mail (Mailpit no local) — configuração como código em `infra/seq/`.
+- Teste das atividades da outbox/inbox (fonte `Subsolo.Messaging`, criada na SPEC-0007) e da assinatura das fontes no ServiceDefaults (minor N3 da revisão da SPEC-0007).
 - Runbooks em `docs/runbooks/`: `erros-5xx.md` e `outbox-parada.md`.
 
 **Não-objetivos (fora do escopo):**
