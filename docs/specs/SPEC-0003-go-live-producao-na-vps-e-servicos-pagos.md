@@ -30,6 +30,8 @@ Levar o Subsolo, já redondo localmente, para produção em `agendasubsolo.com.b
 - Backup diário com restic para o R2 e teste de restauração mensal (ADR-0011).
 - Monitor externo de disponibilidade e alertas de produção (ADR-0010).
 
+- Endurecimento do artefato de deploy apontado na revisão da SPEC-0008: cabeçalhos de segurança no Caddy (HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors`), imagem do web sem root, imagens base com versão completa ou digest (Node e `aspnet`), Seq de produção com autenticação e sem Mailpit no artefato de produção, portas ligadas só ao necessário.
+
 **Não-objetivos (fora do escopo):**
 - Features novas do produto (épico SPEC-0002).
 - Alta disponibilidade (múltiplas VPS) e CDN — avaliar depois do lançamento, com dados reais de uso.

@@ -11,6 +11,7 @@ rules:
       (ex.: `#pragma warning disable CA1062 // motivo`).
     paths:
       include: ["*.cs"]
+      exclude: ["**/Migrations/*.cs"]
     pattern-regex: '#pragma\s+warning\s+disable\b(?![^\n]*//)[^\n]*'
 
   - id: subsolo-eslint-disable-without-reason

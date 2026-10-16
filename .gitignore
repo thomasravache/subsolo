@@ -1,6 +1,7 @@
 # Build .NET
 bin/
 obj/
+# Saídas locais (ex.: o Compose gerado por `aspire publish -o artifacts/compose`, SPEC-0008)
 artifacts/
 *.user
 *.suo
@@ -27,6 +28,9 @@ npm-debug.log*
 appsettings.*.local.json
 *.pem
 *.pfx
+
+# Aspire CLI: aspire.config.json é criado na raiz a cada `aspire publish`/`run` (local, não versionado)
+aspire.config.json
 
 # Editores e sistema
 .claude/

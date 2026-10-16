@@ -1,0 +1,21 @@
+# SPEC-0008 — contexto da imagem do web (Dockerfile gerado pelo `aspire publish`): só o código-fonte; as dependências
+# e o build são feitos dentro da imagem.
+node_modules
+.next
+out
+build
+coverage
+test-results
+playwright-report
+.git
+.gitignore
+.DS_Store
+*.log
+.env
+.env.*
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+*.Dockerfile
+*.Dockerfile.dockerignore
+.dockerignore

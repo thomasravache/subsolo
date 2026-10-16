@@ -11,6 +11,8 @@
     "build": "next build",
     "start": "next start",
     "typegen": "next typegen",
+    "api:generate": "openapi-typescript ../docs/api/openapi.v1.json -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts",
+    "api:check": "openapi-typescript ../docs/api/openapi.v1.json | prettier --stdin-filepath src/api/schema.d.ts | diff -u src/api/schema.d.ts - && echo 'api:check: src/api/schema.d.ts em dia com ../docs/api/openapi.v1.json'",
     "lint": "pnpm run lint:eslint; e1=$?; pnpm run lint:format; e2=$?; pnpm run lint:types; e3=$?; exit $((e1 || e2 || e3))",
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:format": "prettier --check .",
@@ -20,6 +22,7 @@
   },
   "dependencies": {
     "next": "16.4.0",
+    "openapi-fetch": "0.17.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -34,6 +37,7 @@
     "eslint-config-next": "16.4.0",
     "eslint-config-prettier": "10.1.8",
     "jsdom": "30.1.2",
+    "openapi-typescript": "7.13.0",
     "prettier": "3.9.10",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",

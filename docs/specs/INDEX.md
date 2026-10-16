@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 5, implemented 5
+- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 4, in-progress 1, implemented 5
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
@@ -38,13 +38,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0008  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0008
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 2 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 2 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
@@ -67,7 +67,7 @@ flowchart LR
   subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
     S0006["SPEC-0006<br/>Pipeline de CI no GitHub Actions"]:::implemented
     S0007["SPEC-0007<br/>Base do monólito modular com Aspire"]:::implemented
-    S0008["SPEC-0008<br/>Walking skeleton: agenda da cidade"]:::approved
+    S0008["SPEC-0008<br/>Walking skeleton: agenda da cidade"]:::inprogress
     S0009["SPEC-0009<br/>Observabilidade base"]:::approved
     S0010["SPEC-0010<br/>Segurança base"]:::approved
     S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
@@ -96,7 +96,7 @@ flowchart LR
 | [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
 | [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@4 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
-| [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
+| [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
 | [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
@@ -122,3 +122,4 @@ flowchart LR
 | [ADR-0013](../adr/ADR-0013-front-end-em-next-js-16-com-pwa.md) | Front-end em Next.js 16 com PWA | accepted | E2E de prévia Open Graph e de instalação/push (Playwright) + compilação do cliente OpenAPI no CI |
 | [ADR-0014](../adr/ADR-0014-avisos-por-web-push-e-e-mail.md) | Avisos por Web Push e e-mail | accepted | teste de arquitetura (canais só implementam INotificationChannel no módulo Notifications) + testes de integração com Mailpit e servidor de push falso |
 | [ADR-0015](../adr/ADR-0015-armazenamento-e-processamento-de-flyers.md) | Armazenamento e processamento de flyers | accepted | teste de arquitetura (só Common.Infrastructure referencia NetVips e o sistema de arquivos) + testes de integração de upload |
+| [ADR-0016](../adr/ADR-0016-status-http-das-paginas-ssr-via-proxy-do-next-js.md) | Status HTTP das páginas SSR via proxy do Next.js | accepted | E2E-01 (404 da cidade inexistente) e IT-04 (503 com a API fora) da SPEC-0008, rodando em todo PR |

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SPEC-0008 — endpoints Minimal API do módulo Events (ADR-0001), um por feature. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Events.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
+  </ItemGroup>
+
+</Project>
