@@ -1,12 +1,15 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using Subsolo.Common.Application.Diagnostics;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
 
 namespace Subsolo.Common.Application.Decorators;
 
 /// <summary>
-/// SPEC-0007 — registra o nome do comando/consulta e o resultado (sucesso ou o código do erro). Nunca registra o
-/// payload (dados pessoais, ADR-0008).
+/// SPEC-0007 — registra o nome do comando/consulta e o resultado (sucesso ou o código do erro) no log e numa
+/// atividade da fonte <see cref="ApplicationTelemetry.SourceName"/> (nome da mensagem; status <c>Ok</c> ou
+/// <c>Error</c> com o código do erro em tag). Nunca registra o payload (dados pessoais, ADR-0008).
 /// </summary>
 public static partial class LoggingDecorator
 {
@@ -16,14 +19,8 @@ public static partial class LoggingDecorator
         : ICommandHandler<TCommand>
         where TCommand : ICommand
     {
-        public async Task<Result> Handle(TCommand command, CancellationToken cancellationToken)
-        {
-            var name = typeof(TCommand).Name;
-            LogProcessing(logger, "comando", name);
-            var result = await innerHandler.Handle(command, cancellationToken);
-            LogOutcome(logger, "comando", name, result);
-            return result;
-        }
+        public Task<Result> Handle(TCommand command, CancellationToken cancellationToken) =>
+            TraceAsync(logger, "comando", typeof(TCommand).Name, () => innerHandler.Handle(command, cancellationToken));
     }
 
     public sealed class CommandHandler<TCommand, TResponse>(
@@ -32,14 +29,8 @@ public static partial class LoggingDecorator
         : ICommandHandler<TCommand, TResponse>
         where TCommand : ICommand<TResponse>
     {
-        public async Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken)
-        {
-            var name = typeof(TCommand).Name;
-            LogProcessing(logger, "comando", name);
-            var result = await innerHandler.Handle(command, cancellationToken);
-            LogOutcome(logger, "comando", name, result);
-            return result;
-        }
+        public Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken) =>
+            TraceAsync(logger, "comando", typeof(TCommand).Name, () => innerHandler.Handle(command, cancellationToken));
     }
 
     public sealed class QueryHandler<TQuery, TResponse>(
@@ -48,14 +39,49 @@ public static partial class LoggingDecorator
         : IQueryHandler<TQuery, TResponse>
         where TQuery : IQuery<TResponse>
     {
-        public async Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken)
+        public Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken) =>
+            TraceAsync(logger, "consulta", typeof(TQuery).Name, () => innerHandler.Handle(query, cancellationToken));
+    }
+
+    /// <summary>Executa o handler dentro de uma atividade com o nome da mensagem e registra o resultado.</summary>
+    private static async Task<TResult> TraceAsync<TResult>(ILogger logger, string kind, string name, Func<Task<TResult>> handle)
+        where TResult : Result
+    {
+        using var activity = ApplicationTelemetry.Source.StartActivity(name);
+        activity?.SetTag(ApplicationTelemetry.RequestKindTag, kind);
+        LogProcessing(logger, kind, name);
+        try
         {
-            var name = typeof(TQuery).Name;
-            LogProcessing(logger, "consulta", name);
-            var result = await innerHandler.Handle(query, cancellationToken);
-            LogOutcome(logger, "consulta", name, result);
+            var result = await handle();
+            LogOutcome(logger, kind, name, result);
+            RecordOutcome(activity, result);
             return result;
         }
+        catch (Exception exception)
+        {
+            activity?.AddException(exception);
+            activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
+            throw;
+        }
+    }
+
+    /// <summary>Status da atividade; na falha, o código e o tipo do erro (nunca a mensagem nem o payload).</summary>
+    private static void RecordOutcome(Activity? activity, Result result)
+    {
+        if (activity is null)
+        {
+            return;
+        }
+
+        if (result.IsSuccess)
+        {
+            activity.SetStatus(ActivityStatusCode.Ok);
+            return;
+        }
+
+        activity.SetTag(ApplicationTelemetry.ErrorCodeTag, result.Error.Code);
+        activity.SetTag(ApplicationTelemetry.ErrorTypeTag, result.Error.Type.ToString());
+        activity.SetStatus(ActivityStatusCode.Error, result.Error.Code);
     }
 
     /// <summary>Só o tipo da mensagem e o resultado: o payload nunca entra no log.</summary>
