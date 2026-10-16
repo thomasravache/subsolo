@@ -148,3 +148,5 @@ internal sealed class CiWorkflowDocument
         return Child(root, key) is YamlScalarNode scalar ? scalar.Value : null;
     }
 }
+
+// ci-check/it-01-20261016044033: mudança válida de verificação (IT-01)
