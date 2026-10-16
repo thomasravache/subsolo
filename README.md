@@ -47,6 +47,7 @@ dotnet test tests/Subsolo.ArchitectureTests            # regras de arquitetura
 ./tools/coverage.sh       # cobertura das linhas alteradas em relação à main
 
 aspire run                # sobe PostgreSQL 18, Seq, Mailpit, API e front (dashboard do Aspire com logs e traces)
+./tools/compose-up.sh     # sobe a pilha de produção local (Compose gerado pelo Aspire + Caddy) em http://localhost:8080 — a agenda de exemplo fica em /cidade-exemplo
 (cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
 (cd web && pnpm format)   # formata o front com o Prettier
 dotnet format Subsolo.slnx  # formata o C# conforme o .editorconfig
