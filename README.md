@@ -39,7 +39,11 @@ Todos os comandos rodam na raiz do repositório.
 ```bash
 ./tools/build.sh          # dotnet build -warnaserror + pnpm install --frozen-lockfile + pnpm build
 ./tools/lint.sh           # dotnet format --verify-no-changes, build com analisadores, eslint, prettier, tsc (e semgrep, se instalado)
-dotnet test tests/Subsolo.Tooling.Tests   # testes das ferramentas do repositório (alguns usam Docker)
+dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)   # suíte padrão (`test` do sdd-config)
+dotnet test Subsolo.slnx --filter "Kind=Integration"   # integração com PostgreSQL e Mailpit reais (precisa do Docker)
+dotnet test tests/Subsolo.ArchitectureTests            # regras de arquitetura
+(cd e2e && pnpm install && pnpm exec playwright install && pnpm test)   # E2E com Playwright (mobile e desktop)
+./tools/coverage.sh       # cobertura das linhas alteradas em relação à main
 
 (cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
 (cd web && pnpm format)   # formata o front com o Prettier
@@ -47,6 +51,8 @@ dotnet format Subsolo.slnx  # formata o C# conforme o .editorconfig
 ```
 
 O `tools/lint.sh` roda todas as verificações e lista no fim as que falharam, em vez de parar na primeira.
+
+Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções
 

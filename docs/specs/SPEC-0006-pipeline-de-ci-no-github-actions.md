@@ -4,7 +4,7 @@ title: Pipeline de CI no GitHub Actions
 tier: full
 type: foundation
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
@@ -172,7 +172,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 - [x] Integração + CI verde (G5) e aprovação (H2)
 - [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -186,7 +186,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 29s 803ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 518ms); nota: CI do PR #4 verde (10/10 checks) em 555c281: https://github.com/thomasravache/subsolo/actions/runs/38850207777; test_commands_contract exit 0 (141s) no integrado; checks obrigatórios configurados na proteção da main (9 checks); verificações reais no GitHub IT-01..06 com SDD_GITHUB_VERIFY=1 a partir de 555c281: 6/6 PASS (17m40s), PRs descartáveis #9 IT-01, #5 IT-02, #6 IT-03, #10 IT-04, #7 IT-05, #8 IT-06 (fechados sem merge) — 555c281 (árvore suja) | 2026-10-16 |
 | H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — 'pode seguir com tudo que for recomendado e pode ir criando PR e mergeando quando for preciso'; integração verde (G5) em 555c281 | 2026-10-16 |
 | G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #4 | 2026-10-16 |
-| G7 Pronto & Docs | PENDING | | |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — fb9a84b (árvore suja) | 2026-10-16 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -200,36 +200,57 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+O pipeline de CI no GitHub Actions (`.github/workflows/ci.yml`) que roda em todo PR e todo push na `main`, com 8 jobs que viram checks obrigatórios na proteção da `main`:
+- `build`, `lint`, `test`, `integration` (Testcontainers no runner), `e2e` (Playwright, artefatos de trace/vídeo na falha), `security` (gitleaks, Semgrep CE, auditoria NuGet e npm com a política "produção primeiro" do ADR-0009), `codeql` (C# e JavaScript/TypeScript) e `sdd` (`validate` + `pr-check` da ferramenta SDD).
+- Cada job chama literalmente o comando do sdd-config (contrato SPEC-0005@4); actions fixadas por SHA, imagens por digest, permissões mínimas, `persist-credentials: false`, caches de NuGet/pnpm/Playwright/imagens e `concurrency` por PR.
+- Proteção da `main` com os 9 checks obrigatórios (os 8 jobs, com o CodeQL em duas linguagens).
+- Comando `ci` (`gh pr checks --watch`) no sdd-config; verificações reais no GitHub sob demanda (`SDD_GITHUB_VERIFY=1`).
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (red abc979d) → Implementer (ddad8c3, 6ddeb2d, 0c335d1) → Test-writer (eeb1e27) → Reviewer 2ª rodada APPROVED.
+- Integração (PR #4): o primeiro run revelou que o job `integration` não tinha pnpm (os testes de integração do `lint.sh` precisam dele) e que o `pr-check` atribuía um commit à SPEC-0005 só por citá-la no corpo. Emenda v4: UT-02 (aff181e) → Node + pnpm no job `integration` e comando `test` novo (d888771) → Reviewer APPROVED. A ferramenta SDD foi corrigida na skill (atribuição pelo rodapé `Refs:`, com teste de regressão) e revendorizada (5a96ee1, 7ecb778).
+- Fase 2: checks obrigatórios configurados e IT-01..06 executados de verdade no GitHub a partir do HEAD integrado.
+- Emendas: v1, v2 (consome SPEC-0005@3 e verificações reais depois do G4), v3 (auditoria npm, opção A) e v4 (consome SPEC-0005@4).
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | política do `ci.yml`: jobs, permissões, SHAs, digests, sem injeção em `run:` | PASS | `gate G2 --run` em 7ecb778; `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| UT-02 | jobs que rodam comandos com pnpm preparam Node + corepack antes | PASS | red em aff181e; verde em d888771 e CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-01 | PR válido → todos os checks verdes | PASS | `SDD_GITHUB_VERIFY=1` a partir de 555c281: PR #9 |
+| IT-02 | teste vermelho → check `test` falha e o merge fica bloqueado | PASS | PR #5 |
+| IT-03 | chave fictícia → `security` falha citando o arquivo | PASS | PR #6 |
+| IT-04 | pacote com vulnerabilidade alta → `security` falha | PASS | PR #10 |
+| IT-05 | PR sem spec → `sdd` falha com anotação | PASS | PR #7 |
+| IT-06 | SQL por concatenação → CodeQL/Semgrep reportam | PASS | PR #8 (6/6 em 17m40s; PRs fechados sem merge) |
+| CT-01 | jobs chamam exatamente os comandos do sdd-config | PASS | `gate G2 --run` em 7ecb778; `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde em 555c281 (run 38850207777)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado) — feedback completo do PR em 4 min 44 s (run 38850207777), meta ≤ 15 min p50
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo é a `main`: merge do PR #4 (ef5ccfa); G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout — rollback = revert do merge commit; histórico de execuções no Actions
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG e README atualizados
+- [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #4 (https://github.com/thomasravache/subsolo/pull/4), merge commit ef5ccfa em 2026-10-16, com H2 delegado pelo Thomas (autorização de piloto automático da mesma data) e merge pelo Architect (ADR-0007). Desde então o pipeline roda em todo PR e push na `main`.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0013 — concorrência por commit na `main`, chaves de cache do pnpm por pasta, asserção mais forte no IT-05, supressão do CodeQL a confirmar, CODEOWNERS para `tools/sdd/**` e o workflow (proposta, aguarda H1).
+- F4 da revisão: `gitleaks git` e `semgrep scan` usados como equivalentes atuais dos comandos citados no contrato.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
