@@ -1,0 +1,17 @@
+# SPEC-0008 — Caddy na frente da aplicação (ADR-0004), no Compose gerado pelo `aspire publish`.
+# Local: http://localhost:8080 (SITE_ADDRESS padrão :8080). Na VPS (go-live), SITE_ADDRESS = domínio, com TLS
+# automático. API_UPSTREAM e WEB_UPSTREAM (host:porta dos serviços) vêm do AppHost.
+{$SITE_ADDRESS::8080} {
+	encode zstd gzip
+
+	# API .NET: rotas /api/* e o health check da aplicação.
+	@api path /api/* /health
+	handle @api {
+		reverse_proxy {$API_UPSTREAM}
+	}
+
+	# Front Next.js: todo o resto.
+	handle {
+		reverse_proxy {$WEB_UPSTREAM}
+	}
+}

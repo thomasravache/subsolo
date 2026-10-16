@@ -4,6 +4,8 @@
     SPEC-0007 IT-07 — o Subsolo.AppHost sobe com Aspire.Hosting.Testing (DistributedApplicationTestingBuilder):
     api e web saudáveis e GET /health da API com 200. Usa Docker, Node.js e pnpm.
     Projeto separado do Subsolo.Api.IntegrationTests porque AppHost e API têm, cada um, o seu Program.
+    SPEC-0008 IT-05 — o Compose gerado por `aspire publish` (Aspire CLI) tem a API em Production por padrão e
+    nenhum dashboard do Aspire.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -26,6 +28,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 
   <ItemGroup>

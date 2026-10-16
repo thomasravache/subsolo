@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0008 — infraestrutura do módulo Events (ADR-0001, ADR-0002): DbContext do schema `events`, migrações,
+    seed de desenvolvimento e o registro do módulo (AddEventsModule).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Events.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Só para gerar as migrações com `dotnet ef` (não vai para quem referencia o projeto). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>
