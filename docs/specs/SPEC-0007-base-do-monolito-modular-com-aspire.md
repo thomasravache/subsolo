@@ -152,8 +152,8 @@ Erros:
 - **UT-03** — Dado cada `ErrorType`, quando convertido pelo mapeador `Result` → HTTP, então o status corresponde à tabela do contrato e o `code` vai em `extensions.code`.
 - **UT-04** — Dado um comando que contém um e-mail, quando passa pelo `LoggingDecorator`, então o log contém o nome do comando e o resultado, mas não o e-mail.
 
-- **UT-05** — Dado um módulo registrado com `AddModule`, quando `ICommandHandler<>`, `ICommandHandler<,>` e `IQueryHandler<,>` são resolvidos, então vêm decorados na ordem Logging → Validation → handler, e um comando inválido não chega ao handler (Emenda v2).
-- **UT-06** — Dado um comando executado pelos decorators, quando um `ActivityListener` escuta a fonte do Subsolo, então uma atividade com o nome do comando é registrada, com o resultado (Emenda v2).
+- **UT-05** — Dado um módulo registrado com `AddModule`, quando `ICommandHandler<>`, `ICommandHandler<,>` e `IQueryHandler<,>` são resolvidos, então os comandos vêm decorados na ordem Logging → Validation → handler (um comando inválido não chega ao handler) e as consultas com Logging → handler (consultas não são validadas, como no padrão de referência) (Emenda v2).
+- **UT-06** — Dado um comando executado pelos decorators, quando um `ActivityListener` escuta a fonte do Subsolo, então uma atividade de uma fonte `Subsolo*` com o nome do comando ou da consulta é registrada, com status `Ok` no sucesso e `Error` + tag com o código do erro na falha (Emenda v2).
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dada uma entidade de exemplo que levanta um evento de domínio, quando `SaveChanges` é chamado num PostgreSQL real, então a outbox recebe a mensagem na mesma transação; se a transação for revertida, nada é gravado.
