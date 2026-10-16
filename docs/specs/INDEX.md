@@ -4,7 +4,7 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
+- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
 - Specs: approved 5, in-progress 2, implemented 3
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
@@ -50,7 +50,7 @@ Perfil: **padrao**
 | 3 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 3 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 3 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
-| 4 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0012; saiu da onda 2: arquivos em comum com SPEC-0008; saiu da onda 3: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
+| 4 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0007, SPEC-0012; saiu da onda 2: arquivos em comum com SPEC-0008; saiu da onda 3: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
 
 ## Épicos
 

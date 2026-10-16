@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0006, SPEC-0007]
 consumes_contract: []
 contract_version: 1
-touches: [src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
+touches: [.editorconfig, src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
 adrs: [ADR-0001, ADR-0002, ADR-0004, ADR-0012, ADR-0013]
 external: []
 size: M
@@ -241,4 +241,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | `.editorconfig` entra nos `touches` para marcar `**/Migrations/*.cs` como código gerado (as migrações do módulo Events quebram o build com IDE0161 sem isso); consome o contrato v3 da SPEC-0007 (`IDomainEvent` com Id, `AddModule`, `AddEndpoints`/`MapEndpoints`) | Revisão G4 da SPEC-0007 | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C`. Contrato HTTP e de tela inalterados. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

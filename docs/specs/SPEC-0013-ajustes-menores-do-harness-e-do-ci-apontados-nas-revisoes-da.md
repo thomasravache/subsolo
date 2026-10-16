@@ -9,7 +9,7 @@ created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-touches: [tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
+touches: [.gitignore, tests/Subsolo.ArchitectureTests/ArchitectureRules.cs, tests/Subsolo.ArchitectureTests/HarnessExamples/**, tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
 adrs: [ADR-0005, ADR-0006, ADR-0009]
 external: []
 size: S
@@ -40,6 +40,8 @@ Da revisão das Emendas v6 (SPEC-0005) e v4 (SPEC-0006), em 2026-10-16:
 12. Com `tools/sdd/**` isento de escopo, um PR pode alterar o próprio verificador do gate sem sinal; falta CODEOWNERS ou checagem de que a cópia bate com a versão vendorizada.
 13. O comentário de `CiWorkflowCommandsContractTests.cs` ainda cita o contrato SPEC-0005@2 (o atual é @4).
 14. A chave do cache do pnpm agora é compartilhada por quatro jobs (agrava o item 6).
+16. Revisão da SPEC-0007: `aspire.config.json` gerado na raiz pelo `aspire run` não é ignorado nem versionado.
+17. Revisão da SPEC-0007: `ArchitectureRules.OnlyReferences` (SPEC-0005) permite `<Outro>.Contracts`, mas o ADR-0001 diz `IntegrationEvents`.
 15. Revisão da SPEC-0012: o `<summary>` de `CommitMessageRuleTests.cs` ainda descreve só `Refs: SPEC-NNNN` (desatualizado após a Emenda v3 da SPEC-0004).
 
 ## 2. Causa Raiz
@@ -52,6 +54,8 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 - `ci.yml`: grupo de concorrência `ci-<número do PR ou github.sha>` (único por commit no push); chaves de cache `pnpm-store-web-…` e `pnpm-store-e2e-…`, cada uma com o hash do próprio lockfile.
 - IT-05 da SPEC-0006: ignorar a anotação "SDD pr-check" e exigir uma anotação que cite a spec ou a regra violada.
 - CodeQL: confirmar a supressão por comentário; se não funcionar, documentar no `ci.yml` o caminho real (`query-filters` num config do CodeQL, com o motivo).
+- `.gitignore`: ignorar `aspire.config.json` (estado local da CLI do Aspire).
+- `ArchitectureRules.OnlyReferences` e `tests/README.md` alinhados ao ADR-0001 (`<Outro>.IntegrationEvents`), com teste próprio.
 - `CommitMessageRuleTests.cs`: comentário de resumo com a regra atual (spec citada em qualquer parte da mensagem ou `[no-spec]` no assunto).
 - `tests/README.md`: comando `test_commands_contract` literal; comentário do contrato atualizado para SPEC-0005@4.
 - Teste de política: filtros de `test`, `test_integration` e o padrão do `coverage.sh` não selecionam `Kind=CommandContract`; nenhum job do CI roda `test_commands_contract`; o UT-02 da SPEC-0006 passa a incluir essa chave.
