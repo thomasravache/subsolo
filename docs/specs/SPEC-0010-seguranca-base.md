@@ -177,7 +177,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — dfad7fe | 2026-10-16 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 27ea040 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 240ms) — 27ea040 | 2026-10-16 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 27ea040 — autorização negada por padrão, CSRF, rate limiting, CSP com nonce e Caddy com HTTPS/HSTS conferidos; aviso do verify justificado (helper do scaffold 663e4e4 preenchido em 18da406 sem mudar asserções); 0 bloqueantes, 0 importantes, 7 menores (X-Forwarded-For de redes privadas, partição IPv6 por /64 e teste via Caddy, bind parcial do rate limit, nosniff global no Caddy, TLS_ISSUER obrigatório no go-live, ignoreHTTPSErrors só local, regra de filtro CSRF em todo não-GET) → SPEC-0003/backlog — 27ea040 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
