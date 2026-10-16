@@ -8,6 +8,7 @@ public sealed class TemplateFaults
 {
     private readonly Lock _gate = new();
     private int _failuresLeft;
+    private int _failuresAfterPublishLeft;
     private int _attempts;
 
     /// <summary>Quantas vezes o handler foi chamado (falhas e sucesso).</summary>
@@ -22,7 +23,7 @@ public sealed class TemplateFaults
         }
     }
 
-    /// <summary>Faz as próximas <paramref name="times"/> chamadas do handler falharem com exceção.</summary>
+    /// <summary>Faz as próximas <paramref name="times"/> chamadas do handler falharem com exceção, antes de publicar.</summary>
     public void FailNext(int times)
     {
         lock (_gate)
@@ -31,7 +32,19 @@ public sealed class TemplateFaults
         }
     }
 
-    /// <summary>Registra uma tentativa e diz se ela deve falhar.</summary>
+    /// <summary>
+    /// Faz as próximas <paramref name="times"/> chamadas do handler falharem com exceção logo depois de publicar o
+    /// evento de integração (a publicação já aconteceu, mas a outbox registra a falha e tenta de novo).
+    /// </summary>
+    public void FailAfterPublishNext(int times)
+    {
+        lock (_gate)
+        {
+            _failuresAfterPublishLeft = times;
+        }
+    }
+
+    /// <summary>Registra uma tentativa e diz se ela deve falhar antes de publicar.</summary>
     internal bool RegisterAttemptAndShouldFail()
     {
         lock (_gate)
@@ -43,6 +56,21 @@ public sealed class TemplateFaults
             }
 
             _failuresLeft--;
+            return true;
+        }
+    }
+
+    /// <summary>Diz se a tentativa atual deve falhar depois de publicar.</summary>
+    internal bool ShouldFailAfterPublish()
+    {
+        lock (_gate)
+        {
+            if (_failuresAfterPublishLeft <= 0)
+            {
+                return false;
+            }
+
+            _failuresAfterPublishLeft--;
             return true;
         }
     }

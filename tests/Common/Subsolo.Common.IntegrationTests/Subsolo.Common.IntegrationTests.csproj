@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    SPEC-0007 — testes de integração da infraestrutura comum (IT-01..IT-04) contra PostgreSQL 18 real
+    SPEC-0007 — testes de integração da infraestrutura comum (IT-01..IT-04, IT-08) contra PostgreSQL 18 real
     (Testcontainers): outbox na mesma transação, schema por módulo, entrega entre módulos e inbox idempotente,
     usando os módulos de exemplo Template e TemplateB (só nos testes).
   -->

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Time.Testing;
+using Quartz;
 using Subsolo.Common.Infrastructure;
 using Subsolo.IntegrationTests.Common;
 using Subsolo.Modules.Template.Infrastructure;
@@ -16,14 +17,20 @@ namespace Subsolo.Common.IntegrationTests.Infrastructure;
 /// Host genérico com a infraestrutura comum e os módulos de exemplo Template e TemplateB, composto como o
 /// Subsolo.Api compõe os módulos (<c>services.Add&lt;M&gt;Module(configuration)</c>), num database isolado e com o
 /// relógio da aplicação (<see cref="TimeProvider"/>, usado também pelo Quartz) trocado por um
-/// <see cref="FakeTimeProvider"/>.
+/// <see cref="FakeTimeProvider"/>. Cada avanço do relógio espera as execuções dos jobs que ficaram devidas
+/// (contadas por um <see cref="JobExecutionCounter"/>), em vez de uma espera fixa em tempo real.
 /// </summary>
 internal sealed class ModulesHost : IAsyncDisposable
 {
-    /// <summary>Quanto tempo real esperar, por padrão, a cada passo do relógio simulado, até a condição se cumprir.</summary>
-    private static readonly TimeSpan DefaultRealWaitPerStep = TimeSpan.FromSeconds(2);
+    /// <summary>
+    /// Proteção: tempo real máximo para os jobs devidos concluírem depois de um avanço do relógio. Estourar é falha
+    /// do teste (o job não rodou), nunca um caminho normal.
+    /// </summary>
+    private static readonly TimeSpan JobsTimeout = TimeSpan.FromSeconds(30);
 
     private readonly IHost _host;
+    private readonly JobExecutionCounter _jobs = new();
+    private IReadOnlyList<JobKey> _jobKeys = [];
     private bool _started;
 
     private ModulesHost(IHost host, FakeTimeProvider clock, string connectionString)
@@ -71,31 +78,37 @@ internal sealed class ModulesHost : IAsyncDisposable
         await MigrateAsync<TemplateBDbContext>(cancellationToken);
     }
 
-    /// <summary>Inicia o host (hosted services, entre eles o scheduler do Quartz).</summary>
+    /// <summary>
+    /// Inicia o host (hosted services, entre eles o scheduler do Quartz), com o <see cref="JobExecutionCounter"/>
+    /// escutando todos os jobs, e espera a primeira execução de cada job (disparada no início).
+    /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        var scheduler = await Services.GetRequiredService<ISchedulerFactory>().GetScheduler(cancellationToken);
+        scheduler.ListenerManager.AddJobListener(_jobs, GroupMatcher<JobKey>.AnyGroup());
+        _jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup(), cancellationToken);
+        _jobKeys.ShouldNotBeEmpty("nenhum job do Quartz agendado pelos módulos");
+
         await _host.StartAsync(cancellationToken);
         _started = true;
+        await WaitForDueJobsAsync(cancellationToken);
     }
 
     /// <summary>
     /// Avança o relógio simulado em passos de <paramref name="step"/> até <paramref name="condition"/> valer ou o
-    /// tempo simulado passar de <paramref name="limit"/>. Depois de cada passo, espera (tempo real) os jobs
-    /// disparados rodarem (<paramref name="realWaitPerStep"/>, padrão 2 s). Devolve o tempo simulado decorrido
-    /// quando a condição passou a valer, ou <see langword="null"/>.
+    /// tempo simulado passar de <paramref name="limit"/>; depois de cada passo, espera os jobs devidos concluírem.
+    /// Devolve o tempo simulado decorrido quando a condição passou a valer, ou <see langword="null"/>.
     /// </summary>
     public async Task<TimeSpan?> AdvanceUntilAsync(
         Func<bool> condition,
         TimeSpan limit,
         TimeSpan step,
-        CancellationToken cancellationToken,
-        TimeSpan? realWaitPerStep = null)
+        CancellationToken cancellationToken)
     {
-        var realWait = realWaitPerStep ?? DefaultRealWaitPerStep;
         var start = Clock.GetUtcNow();
         while (true)
         {
-            if (await WaitRealTimeAsync(condition, realWait, cancellationToken))
+            if (condition())
             {
                 return Clock.GetUtcNow() - start;
             }
@@ -105,19 +118,26 @@ internal sealed class ModulesHost : IAsyncDisposable
                 return null;
             }
 
-            Clock.Advance(step);
+            await StepAsync(step, cancellationToken);
         }
     }
 
-    /// <summary>Avança o relógio simulado por <paramref name="duration"/>, dando tempo real aos jobs a cada passo.</summary>
+    /// <summary>
+    /// Avança o relógio simulado por <paramref name="duration"/> em passos de <paramref name="step"/>, esperando,
+    /// a cada passo, que todo job tenha concluído a execução devida mais recente. Garante que as asserções feitas
+    /// depois (ex.: "nunca mais depois do sucesso") observaram execuções reais dos jobs.
+    /// </summary>
     public async Task AdvanceAsync(TimeSpan duration, TimeSpan step, CancellationToken cancellationToken)
     {
         for (var elapsed = TimeSpan.Zero; elapsed < duration; elapsed += step)
         {
-            Clock.Advance(step);
-            await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+            await StepAsync(step, cancellationToken);
         }
     }
+
+    /// <summary>Execuções concluídas, somadas, de todos os jobs com <paramref name="jobNameSuffix"/> no nome.</summary>
+    public int CompletedExecutions(string jobNameSuffix) =>
+        _jobKeys.Where(key => key.Name.EndsWith(jobNameSuffix, StringComparison.Ordinal)).Sum(_jobs.Completed);
 
     public async ValueTask DisposeAsync()
     {
@@ -129,19 +149,38 @@ internal sealed class ModulesHost : IAsyncDisposable
         _host.Dispose();
     }
 
-    private static async Task<bool> WaitRealTimeAsync(Func<bool> condition, TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task StepAsync(TimeSpan step, CancellationToken cancellationToken)
     {
+        Clock.Advance(step);
+        await WaitForDueJobsAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Espera (tempo real, com <see cref="JobsTimeout"/> só como proteção) até que, para cada job, a última
+    /// execução concluída seja a devida mais recente: os jobs disparam a cada
+    /// <see cref="ModuleRegistrationExtensions.ProcessingInterval"/>, então há sempre um disparo agendado em
+    /// (agora − intervalo, agora].
+    /// </summary>
+    private async Task WaitForDueJobsAsync(CancellationToken cancellationToken)
+    {
+        var dueAfter = Clock.GetUtcNow() - ModuleRegistrationExtensions.ProcessingInterval;
         var watch = Stopwatch.StartNew();
-        while (watch.Elapsed < timeout)
+        while (true)
         {
-            if (condition())
+            var pending = _jobKeys.Where(key => !(_jobs.LastCompletedScheduledFire(key) > dueAfter)).ToList();
+            if (pending.Count == 0)
             {
-                return true;
+                return;
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken);
-        }
+            if (watch.Elapsed > JobsTimeout)
+            {
+                throw new TimeoutException(
+                    $"Jobs sem a execução devida até {Clock.GetUtcNow():O} em {JobsTimeout.TotalSeconds} s reais: " +
+                    string.Join(", ", pending.Select(key => $"{key} (última: {_jobs.LastCompletedScheduledFire(key)?.ToString("O") ?? "nunca"})")));
+            }
 
-        return condition();
+            await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
+        }
     }
 }

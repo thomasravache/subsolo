@@ -47,6 +47,20 @@ public static partial class ModularMonolithRules
             .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
 
     /// <summary>
+    /// Nomes (sem extensão) de todos os projetos <c>Subsolo.Modules.*.csproj</c> em <c>src/</c> e <c>tests/</c> de
+    /// <paramref name="repositoryRoot"/>.
+    /// </summary>
+    public static IReadOnlyList<string> ModuleProjects(string repositoryRoot) => throw new NotImplementedException();
+
+    /// <summary>
+    /// Falha nomeando cada projeto <c>Subsolo.Modules.*.csproj</c> do repositório (<see cref="ModuleProjects"/>) que
+    /// não está entre os assemblies <paramref name="loaded"/> avaliados pelas regras (módulo esquecido no projeto de
+    /// testes de arquitetura).
+    /// </summary>
+    public static void CheckEveryModuleIsLoaded(string repositoryRoot, IEnumerable<Assembly> loaded) =>
+        throw new NotImplementedException();
+
+    /// <summary>
     /// Avalia a regra <paramref name="rule"/> (uma das constantes desta classe) sobre <paramref name="assemblies"/>
     /// e falha (exceção do xUnit/ArchUnitNET) com uma mensagem que contém o texto da regra (o <c>because</c> de cada
     /// regra) e os tipos ou o ciclo que a violam.

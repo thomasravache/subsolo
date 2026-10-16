@@ -6,8 +6,9 @@ using Subsolo.Common.UnitTests.Doubles;
 namespace Subsolo.Common.UnitTests;
 
 /// <summary>
-/// SPEC-0007 UT-04 — o decorator de log registra o nome do comando e o resultado, nunca o payload (o e-mail é dado
-/// pessoal, ADR-0008). Verifica a mensagem, o estado estruturado e os escopos de cada registro.
+/// SPEC-0007 UT-04 — o decorator de log (comando, comando com resposta e consulta) registra o nome e o resultado,
+/// nunca o payload (o e-mail é dado pessoal, ADR-0008). Verifica a mensagem, o estado estruturado e os escopos de
+/// cada registro.
 /// </summary>
 public sealed class LoggingDecoratorTests
 {
@@ -43,6 +44,76 @@ public sealed class LoggingDecoratorTests
         result.IsFailure.ShouldBeTrue();
         var logged = LoggedText(logger);
         logged.ShouldContain(nameof(RegisterFan), Case.Sensitive, "o log não registra o nome do comando");
+        logged.ShouldContain(error.Code, Case.Sensitive, "o log não registra o resultado (código do erro)");
+        logged.ShouldNotContain(Email, Case.Insensitive, "o log expôs o e-mail do payload");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0007:UT-04")]
+    public async Task CommandWithResponseLogsNameAndOutcomeWithoutPayload()
+    {
+        var logger = new FakeLogger<LoggingDecorator.CommandHandler<RegisterFanWithId, Guid>>();
+        var inner = new ConfigurableHandlerWithId(() => Result.Success(Guid.NewGuid()));
+        var decorated = new LoggingDecorator.CommandHandler<RegisterFanWithId, Guid>(inner, logger);
+
+        var result = await decorated.Handle(new RegisterFanWithId("Ana", Email), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        inner.Calls.ShouldBe(1);
+        var logged = LoggedText(logger);
+        logged.ShouldContain(nameof(RegisterFanWithId), Case.Sensitive, "o log não registra o nome do comando");
+        logged.ShouldNotContain(Email, Case.Insensitive, "o log expôs o e-mail do payload");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0007:UT-04")]
+    public async Task FailedCommandWithResponseLogsErrorCodeWithoutPayload()
+    {
+        var logger = new FakeLogger<LoggingDecorator.CommandHandler<RegisterFanWithId, Guid>>();
+        var error = Error.Conflict("Fans.EmailTaken", "E-mail já cadastrado.");
+        var decorated = new LoggingDecorator.CommandHandler<RegisterFanWithId, Guid>(
+            new ConfigurableHandlerWithId(() => Result.Failure<Guid>(error)), logger);
+
+        var result = await decorated.Handle(new RegisterFanWithId("Ana", Email), TestContext.Current.CancellationToken);
+
+        result.Error.ShouldBe(error);
+        var logged = LoggedText(logger);
+        logged.ShouldContain(nameof(RegisterFanWithId), Case.Sensitive, "o log não registra o nome do comando");
+        logged.ShouldContain(error.Code, Case.Sensitive, "o log não registra o resultado (código do erro)");
+        logged.ShouldNotContain(Email, Case.Insensitive, "o log expôs o e-mail do payload");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0007:UT-04")]
+    public async Task QueryLogsNameAndOutcomeWithoutPayload()
+    {
+        var logger = new FakeLogger<LoggingDecorator.QueryHandler<FindFanByEmail, string>>();
+        var inner = new RecordingQueryHandler(() => Result.Success("Ana"));
+        var decorated = new LoggingDecorator.QueryHandler<FindFanByEmail, string>(inner, logger);
+
+        var result = await decorated.Handle(new FindFanByEmail(Email), TestContext.Current.CancellationToken);
+
+        result.Value.ShouldBe("Ana");
+        inner.Calls.ShouldBe(1);
+        var logged = LoggedText(logger);
+        logged.ShouldContain(nameof(FindFanByEmail), Case.Sensitive, "o log não registra o nome da consulta");
+        logged.ShouldNotContain(Email, Case.Insensitive, "o log expôs o e-mail do payload");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0007:UT-04")]
+    public async Task FailedQueryLogsErrorCodeWithoutPayload()
+    {
+        var logger = new FakeLogger<LoggingDecorator.QueryHandler<FindFanByEmail, string>>();
+        var error = Error.NotFound("Fans.NotFound", "Fã não encontrado.");
+        var decorated = new LoggingDecorator.QueryHandler<FindFanByEmail, string>(
+            new RecordingQueryHandler(() => Result.Failure<string>(error)), logger);
+
+        var result = await decorated.Handle(new FindFanByEmail(Email), TestContext.Current.CancellationToken);
+
+        result.Error.ShouldBe(error);
+        var logged = LoggedText(logger);
+        logged.ShouldContain(nameof(FindFanByEmail), Case.Sensitive, "o log não registra o nome da consulta");
         logged.ShouldContain(error.Code, Case.Sensitive, "o log não registra o resultado (código do erro)");
         logged.ShouldNotContain(Email, Case.Insensitive, "o log expôs o e-mail do payload");
     }

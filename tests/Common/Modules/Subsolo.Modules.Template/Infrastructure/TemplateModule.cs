@@ -11,6 +11,7 @@ public static class TemplateModule
     public static IServiceCollection AddTemplateModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<TemplateFaults>();
+        services.AddSingleton<TemplateHandlerCalls>();
         return services.AddModule<TemplateDbContext>(configuration, typeof(TemplateModule).Assembly);
     }
 }

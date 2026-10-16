@@ -34,6 +34,28 @@ public sealed class ApiResultsTests
         body.GetProperty("code").GetString().ShouldBe(Code);
     }
 
+    [Fact]
+    [Trait("Spec", "SPEC-0007:UT-03")]
+    public async Task ValidationErrorListsTheFieldsInErrors()
+    {
+        var fields = new Dictionary<string, string[]>
+        {
+            ["Name"] = ["Nome obrigatório."],
+            ["Email"] = ["E-mail inválido.", "E-mail muito longo."],
+        };
+        var result = Result.Failure(Error.Validation(Code, "Um ou mais campos são inválidos.", fields));
+
+        var (status, _, body) = await ExecuteAsync(ApiResults.Problem(result));
+
+        status.ShouldBe(StatusCodes.Status400BadRequest);
+        body.GetProperty("code").GetString().ShouldBe(Code);
+        var errors = body.GetProperty("errors");
+        errors.EnumerateObject().Select(field => field.Name).ShouldBe(["Name", "Email"], ignoreOrder: true);
+        errors.GetProperty("Name").EnumerateArray().Select(message => message.GetString()).ShouldBe(["Nome obrigatório."]);
+        errors.GetProperty("Email").EnumerateArray().Select(message => message.GetString())
+            .ShouldBe(["E-mail inválido.", "E-mail muito longo."]);
+    }
+
     private static async Task<(int Status, string? ContentType, JsonElement Body)> ExecuteAsync(IResult result)
     {
         await using var services = new ServiceCollection().AddLogging().AddProblemDetails().BuildServiceProvider();

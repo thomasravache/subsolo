@@ -51,3 +51,30 @@ public sealed class RecordingHandlerWithId(Guid id) : ICommandHandler<RegisterFa
         return Task.FromResult(Result.Success(id));
     }
 }
+
+/// <summary>Handler de exemplo, com valor de retorno configurável (sucesso ou falha), que conta as chamadas.</summary>
+public sealed class ConfigurableHandlerWithId(Func<Result<Guid>> outcome) : ICommandHandler<RegisterFanWithId, Guid>
+{
+    public int Calls { get; private set; }
+
+    public Task<Result<Guid>> Handle(RegisterFanWithId command, CancellationToken cancellationToken)
+    {
+        Calls++;
+        return Task.FromResult(outcome());
+    }
+}
+
+/// <summary>Consulta de exemplo com um dado pessoal (e-mail) no payload.</summary>
+public sealed record FindFanByEmail(string Email) : IQuery<string>;
+
+/// <summary>Handler de consulta de exemplo que conta as chamadas e devolve o resultado configurado.</summary>
+public sealed class RecordingQueryHandler(Func<Result<string>> outcome) : IQueryHandler<FindFanByEmail, string>
+{
+    public int Calls { get; private set; }
+
+    public Task<Result<string>> Handle(FindFanByEmail query, CancellationToken cancellationToken)
+    {
+        Calls++;
+        return Task.FromResult(outcome());
+    }
+}

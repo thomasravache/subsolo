@@ -46,8 +46,10 @@ public sealed class IdempotencyAndRetryTests(PostgresFixture postgres)
             () => probe.Received.Any(e => e.Id == integrationEvent.Id), TimeSpan.FromSeconds(10), Step, ct);
         elapsed.ShouldNotBeNull("o handler do TemplateB nunca recebeu o evento");
 
-        // Mais ciclos dos jobs: uma segunda execução apareceria aqui.
+        // Mais ciclos dos jobs (cada passo espera as execuções devidas): uma segunda execução apareceria aqui.
+        var inboxRunsBefore = host.CompletedExecutions("ProcessInbox");
         await host.AdvanceAsync(TimeSpan.FromSeconds(10), Step, ct);
+        host.CompletedExecutions("ProcessInbox").ShouldBeGreaterThan(inboxRunsBefore, "o job da inbox não rodou depois da entrega");
 
         probe.Received.Count(e => e.Id == integrationEvent.Id).ShouldBe(1, "a inbox processou o mesmo evento mais de uma vez");
     }
@@ -77,7 +79,10 @@ public sealed class IdempotencyAndRetryTests(PostgresFixture postgres)
             () => probe.Received.Any(e => e.Name == token), TimeSpan.FromMinutes(3), RetryStep, ct);
         elapsed.ShouldNotBeNull("depois de 2 falhas, a outbox não tentou de novo até o evento ser entregue");
 
+        // Cada passo espera as execuções devidas dos jobs: sem nova tentativa aqui, ela nunca aconteceu.
+        var outboxRunsBefore = host.CompletedExecutions("ProcessOutbox");
         await host.AdvanceAsync(TimeSpan.FromSeconds(30), RetryStep, ct);
+        host.CompletedExecutions("ProcessOutbox").ShouldBeGreaterThan(outboxRunsBefore, "o job da outbox não rodou depois do sucesso");
 
         faults.Attempts.ShouldBe(3, "esperadas 2 falhas e 1 sucesso, sem novas execuções depois do sucesso");
         probe.Received.Count(e => e.Name == token).ShouldBe(1);
