@@ -6,7 +6,8 @@ import { appURL } from "./environment";
  * (`BASE_URL`, padrão http://localhost:8080): `/health` responde 200, a agenda da cidade de exemplo carrega e o
  * p95 da duração da navegação em 20 carregamentos fica abaixo de 800 ms (SLO do SSR, ADR-0010).
  */
-test.use({ baseURL: appURL });
+// SPEC-0010: o Caddy do Compose redireciona HTTP para HTTPS com o certificado local (`tls internal`), não confiável.
+test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
 const loads = 20;
 const p95BudgetMs = 800;
