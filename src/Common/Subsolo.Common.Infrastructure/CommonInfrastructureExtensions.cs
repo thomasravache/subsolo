@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Quartz;
 using Subsolo.Common.Application.EventBus;
 using Subsolo.Common.Infrastructure.EventBus;
+using Subsolo.Common.Infrastructure.Observability;
 using Subsolo.Common.Infrastructure.Outbox;
 
 namespace Subsolo.Common.Infrastructure;
@@ -19,6 +20,8 @@ public static class CommonInfrastructureExtensions
     /// contêiner), o <see cref="TimeProvider"/> do sistema (substituível nos testes) e o interceptor da outbox. A
     /// connection string <see cref="ConnectionStringName"/> é lida de <paramref name="configuration"/> quando o
     /// DbContext de um módulo é criado.
+    /// SPEC-0009 — health checks <c>postgres</c> e <c>outbox</c> do <c>/health</c>, com o heartbeat da outbox
+    /// alimentado por um listener dos jobs <c>ProcessOutbox</c>.
     /// </summary>
     public static IServiceCollection AddCommonInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -27,7 +30,13 @@ public static class CommonInfrastructureExtensions
         services.TryAddSingleton<InsertOutboxMessagesInterceptor>();
         services.TryAddSingleton<IEventBus, InProcessEventBus>();
 
-        services.AddQuartz(_ => { });
+        services.TryAddSingleton<OutboxHeartbeat>();
+        services.AddHealthChecks()
+            .AddCheck<PostgresHealthCheck>(PostgresHealthCheck.Name, timeout: PostgresHealthCheck.Timeout)
+            .AddCheck<OutboxHealthCheck>(OutboxHealthCheck.Name);
+
+        services.AddQuartz(quartz => quartz.AddJobListener<OutboxHeartbeatListener>(
+            [NameMatcher<JobKey>.NameEndsWith(OutboxHeartbeatListener.JobNameSuffix)]));
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
         return services;
     }

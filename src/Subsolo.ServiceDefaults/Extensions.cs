@@ -1,17 +1,24 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Subsolo.ServiceDefaults.Redaction;
 
 namespace Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// SPEC-0007 — padrões de serviço do template do Aspire 13.6: OpenTelemetry (exportação OTLP), health checks,
 /// resiliência de HttpClient e service discovery.
+/// SPEC-0009 — mascaramento de dados pessoais em todo log (OTLP e console) e em todo span exportado (ADR-0008),
+/// spans do PostgreSQL (Npgsql) e <c>/health</c> em JSON <c>{status, entries}</c>.
 /// </summary>
 public static class Extensions
 {
@@ -26,6 +33,9 @@ public static class Extensions
     /// repetido aqui para o ServiceDefaults não depender do Quartz).
     /// </summary>
     private const string QuartzSource = "Quartz";
+
+    /// <summary>Fonte das consultas do Npgsql (o que o pacote <c>Npgsql.OpenTelemetry</c> assina).</summary>
+    private const string NpgsqlSource = "Npgsql";
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -52,6 +62,14 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
+        // Todo log passa pelo redator antes de chegar a qualquer provedor (OTLP, console).
+        builder.Services.Replace(ServiceDescriptor.Singleton<ILoggerFactory>(services => new RedactingLoggerFactory(
+            new LoggerFactory(
+                services.GetServices<ILoggerProvider>(),
+                services.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>(),
+                services.GetService<IOptions<LoggerFactoryOptions>>(),
+                services.GetService<IExternalScopeProvider>()))));
+
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
@@ -62,12 +80,15 @@ public static class Extensions
                 // Comandos, consultas e outbox/inbox (Subsolo.Application, Subsolo.Messaging).
                 .AddSource(SubsoloSources)
                 .AddSource(QuartzSource)
+                .AddSource(NpgsqlSource)
                 .AddAspNetCoreInstrumentation(aspNetCore =>
                     // Os health checks não poluem os traces.
                     aspNetCore.Filter = context =>
                         !context.Request.Path.StartsWithSegments(HealthEndpointPath) &&
                         !context.Request.Path.StartsWithSegments(AlivenessEndpointPath))
-                .AddHttpClientInstrumentation());
+                .AddHttpClientInstrumentation()
+                // Antes dos exportadores: nenhum span sai sem o mascaramento.
+                .AddProcessor(new RedactingActivityProcessor()));
 
         builder.AddOpenTelemetryExporters();
         return builder;
@@ -89,7 +110,7 @@ public static class Extensions
         ArgumentNullException.ThrowIfNull(app);
 
         // Todos os checks precisam passar para a aplicação estar pronta para receber tráfego.
-        app.MapHealthChecks(HealthEndpointPath);
+        app.MapHealthChecks(HealthEndpointPath, new HealthCheckOptions { ResponseWriter = WriteHealthAsync });
 
         // Só os checks com a tag "live" precisam passar para a aplicação ser considerada viva.
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
@@ -98,6 +119,28 @@ public static class Extensions
         });
 
         return app;
+    }
+
+    /// <summary>
+    /// Corpo do <c>/health</c>: <c>{"status": "Healthy|Degraded|Unhealthy", "entries": {"nome": {"status",
+    /// "description"}}}</c> — sem a mensagem das exceções (pode trazer detalhes da infraestrutura).
+    /// </summary>
+    private static Task WriteHealthAsync(HttpContext context, HealthReport report)
+    {
+        context.Response.ContentType = "application/json; charset=utf-8";
+        var body = new
+        {
+            status = report.Status.ToString(),
+            entries = report.Entries.ToDictionary(
+                entry => entry.Key,
+                entry => new
+                {
+                    status = entry.Value.Status.ToString(),
+                    description = entry.Value.Exception is null ? entry.Value.Description : null,
+                },
+                StringComparer.Ordinal),
+        };
+        return JsonSerializer.SerializeAsync(context.Response.Body, body, cancellationToken: context.RequestAborted);
     }
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
