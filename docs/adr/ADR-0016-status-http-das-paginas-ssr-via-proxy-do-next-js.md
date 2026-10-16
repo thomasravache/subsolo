@@ -33,7 +33,7 @@ As páginas públicas (agenda da cidade, depois show e perfil) precisam responde
 
 ### Consequências
 - **Boa**, porque 404 e 503 são reais, e a página continua SSR com cache.
-- **Ruim**, porque a API é chamada duas vezes por visualização (proxy e página); `unstable_paramMatching` não é documentado e pode mudar numa atualização do Next; e o matcher do proxy (`/:cidade([a-z0-9-]{2,60})`) precisa de exclusões quando surgirem páginas estáticas com caminho parecido (ex.: `/sobre`). Mitigação: E2E-01 e IT-04 quebram se o comportamento mudar; revisar ao atualizar o Next e trocar pela API estável quando existir.
+- **Ruim**, porque a API é chamada duas vezes por visualização (proxy e página); `unstable_paramMatching` não é documentado e pode mudar numa atualização do Next; e o matcher do proxy (`/:cidade([a-z0-9-]{2,60})`) precisa de exclusões quando surgirem páginas estáticas com caminho parecido (ex.: `/sobre`). Mitigação: E2E-01 e IT-04 quebram se o comportamento mudar; revisar ao atualizar o Next e trocar pela API estável quando existir. Na prática são até 3 chamadas por visualização (proxy, `generateMetadata` e página; a deduplicação do `fetch` não é garantida com `AbortSignal` distintos), com pior caso de ~10 s se a API não responder (timeout de 5 s em duas chamadas). O proxy remove qualquer cabeçalho interno de estado vindo do cliente (evita envenenamento de cache).
 
 ### Confirmação (G3)
 E2E-01 (cidade inexistente → 404) e IT-04 (API fora → 503) da SPEC-0008, em todo PR pelo job `e2e`.
@@ -47,4 +47,6 @@ E2E-01 (cidade inexistente → 404) e IT-04 (API fora → 503) da SPEC-0008, em 
 | Custo por requisição (1) | 2 chamadas à API | 1 | 1 |
 
 ## Mais Informações
+- Publicação do front no Compose usa `PublishAsPackageScript` (ASPIREJAVASCRIPT001), API em avaliação no Aspire 13.6 — alternativa se mudar: `output: "standalone"` com Dockerfile próprio.
+- `openapi-typescript` 7.13.0 declara peer `typescript ^5.x`; o projeto usa TypeScript 6.0.3 (ADR-0006) e a geração funciona (CT-01 verde); atualizar quando houver versão compatível.
 - Next.js 16.4 (Cache Components, `proxy.ts`) — comportamento verificado no código e nos testes da SPEC-0008 em 2026-10-16; `unstable_paramMatching` não tem documentação pública (não verificado em fonte oficial).
