@@ -38,6 +38,12 @@
     <ProjectReference Include="../Common/Modules/Subsolo.Modules.Template/Subsolo.Modules.Template.csproj" />
     <ProjectReference Include="../Common/Modules/Subsolo.Modules.Template.IntegrationEvents/Subsolo.Modules.Template.IntegrationEvents.csproj" />
     <ProjectReference Include="../Common/Modules/Subsolo.Modules.TemplateB/Subsolo.Modules.TemplateB.csproj" />
+    <!-- SPEC-0008: módulo Events (primeiro módulo real). -->
+    <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Domain/Subsolo.Modules.Events.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Infrastructure/Subsolo.Modules.Events.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
     <!-- SPEC-0007 IT-06: assembly de exemplo com uma violação de cada regra do ADR-0001. -->
     <ProjectReference Include="../Common/Subsolo.Common.ArchitectureViolations/Subsolo.Common.ArchitectureViolations.csproj" />
   </ItemGroup>

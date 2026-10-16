@@ -18,7 +18,16 @@ public sealed class EveryModuleLoadedTests
         var projects = ModularMonolithRules.ModuleProjects(RepositoryRoot());
 
         projects.ShouldBe(
-            ["Subsolo.Modules.Template", "Subsolo.Modules.Template.IntegrationEvents", "Subsolo.Modules.TemplateB"],
+            [
+                "Subsolo.Modules.Events.Application",
+                "Subsolo.Modules.Events.Domain",
+                "Subsolo.Modules.Events.Infrastructure",
+                "Subsolo.Modules.Events.IntegrationEvents",
+                "Subsolo.Modules.Events.Presentation",
+                "Subsolo.Modules.Template",
+                "Subsolo.Modules.Template.IntegrationEvents",
+                "Subsolo.Modules.TemplateB",
+            ],
             ignoreOrder: true);
     }
 
