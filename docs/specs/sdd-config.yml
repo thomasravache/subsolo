@@ -13,7 +13,7 @@ build: "./tools/build.sh"
 test: "dotnet test Subsolo.slnx --filter \"Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract\" && (cd web && pnpm test)"
 test_integration: "dotnet test Subsolo.slnx --filter \"Kind=Integration\""
 # Sob demanda (G2/G5 locais): testes que rodam os próprios comandos deste arquivo (SPEC-0005, Emenda v6). No CI cada comando já é um job.
-test_commands_contract: "dotnet test Subsolo.slnx --filter \"Kind=CommandContract\""
+test_commands_contract: "dotnet test Subsolo.slnx --filter \"Kind=CommandContract\" --max-parallel-test-modules 1"
 # E2E da jornada do usuário. Exemplos: "npx playwright test" | "npx cypress run" | "maestro test flows/"
 test_e2e: "(cd e2e && pnpm test)"
 # Subconjunto rápido rodado após cada deploy (G6).

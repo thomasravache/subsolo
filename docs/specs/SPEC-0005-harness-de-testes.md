@@ -88,7 +88,7 @@ Comandos (sdd-config)
   test             = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)
                      # Emenda v3: testes Kind=GitHubVerification (SPEC-0006) rodam só sob demanda, com SDD_GITHUB_VERIFY=1
                      # Emenda v6: testes Kind=CommandContract (rodam os próprios comandos do sdd-config) ficam fora do test e do test_integration
-  test_commands_contract = dotnet test Subsolo.slnx --filter "Kind=CommandContract"   # sob demanda: G2/G5 locais (no CI, cada comando já é um job)
+  test_commands_contract = dotnet test Subsolo.slnx --filter "Kind=CommandContract" --max-parallel-test-modules 1   # um projeto por vez (os dois CT-01 compilam a mesma solution); sob demanda: G2/G5 locais (no CI, cada comando já é um job)
   test_integration = dotnet test Subsolo.slnx --filter "Kind=Integration"
   arch_test        = dotnet test tests/Subsolo.ArchitectureTests
   test_e2e         = (cd e2e && pnpm test)   # e2e/package.json fixa o mesmo pnpm de web/
