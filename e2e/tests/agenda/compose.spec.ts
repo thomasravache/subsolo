@@ -3,7 +3,7 @@ import { appURL } from "./environment";
 
 /**
  * SPEC-0008 E2E-02 — na pilha do Compose gerado pelo `aspire publish` e iniciado por `tools/compose-up.sh`
- * (`BASE_URL`, padrão http://localhost:8080): `/health` responde 200, a agenda da cidade de exemplo carrega e o
+ * (`BASE_URL`, padrão https://localhost:8443): `/health` responde 200, a agenda da cidade de exemplo carrega e o
  * p95 da duração da navegação em 20 carregamentos fica abaixo de 800 ms (SLO do SSR, ADR-0010).
  */
 // SPEC-0010: o Caddy do Compose redireciona HTTP para HTTPS com o certificado local (`tls internal`), não confiável.

@@ -8,12 +8,20 @@ import { appURL } from "../agenda/environment";
  */
 test.use({ ignoreHTTPSErrors: true });
 
-/** O endereço HTTP da aplicação (`BASE_URL` em HTTPS vira o mesmo host em HTTP, porta padrão). */
+/** Portas do Caddy do Compose local (SPEC-0010, Emenda 3): HTTPS em 8443, HTTP em 8080. */
+const localHttpsPort = "8443";
+const localHttpPort = "8080";
+
+/**
+ * O endereço HTTP da aplicação: o HTTPS local (porta 8443) vira a porta 8080; um `BASE_URL` externo em HTTPS na
+ * porta padrão vira o mesmo host em HTTP, porta padrão.
+ */
 function httpURL(): string {
   const url = new URL(appURL);
   if (url.protocol === "https:") {
+    const port = url.port === localHttpsPort ? localHttpPort : "";
     url.protocol = "http:";
-    url.port = "";
+    url.port = port;
   }
   return url.origin;
 }
