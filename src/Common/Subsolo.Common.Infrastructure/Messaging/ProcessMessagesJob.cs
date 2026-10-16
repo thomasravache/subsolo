@@ -45,6 +45,9 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
         var db = scope.ServiceProvider.GetRequiredService<TDbContext>();
         var now = clock.GetUtcNow().UtcDateTime;
 
+        // Premissa de instância única (ADR-0004): a leitura não usa FOR UPDATE SKIP LOCKED, então duas instâncias
+        // do job sobre o mesmo schema processariam as mesmas mensagens. Exigir o bloqueio antes de qualquer
+        // sobreposição de instâncias (escala horizontal ou deploy com sobreposição).
         var messages = await db.Set<TMessage>()
             .Where(m => m.ProcessedOnUtc == null && (m.NextAttemptOnUtc == null || m.NextAttemptOnUtc <= now))
             .OrderBy(m => m.OccurredOnUtc)
@@ -65,13 +68,28 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
+                // A mensagem da exceção vai para a coluna de erro e para o log: os handlers não devem colocar dados
+                // pessoais nas mensagens de exceção (ADR-0008).
+                DiscardPendingChanges(db);
                 message.MarkFailed(exception, clock.GetUtcNow().UtcDateTime);
                 LogFailure(logger, exception, typeof(TMessage).Name, message.Id, _module.Name, message.Attempts);
                 activity?.AddException(exception);
                 activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
             }
 
-            await db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // Falha ao gravar o estado desta mensagem não aborta o lote: as alterações pendentes são descartadas
+                // e a mensagem volta a ser lida na próxima execução (os handlers já registrados não rodam de novo).
+                DiscardPendingChanges(db);
+                LogSaveFailure(logger, exception, typeof(TMessage).Name, message.Id, _module.Name);
+                activity?.AddException(exception);
+                activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
+            }
         }
     }
 
@@ -99,7 +117,24 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
         }
     }
 
+    /// <summary>
+    /// Desanexa do rastreador as alterações ainda não gravadas (ex.: o registro de consumer cuja gravação falhou),
+    /// para que o próximo <c>SaveChanges</c> não as tente de novo.
+    /// </summary>
+    private static void DiscardPendingChanges(TDbContext db)
+    {
+        foreach (var entry in db.ChangeTracker.Entries()
+                     .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+    }
+
     private static string ShortTypeName(string typeName) => typeName[(typeName.LastIndexOf('.') + 1)..];
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Falha ao gravar o estado de {MessageKind} {MessageId} do módulo {Module}; nova leitura na próxima execução")]
+    private static partial void LogSaveFailure(ILogger logger, Exception exception, string messageKind, Guid messageId, string module);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Falha ao processar {MessageKind} {MessageId} do módulo {Module} (tentativa {Attempt})")]
     private static partial void LogFailure(ILogger logger, Exception exception, string messageKind, Guid messageId, string module, int attempt);
