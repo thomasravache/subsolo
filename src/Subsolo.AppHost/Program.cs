@@ -61,6 +61,10 @@ if (builder.ExecutionContext.IsPublishMode)
         // Production efetivo por padrão (migrações pelo pipeline, ADR-0002), mesmo com o .env gerado vazio. O
         // Compose local (tools/compose-up.sh) define API_ENVIRONMENT=Development: migrações e seed no start.
         service.Environment["ASPNETCORE_ENVIRONMENT"] = "${API_ENVIRONMENT:-Production}";
+
+        // Sem Kerberos: a imagem aspnet não tem a libgssapi_krb5, e o Npgsql tentaria a criptografia GSS (Prefer) a
+        // cada conexão, registrando "cannot open shared object file" antes de seguir sem ela.
+        service.Environment["PGGSSENCMODE"] = "disable";
     });
 
     // Caddy na frente (ADR-0004): /api/* e /health → api; o resto → web. Mesmo Caddyfile do deploy na VPS.
