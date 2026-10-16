@@ -10,8 +10,8 @@ parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [e2e/tests/agenda/**, src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/src/proxy.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
-adrs: [ADR-0003, ADR-0008, ADR-0004]
+touches: [Subsolo.slnx, web/src/proxy.test.ts, web/src/app/layout.tsx, web/src/app/page.tsx, web/src/app/not-found.tsx, src/Subsolo.AppHost/Program.cs, tests/Common/Subsolo.AppHost.IntegrationTests/**, src/Subsolo.ServiceDefaults/Extensions.cs, e2e/tests/agenda/**, src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/src/proxy.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
+adrs: [ADR-0003, ADR-0008, ADR-0004, ADR-0017]
 external: []
 size: M
 approved_by: thomas
@@ -227,4 +227,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0010`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 2 (impedimentos do Test-writer): IMP-B → ADR-0017: a CSP com nonce vale em todas as páginas renderizando-as por requisição (`await connection()`), mantendo o Cache Components; IMP-A → entram nos `touches` o `Subsolo.slnx` (projetos de `tests/Security`), `web/src/proxy.test.ts` (UT-02), o layout raiz, `page.tsx` e `not-found.tsx` (renderização por requisição), o AppHost e seus testes (porta HTTPS do Caddy para o IT-06) e `src/Subsolo.ServiceDefaults/Extensions.cs` só para `/health` e `/alive` declararem `AllowAnonymous` (arquivo também da SPEC-0009; o Integrator resolve o merge); `GET /api/v1/antiforgery` fica fora do OpenAPI (`ExcludeFromDescription`), sem mudar o snapshot nem o cliente | IMP-A e IMP-B do Test-writer | SPEC-0009 (mesmo arquivo do ServiceDefaults), SPEC-0011 (layout raiz) | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): no Next 16 o middleware chama-se `proxy.ts` e já existe em `web/src/proxy.ts` (status da agenda, ADR-0016); a CSP e os cabeçalhos entram nesse mesmo proxy, ampliando o matcher para todas as páginas sem mudar o comportamento da agenda (E2E-01/IT-04 da SPEC-0008 continuam verdes; `e2e/tests/agenda/**` entra só se for preciso ajustar o ambiente desses testes, nunca as asserções). Se a CSP com nonce conflitar com o Cache Components do ADR-0013 (nonce exige renderização dinâmica), o Test-writer/Implementer reporta impedimento antes de escolher | Estrutura real do projeto e convivência com o ADR-0016 | SPEC-0008 | thomas (delegado: piloto automático, 2026-10-16) |

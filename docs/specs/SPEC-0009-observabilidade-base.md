@@ -10,7 +10,7 @@ parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/src/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, tests/Common/Subsolo.Common.IntegrationTests/Observability/**, e2e/tests/observability/**]
+touches: [Subsolo.slnx, src/Subsolo.AppHost/**, src/Common/Subsolo.Common.Infrastructure/CommonInfrastructureExtensions.cs, tools/compose-up.sh, e2e/playwright.config.ts, src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/src/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, tests/Common/Subsolo.Common.IntegrationTests/Observability/**, e2e/tests/observability/**]
 adrs: [ADR-0010, ADR-0008]
 external: []
 size: M
@@ -219,4 +219,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0009`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo e testes) | 2026-10-16 | Emenda 2 (impedimentos do Test-writer): `Subsolo.slnx` entra nos `touches` (projetos de `tests/Observability`); o E2E-01 chega ao Seq por um override só local do `tools/compose-up.sh` que publica o Seq em `127.0.0.1` e exporta `SEQ_URL` (o artefato publicado continua sem porta do Seq, IT-04); o heartbeat da outbox é registrado por um `IJobListener` do Quartz em `Observability/**` e o health check em `CommonInfrastructureExtensions.cs`, sem tocar a mensageria; o AppHost entra para ligar o OTLP de api/web ao Seq, aplicar os alertas e o SMTP do Mailpit; o redator de dados pessoais vale também para os logs de console (ADR-0008), com um caso a mais no UT-01; os testes herdados das atividades da mensageria ficam com a tag `SPEC-0009:IT-01` | IMP 1–4 do Test-writer | SPEC-0008 (`tools/compose-up.sh` ganha o override local; o artefato não muda), SPEC-0010 (AppHost também tocado; o Integrator resolve o merge) | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): o app Next fica em `web/src/`, então a instrumentação é `web/src/instrumentation.ts` | Estrutura real do projeto (SPEC-0008) | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
