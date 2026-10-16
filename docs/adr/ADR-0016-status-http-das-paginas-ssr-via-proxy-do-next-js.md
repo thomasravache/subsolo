@@ -33,7 +33,7 @@ As páginas públicas (agenda da cidade, depois show e perfil) precisam responde
 
 ### Consequências
 - **Boa**, porque 404 e 503 são reais, e a página continua SSR com cache.
-- **Ruim**, porque a API é chamada duas vezes por visualização (proxy e página); `unstable_paramMatching` não é documentado e pode mudar numa atualização do Next; e o matcher do proxy (`/:cidade([a-z0-9-]{2,60})`) precisa de exclusões quando surgirem páginas estáticas com caminho parecido (ex.: `/sobre`). Mitigação: E2E-01 e IT-04 quebram se o comportamento mudar; revisar ao atualizar o Next e trocar pela API estável quando existir. Na prática são até 3 chamadas por visualização (proxy, `generateMetadata` e página; a deduplicação do `fetch` não é garantida com `AbortSignal` distintos), com pior caso de ~10 s se a API não responder (timeout de 5 s em duas chamadas). O proxy remove qualquer cabeçalho interno de estado vindo do cliente (evita envenenamento de cache).
+- **Ruim**, porque a API é chamada mais de uma vez por visualização (proxy, `generateMetadata` e página); `unstable_paramMatching` não é documentado e pode mudar numa atualização do Next; e o matcher do proxy cobre todo segmento único que não seja interno do Next nem tenha ponto (`/((?!_)[^/.]+)`): slug fora do padrão vira 404 sem chamar a API, arquivos públicos ficam de fora, e páginas estáticas de um segmento (ex.: `/sobre`) precisarão de exclusão explícita. Mitigação: E2E-01 e IT-04 quebram se o comportamento mudar; revisar ao atualizar o Next e trocar pela API estável quando existir. Na prática são até 3 chamadas (a deduplicação do `fetch` não é garantida com `AbortSignal` distintos), com pior caso de ~10 s se a API não responder (timeout de 5 s em duas chamadas). O proxy remove qualquer cabeçalho interno de estado vindo do cliente (evita envenenamento de cache).
 
 ### Confirmação (G3)
 E2E-01 (cidade inexistente → 404) e IT-04 (API fora → 503) da SPEC-0008, em todo PR pelo job `e2e`.
@@ -44,7 +44,7 @@ E2E-01 (cidade inexistente → 404) e IT-04 (API fora → 503) da SPEC-0008, em 
 | Status correto (3) | sim | sim | não |
 | Mantém cache/SSR do ADR-0013 (2) | sim | não | sim |
 | API estável do Next (2) | não (unstable) | sim | sim |
-| Custo por requisição (1) | 2 chamadas à API | 1 | 1 |
+| Custo por requisição (1) | até 3 chamadas à API | 1 | 1 |
 
 ## Mais Informações
 - Publicação do front no Compose usa `PublishAsPackageScript` (ASPIREJAVASCRIPT001), API em avaliação no Aspire 13.6 — alternativa se mudar: `output: "standalone"` com Dockerfile próprio.
