@@ -1,0 +1,3 @@
+# SPEC-0007 — migrações geradas pelo `dotnet ef` nos módulos de exemplo: código gerado (sem regras de estilo).
+[**/Migrations/*.cs]
+generated_code = true
