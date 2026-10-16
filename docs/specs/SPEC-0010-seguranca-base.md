@@ -4,13 +4,13 @@ title: Segurança base
 tier: full
 type: foundation
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/middleware.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
+touches: [e2e/tests/agenda/**, src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/src/proxy.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
 adrs: [ADR-0003, ADR-0008, ADR-0004]
 external: []
 size: M
@@ -49,7 +49,7 @@ Aplica a segurança base dos ADR-0003 e ADR-0008 antes da primeira feature com u
 ## 4. Decisão Arquitetural
 **Contexto:** projeto novo; ADR-0003 (identidade própria, nega por padrão) e ADR-0008.
 
-**Decisão:** segurança como configuração central (`Common.Presentation` + `web/middleware.ts`), com teste de arquitetura impedindo endpoint sem política.
+**Decisão:** segurança como configuração central (`Common.Presentation` + `web/src/proxy.ts`), com teste de arquitetura impedindo endpoint sem política.
 
 **Justificativa:** com agentes escrevendo endpoints, a regra precisa falhar no CI, não depender da revisão.
 
@@ -227,3 +227,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0010`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): no Next 16 o middleware chama-se `proxy.ts` e já existe em `web/src/proxy.ts` (status da agenda, ADR-0016); a CSP e os cabeçalhos entram nesse mesmo proxy, ampliando o matcher para todas as páginas sem mudar o comportamento da agenda (E2E-01/IT-04 da SPEC-0008 continuam verdes; `e2e/tests/agenda/**` entra só se for preciso ajustar o ambiente desses testes, nunca as asserções). Se a CSP com nonce conflitar com o Cache Components do ADR-0013 (nonce exige renderização dinâmica), o Test-writer/Implementer reporta impedimento antes de escolher | Estrutura real do projeto e convivência com o ADR-0016 | SPEC-0008 | thomas (delegado: piloto automático, 2026-10-16) |

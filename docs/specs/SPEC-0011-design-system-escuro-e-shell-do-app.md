@@ -4,13 +4,13 @@ title: Design system escuro e shell do app
 tier: full
 type: foundation
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [docs/design/**, web/src/styles/**, web/src/components/ui/**, web/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
+touches: [web/src/app/layout.tsx, web/src/app/globals.css, web/src/app/(public)/[cidade]/**, web/src/app/icon.png, web/src/app/favicon.ico, web/public/icons/**, docs/design/**, web/src/styles/**, web/src/components/ui/**, web/src/app/(public)/layout.tsx, web/public/fonts/**, web/src/components/ui/__tests__/**, e2e/tests/design/**]
 adrs: [ADR-0013]
 external: []
 size: M
@@ -223,3 +223,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0011`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): o app Next fica em `web/src/app/`; entram nos `touches` o layout raiz, o `globals.css`, a página da agenda (`(public)/[cidade]/**`, para aplicar o shell e os componentes sem mudar textos nem status) e os ícones do app | Estrutura real do projeto (SPEC-0008) | SPEC-0008 (mesmos textos e status; E2E-01 continua valendo) | thomas (delegado: piloto automático, 2026-10-16) |

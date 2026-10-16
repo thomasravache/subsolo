@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 4, implemented 6
+- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 1, in-progress 3, implemented 6
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
@@ -38,15 +38,15 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0009, SPEC-0010, SPEC-0011  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0009, SPEC-0010, SPEC-0011
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0009 | Observabilidade base | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0010 | Segurança base | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0009 | Observabilidade base | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0010 | Segurança base | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0011 | Design system escuro e shell do app | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
 
 ## Épicos
@@ -65,9 +65,9 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 flowchart LR
   subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
     S0008["SPEC-0008<br/>Walking skeleton: agenda da cidade"]:::implemented
-    S0009["SPEC-0009<br/>Observabilidade base"]:::approved
-    S0010["SPEC-0010<br/>Segurança base"]:::approved
-    S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
+    S0009["SPEC-0009<br/>Observabilidade base"]:::inprogress
+    S0010["SPEC-0010<br/>Segurança base"]:::inprogress
+    S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::inprogress
     S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::approved
   end
   S0008 --> S0009
@@ -92,9 +92,9 @@ flowchart LR
 | [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@4 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
 | [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
-| [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
-| [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
-| [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | approved | 2026-10-14 | SPEC-0001 | — | — |
 

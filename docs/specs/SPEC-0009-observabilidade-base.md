@@ -4,13 +4,13 @@ title: Observabilidade base
 tier: full
 type: foundation
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, tests/Common/Subsolo.Common.IntegrationTests/Observability/**, e2e/tests/observability/**]
+touches: [src/Subsolo.ServiceDefaults/**, src/Common/Subsolo.Common.Infrastructure/Observability/**, web/src/instrumentation.ts, web/src/observability/**, web/package.json, web/pnpm-lock.yaml, Directory.Packages.props, infra/seq/**, docs/runbooks/erros-5xx.md, docs/runbooks/outbox-parada.md, tests/Observability/**, tests/Common/Subsolo.Common.IntegrationTests/Observability/**, e2e/tests/observability/**]
 adrs: [ADR-0010, ADR-0008]
 external: []
 size: M
@@ -49,7 +49,7 @@ Liga a observabilidade do ADR-0010 de ponta a ponta, localmente: logs estruturad
 ## 4. Decisão Arquitetural
 **Contexto:** projeto novo; ADR-0010 (OpenTelemetry → Seq) e ADR-0008 (sem dado pessoal em logs).
 
-**Decisão:** toda a instrumentação passa por `Subsolo.ServiceDefaults` e por `web/instrumentation.ts`; os módulos não configuram telemetria por conta própria.
+**Decisão:** toda a instrumentação passa por `Subsolo.ServiceDefaults` e por `web/src/instrumentation.ts`; os módulos não configuram telemetria por conta própria.
 
 **Justificativa:** um ponto único garante o mesmo formato e o mascaramento em todos os módulos.
 
@@ -219,3 +219,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0009`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): o app Next fica em `web/src/`, então a instrumentação é `web/src/instrumentation.ts` | Estrutura real do projeto (SPEC-0008) | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
