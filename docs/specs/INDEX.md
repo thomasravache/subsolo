@@ -4,7 +4,7 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Validação (G0): **1 erro(s), 14 aviso(s)** — rode `spec_graph.py validate`
 - Specs: proposed 1, approved 6, in-progress 2, implemented 1
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 

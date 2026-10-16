@@ -159,9 +159,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 
 **Fase Emenda v4 (IMP-03 da SPEC-0005): CI com o contrato SPEC-0005@4**
-- [ ] Red: UT-02 (jobs que chamam `tools/*.sh`/`pnpm` preparam Node + pnpm) e CT-01 (comando `test` literal novo) falhando
-- [ ] Green: `ci.yml` com o comando `test` novo e Node + pnpm no job `integration`
-- [ ] Validar e re-registrar G1–G4; CI verde no PR #4
+- [x] Red: UT-02 (jobs que chamam `tools/*.sh`/`pnpm` preparam Node + pnpm) e CT-01 (comando `test` literal novo) falhando
+- [x] Green: `ci.yml` com o comando `test` novo e Node + pnpm no job `integration`
+- [x] Validar e re-registrar G1–G4; CI verde no PR #4
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -182,7 +182,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — aff181e | 2026-10-16 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — d888771 | 2026-10-16 |
 | G3 Arquitetura | N/A | SPEC-0006 só altera .github/workflows; a suíte de arquitetura nasce na SPEC-0005 (mesma onda) e as regras do ADR-0001 na SPEC-0007 | 2026-10-13 |
-| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em eeb1e27 — 0 blocker/major; F1–F7 da 1ª rodada verificados; minors: m1 retries/trace/vídeo do Playwright no CI (SPEC-0005), m2 grupo de concorrência na main, m3 chave de cache pnpm compartilhada, m4 asserção do IT-05, m5 supressão do CodeQL a confirmar — eeb1e27 | 2026-10-13 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v4) em 39fd929 — SHAs aff181e, d888771, 5a96ee1; 0 blocker/major; segurança do workflow ok; m4 (Refs sem spec) corrigido em 7ecb778; demais minors na SPEC-0013 — 7ecb778 (árvore suja) | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |

@@ -176,8 +176,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Validar: build + suíte completa + E2E (G2)
 
 **Fase Emenda v6 (IMP-03): testes de comando fora da suíte padrão**
-- [ ] Red/ajuste de testes: CT-01 desta spec e CT-01 da SPEC-0004 com `Kind=CommandContract`; remover o desvio `SUBSOLO_SPEC0005_CT01_NESTED`
-- [ ] Validar: `test`, `test_integration` e `test_commands_contract` verdes localmente; re-registrar G1–G4
+- [x] Red/ajuste de testes: CT-01 desta spec e CT-01 da SPEC-0004 com `Kind=CommandContract`; remover o desvio `SUBSOLO_SPEC0005_CT01_NESTED`
+- [x] Validar: `test`, `test_integration` e `test_commands_contract` verdes localmente; re-registrar G1–G4
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -191,9 +191,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — cc247d8 | 2026-10-13 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 535aa1b | 2026-10-13 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 555ms) — 535aa1b | 2026-10-13 |
-| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED após Emenda v5 — único blocker do 1º review (web/pnpm-lock.yaml fora de touches) resolvido só por escopo, sem mudança de código; WARN de testes fora de commits red justificado no 1º review (infra do harness na fase green: fixtures, configs, exemplos); minors viram spec de pendências — 434de58 | 2026-10-14 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 7ecb778 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 556ms) — 7ecb778 (árvore suja) | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v6) em 39fd929 — SHAs 1d1d835, 1755d0d, 591105e; 0 blocker/major. fix de coverage.sh feito após o test por necessidade: sem ele o coverage rodaria o CT-01 em recursão (justificado). Minors m1–m3 na SPEC-0013; test_commands_contract verde (141s) — 7ecb778 (árvore suja) | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
