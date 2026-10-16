@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Subsolo.Common.Presentation.Security;
 
@@ -13,6 +15,27 @@ public sealed class AntiforgeryFilter : IEndpointFilter
     /// <summary>Cabeçalho que carrega o token anti-forgery nas mutações.</summary>
     public const string HeaderName = "X-CSRF";
 
-    public ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
-        throw new NotImplementedException("SPEC-0010: scaffold — implementar o filtro de anti-forgery.");
+    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(next);
+
+        var httpContext = context.HttpContext;
+        if (!IsMutation(httpContext.Request.Method))
+        {
+            return await next(context);
+        }
+
+        if (string.IsNullOrWhiteSpace(httpContext.Request.Headers[HeaderName])
+            || !await httpContext.RequestServices.GetRequiredService<IAntiforgery>().IsRequestValidAsync(httpContext))
+        {
+            SecurityLog.Rejected(httpContext, SecurityProblems.CsrfInvalid);
+            return SecurityProblems.CsrfRejected();
+        }
+
+        return await next(context);
+    }
+
+    private static bool IsMutation(string method) =>
+        HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsPatch(method) || HttpMethods.IsDelete(method);
 }

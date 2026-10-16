@@ -89,13 +89,14 @@ public static class Extensions
         ArgumentNullException.ThrowIfNull(app);
 
         // Todos os checks precisam passar para a aplicação estar pronta para receber tráfego.
-        app.MapHealthChecks(HealthEndpointPath);
+        // Públicos (SPEC-0010): a política de fallback da API exige usuário autenticado.
+        app.MapHealthChecks(HealthEndpointPath).AllowAnonymous();
 
         // Só os checks com a tag "live" precisam passar para a aplicação ser considerada viva.
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
         {
             Predicate = registration => registration.Tags.Contains("live"),
-        });
+        }).AllowAnonymous();
 
         return app;
     }
