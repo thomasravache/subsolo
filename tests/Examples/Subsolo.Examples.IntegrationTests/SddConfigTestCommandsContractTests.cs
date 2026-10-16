@@ -8,12 +8,11 @@ namespace Subsolo.Examples.IntegrationTests;
 /// (contrato consumido pela SPEC-0006 e pelas specs de módulo).
 /// </summary>
 /// <remarks>
-/// Os comandos rodam a própria suíte .NET, que contém este teste: a execução aninhada recebe
-/// <see cref="NestedRunVariable"/> e, nela, este teste é pulado — sem isso a suíte se chamaria para sempre.
+/// Marcado <c>Kind=CommandContract</c> (Emenda v6): roda só com o comando <c>test_commands_contract</c>. Os comandos
+/// <c>test</c>, <c>test_integration</c> e <c>coverage</c> não selecionam esse Kind, então não há execução aninhada.
 /// </remarks>
 public sealed class SddConfigTestCommandsContractTests
 {
-    private const string NestedRunVariable = "SUBSOLO_SPEC0005_CT01_NESTED";
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(45);
 
     [Theory]
@@ -23,13 +22,9 @@ public sealed class SddConfigTestCommandsContractTests
     [InlineData("test_e2e")]
     [InlineData("coverage")]
     [Trait("Spec", "SPEC-0005:CT-01")]
-    [Trait("Kind", "Integration")]
+    [Trait("Kind", "CommandContract")]
     public async Task SddConfigTestCommandRunsSuccessfullyAtRepositoryRoot(string key)
     {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable(NestedRunVariable) == "1",
-            "execução aninhada pelo próprio CT-01 da SPEC-0005");
-
         var command = ReadSddConfigCommand(key);
         command.ShouldNotBeNullOrWhiteSpace($"comando {key} vazio no sdd-config (docs/specs/sdd-config.yml)");
 
@@ -39,7 +34,6 @@ public sealed class SddConfigTestCommandsContractTests
             CommandTimeout,
             new Dictionary<string, string?>
             {
-                [NestedRunVariable] = "1",
                 ["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1",
                 ["DOTNET_NOLOGO"] = "1",
             },
