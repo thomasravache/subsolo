@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 
 /**
- * SPEC-0008 — cabeçalho de requisição com que o `proxy` (que já definiu o status HTTP) avisa a página de que a
- * cidade não existe (`not-found`, 404) ou de que a API está fora do ar (`unavailable`, 503).
+ * SPEC-0008 — cabeçalho de requisição com que o `proxy` (que já definiu o status HTTP) diz à página o resultado
+ * da agenda: `ok`, `not-found` (404) ou `unavailable` (503). O proxy sempre o sobrescreve, então o valor que o
+ * cliente mandar é descartado.
  */
 export const agendaStatusHeader = "x-subsolo-agenda";
 

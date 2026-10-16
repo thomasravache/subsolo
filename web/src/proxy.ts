@@ -1,29 +1,43 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getCityAgenda } from "@/api/agenda";
+import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
 import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
 
 /**
- * SPEC-0008 — o status HTTP da agenda `/{cidade}` é decidido aqui, antes da renderização: com Cache Components a
- * página começa a ser enviada (status 200) pelo shell estático antes de os dados da API chegarem. Cidade
- * inexistente → 404 e API fora do ar → 503, com a página avisada pelo cabeçalho {@link agendaStatusHeader}.
+ * SPEC-0008 — o status HTTP da agenda `/{cidade}` é decidido aqui, antes da renderização (ADR-0016): com Cache
+ * Components a página começa a ser enviada (status 200) pelo shell estático antes de os dados da API chegarem.
+ * Cidade inexistente ou slug fora do padrão → 404 e API fora do ar → 503. A página é avisada pelo cabeçalho
+ * interno {@link agendaStatusHeader}, que o proxy sempre sobrescreve: o valor mandado pelo cliente nunca chega lá.
  */
+
+/** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
+const citySlug = /^[a-z0-9-]{2,60}$/;
+
+const statusByKind: Record<CityAgendaResult["kind"], number> = {
+  ok: 200,
+  "not-found": 404,
+  unavailable: 503,
+};
+
 export async function proxy(request: NextRequest) {
   const slug = request.nextUrl.pathname.slice(1);
-  const result = await getCityAgenda(slug);
-  if (result.kind === "ok") {
-    return NextResponse.next();
-  }
+  const kind = citySlug.test(slug)
+    ? (await getCityAgenda(slug)).kind
+    : "not-found";
 
   const headers = new Headers(request.headers);
-  headers.set(agendaStatusHeader, result.kind);
+  headers.set(agendaStatusHeader, kind);
+  if (kind === "ok") {
+    return NextResponse.next({ request: { headers } });
+  }
   return NextResponse.rewrite(request.nextUrl, {
-    status: result.kind === "not-found" ? 404 : 503,
+    status: statusByKind[kind],
     request: { headers },
   });
 }
 
 export const config = {
-  // Só a agenda (`/{cidade}`, slug válido); `/` e os arquivos do Next.js não passam por aqui.
-  matcher: "/:cidade([a-z0-9-]{2,60})",
+  // Todo caminho de um segmento (`/{cidade}`), menos os internos do Next.js (`/_next/…`, `/_not-found` etc.).
+  // `/` não passa por aqui. Uma página estática nova de um segmento (ex.: `/sobre`) precisa entrar na exceção.
+  matcher: "/((?!_)[^/]+)",
 };
