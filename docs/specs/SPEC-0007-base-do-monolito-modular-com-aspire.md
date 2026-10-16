@@ -4,7 +4,7 @@ title: Base do monólito modular com Aspire
 tier: full
 type: foundation
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0005]
@@ -222,9 +222,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase final: Integração, entrega e documentação**
 - [x] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -235,10 +235,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 4205196 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 813ms) — 4205196 | 2026-10-16 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (2ª rodada): APPROVED em 4205196 — 3 majors e minors 4–9 resolvidos; arquivos de teste fora de red justificados (corpo do helper de regra, configuração do AppHost, artefatos gerados). Minors novos: N1 caminho de falha ao gravar estado sem teste e N2 OccurredOnUtc do DomainEvent fora do TimeProvider (→ SPEC-0013); N3 atividades da outbox/inbox sem teste (→ SPEC-0009) — 4205196 | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 1m 07s 585ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 801ms); nota: CI do PR #12 verde (10/10 checks) em 8a87862: https://github.com/thomasravache/subsolo/actions/runs/38864259685; bateria local no integrado 8a87862 verde, incluindo test_commands_contract (275 s) e coverage — 8a87862 | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — seguir as recomendações, criar PR e mergear; integração verde (G5) em 8a87862 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #12 | 2026-10-16 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 5a2dd91 | 2026-10-16 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -250,36 +250,67 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+A base do monólito modular (ADR-0001) e o ambiente local com Aspire (ADR-0004), prontos para receber módulos:
+- `Subsolo.Common.Domain`: `Entity`, `DomainEvent` com identidade estável (Guid v7), `Result`/`Error` com tipos e erros de validação por campo.
+- `Subsolo.Common.Application`: comandos, consultas e handlers sem MediatR; decorators de log (sem payload) e de validação (FluentValidation 12), com traces próprios (`Subsolo.Application`); eventos de integração e `IEventBus`.
+- `Subsolo.Common.Infrastructure`: `ModuleDbContext` com schema por módulo, outbox/inbox por módulo gravadas na mesma transação, jobs Quartz a cada 2 s com retry e backoff, inbox idempotente, traces da mensageria (`Subsolo.Messaging`), registro `AddCommonInfrastructure` + `AddModule<TDbContext>`.
+- `Subsolo.Common.Presentation`: `IEndpoint`, `AddEndpoints`/`MapEndpoints`, `Result` → `ProblemDetails` (RFC 9457) sem detalhes internos fora de Development.
+- `Subsolo.Api` (OpenAPI em `/openapi/v1.json` com snapshot em `docs/api/openapi.v1.json`, `/health`, `/alive`), `Subsolo.ServiceDefaults` (OpenTelemetry, resiliência, service discovery) e `Subsolo.AppHost`: `aspire run` sobe PostgreSQL 18.6, Seq, Mailpit, API e o front.
+- Regras do ADR-0001 em `tests/Subsolo.ArchitectureTests` aplicadas a todo `Subsolo.Modules.*`, com falha quando um módulo do repositório fica de fora.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: scaffold (b98a058) → Test-writer (red 75fec1d) → Emenda v1 (lacunas do esboço do contrato) → Implementer (866758e…4a59b76) → Reviewer 1 (CHANGES_REQUESTED: 3 majors) → Emenda v2 (contrato v3) → Test-writer (5970381, 2c1463c) → Implementer (3a7391c…4205196) → Reviewer 2 APPROVED.
+- Emendas: v1 (`IDomainEventHandler`, registro de módulo, endpoints, `IFileStorage` movido para a feature de flyer do MVP) e v2 (identidade do evento de domínio, traces próprios, regra contra módulo esquecido; envio ao Seq com a SPEC-0009).
+- Pacotes: Aspire 13.6.1, EF Core 10.0.13 + Npgsql 10.0.3, FluentValidation 12.2.0, Scrutor 7.0.0, Quartz 4.5.1, OpenTelemetry 1.20.0 — licenças da allowlist do ADR-0009 (o transitivo `fractions` 7.3.0 é BSD-2-Clause).
+- Dívidas registradas: sem `FOR UPDATE SKIP LOCKED` (premissa de instância única do ADR-0004) e sem dead-letter; minors encaminhados para as SPEC-0008, 0009 e 0013.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | comando válido passa pelos decorators | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| UT-02 | comando inválido vira `Error.Validation` com os 2 campos, sem chamar o handler | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| UT-03 | cada `ErrorType` vira o status certo com `code` (e `errors` no 400) | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| UT-04 | log com nome e resultado, sem o e-mail do payload | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| UT-05 | `AddModule` decora comandos (Logging → Validation) e consultas (Logging) | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| UT-06 | atividade com nome e status Ok/Error para comando e consulta | PASS | `gate G2 --run` em 4205196; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-01 | evento de domínio vai para a outbox na mesma transação; rollback não grava | PASS | `test_integration` em `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-02 | tabelas só no schema do módulo | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-03 | entrega entre módulos em ≤ 5 s simulados | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-04 | inbox processa 1×; retry até o sucesso sem reprocessar | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-05 | 500 em Production sem stack trace | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-06 | regras do ADR-0001 passam nos módulos e falham nas violações | PASS | `arch_test` em `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-07 | AppHost sobe api e web saudáveis; `/health` 200 | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) (job integration); `aspire start` manual do Implementer com todos os recursos saudáveis |
+| IT-08 | retry da outbox não duplica no outro módulo | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-09 | módulo não referenciado faz a regra falhar com o nome | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| CT-01 | OpenAPI 3.1 válido e igual ao snapshot | PASS | `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde em 8a87862 (run 38864259685)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado) — entrega ≤ 5 s (IT-03), sem stack trace (IT-05), log sem payload (UT-04), inbox idempotente (IT-04)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo é a `main`: merge do PR #12 (a373563); G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout — traces no dashboard do Aspire; rollback = revert do merge commit
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG e README atualizados
+- [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #12 (https://github.com/thomasravache/subsolo/pull/12), merge commit a373563 em 2026-10-16, com H2 delegado pelo Thomas (autorização de piloto automático) e merge pelo Architect (ADR-0007).
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0013 — teste do caminho de falha ao gravar o estado da mensagem e `OccurredOnUtc` pelo `TimeProvider`.
+- SPEC-0009 — envio de logs e traces ao Seq e teste das atividades da mensageria.
+- SPEC-0008 — `.editorconfig` para migrações dos módulos de produção.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0007`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

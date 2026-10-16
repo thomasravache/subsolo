@@ -4,7 +4,7 @@ title: Ajustes menores do tooling apontados na revisão da SPEC-0004
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
@@ -67,9 +67,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase final: Integração, entrega e documentação**
 - [x] Review independente (G4)
-- [ ] Integração + CI (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live (SPEC-0003)
-- [ ] Relatório de Entrega e CHANGELOG (G7)
+- [x] Integração + CI (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live (SPEC-0003)
+- [x] Relatório de Entrega e CHANGELOG (G7)
 
 
 ## 8. Registro de Gates
@@ -81,10 +81,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 3d8ef04 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 548ms) — 3d8ef04 | 2026-10-16 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 3d8ef04 (9c0dc7c red, 3d8ef04 green); IT-01 red/green confirmado; .gitignore não expõe .env.local/.env.production; chave do IT-02 dispara gcp-api-key só no teste. Minors: summary do CommitMessageRuleTests desatualizado (→ SPEC-0013); .claude/ inteiro ignorado (trocar por .claude/* com exceções se um dia versionarem config) — 3d8ef04 | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 1m 00s 745ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 841ms); nota: CI do PR #12 verde (10/10 checks) em 8a87862: https://github.com/thomasravache/subsolo/actions/runs/38864259685; bateria local no integrado 8a87862 verde, incluindo test_commands_contract (275 s) e coverage — 8a87862 (árvore suja) | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — seguir as recomendações, criar PR e mergear; integração verde (G5) em 8a87862 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #12 | 2026-10-16 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 5a2dd91 (árvore suja) | 2026-10-16 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -95,29 +95,38 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- `.gitignore` libera `.env.example` (raiz e subpastas) mantendo `.env*` ignorado, e ignora `.claude/` (estado local do Claude Code).
+- Testes de ferramentas cobrem a referência à spec fora do rodapé e o `[no-spec]` no hook de commit, e uma chave falsa no formato Google API no pre-commit.
+- Comentário de scaffold removido de `web/next.config.ts`.
 
 ### Como foi feito
+Test-writer (red 9c0dc7c) → Implementer (3d8ef04) → Reviewer APPROVED. Emenda 1 corrigiu o exemplo `[no-spec]` do UT-01 para o formato aceito pelo hook.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+IT-01 falhou em 9c0dc7c (`.env.example` ignorado e `.claude/worktrees/x` não ignorado; `gate G1 --run --at 9c0dc7c` exit 2) e passa em 3d8ef04 (`gate G2 --run`). UT-01 e IT-02 são guardas: passavam antes e continuam passando.
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | hook aceita spec citada no corpo e `[no-spec]` no assunto | PASS | `gate G2 --run` em 3d8ef04; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-01 | `.env.example` versionável; `.env`/`.env.local` ignorados; `.claude/` ignorado | PASS | red em 9c0dc7c; verde em 3d8ef04; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
+| IT-02 | pre-commit bloqueia chave falsa no formato Google API | PASS | `gate G2 --run` em 3d8ef04; `gate G5 --run` em 8a87862; CI do PR #12 em 8a87862 (run 38864259685, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — merge do PR #12 (a373563); G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — SPEC-0013
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #12, merge commit a373563 em 2026-10-16 (H2 delegado pelo Thomas).
 
 ### Pendências
-
+- SPEC-0013 — comentário de resumo de `CommitMessageRuleTests.cs` desatualizado.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
