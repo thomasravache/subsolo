@@ -141,7 +141,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: test (sdd-config)
-        run: dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test)
+        run: dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)
       - name: arch_test (sdd-config)
         if: ${{ !cancelled() }}
         run: dotnet test tests/Subsolo.ArchitectureTests
@@ -178,6 +178,25 @@ jobs:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
+      # Os testes de integração do lint.sh (Kind=Integration) instalam e rodam o front com pnpm.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: pnpm via corepack (packageManager de web/package.json)
+        id: pnpm
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable
+          cd web
+          pnpm --version
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache do store do pnpm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
 
       # Imagens dos Testcontainers (PostgreSQL, Mailpit, Ryuk): salvas depois da primeira execução e
       # recarregadas nas seguintes; a chave muda quando as fixtures de integração mudam.
