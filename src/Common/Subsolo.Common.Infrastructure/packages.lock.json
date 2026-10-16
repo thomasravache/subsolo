@@ -41,14 +41,11 @@
           "Npgsql": "10.0.3"
         }
       },
-      "Quartz.Extensions.Hosting": {
+      "Quartz": {
         "type": "Direct",
         "requested": "[4.5.1, )",
         "resolved": "4.5.1",
-        "contentHash": "A5werfxoXtoOtJPoafogL5WOPVZ3YEGVrIf+JlEJAGfS77xrMlxc0FyFlS3hQEB9mfobXiOJIHpl9ox89ruS2g==",
-        "dependencies": {
-          "Quartz": "4.5.1"
-        }
+        "contentHash": "vexFR5Z/Sbu0um75NOhjhinOEB4Acb/HAK6Q90EpGV44/YBxfchatXWoKJDOtYu8UtodBm6rs5GVtfM7TfUmsg=="
       },
       "Scrutor": {
         "type": "Direct",
@@ -73,11 +70,6 @@
         "type": "Transitive",
         "resolved": "10.0.0",
         "contentHash": "RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg=="
-      },
-      "Quartz": {
-        "type": "Transitive",
-        "resolved": "4.5.1",
-        "contentHash": "vexFR5Z/Sbu0um75NOhjhinOEB4Acb/HAK6Q90EpGV44/YBxfchatXWoKJDOtYu8UtodBm6rs5GVtfM7TfUmsg=="
       },
       "subsolo.common.application": {
         "type": "Project",

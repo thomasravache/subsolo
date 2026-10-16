@@ -2,7 +2,7 @@
 
   <!--
     SPEC-0007 — infraestrutura comum (ADR-0001, ADR-0002): ModuleDbContext com schema por módulo, outbox/inbox
-    por schema com jobs Quartz, registro de módulo (varredura com Scrutor) e armazenamento de arquivos.
+    por schema com jobs Quartz e registro de módulo (varredura com Scrutor).
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="Quartz.Extensions.Hosting" />
+    <PackageReference Include="Quartz" />
     <PackageReference Include="Scrutor" />
   </ItemGroup>
 

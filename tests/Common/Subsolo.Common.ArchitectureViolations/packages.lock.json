@@ -165,19 +165,6 @@
         "resolved": "10.0.13",
         "contentHash": "ZjTwxzhiw2TMEzIbUDkMF0dfDB2I4NQgIfKD0ELu9/5Mk+SRGdKZcD0/lvBrRCAPo6KN2r0BW86MRancoyJkoA=="
       },
-      "Quartz": {
-        "type": "Transitive",
-        "resolved": "4.5.1",
-        "contentHash": "vexFR5Z/Sbu0um75NOhjhinOEB4Acb/HAK6Q90EpGV44/YBxfchatXWoKJDOtYu8UtodBm6rs5GVtfM7TfUmsg==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection": "10.0.0",
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.0",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0"
-        }
-      },
       "subsolo.common.application": {
         "type": "Project",
         "dependencies": {
@@ -195,7 +182,7 @@
           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.13, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
-          "Quartz.Extensions.Hosting": "[4.5.1, )",
+          "Quartz": "[4.5.1, )",
           "Scrutor": "[7.0.0, )",
           "Subsolo.Common.Application": "[1.0.0, )"
         }
@@ -260,13 +247,18 @@
           "Npgsql": "10.0.3"
         }
       },
-      "Quartz.Extensions.Hosting": {
+      "Quartz": {
         "type": "CentralTransitive",
         "requested": "[4.5.1, )",
         "resolved": "4.5.1",
-        "contentHash": "A5werfxoXtoOtJPoafogL5WOPVZ3YEGVrIf+JlEJAGfS77xrMlxc0FyFlS3hQEB9mfobXiOJIHpl9ox89ruS2g==",
+        "contentHash": "vexFR5Z/Sbu0um75NOhjhinOEB4Acb/HAK6Q90EpGV44/YBxfchatXWoKJDOtYu8UtodBm6rs5GVtfM7TfUmsg==",
         "dependencies": {
-          "Quartz": "4.5.1"
+          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection": "10.0.0",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0"
         }
       },
       "Scrutor": {
