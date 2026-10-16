@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Todo caminho de um segmento (`/{cidade}`), menos os internos do Next.js (`/_next/…`, `/_not-found` etc.).
-  // `/` não passa por aqui. Uma página estática nova de um segmento (ex.: `/sobre`) precisa entrar na exceção.
-  matcher: "/((?!_)[^/]+)",
+  // Todo caminho de um segmento (`/{cidade}`), menos os internos do Next.js (`/_next/…`, `/_not-found` etc.) e os
+  // arquivos públicos (com ponto, ex.: `/robots.txt`; um slug nunca tem ponto). `/` não passa por aqui. Uma página
+  // estática nova de um segmento (ex.: `/sobre`) precisa entrar na exceção.
+  matcher: "/((?!_)[^/.]+)",
 };
