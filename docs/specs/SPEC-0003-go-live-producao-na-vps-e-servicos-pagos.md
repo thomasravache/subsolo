@@ -78,6 +78,7 @@ Os IDs de teste são definidos quando as filhas forem criadas.
 ## 8. Questões em Aberto
 - [ ] Provedor, região, vCPU/RAM/disco e sistema operacional da VPS, e o que mais já roda nela? (Thomas)
 - [ ] Aprovação dos custos do ADR-0012 revisados: domínio, e-mail (recomendado: Amazon SES), backup (recomendado: Cloudflare R2), monitor externo (Thomas)
+- [ ] Endereço definitivo do Instagram do Subsolo (perfil ainda não criado; hoje o rodapé aponta para o provisório `https://www.instagram.com/subsolo.app` em `web/src/components/ui/Footer.tsx`, SPEC-0011) — trocar antes do lançamento (Thomas)
 
 ## 9. Aprovação (H1)
 Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com ele. Registrada no frontmatter (`approved_by`, `approved_at`) do épico e de cada filha.
