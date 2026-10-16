@@ -17,6 +17,8 @@ internal sealed class ProcessInboxJob<TDbContext>(
     : ProcessMessagesJob<TDbContext, InboxMessage, InboxMessageConsumer>(scopeFactory, modules, clock, logger)
     where TDbContext : ModuleDbContext
 {
+    protected override string Operation => "ProcessInbox";
+
     protected override Type? ResolveType(ModuleDescriptor module, string typeName) =>
         module.IntegrationEventTypes.GetValueOrDefault(typeName);
 

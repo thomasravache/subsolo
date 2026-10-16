@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,8 @@ namespace Subsolo.Common.Infrastructure.Messaging;
 /// SPEC-0007 — base dos jobs Quartz <c>ProcessOutbox</c> e <c>ProcessInbox</c> de um módulo: lê as mensagens
 /// pendentes do schema do módulo (cujo próximo horário de tentativa já chegou, pelo <see cref="TimeProvider"/>),
 /// entrega cada uma aos handlers do módulo e marca como processada; numa falha, registra o erro e agenda nova
-/// tentativa com backoff. Cada handler que já processou a mensagem fica registrado e não roda de novo.
+/// tentativa com backoff. Cada handler que já processou a mensagem fica registrado e não roda de novo. Cada
+/// mensagem gera uma atividade da fonte <see cref="MessagingTelemetry.SourceName"/>.
 /// </summary>
 internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsumer>(
     IServiceScopeFactory scopeFactory,
@@ -34,6 +36,9 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
 
     protected abstract TConsumer Consumer(Guid messageId, string name);
 
+    /// <summary>Nome do job (<c>ProcessOutbox</c> ou <c>ProcessInbox</c>), prefixo do nome das atividades.</summary>
+    protected abstract string Operation { get; }
+
     public async ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
@@ -48,15 +53,22 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
 
         foreach (var message in messages)
         {
+            using var activity = MessagingTelemetry.Source.StartActivity($"{Operation} {ShortTypeName(message.Type)}");
+            activity?.SetTag(MessagingTelemetry.ModuleTag, _module.Name);
+            activity?.SetTag(MessagingTelemetry.MessageIdTag, message.Id);
+
             try
             {
                 await DispatchAsync(db, message, cancellationToken);
                 message.MarkProcessed(clock.GetUtcNow().UtcDateTime);
+                activity?.SetStatus(ActivityStatusCode.Ok);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 message.MarkFailed(exception, clock.GetUtcNow().UtcDateTime);
                 LogFailure(logger, exception, typeof(TMessage).Name, message.Id, _module.Name, message.Attempts);
+                activity?.AddException(exception);
+                activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -86,6 +98,8 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
             await db.SaveChangesAsync(cancellationToken);
         }
     }
+
+    private static string ShortTypeName(string typeName) => typeName[(typeName.LastIndexOf('.') + 1)..];
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Falha ao processar {MessageKind} {MessageId} do módulo {Module} (tentativa {Attempt})")]
     private static partial void LogFailure(ILogger logger, Exception exception, string messageKind, Guid messageId, string module, int attempt);

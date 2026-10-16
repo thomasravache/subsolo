@@ -17,6 +17,8 @@ internal sealed class ProcessOutboxJob<TDbContext>(
     : ProcessMessagesJob<TDbContext, OutboxMessage, OutboxMessageConsumer>(scopeFactory, modules, clock, logger)
     where TDbContext : ModuleDbContext
 {
+    protected override string Operation => "ProcessOutbox";
+
     protected override Type? ResolveType(ModuleDescriptor module, string typeName) =>
         module.DomainEventTypes.GetValueOrDefault(typeName);
 

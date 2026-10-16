@@ -18,6 +18,15 @@ public static class Extensions
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
 
+    /// <summary>Todas as <c>ActivitySource</c> próprias do Subsolo.</summary>
+    private const string SubsoloSources = "Subsolo.*";
+
+    /// <summary>
+    /// Fonte das execuções de job do Quartz 4 (valor de <c>Quartz.Diagnostics.QuartzInstrumentation.ActivitySourceName</c>,
+    /// repetido aqui para o ServiceDefaults não depender do Quartz).
+    /// </summary>
+    private const string QuartzSource = "Quartz";
+
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
@@ -50,6 +59,9 @@ public static class Extensions
                 .AddRuntimeInstrumentation())
             .WithTracing(tracing => tracing
                 .AddSource(builder.Environment.ApplicationName)
+                // Comandos, consultas e outbox/inbox (Subsolo.Application, Subsolo.Messaging).
+                .AddSource(SubsoloSources)
+                .AddSource(QuartzSource)
                 .AddAspNetCoreInstrumentation(aspNetCore =>
                     // Os health checks não poluem os traces.
                     aspNetCore.Filter = context =>
