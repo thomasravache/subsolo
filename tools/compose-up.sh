@@ -10,6 +10,9 @@
 # então derruba o projeto Compose com os volumes (`docker compose down --volumes`): cada subida começa com um banco
 # novo, migrado e com o seed da cidade de exemplo (a API roda em Development só aqui; no deploy, Production).
 # Exige Docker (com Compose v2), o .NET SDK e a Aspire CLI.
+#
+# SPEC-0009 — só neste Compose local, um override publica o Seq em 127.0.0.1:${SEQ_PORT:-5341} (API e interface),
+# para consultar logs e traces (o E2E-01 usa SEQ_URL); o artefato publicado continua sem porta do Seq.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -19,6 +22,7 @@ readonly APPHOST="src/Subsolo.AppHost/Subsolo.AppHost.csproj"
 readonly OUT="artifacts/compose"
 readonly PROJECT="subsolo-local"
 readonly APP_URL="http://localhost:8080"
+readonly SEQ_PORT="${SEQ_PORT:-5341}"
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -68,8 +72,18 @@ CADDY_BINDMOUNT_0=$root/infra/caddy/Caddyfile
 POSTGRES_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 ENV
 
+# Override só local (SPEC-0009): o Seq acessível apenas pelo localhost.
+override_file="$OUT/docker-compose.local.yaml"
+cat >"$override_file" <<YAML
+services:
+  seq:
+    ports:
+      - "127.0.0.1:$SEQ_PORT:80"
+YAML
+
 compose() {
-  docker compose --project-name "$PROJECT" --file "$OUT/docker-compose.yaml" --env-file "$env_file" "$@"
+  docker compose --project-name "$PROJECT" --file "$OUT/docker-compose.yaml" --file "$override_file" \
+    --env-file "$env_file" "$@"
 }
 
 stopped=0
@@ -105,7 +119,7 @@ if ((healthy == 0)); then
   compose logs --no-color --tail 200 >&2 || true
   exit 1
 fi
-echo "compose-up: aplicação no ar em $APP_URL (Ctrl+C para derrubar)"
+echo "compose-up: aplicação no ar em $APP_URL; Seq em http://127.0.0.1:$SEQ_PORT (Ctrl+C para derrubar)"
 
 # Primeiro plano: os logs até o sinal de parada (o trap derruba o Compose).
 compose logs --follow --no-color &

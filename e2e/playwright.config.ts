@@ -21,6 +21,12 @@ const port = Number(process.env.E2E_STATIC_PORT ?? 4317);
 const baseURL = `http://127.0.0.1:${port}`;
 const isCI = !!process.env.CI;
 
+// SPEC-0009 — o E2E-01 consulta o Seq da pilha local, publicado só em 127.0.0.1 pelo override do compose-up.
+const seqPort = Number(process.env.SEQ_PORT ?? 5341);
+if (!externalApp) {
+  process.env.SEQ_URL ??= `http://127.0.0.1:${seqPort}`;
+}
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -59,6 +65,7 @@ export default defineConfig({
             timeout: 20 * 60_000,
             stdout: "pipe" as const,
             gracefulShutdown: { signal: "SIGTERM" as const, timeout: 60_000 },
+            env: { SEQ_PORT: String(seqPort) },
           },
           {
             // SPEC-0008 IT-04 (Emenda 5): o web de produção (next build + next start) sem API (conexão recusada).
