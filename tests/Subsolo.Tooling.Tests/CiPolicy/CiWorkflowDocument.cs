@@ -148,3 +148,5 @@ internal sealed class CiWorkflowDocument
         return Child(root, key) is YamlScalarNode scalar ? scalar.Value : null;
     }
 }
+
+// ci-check/it-05-20261016043424: PR sem spec (IT-05)
