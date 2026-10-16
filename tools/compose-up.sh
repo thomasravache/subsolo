@@ -20,7 +20,7 @@ readonly OUT="artifacts/compose"
 readonly PROJECT="subsolo-local"
 readonly APP_URL="http://localhost:8080"
 
-for tool in docker dotnet aspire; do
+for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "compose-up: '$tool' não encontrado no PATH" >&2
     exit 2
@@ -91,13 +91,21 @@ compose down --volumes --remove-orphans --timeout 10 >/dev/null 2>&1 || true
 echo ">>> docker compose up ($PROJECT, imagens :$tag)"
 compose up --detach
 
+healthy=0
 for _ in $(seq 1 120); do
   if curl -fsS -o /dev/null "$APP_URL/health" 2>/dev/null; then
-    echo "compose-up: aplicação no ar em $APP_URL (Ctrl+C para derrubar)"
+    healthy=1
     break
   fi
   sleep 1
 done
+if ((healthy == 0)); then
+  echo "compose-up: $APP_URL/health não respondeu em 120 s; logs da pilha:" >&2
+  compose ps --all >&2 || true
+  compose logs --no-color --tail 200 >&2 || true
+  exit 1
+fi
+echo "compose-up: aplicação no ar em $APP_URL (Ctrl+C para derrubar)"
 
 # Primeiro plano: os logs até o sinal de parada (o trap derruba o Compose).
 compose logs --follow --no-color &
