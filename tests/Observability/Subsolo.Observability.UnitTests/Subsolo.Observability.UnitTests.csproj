@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0009 — testes unitários da observabilidade (UT-01, UT-02): redator de dados pessoais no pipeline do
+    ServiceDefaults (logs e spans exportados, exportador em memória), health check da outbox com FakeTimeProvider
+    e a assinatura das fontes do Subsolo (Subsolo.Application, Subsolo.Messaging) pelo ServiceDefaults.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Observability.UnitTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <ProjectReference Include="../../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
+    <ProjectReference Include="../../../src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
