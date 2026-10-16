@@ -10,8 +10,8 @@ parent: SPEC-0001
 depends_on: [SPEC-0006, SPEC-0007]
 consumes_contract: []
 contract_version: 1
-touches: [tests/Subsolo.ArchitectureTests/**, .editorconfig, .gitignore, .github/workflows/ci.yml, Directory.Packages.props, src/Subsolo.Api/**, e2e/playwright.config.ts, e2e/package.json, e2e/pnpm-lock.yaml, web/pnpm-lock.yaml, tests/Common/Subsolo.AppHost.IntegrationTests/**, src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/src/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
-adrs: [ADR-0001, ADR-0002, ADR-0004, ADR-0012, ADR-0013]
+touches: [web/src/proxy.ts, web/.nvmrc, web/.dockerignore, tests/Common/Subsolo.Api.IntegrationTests/packages.lock.json, tests/Subsolo.ArchitectureTests/**, .editorconfig, .gitignore, .github/workflows/ci.yml, Directory.Packages.props, src/Subsolo.Api/**, e2e/playwright.config.ts, e2e/package.json, e2e/pnpm-lock.yaml, web/pnpm-lock.yaml, tests/Common/Subsolo.AppHost.IntegrationTests/**, src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/src/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
+adrs: [ADR-0016, ADR-0001, ADR-0002, ADR-0004, ADR-0012, ADR-0013]
 external: []
 size: M
 approved_by: thomas
@@ -188,7 +188,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ce9c7a3 | 2026-10-16 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -241,6 +241,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 4 (achados do Implementer): entram nos `touches` `web/src/proxy.ts` (o Next só aceita o proxy em `src/` ou na raiz), o `packages.lock.json` dos testes da API (muda ao referenciar o Events) e `web/.nvmrc`/`web/.dockerignore` (Node 24 na imagem gerada pelo Aspire, que hoje usa `node:22`); ADR-0016 registra o status 404/503 via proxy do Next; `smoke_test` gravado no sdd-config; falta um UT para `to` antes de hoje sem `from` (`agenda.invalid_range`) | G4 do verify reprovou escopo; Node fora do ADR-0009 na imagem | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 3 (achados do Test-writer): `touches` corrigido para `web/src/app/(public)/**` (o app Next fica em `web/src/app`); `tests/Subsolo.ArchitectureTests/**` entra para referenciar os projetos do Events nas regras (IT-06/IT-09 da SPEC-0007); a consulta é validada no endpoint com o `GetCityAgendaQueryValidator`, devolvendo o código específico (`agenda.invalid_slug`/`agenda.invalid_range`), porque o decorator comum não valida consultas; E2E-02 também marcado `@smoke`; com `BASE_URL` definido nenhum servidor é subido e o IT-04 é pulado | Caminho errado do app na spec; regra de arquitetura exige referência de todo módulo | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 2: o comando `test_e2e` continua `(cd e2e && pnpm test)`; o `webServer` do Playwright sobe a pilha completa via `tools/compose-up.sh` (Compose gerado por `aspire publish`) para as jornadas, e o job `e2e` do CI ganha .NET SDK + Aspire CLI; E2E-01 e E2E-02 rodam contra essa pilha (o AppHost em modo dev já é provado pelo IT-07 da SPEC-0007). Entram nos `touches`: `.gitignore` (`artifacts/`), `.github/workflows/ci.yml`, `Directory.Packages.props` (Aspire.Hosting.Docker), `src/Subsolo.Api/**`, `e2e/playwright.config.ts`, `e2e/package.json`, lockfiles do `e2e/` e do `web/` e o teste do AppHost | Preparação do Architect antes do Red: sem isso o E2E não tem aplicação para testar no CI e o escopo ficaria fora dos `touches` | SPEC-0006 (o job `e2e` muda, mantendo o comando literal) | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | `.editorconfig` entra nos `touches` para marcar `**/Migrations/*.cs` como código gerado (as migrações do módulo Events quebram o build com IDE0161 sem isso); consome o contrato v3 da SPEC-0007 (`IDomainEvent` com Id, `AddModule`, `AddEndpoints`/`MapEndpoints`) | Revisão G4 da SPEC-0007 | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
