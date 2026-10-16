@@ -174,7 +174,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ad885b4 | 2026-10-16 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 1e50631 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 080ms) — 1e50631 | 2026-10-16 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 1e50631 — verify PASS (aviso justificado: 24d7792 só implementa ListAsync no repositório falso; scaffold 1a4c7e7 sem lógica); contrato, contraste, foco, fontes self-hosted e CSP sem terceiros conformes; 0 bloqueantes, 0 importantes, 7 menores (safe-area da BottomNav, keys duplicáveis no Card, RangeError com fuso inválido, CitySwitcher sem JS, Footer no bundle do cliente, collation pt-BR, fontes duplicadas) → épico SPEC-0002 — 1e50631 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
