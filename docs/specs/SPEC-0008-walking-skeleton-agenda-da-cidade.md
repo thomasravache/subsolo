@@ -4,7 +4,7 @@ title: "Walking skeleton: agenda da cidade"
 tier: full
 type: foundation
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0006, SPEC-0007]
@@ -202,7 +202,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 1m 12s 884ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 844ms); nota: CI do PR #14 verde (10/10 checks, incluindo e2e com a pilha Compose) em 11eecff: https://github.com/thomasravache/subsolo/actions/runs/38880460959; bateria local no integrado 5a35c0e verde (E2E 23 passaram, test_commands_contract e coverage) — 11eecff | 2026-10-16 |
 | H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16; integração verde (G5) em 11eecff | 2026-10-16 |
 | G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; o Compose gerado sobe localmente e no CI (E2E-02); entrega na main pelo merge do PR #14 | 2026-10-16 |
-| G7 Pronto & Docs | PENDING | | |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — dcbe2eb | 2026-10-16 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
