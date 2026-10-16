@@ -212,36 +212,61 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+A infraestrutura de testes de todos os níveis do ADR-0005, com um exemplo funcional de cada:
+- .NET: xUnit v3 4.0.2 + Shouldly 4.3.0 no Microsoft Testing Platform; `Subsolo.UnitTests.Common` (com `FakeTimeProvider`) e `Subsolo.IntegrationTests.Common` com `PostgresFixture` (PostgreSQL 18 real via Testcontainers 4.16.0, `ResetAsync` para isolamento) e `MailpitFixture` (SMTP + API do Mailpit), imagens fixadas por digest e falha clara quando o Docker está indisponível.
+- `Subsolo.ArchitectureTests` com ArchUnitNET 0.13.4 e o ponto de extensão `ArchitectureRules` (`ForModule`, `OnlyReferences`) que a SPEC-0007 aplica aos módulos.
+- Front: Vitest + Testing Library (`@testing-library/react` 16.3.3, jsdom 30.1.2) em `web/`.
+- E2E: projeto Playwright 1.64.0 em `e2e/` (mobile-chrome, mobile-safari, desktop-chrome) com fixture `axe` (falha em violações serious/critical), sem retries automáticos e com trace/vídeo retidos na falha.
+- `tools/coverage.sh` (coverlet + ReportGenerator) com a porcentagem das linhas alteradas em relação à `main`.
+- Comandos do sdd-config (contrato v4): `test`, `test_integration`, `arch_test`, `test_e2e`, `coverage` e `test_commands_contract` (sob demanda); `tests/README.md` com o guia de uso.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: scaffold `chore` (2fd068d) → Test-writer (red 2068221, cc247d8) → Implementer (5f775cb .NET, cf91db4 front/E2E, b3f7f15 ajuste do Playwright pedido pela revisão da SPEC-0006) → Reviewer 1 (CHANGES_REQUESTED só por escopo do lockfile) → Emenda v5 → G4 PASS.
+- Integração da onda 2 (PR #4): o primeiro run do CI no GitHub mostrou que os testes que rodam os próprios comandos do sdd-config (CT-01 desta spec e da SPEC-0004) não cabem nos jobs do CI. Emenda v6 (contrato v4): `Kind=CommandContract`, fora de `test`/`test_integration`, com o comando `test_commands_contract` sob demanda; Test-writer (1d1d835, 1755d0d) → Reviewer 2 APPROVED. Efeito colateral: o `test` caiu de ~220 s para ~31 s.
+- Emendas: v2 (pnpm de dentro de `web/`/`e2e/`), v3 (`test` sem `Kind=GitHubVerification`), v4 e v5 (escopo), v6 (contrato v4). ADR-0009 passou a aceitar MIT-0 (transitivo do jsdom).
+- Dívida aceita: os minors das revisões ficaram na SPEC-0013 (bash 3.2 no coverage, URL malformada no servidor E2E, `e2e/` fora do lint, guarda contra recursão do `CommandContract`).
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | teste unitário de exemplo com trait de rastreabilidade | PASS | `gate G2 --run` em 7ecb778; `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| UT-02 | `FakeTimeProvider` avança o relógio do serviço de exemplo | PASS | `gate G2 --run` em 7ecb778; `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| UT-03 | componente React renderizado no Vitest + Testing Library | PASS | `gate G2 --run` em 7ecb778 (`pnpm test` 1/1); `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-01 | `PostgresFixture` sobe PostgreSQL 18 real | PASS | `test_integration` 21/21 em `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) (job integration) |
+| IT-02 | `MailpitFixture` recebe e-mail por SMTP | PASS | `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-03 | isolamento com `ResetAsync` em qualquer ordem | PASS | `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-04 | Docker indisponível → mensagem "Docker não encontrado" | PASS | `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-05 | `ArchitectureRules.ForModule` aponta Domain → Infrastructure | PASS | `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| IT-06 | `coverage.sh` mostra a porcentagem das linhas alteradas do arquivo | PASS | `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| CT-01 | comandos do sdd-config com exit 0 na raiz | PASS | `test_commands_contract` exit 0 (141 s) em 39fd929; cada comando também é um job verde no CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) |
+| E2E-01 | axe aprova a página correta e reprova a com contraste ruim, mobile e desktop | PASS | `test_e2e` 9/9 em `gate G5 --run` em 555c281; CI do PR #4 em 555c281 (run 38850207777, 10/10 checks) (job e2e) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde em 555c281 (run 38850207777)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado) — `test` em ~31 s, determinismo sem esperas fixas nem retries (G4)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo é a `main`: merge do PR #4 (ef5ccfa); G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout — rollback = revert do merge commit
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG e README (seção de testes) atualizados
+- [x] Pendências registradas como novas specs (ou nenhuma)
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #4 (https://github.com/thomasravache/subsolo/pull/4), merge commit ef5ccfa em 2026-10-16, com H2 delegado pelo Thomas (autorização de piloto automático da mesma data) e merge pelo Architect (ADR-0007).
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0013 — ajustes menores do harness e do CI (proposta, aguarda H1).
+- `ArchitectureRules.OnlyReferences` sem teste próprio → coberto pela SPEC-0007, que aplica as regras aos módulos.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
