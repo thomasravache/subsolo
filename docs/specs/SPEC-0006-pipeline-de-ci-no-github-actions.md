@@ -151,10 +151,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Workflow de CI**
-- [ ] Red: UT-01 e CT-01 (teste de política do `ci.yml` e comparação com o sdd-config) falhando
-- [ ] Green: `.github/workflows/ci.yml` com os 8 jobs do contrato, caches, artefatos, `concurrency`, permissões mínimas, actions fixadas por SHA; job `sdd` via `vendor --ci github`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte (G2)
+- [x] Red: UT-01 e CT-01 (teste de política do `ci.yml` e comparação com o sdd-config) falhando
+- [x] Green: `.github/workflows/ci.yml` com os 8 jobs do contrato, caches, artefatos, `concurrency`, permissões mínimas, actions fixadas por SHA; job `sdd` via `vendor --ci github`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte (G2)
 
 
 
@@ -164,14 +164,14 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [x] Validar e re-registrar G1–G4; CI verde no PR #4
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
+- [x] Review independente (G4)
 
 **Fase 2: Verificação no GitHub** (depois do G4: o job `sdd` só passa com G0–G4 registrados)
-- [ ] Checks obrigatórios configurados na proteção da `main` (pré-requisito do IT-02); comando `ci` no sdd-config
-- [ ] IT-01..IT-06 com `SDD_GITHUB_VERIFY=1` e PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
+- [x] Checks obrigatórios configurados na proteção da `main` (pré-requisito do IT-02); comando `ci` no sdd-config
+- [x] IT-01..IT-06 com `SDD_GITHUB_VERIFY=1` e PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
 
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
@@ -183,9 +183,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — d888771 | 2026-10-16 |
 | G3 Arquitetura | N/A | SPEC-0006 só altera .github/workflows; a suíte de arquitetura nasce na SPEC-0005 (mesma onda) e as regras do ADR-0001 na SPEC-0007 | 2026-10-13 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v4) em 39fd929 — SHAs aff181e, d888771, 5a96ee1; 0 blocker/major; segurança do workflow ok; m4 (Refs sem spec) corrigido em 7ecb778; demais minors na SPEC-0013 — 7ecb778 (árvore suja) | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 29s 803ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 518ms); nota: CI do PR #4 verde (10/10 checks) em 555c281: https://github.com/thomasravache/subsolo/actions/runs/38850207777; test_commands_contract exit 0 (141s) no integrado; checks obrigatórios configurados na proteção da main (9 checks); verificações reais no GitHub IT-01..06 com SDD_GITHUB_VERIFY=1 a partir de 555c281: 6/6 PASS (17m40s), PRs descartáveis #9 IT-01, #5 IT-02, #6 IT-03, #10 IT-04, #7 IT-05, #8 IT-06 (fechados sem merge) — 555c281 (árvore suja) | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — 'pode seguir com tudo que for recomendado e pode ir criando PR e mergeando quando for preciso'; integração verde (G5) em 555c281 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #4 | 2026-10-16 |
 | G7 Pronto & Docs | PENDING | | |
 
 ## 13. Registro de Impedimentos

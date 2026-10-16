@@ -164,25 +164,25 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Harness .NET**
-- [ ] Red: UT-01, UT-02, IT-01..IT-06 com a tag `SPEC-0005:<ID>`, falhando pelo motivo certo (fixtures e helpers ainda inexistentes — scaffold `chore` com NotImplemented)
-- [ ] Green: projetos `Subsolo.UnitTests.Common`, `Subsolo.IntegrationTests.Common` (PostgresFixture, MailpitFixture), `Subsolo.ArchitectureTests` (ArchUnitNET + `ArchitectureRules`), `tools/coverage.sh`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa (G2)
+- [x] Red: UT-01, UT-02, IT-01..IT-06 com a tag `SPEC-0005:<ID>`, falhando pelo motivo certo (fixtures e helpers ainda inexistentes — scaffold `chore` com NotImplemented)
+- [x] Green: projetos `Subsolo.UnitTests.Common`, `Subsolo.IntegrationTests.Common` (PostgresFixture, MailpitFixture), `Subsolo.ArchitectureTests` (ArchUnitNET + `ArchitectureRules`), `tools/coverage.sh`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa (G2)
 
 **Fase 2: Harness do front e E2E**
-- [ ] Red: UT-03, E2E-01 e CT-01 falhando
-- [ ] Green: Vitest + Testing Library em `web/`; projeto Playwright em `e2e/` (mobile + desktop, fixture axe); comandos `test`, `test_integration`, `arch_test`, `test_e2e`, `coverage` no sdd-config
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + E2E (G2)
+- [x] Red: UT-03, E2E-01 e CT-01 falhando
+- [x] Green: Vitest + Testing Library em `web/`; projeto Playwright em `e2e/` (mobile + desktop, fixture axe); comandos `test`, `test_integration`, `arch_test`, `test_e2e`, `coverage` no sdd-config
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + E2E (G2)
 
 **Fase Emenda v6 (IMP-03): testes de comando fora da suíte padrão**
 - [x] Red/ajuste de testes: CT-01 desta spec e CT-01 da SPEC-0004 com `Kind=CommandContract`; remover o desvio `SUBSOLO_SPEC0005_CT01_NESTED`
 - [x] Validar: `test`, `test_integration` e `test_commands_contract` verdes localmente; re-registrar G1–G4
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
@@ -194,9 +194,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 7ecb778 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 556ms) — 7ecb778 (árvore suja) | 2026-10-16 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v6) em 39fd929 — SHAs 1d1d835, 1755d0d, 591105e; 0 blocker/major. fix de coverage.sh feito após o test por necessidade: sem ele o coverage rodaria o CT-01 em recursão (justificado). Minors m1–m3 na SPEC-0013; test_commands_contract verde (141s) — 7ecb778 (árvore suja) | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 29s 433ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 550ms); nota: CI do PR #4 verde (10/10 checks) em 555c281: https://github.com/thomasravache/subsolo/actions/runs/38850207777; test_commands_contract exit 0 (141s) no integrado; checks obrigatórios configurados na proteção da main (9 checks) — 555c281 (árvore suja) | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — 'pode seguir com tudo que for recomendado e pode ir criando PR e mergeando quando for preciso'; integração verde (G5) em 555c281 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #4 | 2026-10-16 |
 | G7 Pronto & Docs | PENDING | | |
 
 ## 13. Registro de Impedimentos
