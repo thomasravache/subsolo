@@ -9,5 +9,20 @@ namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 /// </summary>
 internal sealed class GetCityAgendaQueryValidator : AbstractValidator<GetCityAgendaQuery>
 {
-    public GetCityAgendaQueryValidator() => throw new NotImplementedException();
+    /// <summary>Formato do slug da cidade na URL.</summary>
+    public const string SlugPattern = "^[a-z0-9-]{2,60}$";
+
+    public GetCityAgendaQueryValidator()
+    {
+        RuleFor(query => query.Slug)
+            .Matches(SlugPattern)
+            .WithErrorCode(AgendaErrors.InvalidSlug)
+            .WithMessage("O slug da cidade deve ter de 2 a 60 letras minúsculas, dígitos ou hífens.");
+
+        RuleFor(query => query.To)
+            .Must((query, to) => AgendaPeriod.IsValidRange(query.From!.Value, to!.Value))
+            .When(query => query.From.HasValue && query.To.HasValue)
+            .WithErrorCode(AgendaErrors.InvalidRange)
+            .WithMessage($"O período deve ter \"to\" igual ou depois de \"from\" e no máximo {AgendaPeriod.MaxDays} dias.");
+    }
 }

@@ -11,4 +11,10 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
     public const string SchemaName = "events";
 
     public DbSet<City> Cities => Set<City>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(EventsDbContext).Assembly);
+    }
 }

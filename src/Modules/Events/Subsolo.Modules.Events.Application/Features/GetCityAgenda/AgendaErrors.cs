@@ -1,3 +1,5 @@
+using Subsolo.Common.Domain;
+
 namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 
 /// <summary>SPEC-0008 — códigos de erro da agenda (vão em <c>extensions.code</c> do ProblemDetails).</summary>
@@ -11,4 +13,15 @@ public static class AgendaErrors
 
     /// <summary>404: nenhuma cidade com o slug.</summary>
     public const string CityNotFound = "agenda.city_not_found";
+
+    /// <summary>Erro de validação do período já resolvido (o validador só confere quando as duas datas vêm na consulta).</summary>
+    internal static Error InvalidRangeError(AgendaPeriod period) =>
+        Error.Validation(
+            InvalidRange,
+            "Período da agenda inválido.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                [nameof(GetCityAgendaQuery.To)] =
+                    [$"O período de {period.From:yyyy-MM-dd} a {period.To:yyyy-MM-dd} deve ter no máximo {AgendaPeriod.MaxDays} dias e \"to\" igual ou depois de \"from\"."],
+            });
 }

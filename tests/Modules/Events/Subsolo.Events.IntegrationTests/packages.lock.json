@@ -802,6 +802,7 @@
           "Microsoft.AspNetCore.OpenApi": "[10.0.13, )",
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
           "Subsolo.ServiceDefaults": "[1.0.0, )"
         }
       },
@@ -840,6 +841,41 @@
           "Subsolo.UnitTests.Common": "[1.0.0, )",
           "Testcontainers.PostgreSql": "[4.16.0, )",
           "xunit.v3.extensibility.core": "[4.0.2, )"
+        }
+      },
+      "subsolo.modules.events.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Events.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Events.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Events.Application": "[1.0.0, )"
         }
       },
       "subsolo.servicedefaults": {

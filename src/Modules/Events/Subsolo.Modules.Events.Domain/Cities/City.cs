@@ -27,6 +27,12 @@ public sealed class City : Entity
     /// <summary>Fuso horário IANA (ex.: <c>America/Sao_Paulo</c>).</summary>
     public string TimeZone { get; private set; }
 
-    public static City Create(string slug, string name, string state, string timeZone) =>
-        throw new NotImplementedException();
+    public static City Create(string slug, string name, string state, string timeZone)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(state);
+        ArgumentException.ThrowIfNullOrWhiteSpace(timeZone);
+        return new City(Guid.NewGuid(), slug, name, state, timeZone);
+    }
 }

@@ -1,16 +1,23 @@
 // SPEC-0007 — composição do host da API (ADR-0001): infraestrutura comum, módulos e endpoints.
+using System.Text.Json.Serialization;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Common.Presentation;
+using Subsolo.Modules.Events.Infrastructure;
+using Subsolo.Modules.Events.Infrastructure.Cities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+
+// Números só como números no JSON: o contrato (e o cliente TypeScript gerado) não aceita inteiros em string.
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
 builder.Services.AddCommonInfrastructure(builder.Configuration);
 
 // Módulos: services.Add<M>Module(builder.Configuration) — cada um chama AddModule e AddEndpoints.
+builder.Services.AddEventsModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -24,6 +31,7 @@ if (app.Environment.IsDevelopment())
 
     // Só em desenvolvimento: nos outros ambientes, o pipeline aplica o bundle de migrações (ADR-0002).
     await app.Services.MigrateModulesAsync();
+    await app.Services.SeedEventsDevelopmentDataAsync();
 }
 
 app.MapDefaultEndpoints();
