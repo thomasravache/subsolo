@@ -48,7 +48,8 @@ internal sealed class InsertOutboxMessagesInterceptor(TimeProvider clock) : Save
             })
             .Select(domainEvent => new OutboxMessage
             {
-                Id = Guid.CreateVersion7(),
+                // O Id da mensagem é o do evento de domínio: identidade estável entre tentativas.
+                Id = domainEvent.Id,
                 Type = MessageSerializer.TypeName(domainEvent.GetType()),
                 Content = MessageSerializer.Serialize(domainEvent),
                 OccurredOnUtc = occurredOnUtc,
