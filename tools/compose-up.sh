@@ -52,20 +52,8 @@ else
     -t:PublishContainer -p:ContainerRepository=subsolo-api -p:ContainerImageTag="$tag" \
     -p:ContainerRuntimeIdentifier="$container_rid"
 
-  # Dockerfile gerado pelo `aspire publish`, com as exclusões que o Aspire usa para o contexto do web.
+  # Dockerfile gerado pelo `aspire publish` (Node da web/.nvmrc); o contexto segue a web/.dockerignore.
   echo ">>> imagem subsolo-web:$tag"
-  cat >"$OUT/web.Dockerfile.dockerignore" <<'IGNORE'
-node_modules
-.next
-coverage
-.git
-.gitignore
-.DS_Store
-*.log
-.env
-.env.*
-*.tsbuildinfo
-IGNORE
   docker build -f "$OUT/web.Dockerfile" -t "subsolo-web:$tag" web
 fi
 
