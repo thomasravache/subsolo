@@ -77,10 +77,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 7f944ee (árvore suja) | 2026-10-13 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 9c0dc7c | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 3d8ef04 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 548ms) — 3d8ef04 | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 3d8ef04 (9c0dc7c red, 3d8ef04 green); IT-01 red/green confirmado; .gitignore não expõe .env.local/.env.production; chave do IT-02 dispara gcp-api-key só no teste. Minors: summary do CommitMessageRuleTests desatualizado (→ SPEC-0013); .claude/ inteiro ignorado (trocar por .claude/* com exceções se um dia versionarem config) — 3d8ef04 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
