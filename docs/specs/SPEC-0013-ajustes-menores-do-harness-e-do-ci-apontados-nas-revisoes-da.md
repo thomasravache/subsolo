@@ -9,7 +9,7 @@ created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-touches: [tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
+touches: [tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
 adrs: [ADR-0005, ADR-0006, ADR-0009]
 external: []
 size: S
@@ -32,6 +32,14 @@ As revisões independentes (G4) das SPEC-0005 (harness de testes) e SPEC-0006 (C
 7. IT-05 da SPEC-0006 (`GitHubCiVerificationTests.cs:156`) aceita a anotação genérica do próprio workflow ("SDD pr-check"), então passa mesmo se o `pr-check` não explicar o motivo da falha.
 8. A supressão de falso positivo do CodeQL por comentário no código nunca foi confirmada para C# e TypeScript com a suíte padrão.
 
+Da revisão das Emendas v6 (SPEC-0005) e v4 (SPEC-0006), em 2026-10-16:
+9. `tests/README.md` mostra `test_commands_contract` sem `--max-parallel-test-modules 1` (o sdd-config tem).
+10. Nada impede por teste que `test`, `test_integration` ou o filtro padrão do `coverage.sh` voltem a selecionar `Kind=CommandContract` (recursão) nem que o CI rode `test_commands_contract`.
+11. O UT-02 da SPEC-0006 não trata `test_commands_contract` como dependente de Node/pnpm.
+12. Com `tools/sdd/**` isento de escopo, um PR pode alterar o próprio verificador do gate sem sinal; falta CODEOWNERS ou checagem de que a cópia bate com a versão vendorizada.
+13. O comentário de `CiWorkflowCommandsContractTests.cs` ainda cita o contrato SPEC-0005@2 (o atual é @4).
+14. A chave do cache do pnpm agora é compartilhada por quatro jobs (agrava o item 6).
+
 ## 2. Causa Raiz
 Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 5–6: padrões de concorrência e cache copiados para todos os jobs sem considerar push na `main` nem os dois lockfiles. Item 7: asserção fraca demais. Item 8: verificação ficou para depois da primeira execução no GitHub.
 
@@ -42,6 +50,9 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 - `ci.yml`: grupo de concorrência `ci-<número do PR ou github.sha>` (único por commit no push); chaves de cache `pnpm-store-web-…` e `pnpm-store-e2e-…`, cada uma com o hash do próprio lockfile.
 - IT-05 da SPEC-0006: ignorar a anotação "SDD pr-check" e exigir uma anotação que cite a spec ou a regra violada.
 - CodeQL: confirmar a supressão por comentário; se não funcionar, documentar no `ci.yml` o caminho real (`query-filters` num config do CodeQL, com o motivo).
+- `tests/README.md`: comando `test_commands_contract` literal; comentário do contrato atualizado para SPEC-0005@4.
+- Teste de política: filtros de `test`, `test_integration` e o padrão do `coverage.sh` não selecionam `Kind=CommandContract`; nenhum job do CI roda `test_commands_contract`; o UT-02 da SPEC-0006 passa a incluir essa chave.
+- `CODEOWNERS` com `tools/sdd/**`, `docs/specs/sdd-config.yml` e `.github/workflows/**` exigindo o dono do repositório.
 - Não muda: os contratos das SPEC-0004/0005/0006 (comandos do `sdd-config` iguais), os jobs do CI e a política de auditoria.
 
 **Padrão seguido:** `tests/Subsolo.Tooling.Tests` (CiPolicy e testes de ferramentas) e os scripts existentes em `tools/`.
@@ -57,6 +68,8 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 - **IT-02** — Dado um repositório sem a base `origin/main`, quando `tools/coverage.sh` roda, então termina com exit ≠ 0 e a mensagem da base em poucos segundos, sem rodar a suíte (falha antes da correção).
 - **IT-03** — Dado o `tools/coverage.sh`, quando analisado, então não usa `mapfile`/`readarray` e roda num shell bash 3.2 compatível (checagem estática; falha antes da correção).
 - **IT-04** — Dado um arquivo `.ts` em `e2e/` com erro de tipo, quando `tools/lint.sh` roda, então o passo `e2e-lint` falha (falha antes da correção).
+- **UT-02** — Dados o sdd-config, o `coverage.sh` e o `ci.yml`, quando a política é avaliada, então nenhum filtro de `test`, `test_integration` ou do coverage seleciona `Kind=CommandContract` e nenhum job roda `test_commands_contract` (guarda: passa hoje, falha se alguém reintroduzir).
+- **UT-03** — Dado o repositório, quando o `CODEOWNERS` é lido, então `tools/sdd/**`, `docs/specs/sdd-config.yml` e `.github/workflows/**` têm dono (falha antes da correção).
 - IT-05 da SPEC-0006 fortalecido (anotação genérica não basta) e a confirmação do CodeQL rodam sob demanda com `SDD_GITHUB_VERIFY=1`, como as demais verificações no GitHub.
 
 ## 5. Questões em Aberto

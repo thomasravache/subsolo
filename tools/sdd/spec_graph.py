@@ -2264,9 +2264,9 @@ REFS_TRAILER_RE = re.compile(r"^Refs:\s*(.+)$", re.MULTILINE | re.IGNORECASE)
 def commit_spec_refs(subject: str, body: str) -> set:
     """Specs a que o commit pertence. Com rodapé `Refs:`, só ele conta (o corpo pode citar outras specs como
     contexto, ex.: "consome SPEC-0005@2"); sem rodapé, vale qualquer menção no assunto ou no corpo."""
-    trailer = REFS_TRAILER_RE.findall(body)
-    if trailer:
-        return set(SPEC_REF_RE.findall("\n".join(trailer)))
+    from_trailer = set(SPEC_REF_RE.findall("\n".join(REFS_TRAILER_RE.findall(body))))
+    if from_trailer:  # um `Refs: #12` sem spec não esconde o commit: cai na regra das menções
+        return from_trailer
     return set(SPEC_REF_RE.findall(subject + "\n" + body))
 
 
