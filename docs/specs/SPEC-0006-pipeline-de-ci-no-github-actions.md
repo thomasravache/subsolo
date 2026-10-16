@@ -8,8 +8,8 @@ status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
-consumes_contract: [SPEC-0005@3]
-contract_version: 3
+consumes_contract: [SPEC-0005@4]
+contract_version: 4
 touches: [.github/workflows/**, tests/Subsolo.Tooling.Tests/CiPolicy/**]
 adrs: [ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0009]
 external: []
@@ -112,6 +112,7 @@ Erros: qualquer job com falha → check vermelho → merge bloqueado pela prote�
 - **UT-01** — Dado o `ci.yml`, quando analisado por um teste de política (parse do YAML em `tests/Subsolo.Tooling.Tests`), então contém os 8 jobs nomeados no contrato, `permissions` mínimas, `timeout-minutes` em todo job e todas as actions de terceiros fixadas por SHA de 40 caracteres.
 
 ### 7.3 Testes de Integração
+- **UT-02** — Dado o `ci.yml`, quando analisado pelo teste de política, então todo job que roda um comando do sdd-config que chama `tools/*.sh` ou `pnpm` (incluindo os testes de integração do `lint.sh`) prepara Node (setup-node) e pnpm (corepack) antes de rodá-lo (Emenda v4).
 - **IT-01** — Dado um PR de verificação com uma mudança válida, quando o CI roda no GitHub, então os 8 checks terminam verdes (evidência: URL da execução).
 - **IT-02** — Dado um PR de verificação com um teste propositalmente falhando, quando o CI roda, então o check `test` fica vermelho e o botão de merge fica bloqueado pela proteção.
 - **IT-03** — Dado um PR de verificação com uma chave fictícia, quando o CI roda, então o check `security` falha citando o arquivo.
@@ -156,6 +157,11 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Validar: build + suíte (G2)
 
 
+
+**Fase Emenda v4 (IMP-03 da SPEC-0005): CI com o contrato SPEC-0005@4**
+- [ ] Red: UT-02 (jobs que chamam `tools/*.sh`/`pnpm` preparam Node + pnpm) e CT-01 (comando `test` literal novo) falhando
+- [ ] Green: `ci.yml` com o comando `test` novo e Node + pnpm no job `integration`
+- [ ] Validar e re-registrar G1–G4; CI verde no PR #4
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -228,6 +234,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 4 | 2026-10-16 | Emenda v4: consome SPEC-0005@4 (o job `test` passa a excluir `Kind=CommandContract`, comando literal do sdd-config); o job `integration` prepara Node + pnpm (corepack), porque os testes de integração do `lint.sh` (SPEC-0004) precisam do pnpm; novo UT-02 | IMP-03 da SPEC-0005: primeiro run do CI no PR #4 (pnpm: command not found no job integration) | SPEC-0005 | thomas (chat, 2026-10-16, recomendação aceita) |
 | 3 | 2026-10-13 | Auditoria npm do job `security`: bloqueia High/Critical em dependências de produção (`--prod --audit-level=high`) e Critical em qualquer dependência; High só de desenvolvimento vira aviso. NuGet continua bloqueando High/Critical. | IMP-01: `braces` (GHSA-vfj7-8cjw-p6xm, High, sem correção) só via ESLint; produção limpa | — | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Passa a consumir SPEC-0005@3 (comando `test` exclui `Kind=GitHubVerification`); IT-01..IT-06 rodam com `SDD_GITHUB_VERIFY=1`, depois do G4. Contrato desta spec inalterado. | IMP-01 da SPEC-0005 | — | thomas (chat, 2026-10-13) |
 | 1 | 2026-10-13 | Job `build` chama `./tools/build.sh`; passa a consumir SPEC-0005@2 (comandos pnpm de dentro de `web/`/`e2e/`). Contrato desta spec inalterado. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

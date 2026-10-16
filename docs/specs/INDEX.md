@@ -6,13 +6,7 @@
 
 - Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
 - Specs: proposed 1, approved 6, in-progress 2, implemented 1
-- Impedimentos: **1 aberto(s)**, 6 resolvido(s)
-
-## Impedimentos Abertos
-
-| Spec | ID | Tipo | Fase/Gate | Responsável | Aberto em | Idade | Descrição |
-|---|---|---|---|---|---|---|---|
-| SPEC-0005 | IMP-03 | decisão | G5 | Thomas: escolher entre Kind próprio fora do test/test_integration (Emenda v6) ou instalar tudo nos jobs test/integration | 2026-10-14 | 2d | CI do PR #4: os testes de contrato que rodam todos os comandos do sdd-config aninhados (CT-01 da SPEC-0004 e da SPEC-0005) falham nos jobs test e integration por falta de pnpm/Playwright no job (pnpm: command not found); localmente passam. No CI cada comando já é um job próprio, então o teste aninhado é redundante e deixa o test em ~4 min |
+- Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -44,13 +38,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0006  
-**Paradas por impedimento:** SPEC-0005  
+**Em andamento:** SPEC-0005, SPEC-0006  
+**Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🚧 parada por impedimento: IMP-03 (decisão → Thomas: escolher entre Kind próprio fora do test/test_integration (Emenda v6) ou instalar tudo nos jobs test/integration, 2d) |  |
+| 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🔄 em andamento |  |
 | 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
 | 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006 |
@@ -88,7 +82,7 @@ flowchart LR
   end
   S0004 --> S0005
   S0004 --> S0006
-  S0005 -. contrato v3 .-> S0006
+  S0005 -. contrato v4 .-> S0006
   S0005 --> S0007
   S0006 --> S0008
   S0007 --> S0008
@@ -111,7 +105,7 @@ flowchart LR
 | [SPEC-0003](SPEC-0003-go-live-producao-na-vps-e-servicos-pagos.md) | Go-live: produção na VPS e serviços pagos | epic | foundation | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
-| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@3 |
+| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@4 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
 | [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
 | [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
