@@ -6,8 +6,9 @@ using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Ambiente de publicação: docker-compose.yaml + .env (ADR-0004).
-builder.AddDockerComposeEnvironment("compose");
+// Ambiente de publicação: docker-compose.yaml + .env (ADR-0004). Sem o dashboard do Aspire (imagem nightly): a
+// telemetria vai para o Seq (ADR-0010).
+builder.AddDockerComposeEnvironment("compose").WithDashboard(false);
 
 // `Subsolo:EphemeralDatabase=true` (usado pelos testes do AppHost) sobe o PostgreSQL sem volume: cada execução de
 // teste gera uma senha nova, e um volume persistente criado com a senha de outra execução recusaria a conexão.
@@ -44,10 +45,6 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
 
 if (builder.ExecutionContext.IsPublishMode)
 {
-    // Ambiente da API no Compose: Production por padrão (migrações pelo pipeline, ADR-0002). O Compose local
-    // (tools/compose-up.sh) usa Development, que aplica as migrações e o seed da cidade de exemplo no start.
-    api.WithEnvironment("ASPNETCORE_ENVIRONMENT", builder.AddParameter("api-environment", "Production", publishValueAsDefault: true));
-
     // A API só sobe com o PostgreSQL aceitando conexões (no Compose, `depends_on` sozinho espera só o contêiner).
     postgres.PublishAsDockerComposeService((_, service) => service.Healthcheck = new Healthcheck
     {
@@ -58,7 +55,13 @@ if (builder.ExecutionContext.IsPublishMode)
         StartPeriod = "5s",
     });
     api.PublishAsDockerComposeService((_, service) =>
-        service.DependsOn[postgres.Resource.Name] = new ServiceDependency { Condition = "service_healthy" });
+    {
+        service.DependsOn[postgres.Resource.Name] = new ServiceDependency { Condition = "service_healthy" };
+
+        // Production efetivo por padrão (migrações pelo pipeline, ADR-0002), mesmo com o .env gerado vazio. O
+        // Compose local (tools/compose-up.sh) define API_ENVIRONMENT=Development: migrações e seed no start.
+        service.Environment["ASPNETCORE_ENVIRONMENT"] = "${API_ENVIRONMENT:-Production}";
+    });
 
     // Caddy na frente (ADR-0004): /api/* e /health → api; o resto → web. Mesmo Caddyfile do deploy na VPS.
     // No Compose, o contêiner do web roda `next start` sobre o build de produção (Dockerfile gerado pelo Aspire).
