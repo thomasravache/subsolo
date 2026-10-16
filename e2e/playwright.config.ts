@@ -15,7 +15,7 @@ import {
  * SPEC-0008 — as jornadas (tests/agenda) usam a aplicação completa em `BASE_URL` (padrão http://localhost:8080):
  * sem `BASE_URL`, o `webServer` sobe a pilha do Compose gerado pelo `aspire publish` com `tools/compose-up.sh`,
  * que fica em primeiro plano até o Playwright encerrá-lo (SIGTERM) e serve `/health` pelo Caddy; com `BASE_URL`
- * (smoke contra um ambiente já no ar), nada é subido. O IT-04 usa um Next.js à parte sem API.
+ * (smoke contra um ambiente já no ar), nada é subido. O IT-04 usa um Next.js de produção à parte, sem API.
  */
 const port = Number(process.env.E2E_STATIC_PORT ?? 4317);
 const baseURL = `http://127.0.0.1:${port}`;
@@ -61,8 +61,8 @@ export default defineConfig({
             gracefulShutdown: { signal: "SIGTERM" as const, timeout: 60_000 },
           },
           {
-            // SPEC-0008 IT-04: o web sem API (conexão recusada em API_URL).
-            command: `pnpm exec next dev --port ${webWithoutApiPort}`,
+            // SPEC-0008 IT-04 (Emenda 5): o web de produção (next build + next start) sem API (conexão recusada).
+            command: `pnpm exec next build && pnpm exec next start --port ${webWithoutApiPort}`,
             cwd: "../web",
             url: webWithoutApiURL,
             reuseExistingServer: !isCI,

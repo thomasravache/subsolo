@@ -2,8 +2,8 @@ import { expect, test } from "../fixtures";
 import { externalApp, webWithoutApiURL } from "./environment";
 
 /**
- * SPEC-0008 IT-04 — o servidor Next.js com `API_URL` apontando para uma porta sem serviço (subido pelo `webServer`
- * do `playwright.config.ts`) responde `/cidade-exemplo` com status 503 e a mensagem de indisponibilidade, em vez
+ * SPEC-0008 IT-04 — o servidor Next.js de produção (`next build` + `next start`) com `API_URL` apontando para uma
+ * porta sem serviço (subido pelo `webServer` do `playwright.config.ts`) responde `/cidade-exemplo` com status 503 e a mensagem de indisponibilidade, em vez
  * de quebrar.
  */
 const unavailableMessage =
