@@ -39,6 +39,9 @@ public static partial class ModularMonolithRules
     private const string Root = ArchitectureRules.ModulesRoot;
     private static readonly string RootPattern = Regex.Escape(Root);
 
+    /// <summary>Pastas do repositório onde ficam os projetos de módulo.</summary>
+    private static readonly string[] ProjectFolders = ["src", "tests"];
+
     /// <summary>Todos os assemblies <c>Subsolo.Modules.*</c> ao lado do assembly de teste.</summary>
     public static IReadOnlyList<Assembly> ModuleAssemblies() =>
         [.. Directory
@@ -50,15 +53,33 @@ public static partial class ModularMonolithRules
     /// Nomes (sem extensão) de todos os projetos <c>Subsolo.Modules.*.csproj</c> em <c>src/</c> e <c>tests/</c> de
     /// <paramref name="repositoryRoot"/>.
     /// </summary>
-    public static IReadOnlyList<string> ModuleProjects(string repositoryRoot) => throw new NotImplementedException();
+    public static IReadOnlyList<string> ModuleProjects(string repositoryRoot) =>
+        [.. ProjectFolders
+            .Select(folder => Path.Combine(repositoryRoot, folder))
+            .Where(Directory.Exists)
+            .SelectMany(folder => Directory.EnumerateFiles(folder, $"{Root}.*.csproj", SearchOption.AllDirectories))
+            .Select(Path.GetFileNameWithoutExtension)
+            .OfType<string>()
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)];
 
     /// <summary>
     /// Falha nomeando cada projeto <c>Subsolo.Modules.*.csproj</c> do repositório (<see cref="ModuleProjects"/>) que
     /// não está entre os assemblies <paramref name="loaded"/> avaliados pelas regras (módulo esquecido no projeto de
     /// testes de arquitetura).
     /// </summary>
-    public static void CheckEveryModuleIsLoaded(string repositoryRoot, IEnumerable<Assembly> loaded) =>
-        throw new NotImplementedException();
+    public static void CheckEveryModuleIsLoaded(string repositoryRoot, IEnumerable<Assembly> loaded)
+    {
+        ArgumentNullException.ThrowIfNull(loaded);
+        var loadedNames = loaded.Select(assembly => assembly.GetName().Name).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        var missing = ModuleProjects(repositoryRoot).Where(project => !loadedNames.Contains(project)).ToList();
+        if (missing.Count > 0)
+        {
+            throw new XunitException(
+                "ADR-0001: todo módulo é avaliado pelas regras de arquitetura; referencie no " +
+                $"Subsolo.ArchitectureTests.csproj: {string.Join(", ", missing)}");
+        }
+    }
 
     /// <summary>
     /// Avalia a regra <paramref name="rule"/> (uma das constantes desta classe) sobre <paramref name="assemblies"/>
