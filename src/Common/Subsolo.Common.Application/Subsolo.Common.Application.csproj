@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0007 — abstrações de aplicação (ADR-0001): comandos, consultas e handlers sem MediatR, decorators de
+    validação (FluentValidation) e de log, e o barramento de eventos de integração.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Common.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ILogger para o LoggingDecorator (Microsoft.Extensions.Logging, do framework compartilhado). -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

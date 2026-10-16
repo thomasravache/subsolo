@@ -4,7 +4,7 @@ title: Ajustes menores do tooling apontados na revisão da SPEC-0004
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
@@ -47,7 +47,7 @@ Itens 1 e 4: padrões do scaffold e da `.gitignore` inicial não revistos. Itens
 
 ## 4. Plano de Testes (TDD)
 - Caracterização: N/A — área já coberta pelos testes da SPEC-0004.
-- **UT-01** — Dada a regra do hook commit-msg, quando avaliada com `feat(web): x` + corpo citando `SPEC-0012` fora do rodapé, e com `[no-spec] style: corrige typo`, então ambas são aceitas (exit 0) — guarda do comportamento definido na Emenda v3 da SPEC-0004 (guarda: passa antes da mudança).
+- **UT-01** — Dada a regra do hook commit-msg, quando avaliada com `feat(web): x` + corpo citando `SPEC-0012` fora do rodapé, e com `style: corrige typo [no-spec]`, então ambas são aceitas (exit 0) — guarda do comportamento definido na Emenda v3 da SPEC-0004 (guarda: passa antes da mudança).
 - **IT-01** — Dado o `.gitignore` do repositório, quando `git check-ignore --no-index` avalia `.env.example` e `web/.env.example`, então nenhum dos dois é ignorado, enquanto `.env` e `.env.local` continuam ignorados, e `.claude/worktrees/x` passa a ser ignorado (falha antes da correção).
 - **IT-02** — Dado o hook pre-commit num repositório temporário, quando um arquivo com chave falsa no formato Google API (`AIza` + 35 caracteres) é commitado, então o commit é bloqueado (guarda: passa antes da mudança).
 
@@ -61,12 +61,12 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Regressão e guardas**
-- [ ] Red: IT-01 (`.env.example` e `.claude/` no `.gitignore`) falhando pelo motivo certo; UT-01 e IT-02 escritos como guarda (passam antes da mudança), com a tag `SPEC-0012:<ID>`
-- [ ] Green: `.gitignore` com `!.env.example`/`!**/.env.example` e `.claude/`; remover o comentário de scaffold de `web/next.config.ts`
-- [ ] Validar: build + suíte completa + lint (G2); G3 N/A até a suíte de arquitetura (SPEC-0007)
+- [x] Red: IT-01 (`.env.example` e `.claude/` no `.gitignore`) falhando pelo motivo certo; UT-01 e IT-02 escritos como guarda (passam antes da mudança), com a tag `SPEC-0012:<ID>`
+- [x] Green: `.gitignore` com `!.env.example`/`!**/.env.example` e `.claude/`; remover o comentário de scaffold de `web/next.config.ts`
+- [x] Validar: build + suíte completa + lint (G2); G3 N/A até a suíte de arquitetura (SPEC-0007)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
+- [x] Review independente (G4)
 - [ ] Integração + CI (G5) e aprovação (H2)
 - [ ] Deploy: N/A até o go-live (SPEC-0003)
 - [ ] Relatório de Entrega e CHANGELOG (G7)
@@ -77,10 +77,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 7f944ee (árvore suja) | 2026-10-13 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 9c0dc7c | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 3d8ef04 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 548ms) — 3d8ef04 | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 3d8ef04 (9c0dc7c red, 3d8ef04 green); IT-01 red/green confirmado; .gitignore não expõe .env.local/.env.production; chave do IT-02 dispara gcp-api-key só no teste. Minors: summary do CommitMessageRuleTests desatualizado (→ SPEC-0013); .claude/ inteiro ignorado (trocar por .claude/* com exceções se um dia versionarem config) — 3d8ef04 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -122,3 +122,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (texto do plano, sem mudança de contrato) | 2026-10-16 | Exemplo do UT-01 corrigido de `[no-spec] style: corrige typo` para `style: corrige typo [no-spec]` | O hook (contrato v3 da SPEC-0004) exige o tipo no início do assunto; a forma antiga nunca foi aceita, então não seria guarda | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |

@@ -1,7 +1,7 @@
 namespace Subsolo.Tooling.Tests;
 
 /// <summary>
-/// SPEC-0004 UT-01 — a regra de validação do hook commit-msg, avaliada diretamente sobre o script
+/// SPEC-0004 UT-01 e SPEC-0012 UT-01 — a regra de validação do hook commit-msg, avaliada diretamente sobre o script
 /// <c>.githooks/commit-msg</c> (sem repositório git): aceita apenas mensagens Conventional Commits com <c>Refs: SPEC-NNNN</c>.
 /// </summary>
 public sealed class CommitMessageRuleTests
@@ -16,10 +16,27 @@ public sealed class CommitMessageRuleTests
         { "tipo inexistente com Refs", "feature: x\n\nRefs: SPEC-0004\n", false },
     };
 
+    // Convenção de commit da ferramenta SDD: referência à spec em qualquer parte da mensagem e [no-spec] no assunto
+    // de mudanças sem comportamento. O assunto continua Conventional Commits, então o marcador vem após o tipo.
+    public static TheoryData<string, string, bool> SpecReferenceVariants => new()
+    {
+        { "referência à spec no corpo, fora do rodapé Refs", "feat(web): x\n\nAjuste pedido na SPEC-0012, sem rodapé.\n", true },
+        { "[no-spec] no assunto, sem referência", "style: corrige typo [no-spec]\n", true },
+    };
+
     [Theory]
     [MemberData(nameof(Messages))]
     [Trait("Spec", "SPEC-0004:UT-01")]
-    public async Task CommitMsgRuleAcceptsOnlyConventionalMessagesWithSpecReference(string scenario, string message, bool expectedValid)
+    public Task CommitMsgRuleAcceptsOnlyConventionalMessagesWithSpecReference(string scenario, string message, bool expectedValid) =>
+        AssertHookVerdictAsync(scenario, message, expectedValid);
+
+    [Theory]
+    [MemberData(nameof(SpecReferenceVariants))]
+    [Trait("Spec", "SPEC-0012:UT-01")]
+    public Task CommitMsgRuleAcceptsSpecReferenceOutsideFooterAndNoSpecMarker(string scenario, string message, bool expectedValid) =>
+        AssertHookVerdictAsync(scenario, message, expectedValid);
+
+    private static async Task AssertHookVerdictAsync(string scenario, string message, bool expectedValid)
     {
         var hook = RepositoryRoot.Combine(".githooks", "commit-msg");
         File.Exists(hook).ShouldBeTrue("hook .githooks/commit-msg ausente no repositório (esperado via `spec_graph.py vendor --hooks`)");

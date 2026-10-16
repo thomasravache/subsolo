@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0007 IT-06 — dublê de teste: módulos fictícios (namespaces Subsolo.Modules.<M>.*), cada um violando uma
+    regra do ADR-0001. O nome do assembly não começa com Subsolo.Modules, para não entrar na verificação dos
+    módulos reais. Não é código de produção.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Subsolo.Common.ArchitectureViolations</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

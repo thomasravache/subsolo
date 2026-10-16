@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0007 — apresentação comum (ADR-0001): IEndpoint, descoberta de endpoints por módulo e o mapeamento
+    Result → ProblemDetails (RFC 9457).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Common.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+  </ItemGroup>
+
+</Project>

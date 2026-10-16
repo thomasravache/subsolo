@@ -1,9 +1,32 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Subsolo.Api/Subsolo.Api.csproj" />
+    <Project Path="src/Subsolo.AppHost/Subsolo.AppHost.csproj" />
+    <Project Path="src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Common/">
+    <Project Path="src/Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+    <Project Path="src/Common/Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+    <Project Path="src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <Project Path="src/Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Subsolo.ArchitectureTests/Subsolo.ArchitectureTests.csproj" />
     <Project Path="tests/Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
     <Project Path="tests/Subsolo.Tooling.Tests/Subsolo.Tooling.Tests.csproj" />
     <Project Path="tests/Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+  </Folder>
+  <Folder Name="/tests/Common/">
+    <Project Path="tests/Common/Subsolo.Api.IntegrationTests/Subsolo.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Common/Subsolo.AppHost.IntegrationTests/Subsolo.AppHost.IntegrationTests.csproj" />
+    <Project Path="tests/Common/Subsolo.Common.ArchitectureViolations/Subsolo.Common.ArchitectureViolations.csproj" />
+    <Project Path="tests/Common/Subsolo.Common.IntegrationTests/Subsolo.Common.IntegrationTests.csproj" />
+    <Project Path="tests/Common/Subsolo.Common.UnitTests/Subsolo.Common.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Common/Modules/">
+    <Project Path="tests/Common/Modules/Subsolo.Modules.Template.IntegrationEvents/Subsolo.Modules.Template.IntegrationEvents.csproj" />
+    <Project Path="tests/Common/Modules/Subsolo.Modules.Template/Subsolo.Modules.Template.csproj" />
+    <Project Path="tests/Common/Modules/Subsolo.Modules.TemplateB/Subsolo.Modules.TemplateB.csproj" />
   </Folder>
   <Folder Name="/tests/Examples/">
     <Project Path="tests/Examples/Subsolo.Examples.ArchitectureSamples/Subsolo.Examples.ArchitectureSamples.csproj" />

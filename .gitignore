@@ -22,11 +22,14 @@ npm-debug.log*
 
 # Segredos e configuração local — nunca versionar (ADR-0008)
 .env*
+!.env.example
+!**/.env.example
 appsettings.*.local.json
 *.pem
 *.pfx
 
 # Editores e sistema
+.claude/
 .idea/
 .vscode/*
 !.vscode/extensions.json
