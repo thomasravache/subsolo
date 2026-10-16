@@ -118,6 +118,11 @@ jobs:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
+      # O IT-05 (Kind=Integration, SPEC-0008) roda `aspire publish` do AppHost.
+      - name: Aspire CLI (versão do Aspire do AppHost)
+        run: |
+          dotnet tool install --global Aspire.Cli --version 13.6.1
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
@@ -178,6 +183,11 @@ jobs:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
+      # O IT-05 (Kind=Integration, SPEC-0008) roda `aspire publish` do AppHost.
+      - name: Aspire CLI (versão do Aspire do AppHost)
+        run: |
+          dotnet tool install --global Aspire.Cli --version 13.6.1
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
       # Os testes de integração do lint.sh (Kind=Integration) instalam e rodam o front com pnpm.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
