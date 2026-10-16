@@ -4,7 +4,7 @@
 # Deixe "" quando ainda não existir — e registre o gate como N/A apontando a spec que vai criá-lo.
 
 base_branch: main
-max_parallel: 3
+max_parallel: 1
 
 # --- Build e testes (G2, G5) ---
 # Exemplos: "dotnet build" | "npm run build" | "./gradlew build" | "go build ./..."
