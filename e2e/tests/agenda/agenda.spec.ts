@@ -5,7 +5,9 @@ import { appURL } from "./environment";
  * SPEC-0008 E2E-01 — na aplicação completa (pilha do Compose subida pelo `webServer`), o fã abre a agenda da cidade
  * de exemplo e vê o título e o estado vazio, sem violações serious/critical do axe; uma cidade inexistente ou um
  * slug fora do padrão (`/Cidade_X`) mostra "Cidade não encontrada" com status 404 (nunca soft 404); o cabeçalho
- * interno de estado da agenda (`x-subsolo-agenda`), quando enviado pelo cliente, é ignorado (Emenda 5).
+ * interno de estado da agenda (`x-subsolo-agenda`), quando enviado pelo cliente, é ignorado (Emenda 5); arquivos
+ * públicos com ponto no caminho (`/robots.txt`) são servidos pelo web, sem passar pelo 404 do proxy da agenda
+ * (Emenda 6).
  */
 test.use({ baseURL: appURL });
 
@@ -50,4 +52,13 @@ test.describe("agenda da cidade", () => {
       ).toBeVisible();
     });
   }
+
+  test("SPEC-0008:E2E-01 /robots.txt é servido como arquivo público, sem o 404 do proxy da agenda [jornada: agenda] @smoke", async ({
+    request,
+  }) => {
+    const robots = await request.get("/robots.txt");
+
+    expect(robots.status()).toBe(200);
+    expect((await robots.text()).trimStart()).toMatch(/^User-agent/);
+  });
 });
