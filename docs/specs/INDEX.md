@@ -1,12 +1,12 @@
 # Índice de Specs
 
-> Gerado por `spec_graph.py index` em 2026-10-13 — não edite manualmente.
+> Gerado por `spec_graph.py index` em 2026-10-16 — não edite manualmente.
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 14 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 8, implemented 1
-- Impedimentos: **0 aberto(s)**, 2 resolvido(s)
+- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
+- Specs: proposed 1, approved 6, in-progress 2, implemented 1
+- Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -38,26 +38,27 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0005, SPEC-0006  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0005, SPEC-0006
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0005 | Harness de testes | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | approved | ✅ pronta |  |
+| 1 | SPEC-0005 | Harness de testes | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0006 | Pipeline de CI no GitHub Actions | full/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0007 | Base do monólito modular com Aspire | full/M | approved | ⛔ aguarda implementação de SPEC-0005 |  |
-| 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0006 |
+| 2 | SPEC-0012 | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006 |
 | 3 | SPEC-0008 | Walking skeleton: agenda da cidade | full/M | approved | ⛔ aguarda implementação de SPEC-0006; aguarda implementação de SPEC-0007 |  |
 | 4 | SPEC-0009 | Observabilidade base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 4 | SPEC-0010 | Segurança base | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
 | 4 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ⛔ aguarda implementação de SPEC-0008 |  |
+| 5 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | proposed | ⏳ aguardando aprovação (H1) | saiu da onda 1: arquivos em comum com SPEC-0005, SPEC-0006; saiu da onda 2: arquivos em comum com SPEC-0012; saiu da onda 3: arquivos em comum com SPEC-0008; saiu da onda 4: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
-| SPEC-0001 | Fundação do Subsolo | approved | 1/9 implementadas |
+| SPEC-0001 | Fundação do Subsolo | approved | 1/10 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | proposed | 0/0 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
@@ -69,18 +70,19 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 flowchart LR
   subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
     S0004["SPEC-0004<br/>Repositório e ferramentas"]:::implemented
-    S0005["SPEC-0005<br/>Harness de testes"]:::approved
-    S0006["SPEC-0006<br/>Pipeline de CI no GitHub Actions"]:::approved
+    S0005["SPEC-0005<br/>Harness de testes"]:::inprogress
+    S0006["SPEC-0006<br/>Pipeline de CI no GitHub Actions"]:::inprogress
     S0007["SPEC-0007<br/>Base do monólito modular com Aspire"]:::approved
     S0008["SPEC-0008<br/>Walking skeleton: agenda da cidade"]:::approved
     S0009["SPEC-0009<br/>Observabilidade base"]:::approved
     S0010["SPEC-0010<br/>Segurança base"]:::approved
     S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
     S0012["SPEC-0012<br/>Ajustes menores do tooling apontados na…"]:::approved
+    S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::proposed
   end
   S0004 --> S0005
   S0004 --> S0006
-  S0005 -. contrato v2 .-> S0006
+  S0005 -. contrato v4 .-> S0006
   S0005 --> S0007
   S0006 --> S0008
   S0007 --> S0008
@@ -102,14 +104,15 @@ flowchart LR
 | [SPEC-0002](SPEC-0002-agenda-subsolo-lancamento-mvp.md) | Agenda Subsolo — lançamento (MVP) | epic | feature | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0003](SPEC-0003-go-live-producao-na-vps-e-servicos-pagos.md) | Go-live: produção na VPS e serviços pagos | epic | foundation | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | implemented | 2026-10-13 | SPEC-0001 | — | — |
-| [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
-| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@2 |
+| [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
+| [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@4 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
 | [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
 | [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | approved | 2026-10-13 | SPEC-0001 | — | — |
+| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | proposed | 2026-10-14 | SPEC-0001 | — | — |
 
 ## ADRs
 

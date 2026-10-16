@@ -38,11 +38,11 @@ Dependências vulneráveis ou fora de suporte viram risco silencioso, e atualiza
 - Calendário de fim de suporte: .NET 10 (2028-11-14), PostgreSQL 18 (2030-11-14) e Node 24 LTS, revisado a cada 6 meses; cada migração de versão vira spec.
 
 **Regras (verificáveis):**
-- Varredura de vulnerabilidades no CI; severidade alta ou crítica bloqueia o merge.
+- Varredura de vulnerabilidades no CI; severidade alta ou crítica bloqueia o merge. No front (npm): High/Critical bloqueiam em dependências de **produção**; em dependências só de **desenvolvimento** (lint, build, testes), Critical bloqueia e High vira aviso no PR, acompanhado pelo Dependabot até sair correção (decisão do Thomas em 2026-10-13, a partir do `braces` GHSA-vfj7-8cjw-p6xm sem correção, que só entra pelo ESLint).
 - Atualização de dependências automatizada (Dependabot) com revisão, pelo menos semanal.
 - Nenhuma dependência ou runtime fora de suporte (EOL); o calendário de fim de suporte é revisado a cada 6 meses e cada item vira spec.
 - Lockfiles versionados (`packages.lock.json`, `pnpm-lock.yaml`).
-- Licenças compatíveis: permitidas MIT, Apache-2.0, BSD, 0BSD, ISC, PostgreSQL, MPL-2.0, CC0-1.0, BlueOak-1.0.0 e Python-2.0; CC-BY-4.0 apenas para pacotes de dados (ex.: `caniuse-lite`); LGPL só para binários nativos ligados dinamicamente (ex.: libvips, sharp-libvips); qualquer licença comercial, RPL ou "split license" exige ADR. (Lista ampliada pelo Thomas em 2026-10-13, a partir da revisão G4 da SPEC-0004.)
+- Licenças compatíveis: permitidas MIT, Apache-2.0, BSD, 0BSD, MIT-0, ISC, PostgreSQL, MPL-2.0, CC0-1.0, BlueOak-1.0.0 e Python-2.0; CC-BY-4.0 apenas para pacotes de dados (ex.: `caniuse-lite`); LGPL só para binários nativos ligados dinamicamente (ex.: libvips, sharp-libvips); qualquer licença comercial, RPL ou "split license" exige ADR. (Lista ampliada pelo Thomas em 2026-10-13, a partir da revisão G4 da SPEC-0004, e em 2026-10-14 com MIT-0, transitivo do jsdom via @csstools, a partir da revisão G4 da SPEC-0005.)
 
 ### Consequências
 - **Boa**, porque as vulnerabilidades aparecem no PR, e o risco de licença é tratado antes de entrar.

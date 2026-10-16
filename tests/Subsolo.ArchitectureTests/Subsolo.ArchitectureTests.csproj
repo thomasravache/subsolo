@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0005 — testes de arquitetura (ADR-0005, ADR-0001) com ArchUnitNET e o helper ArchitectureRules, que
+    declara as regras por módulo (consumido pela SPEC-0007). Comando `arch_test` do sdd-config.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.ArchitectureTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <!-- SPEC-0005 IT-05: assembly de exemplo com uma violação proposital do ADR-0001. -->
+    <ProjectReference Include="../Examples/Subsolo.Examples.ArchitectureSamples/Subsolo.Examples.ArchitectureSamples.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -4,12 +4,12 @@ title: Pipeline de CI no GitHub Actions
 tier: full
 type: foundation
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
-consumes_contract: [SPEC-0005@2]
-contract_version: 1
+consumes_contract: [SPEC-0005@4]
+contract_version: 4
 touches: [.github/workflows/**, tests/Subsolo.Tooling.Tests/CiPolicy/**]
 adrs: [ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0009]
 external: []
@@ -29,7 +29,7 @@ Cria o pipeline de CI no GitHub Actions, que roda em todo PR e em todo push na `
 **Motivação:** o CI é o portão final que funciona mesmo quando o agente esquece o processo; sem ele, a `main` deixa de ser confiável.
 
 **Objetivos (dentro do escopo):**
-- `.github/workflows/ci.yml` com os jobs `build`, `lint`, `test` (unitário + arquitetura), `integration` (Testcontainers no runner Ubuntu), `e2e` (Playwright contra a aplicação subida via Aspire/Compose a partir da SPEC-0008; até lá, contra o exemplo da SPEC-0005), `security` (`dotnet list package --vulnerable --include-transitive`, `pnpm audit --audit-level=high`, gitleaks, Semgrep CE), `codeql` (C# e TypeScript, gratuito no repositório público, ADR-0006) e `sdd` (vendor `--ci github`).
+- `.github/workflows/ci.yml` com os jobs `build`, `lint`, `test` (unitário + arquitetura), `integration` (Testcontainers no runner Ubuntu), `e2e` (Playwright contra a aplicação subida via Aspire/Compose a partir da SPEC-0008; até lá, contra o exemplo da SPEC-0005), `security` (`dotnet list package --vulnerable --include-transitive`, `(cd web && pnpm audit --prod --audit-level=high)` bloqueante + `(cd web && pnpm audit --audit-level=critical)` bloqueante + aviso para High só de desenvolvimento, gitleaks, Semgrep CE — Emenda v3), `codeql` (C# e TypeScript, gratuito no repositório público, ADR-0006) e `sdd` (vendor `--ci github`).
 - Cache de NuGet, pnpm, navegadores do Playwright e imagens Docker.
 - Artefatos de falha: trace/vídeo do Playwright, relatório de cobertura e TRX.
 - `concurrency` para cancelar execuções antigas do mesmo PR.
@@ -78,7 +78,10 @@ jobs (nomes = checks obrigatórios na proteção da main):
   integration  → sdd-config.test_integration
   e2e          → sdd-config.test_e2e (artefato: playwright-report, traces)
   security     → dotnet list package --vulnerable --include-transitive (falha em High/Critical)
-                 pnpm audit --audit-level=high ; gitleaks detect ; semgrep ci --config .semgrep.yml
+                 (cd web && pnpm audit --prod --audit-level=high)   → falha em High/Critical de produção
+                 (cd web && pnpm audit --audit-level=critical)      → falha em Critical de qualquer dependência
+                 (cd web && pnpm audit --audit-level=high) só de dev → aviso (::warning), não falha   (Emenda v3)
+                 gitleaks detect ; semgrep ci --config .semgrep.yml
   codeql       → github/codeql-action (csharp, javascript-typescript); alerta High/Critical novo falha o check
   sdd          → python3 tools/sdd/spec_graph.py validate --exclude-drafts && pr-check (PR_TITLE/PR_BODY)
 Saídas: status por job; anotações no PR (sdd, semgrep)
@@ -109,6 +112,7 @@ Erros: qualquer job com falha → check vermelho → merge bloqueado pela prote�
 - **UT-01** — Dado o `ci.yml`, quando analisado por um teste de política (parse do YAML em `tests/Subsolo.Tooling.Tests`), então contém os 8 jobs nomeados no contrato, `permissions` mínimas, `timeout-minutes` em todo job e todas as actions de terceiros fixadas por SHA de 40 caracteres.
 
 ### 7.3 Testes de Integração
+- **UT-02** — Dado o `ci.yml`, quando analisado pelo teste de política, então todo job que roda um comando do sdd-config que chama `tools/*.sh` ou `pnpm` (incluindo os testes de integração do `lint.sh`) prepara Node (setup-node) e pnpm (corepack) antes de rodá-lo (Emenda v4).
 - **IT-01** — Dado um PR de verificação com uma mudança válida, quando o CI roda no GitHub, então os 8 checks terminam verdes (evidência: URL da execução).
 - **IT-02** — Dado um PR de verificação com um teste propositalmente falhando, quando o CI roda, então o check `test` fica vermelho e o botão de merge fica bloqueado pela proteção.
 - **IT-03** — Dado um PR de verificação com uma chave fictícia, quando o CI roda, então o check `security` falha citando o arquivo.
@@ -147,19 +151,27 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Workflow de CI**
-- [ ] Red: UT-01 e CT-01 (teste de política do `ci.yml` e comparação com o sdd-config) falhando
-- [ ] Green: `.github/workflows/ci.yml` com os 8 jobs do contrato, caches, artefatos, `concurrency`, permissões mínimas, actions fixadas por SHA; job `sdd` via `vendor --ci github`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte (G2)
+- [x] Red: UT-01 e CT-01 (teste de política do `ci.yml` e comparação com o sdd-config) falhando
+- [x] Green: `.github/workflows/ci.yml` com os 8 jobs do contrato, caches, artefatos, `concurrency`, permissões mínimas, actions fixadas por SHA; job `sdd` via `vendor --ci github`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte (G2)
 
-**Fase 2: Verificação no GitHub**
-- [ ] IT-01..IT-06 com PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
-- [ ] Checks obrigatórios configurados na proteção da `main`; comando `ci` no sdd-config
+
+
+**Fase Emenda v4 (IMP-03 da SPEC-0005): CI com o contrato SPEC-0005@4**
+- [x] Red: UT-02 (jobs que chamam `tools/*.sh`/`pnpm` preparam Node + pnpm) e CT-01 (comando `test` literal novo) falhando
+- [x] Green: `ci.yml` com o comando `test` novo e Node + pnpm no job `integration`
+- [x] Validar e re-registrar G1–G4; CI verde no PR #4
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Review independente (G4)
+
+**Fase 2: Verificação no GitHub** (depois do G4: o job `sdd` só passa com G0–G4 registrados)
+- [x] Checks obrigatórios configurados na proteção da `main` (pré-requisito do IT-02); comando `ci` no sdd-config
+- [x] IT-01..IT-06 com `SDD_GITHUB_VERIFY=1` e PRs de verificação descartáveis (`ci-check/*`), registrando a URL de cada execução
+
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
@@ -167,19 +179,21 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — aff181e | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — d888771 | 2026-10-16 |
+| G3 Arquitetura | N/A | SPEC-0006 só altera .github/workflows; a suíte de arquitetura nasce na SPEC-0005 (mesma onda) e as regras do ADR-0001 na SPEC-0007 | 2026-10-13 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v4) em 39fd929 — SHAs aff181e, d888771, 5a96ee1; 0 blocker/major; segurança do workflow ok; m4 (Refs sem spec) corrigido em 7ecb778; demais minors na SPEC-0013 — 7ecb778 (árvore suja) | 2026-10-16 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 29s 803ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 518ms); nota: CI do PR #4 verde (10/10 checks) em 555c281: https://github.com/thomasravache/subsolo/actions/runs/38850207777; test_commands_contract exit 0 (141s) no integrado; checks obrigatórios configurados na proteção da main (9 checks); verificações reais no GitHub IT-01..06 com SDD_GITHUB_VERIFY=1 a partir de 555c281: 6/6 PASS (17m40s), PRs descartáveis #9 IT-01, #5 IT-02, #6 IT-03, #10 IT-04, #7 IT-05, #8 IT-06 (fechados sem merge) — 555c281 (árvore suja) | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — 'pode seguir com tudo que for recomendado e pode ir criando PR e mergeando quando for preciso'; integração verde (G5) em 555c281 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #4 | 2026-10-16 |
 | G7 Pronto & Docs | PENDING | | |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-13 | G2 | decisão | pnpm audit --audit-level=high falha em main: braces GHSA-vfj7-8cjw-p6xm (high, sem versão corrigida) só em dependência de desenvolvimento (eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch > braces); dependências de produção limpas (pnpm audit --prod) | Implementer SPEC-0006 e Architect reproduziram localmente; nenhuma versão corrigida para override | Thomas: escolher a política de auditoria do front (bloquear High só em produção + Critical em dev, ou exceção pontual por GHSA) | Opção A (Thomas, 2026-10-13): Emenda v3 — npm bloqueia High/Critical só em produção e Critical em dev; High de dev vira aviso; nota no ADR-0009 | 2026-10-13 |
+| IMP-02 | 2026-10-14 | G5 | decisão | pr-check do PR #4 conta o commit abc979d (Refs: SPEC-0006) também como da SPEC-0005, porque o corpo cita 'SPEC-0005@2'; com isso os arquivos CiPolicy aparecem fora dos touches da SPEC-0005 (job sdd vermelho) | Confirmado na função de atribuição do spec_graph.py: qualquer menção a SPEC-NNNN no corpo atribui o commit | Thomas: corrigir a ferramenta da skill (Refs: tem precedência) ou outra saída | Decisão do Thomas (2026-10-16): corrigir a ferramenta. spec_graph.py da skill (2026.10.8) passa a atribuir o commit só pelo rodapé Refs: quando ele existe (teste de regressão na suíte da skill: red no código antigo, 122 testes OK); tools/sdd revendorizado e tools/sdd/** em scope_exempt; pr-check local sem falha de escopo | 2026-10-16 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -220,4 +234,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0006`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 4 | 2026-10-16 | Emenda v4: consome SPEC-0005@4 (o job `test` passa a excluir `Kind=CommandContract`, comando literal do sdd-config); o job `integration` prepara Node + pnpm (corepack), porque os testes de integração do `lint.sh` (SPEC-0004) precisam do pnpm; novo UT-02 | IMP-03 da SPEC-0005: primeiro run do CI no PR #4 (pnpm: command not found no job integration) | SPEC-0005 | thomas (chat, 2026-10-16, recomendação aceita) |
+| 3 | 2026-10-13 | Auditoria npm do job `security`: bloqueia High/Critical em dependências de produção (`--prod --audit-level=high`) e Critical em qualquer dependência; High só de desenvolvimento vira aviso. NuGet continua bloqueando High/Critical. | IMP-01: `braces` (GHSA-vfj7-8cjw-p6xm, High, sem correção) só via ESLint; produção limpa | — | thomas (chat, 2026-10-13) |
+| 2 | 2026-10-13 | Passa a consumir SPEC-0005@3 (comando `test` exclui `Kind=GitHubVerification`); IT-01..IT-06 rodam com `SDD_GITHUB_VERIFY=1`, depois do G4. Contrato desta spec inalterado. | IMP-01 da SPEC-0005 | — | thomas (chat, 2026-10-13) |
 | 1 | 2026-10-13 | Job `build` chama `./tools/build.sh`; passa a consumir SPEC-0005@2 (comandos pnpm de dentro de `web/`/`e2e/`). Contrato desta spec inalterado. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |

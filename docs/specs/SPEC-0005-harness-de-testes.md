@@ -4,13 +4,13 @@ title: Harness de testes
 tier: full
 type: foundation
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0004]
 consumes_contract: []
-contract_version: 2
-touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx]
+contract_version: 4
+touches: [tests/Subsolo.UnitTests.Common/**, tests/Subsolo.IntegrationTests.Common/**, tests/Subsolo.ArchitectureTests/**, tests/Examples/**, tests/README.md, web/vitest.config.ts, web/src/test/**, web/package.json, web/pnpm-lock.yaml, e2e/**, tools/coverage.sh, Directory.Packages.props, Subsolo.slnx, tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs, tests/Subsolo.Tooling.Tests/packages.lock.json]
 adrs: [ADR-0005, ADR-0002]
 external: []
 size: M
@@ -85,7 +85,10 @@ TypeScript
   Tag: test("SPEC-NNNN:E2E-01 descrição", ...)
 
 Comandos (sdd-config)
-  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture" && (cd web && pnpm test)
+  test             = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)
+                     # Emenda v3: testes Kind=GitHubVerification (SPEC-0006) rodam só sob demanda, com SDD_GITHUB_VERIFY=1
+                     # Emenda v6: testes Kind=CommandContract (rodam os próprios comandos do sdd-config) ficam fora do test e do test_integration
+  test_commands_contract = dotnet test Subsolo.slnx --filter "Kind=CommandContract" --max-parallel-test-modules 1   # um projeto por vez (os dois CT-01 compilam a mesma solution); sob demanda: G2/G5 locais (no CI, cada comando já é um job)
   test_integration = dotnet test Subsolo.slnx --filter "Kind=Integration"
   arch_test        = dotnet test tests/Subsolo.ArchitectureTests
   test_e2e         = (cd e2e && pnpm test)   # e2e/package.json fixa o mesmo pnpm de web/
@@ -131,7 +134,7 @@ Erros
 - **IT-06** — Dado um commit que altera um arquivo coberto pela metade, quando `./tools/coverage.sh` roda, então o relatório mostra a porcentagem das linhas alteradas daquele arquivo.
 
 ### 7.4 Testes de Contrato
-- **CT-01** — Os comandos `test`, `test_integration`, `arch_test`, `test_e2e` e `coverage` gravados no sdd-config executam com exit 0 na raiz (contrato consumido pela SPEC-0006 e pelas specs de módulo).
+- **CT-01** — Os comandos `test`, `test_integration`, `arch_test`, `test_e2e` e `coverage` gravados no sdd-config executam com exit 0 na raiz (contrato consumido pela SPEC-0006 e pelas specs de módulo); marcado `Kind=CommandContract` (Emenda v6), roda com `test_commands_contract`, sem execução aninhada de si mesmo nem do CT-01 da SPEC-0004.
 
 ### 7.5 Testes E2E
 - **E2E-01** — Dadas duas páginas estáticas de exemplo (uma com contraste insuficiente), quando o Playwright as abre nos projetos mobile e desktop e roda `axe.check`, então a página correta passa e a página com violação falha, provando o harness E2E e de acessibilidade.
@@ -161,21 +164,25 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Harness .NET**
-- [ ] Red: UT-01, UT-02, IT-01..IT-06 com a tag `SPEC-0005:<ID>`, falhando pelo motivo certo (fixtures e helpers ainda inexistentes — scaffold `chore` com NotImplemented)
-- [ ] Green: projetos `Subsolo.UnitTests.Common`, `Subsolo.IntegrationTests.Common` (PostgresFixture, MailpitFixture), `Subsolo.ArchitectureTests` (ArchUnitNET + `ArchitectureRules`), `tools/coverage.sh`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa (G2)
+- [x] Red: UT-01, UT-02, IT-01..IT-06 com a tag `SPEC-0005:<ID>`, falhando pelo motivo certo (fixtures e helpers ainda inexistentes — scaffold `chore` com NotImplemented)
+- [x] Green: projetos `Subsolo.UnitTests.Common`, `Subsolo.IntegrationTests.Common` (PostgresFixture, MailpitFixture), `Subsolo.ArchitectureTests` (ArchUnitNET + `ArchitectureRules`), `tools/coverage.sh`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa (G2)
 
 **Fase 2: Harness do front e E2E**
-- [ ] Red: UT-03, E2E-01 e CT-01 falhando
-- [ ] Green: Vitest + Testing Library em `web/`; projeto Playwright em `e2e/` (mobile + desktop, fixture axe); comandos `test`, `test_integration`, `arch_test`, `test_e2e`, `coverage` no sdd-config
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + E2E (G2)
+- [x] Red: UT-03, E2E-01 e CT-01 falhando
+- [x] Green: Vitest + Testing Library em `web/`; projeto Playwright em `e2e/` (mobile + desktop, fixture axe); comandos `test`, `test_integration`, `arch_test`, `test_e2e`, `coverage` no sdd-config
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + E2E (G2)
+
+**Fase Emenda v6 (IMP-03): testes de comando fora da suíte padrão**
+- [x] Red/ajuste de testes: CT-01 desta spec e CT-01 da SPEC-0004 com `Kind=CommandContract`; remover o desvio `SUBSOLO_SPEC0005_CT01_NESTED`
+- [x] Validar: `test`, `test_integration` e `test_commands_contract` verdes localmente; re-registrar G1–G4
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
@@ -183,19 +190,22 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — cc247d8 | 2026-10-13 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 7ecb778 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 556ms) — 7ecb778 (árvore suja) | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (Emenda v6) em 39fd929 — SHAs 1d1d835, 1755d0d, 591105e; 0 blocker/major. fix de coverage.sh feito após o test por necessidade: sem ele o coverage rodaria o CT-01 em recursão (justificado). Minors m1–m3 na SPEC-0013; test_commands_contract verde (141s) — 7ecb778 (árvore suja) | 2026-10-16 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 29s 433ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 550ms); nota: CI do PR #4 verde (10/10 checks) em 555c281: https://github.com/thomasravache/subsolo/actions/runs/38850207777; test_commands_contract exit 0 (141s) no integrado; checks obrigatórios configurados na proteção da main (9 checks) — 555c281 (árvore suja) | 2026-10-16 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — 'pode seguir com tudo que for recomendado e pode ir criando PR e mergeando quando for preciso'; integração verde (G5) em 555c281 | 2026-10-16 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #4 | 2026-10-16 |
 | G7 Pronto & Docs | PENDING | | |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-13 | G1 | spec | Contrato v2: 'test' roda toda a solution; os testes de verificação no GitHub da SPEC-0006 (Kind=GitHubVerification) falham de propósito sem SDD_GITHUB_VERIFY=1, deixando a suíte padrão e o job test do CI sempre vermelhos | Test-writer da SPEC-0006 confirmou que '--filter "Kind!=GitHubVerification"' funciona com o runner MTP (20 → 14 testes no CiPolicy) | Architect + Thomas: Emenda v3 da SPEC-0005 — test = dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification" && (cd web && pnpm test) | Emenda v3 — test exclui Kind=GitHubVerification; SPEC-0006 consome SPEC-0005@3; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
+| IMP-02 | 2026-10-13 | G2 | spec | CT-01 da SPEC-0005 roda a suíte inteira aninhada; ela inclui o CT-01 da SPEC-0004 (tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs), que roda ./tools/build.sh (next build) ao mesmo tempo que a execução externa → 'Another next build process is already running' e test/test_integration com exit 2 (falha estável em 2 execuções) | Cada comando isolado passa; test_integration com SUBSOLO_SPEC0005_CT01_NESTED=1 passa (23 ok, 5 skipped); descartadas gambiarras de espera/ordem e lock no next build | Architect + Thomas: Emenda v4 — incluir tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs nos touches da SPEC-0005 para o Test-writer pular o CT-01 da SPEC-0004 quando SUBSOLO_SPEC0005_CT01_NESTED=1 | Emenda v4 (escopo) — CT-01 da SPEC-0004 pula quando SUBSOLO_SPEC0005_CT01_NESTED=1; aprovada pelo Thomas em 2026-10-13 | 2026-10-13 |
+| IMP-03 | 2026-10-14 | G5 | decisão | CI do PR #4: os testes de contrato que rodam todos os comandos do sdd-config aninhados (CT-01 da SPEC-0004 e da SPEC-0005) falham nos jobs test e integration por falta de pnpm/Playwright no job (pnpm: command not found); localmente passam. No CI cada comando já é um job próprio, então o teste aninhado é redundante e deixa o test em ~4 min | Logs do run 38635402676 analisados; todos os outros jobs (build, lint, e2e, security, codeql) passaram | Thomas: escolher entre Kind próprio fora do test/test_integration (Emenda v6) ou instalar tudo nos jobs test/integration | Decisão do Thomas (2026-10-16): Kind próprio. Emenda v6 da SPEC-0005 (contrato v4: Kind=CommandContract fora do test/test_integration, comando test_commands_contract) + Emenda v4 da SPEC-0006 (job integration com Node + pnpm, comando test literal novo) | 2026-10-16 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -236,4 +246,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0005`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 4 | 2026-10-16 | Emenda v6: os testes que rodam os comandos do sdd-config (CT-01 desta spec e CT-01 da SPEC-0004) passam a `Kind=CommandContract`; `test` exclui esse Kind (`test_integration` já não o seleciona); novo comando sob demanda `test_commands_contract`; sai o desvio `SUBSOLO_SPEC0005_CT01_NESTED` (não há mais execução aninhada) | IMP-03: no CI os jobs `test`/`integration` não têm pnpm/Playwright e os CTs aninhados falham; no CI cada comando já é um job (prova equivalente); `test` caía de ~4 min | SPEC-0006 (job `test` usa o comando literal), SPEC-0004 (CT-01 reclassificado) | thomas (chat, 2026-10-16, recomendação aceita) |
+| 3 (escopo, contrato inalterado) | 2026-10-14 | Emenda v5: `web/pnpm-lock.yaml` entra nos `touches` (regenerado pelo pnpm ao adicionar as devDependencies de teste em `web/package.json`, já no escopo) | G4 FAIL: verify apontou o lockfile fora dos `touches`; sem mudança de código | Nenhuma | thomas (chat, 2026-10-14) |
+| 3 (escopo, contrato inalterado) | 2026-10-13 | Emenda v4: `tests/Subsolo.Tooling.Tests/SddConfigCommandsContractTests.cs` (CT-01 da SPEC-0004) entra nos `touches` para pular quando `SUBSOLO_SPEC0005_CT01_NESTED=1` (só na execução aninhada; a execução normal continua rodando-o), e `tests/Subsolo.Tooling.Tests/packages.lock.json` (regenerado pelo CPM ao adicionar pacotes) | IMP-02: o CT-01 aninhado da SPEC-0005 disparava um segundo `next build` simultâneo pelo CT-01 da SPEC-0004 | SPEC-0004 (teste de ferramentas, comportamento inalterado fora da execução aninhada) | thomas (chat, 2026-10-13) |
+| 3 | 2026-10-13 | Comando `test` passa a excluir `Kind=GitHubVerification` (`--filter "Category!=Architecture&Kind!=GitHubVerification"`); essas verificações rodam sob demanda com `SDD_GITHUB_VERIFY=1` | IMP-01: as verificações reais no GitHub da SPEC-0006 falham de propósito sem a variável e deixariam a suíte padrão e o CI vermelhos | SPEC-0006 | thomas (chat, 2026-10-13) |
 | 2 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C` (mesma regra da Emenda v2 da SPEC-0004) | `pnpm -C` a partir da raiz ignora o pnpm fixado (IMP-02 da SPEC-0004) | SPEC-0006 | thomas (chat, 2026-10-13) |

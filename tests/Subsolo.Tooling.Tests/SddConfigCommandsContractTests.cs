@@ -6,6 +6,10 @@ namespace Subsolo.Tooling.Tests;
 /// SPEC-0004 CT-01 — os comandos <c>build</c> e <c>lint</c> gravados em <c>docs/specs/sdd-config.yml</c> executam com
 /// exit 0 na raiz do repositório (contrato consumido pelas SPEC-0005, SPEC-0006 e SPEC-0007).
 /// </summary>
+/// <remarks>
+/// Marcado <c>Kind=CommandContract</c> (SPEC-0005, Emenda v6): roda só com o comando <c>test_commands_contract</c>,
+/// fora do <c>test</c> e do <c>test_integration</c> (no CI cada comando já é um job).
+/// </remarks>
 public sealed class SddConfigCommandsContractTests
 {
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(20);
@@ -14,7 +18,7 @@ public sealed class SddConfigCommandsContractTests
     [InlineData("build")]
     [InlineData("lint")]
     [Trait("Spec", "SPEC-0004:CT-01")]
-    [Trait("Kind", "Integration")]
+    [Trait("Kind", "CommandContract")]
     public async Task SddConfigCommandRunsSuccessfullyAtRepositoryRoot(string key)
     {
         var command = ReadSddConfigCommand(key);
