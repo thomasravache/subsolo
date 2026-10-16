@@ -3,12 +3,12 @@ using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Sob o Aspire.Hosting.Testing (portas aleatórias), cada execução gera uma senha nova para o PostgreSQL: o volume
-// persistente, criado com a senha de outra execução, recusaria a conexão. Nos testes o banco é descartável.
-var isolatedRun = builder.Configuration.GetValue<bool>("DcpPublisher:RandomizePorts");
+// `Subsolo:EphemeralDatabase=true` (usado pelos testes do AppHost) sobe o PostgreSQL sem volume: cada execução de
+// teste gera uma senha nova, e um volume persistente criado com a senha de outra execução recusaria a conexão.
+var ephemeralDatabase = builder.Configuration.GetValue<bool>("Subsolo:EphemeralDatabase");
 
 var postgres = builder.AddPostgres("postgres").WithImageTag("18.6");
-if (!isolatedRun)
+if (!ephemeralDatabase)
 {
     postgres.WithDataVolume("subsolo-pg");
 }

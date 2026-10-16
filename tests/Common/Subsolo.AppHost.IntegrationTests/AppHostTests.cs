@@ -20,7 +20,8 @@ public sealed class AppHostTests
     public async Task AppHostStartsApiAndWebHealthy()
     {
         var ct = TestContext.Current.CancellationToken;
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Subsolo_AppHost>(ct);
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Subsolo_AppHost>(
+            ["--Subsolo:EphemeralDatabase=true"], ct);
         await using var app = await appHost.BuildAsync(ct).WaitAsync(StartupTimeout, ct);
         await app.StartAsync(ct).WaitAsync(StartupTimeout, ct);
 
