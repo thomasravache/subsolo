@@ -30,6 +30,7 @@ Pastas ainda vazias são criadas pela spec que as usa pela primeira vez.
   `pnpm -C web ...` a partir da raiz usa o pnpm padrão do `PATH`, que precisa ser o mesmo (os scripts de `tools/` já
   entram em `web/`). Com o Corepack, alinhe o padrão global uma vez: `corepack install -g pnpm@12.11.2`.
 - [Docker](https://docs.docker.com/get-docker/) — usado pelo gitleaks no hook de pre-commit (quando o binário `gitleaks` não está no `PATH`) e pelos testes de integração.
+- [Aspire CLI](https://aspire.dev) 13.6 — `dotnet tool install -g Aspire.Cli --version 13.6.1` (ambiente local com `aspire run`).
 - Python 3.8+ — para `tools/sdd/spec_graph.py`.
 
 ## Como rodar
@@ -45,6 +46,7 @@ dotnet test tests/Subsolo.ArchitectureTests            # regras de arquitetura
 (cd e2e && pnpm install && pnpm exec playwright install && pnpm test)   # E2E com Playwright (mobile e desktop)
 ./tools/coverage.sh       # cobertura das linhas alteradas em relação à main
 
+aspire run                # sobe PostgreSQL 18, Seq, Mailpit, API e front (dashboard do Aspire com logs e traces)
 (cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
 (cd web && pnpm format)   # formata o front com o Prettier
 dotnet format Subsolo.slnx  # formata o C# conforme o .editorconfig
