@@ -17,7 +17,7 @@ test_commands_contract: "dotnet test Subsolo.slnx --filter \"Kind=CommandContrac
 # E2E da jornada do usuário. Exemplos: "npx playwright test" | "npx cypress run" | "maestro test flows/"
 test_e2e: "(cd e2e && pnpm test)"
 # Subconjunto rápido rodado após cada deploy (G6).
-smoke_test: ""
+smoke_test: "(cd e2e && pnpm test --grep @smoke)"   # contra BASE_URL (sem BASE_URL o Playwright sobe a pilha local)
 lint: "./tools/lint.sh"
 # G2 — cobertura das linhas alteradas (ex: diff-cover, coverlet + reportgenerator). Opcional.
 coverage: "./tools/coverage.sh"
