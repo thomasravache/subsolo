@@ -20,12 +20,8 @@ readonly COVERLET_VERSION="10.1.0"
 readonly REPORTGENERATOR_VERSION="5.5.11"
 readonly CONFIGURATION="Release"
 base_ref="${COVERAGE_BASE:-origin/main}"
-filter="${COVERAGE_FILTER:-Category!=Architecture&Kind!=GitHubVerification}"
+filter="${COVERAGE_FILTER:-Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract}"
 out="$root/coverage"
-
-# Os testes de contrato dos comandos de teste (CT-01 da SPEC-0005) rodariam a suíte de novo dentro desta
-# execução, recompilando os assemblies instrumentados: aqui eles são pulados (já rodam no comando `test`).
-export SUBSOLO_SPEC0005_CT01_NESTED=1
 
 solution="$(find . -maxdepth 1 -name '*.slnx' -print -quit)"
 if [[ -z "$solution" ]]; then
