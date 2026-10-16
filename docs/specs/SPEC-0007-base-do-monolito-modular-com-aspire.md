@@ -4,7 +4,7 @@ title: Base do monólito modular com Aspire
 tier: full
 type: foundation
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0005]
@@ -238,7 +238,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 1m 07s 585ms); test_e2e exit 0 ($ playwright test); arch_test exit 0 (duration: 801ms); nota: CI do PR #12 verde (10/10 checks) em 8a87862: https://github.com/thomasravache/subsolo/actions/runs/38864259685; bateria local no integrado 8a87862 verde, incluindo test_commands_contract (275 s) e coverage — 8a87862 | 2026-10-16 |
 | H2 Integração aprovada | PASS | aprovado por thomas (delegado): autorização de piloto automático em 2026-10-16 — seguir as recomendações, criar PR e mergear; integração verde (G5) em 8a87862 | 2026-10-16 |
 | G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003; entrega na main pelo merge do PR #12 | 2026-10-16 |
-| G7 Pronto & Docs | PENDING | | |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 5a2dd91 | 2026-10-16 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
