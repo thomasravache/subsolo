@@ -84,6 +84,18 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
+**Fase 1: Regressão e guardas**
+- [ ] Red: UT-01, UT-03, IT-01..IT-04 falhando pelo motivo certo; UT-02 escrito como guarda (passa hoje), todos com a tag `SPEC-0013:<ID>`; ajustar a asserção do IT-05 da SPEC-0006 (anotação genérica não basta)
+- [ ] Green: `coverage.sh` compatível com bash 3.2 e checagem da base no início; `static-server.mjs` com 400 para URL malformada; lint de `e2e/`; concorrência e chaves de cache no `ci.yml`; CODEOWNERS; README e comentários
+- [ ] Validar: build + suíte + lint + arquitetura (G2/G3)
+- [ ] Rodar o IT-05 fortalecido e confirmar a supressão do CodeQL com `SDD_GITHUB_VERIFY=1` (fase 2, depois do G4)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live (SPEC-0003)
+- [ ] Relatório de Entrega e CHANGELOG (G7)
+
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
 | Gate | Status | Evidência | Data |
