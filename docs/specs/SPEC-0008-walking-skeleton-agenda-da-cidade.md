@@ -108,7 +108,9 @@ Compose local:
 | Período padrão | sem `from`/`to` | de hoje (fuso da cidade) até +60 dias | UT-03 |
 | Slug inválido | `slug=Cidade_X` | 400 `agenda.invalid_slug` | UT-02, IT-02 |
 | Período inválido | `to < from` ou > 180 dias | 400 `agenda.invalid_range` | UT-02 |
-| Cidade inexistente | slug não cadastrado | API 404 `agenda.city_not_found`; tela 404 | IT-03, E2E-01 |
+| Cidade inexistente | slug não cadastrado ou fora do padrão na tela | API 404 `agenda.city_not_found`; tela 404 (nunca soft 404) | IT-03, E2E-01 |
+| Endpoint público | metadata do endpoint | `AllowAnonymous` explícito | UT-04 |
+| Compose publicado | `aspire publish` | API em Production por padrão; sem dashboard | IT-05 |
 | API fora do ar | API parada | tela 503 com a mensagem amigável | IT-04 |
 | Cliente TS em dia | OpenAPI muda sem regenerar | `api:check` falha | CT-01 |
 | Compose gerado sobe | `aspire publish` + `compose-up.sh` | `/health` 200 e agenda acessível em :8080 | E2E-02 |
@@ -127,13 +129,16 @@ Compose local:
 - **IT-01** — Dada a cidade seed num PostgreSQL real, quando `GET /api/v1/cities/cidade-exemplo/agenda` é chamado, então a resposta é 200 com a cidade e `shows: []`.
 - **IT-02** — Dado um slug inválido, quando a API é chamada, então a resposta é 400 com `ProblemDetails` e `code = agenda.invalid_slug`.
 - **IT-03** — Dado um slug não cadastrado, quando a API é chamada, então a resposta é 404 com `agenda.city_not_found`.
-- **IT-04** — Dado o servidor Next.js com `API_URL` apontando para uma porta sem serviço, quando `/cidade-exemplo` é requisitada, então o status é 503 e o HTML contém a mensagem de indisponibilidade.
+- **IT-04** — Dado o servidor Next.js de produção (`next build` + `next start`) com `API_URL` apontando para uma porta sem serviço, quando `/cidade-exemplo` é requisitada, então o status é 503 e o HTML contém a mensagem de indisponibilidade.
+
+- **IT-05** — Dado o AppHost publicado com `aspire publish` (ou o modelo de publicação equivalente em teste), quando o Compose é gerado, então a API recebe `ASPNETCORE_ENVIRONMENT` = `Production` por padrão (sobrescrevível) e nenhum serviço de dashboard do Aspire entra no artefato (Emenda 5).
+- **UT-04** — Dado o endpoint `GetCityAgenda` mapeado, quando sua metadata é lida, então contém `IAllowAnonymous` (Emenda 5).
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` (SPEC-0007), quando `(cd web && pnpm api:check)` roda, então o cliente gerado é idêntico ao versionado; uma mudança no OpenAPI sem regenerar o cliente faz o check falhar.
 
 ### 7.5 Testes E2E
-- **E2E-01** — Dada a aplicação completa (a mesma pilha do Compose gerado pelo Aspire, subida pelo `webServer` do Playwright), quando o fã abre `/cidade-exemplo` no projeto mobile, então vê "Agenda Cidade Exemplo" e o estado vazio, sem violações do axe; ao abrir `/cidade-inexistente`, vê "Cidade não encontrada" [jornada: agenda] @smoke.
+- **E2E-01** — Dada a aplicação completa (a mesma pilha do Compose gerado pelo Aspire, subida pelo `webServer` do Playwright), quando o fã abre `/cidade-exemplo` no projeto mobile, então vê "Agenda Cidade Exemplo" e o estado vazio, sem violações do axe; ao abrir `/cidade-inexistente` e `/Cidade_X` (slug fora do padrão), vê "Cidade não encontrada" com status 404; um cabeçalho interno de estado enviado pelo cliente é ignorado [jornada: agenda] @smoke.
 - **E2E-02** — Dado o Compose gerado por `aspire publish` e iniciado por `tools/compose-up.sh`, quando o smoke roda com `BASE_URL=http://localhost:8080`, então `/health` responde 200, a agenda da cidade de exemplo carrega e o p95 de 20 carregamentos fica abaixo de 800 ms [jornada: agenda].
 
 ### 7.6 Outros
@@ -189,9 +194,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ce9c7a3 | 2026-10-16 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 3a8674a | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 914ms) — 3a8674a | 2026-10-16 |
+| G4 Review | FAIL | Reviewer independente: CHANGES_REQUESTED em 3a8674a — 0 blocker, 3 major: (M1) soft 404 (status 200) para slug fora do padrão (/Cidade_X), contra o contrato §6 e o ADR-0016; (M2) API_ENVIRONMENT vazio no .env gerado → API não fica em Production por padrão no Compose; (M3) dashboard do Aspire no Compose publicado com imagem nightly e tag flutuante (ADR-0009). 10 minors: cabeçalho x-subsolo-agenda falsificável, IT-04 contra next dev, AllowAnonymous sem teste, OpenAPI mais fraco que o contrato, tags de imagem base flutuantes, web como root, compose-up.sh segue sem /health, Caddy sem cabeçalhos de segurança, peer typescript ^5, riscos não registrados (PublishAsPackageScript, até 3 chamadas por página, error.tsx com 200) | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -241,6 +246,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo e testes) | 2026-10-16 | Emenda 5 (revisão G4): tela devolve 404 também para slug fora do padrão e ignora o cabeçalho interno vindo do cliente (E2E-01 ampliado); IT-04 contra o build de produção; novos UT-04 (`AllowAnonymous`) e IT-05 (Compose publicado com API em Production por padrão e sem dashboard nightly); OpenAPI fiel ao contrato §6 (padrão do slug, UF com 2 letras, enum de status, `startsAt` com fuso, `code` no ProblemDetails); `tools/compose-up.sh` falha com logs se `/health` não sobe e confere `curl`; riscos `PublishAsPackageScript` e até 3 chamadas por página registrados no ADR-0016; endurecimento do artefato de deploy (Caddy, root, tags completas, Seq/Mailpit) movido para o épico SPEC-0003 | Majors M1–M3 e minors da revisão G4 | SPEC-0003 | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 4 (achados do Implementer): entram nos `touches` `web/src/proxy.ts` (o Next só aceita o proxy em `src/` ou na raiz), o `packages.lock.json` dos testes da API (muda ao referenciar o Events) e `web/.nvmrc`/`web/.dockerignore` (Node 24 na imagem gerada pelo Aspire, que hoje usa `node:22`); ADR-0016 registra o status 404/503 via proxy do Next; `smoke_test` gravado no sdd-config; falta um UT para `to` antes de hoje sem `from` (`agenda.invalid_range`) | G4 do verify reprovou escopo; Node fora do ADR-0009 na imagem | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 3 (achados do Test-writer): `touches` corrigido para `web/src/app/(public)/**` (o app Next fica em `web/src/app`); `tests/Subsolo.ArchitectureTests/**` entra para referenciar os projetos do Events nas regras (IT-06/IT-09 da SPEC-0007); a consulta é validada no endpoint com o `GetCityAgendaQueryValidator`, devolvendo o código específico (`agenda.invalid_slug`/`agenda.invalid_range`), porque o decorator comum não valida consultas; E2E-02 também marcado `@smoke`; com `BASE_URL` definido nenhum servidor é subido e o IT-04 é pulado | Caminho errado do app na spec; regra de arquitetura exige referência de todo módulo | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 2: o comando `test_e2e` continua `(cd e2e && pnpm test)`; o `webServer` do Playwright sobe a pilha completa via `tools/compose-up.sh` (Compose gerado por `aspire publish`) para as jornadas, e o job `e2e` do CI ganha .NET SDK + Aspire CLI; E2E-01 e E2E-02 rodam contra essa pilha (o AppHost em modo dev já é provado pelo IT-07 da SPEC-0007). Entram nos `touches`: `.gitignore` (`artifacts/`), `.github/workflows/ci.yml`, `Directory.Packages.props` (Aspire.Hosting.Docker), `src/Subsolo.Api/**`, `e2e/playwright.config.ts`, `e2e/package.json`, lockfiles do `e2e/` e do `web/` e o teste do AppHost | Preparação do Architect antes do Red: sem isso o E2E não tem aplicação para testar no CI e o escopo ficaria fora dos `touches` | SPEC-0006 (o job `e2e` muda, mantendo o comando literal) | thomas (delegado: piloto automático, 2026-10-16) |
