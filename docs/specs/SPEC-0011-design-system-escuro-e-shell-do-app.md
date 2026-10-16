@@ -36,6 +36,8 @@ Define a identidade visual do Subsolo, escura e com a cara da cena, no **Stitch*
 - Shell aplicado à rota `/{cidade}`; o rodapé leva a `/apoie` (página criada no épico SPEC-0002) e às redes do Subsolo.
 - Fontes self-hosted (sem chamada a terceiros, por causa da CSP da SPEC-0010).
 
+- Ícones do app (`favicon.ico`/`icon.png` e os do PWA) a partir da identidade do Stitch — o navegador pede `/favicon.ico` em toda página e, sem o arquivo, cai na página de não encontrada (ADR-0016).
+
 **Não-objetivos (fora do escopo):**
 - Telas específicas das features (cadastro, perfil, painel) — cada spec do épico SPEC-0002 tem as suas telas no Stitch antes do próprio H1.
 - Logo definitivo: nesta spec, wordmark tipográfico "Subsolo" criado no Stitch; um logo desenhado, se vier, entra por spec própria.

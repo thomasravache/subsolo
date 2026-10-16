@@ -169,23 +169,23 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Slice GetCityAgenda (API)**
-- [ ] Red: UT-01..UT-03, IT-01..IT-03 com a tag `SPEC-0008:<ID>`, falhando pelo motivo certo
-- [ ] Green: módulo `Events` (City, migração do schema `events`, seed `cidade-exemplo`), feature `GetCityAgenda`, endpoint `GET /api/v1/cities/{slug}/agenda` com `AllowAnonymous`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: UT-01..UT-03, IT-01..IT-03 com a tag `SPEC-0008:<ID>`, falhando pelo motivo certo
+- [x] Green: módulo `Events` (City, migração do schema `events`, seed `cidade-exemplo`), feature `GetCityAgenda`, endpoint `GET /api/v1/cities/{slug}/agenda` com `AllowAnonymous`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 2: Página SSR e cliente tipado**
-- [ ] Red: IT-04 e CT-01 falhando
-- [ ] Green: cliente OpenAPI em `web/src/api/` + `api:check`; página `/[cidade]` com estados vazio, 404 e 503
-- [ ] Refactor mantendo tudo verde
+- [x] Red: IT-04 e CT-01 falhando
+- [x] Green: cliente OpenAPI em `web/src/api/` + `api:check`; página `/[cidade]` com estados vazio, 404 e 503
+- [x] Refactor mantendo tudo verde
 
 **Fase 3: Jornada E2E e Compose**
-- [ ] Red: E2E-01 e E2E-02 falhando pelo motivo certo
-- [ ] Green: `AddDockerComposeEnvironment`, `aspire publish`, `infra/caddy/Caddyfile`, `tools/compose-up.sh`, `smoke_test` e `critical_journeys` no sdd-config; jornada completa passando localmente
-- [ ] Validar: build + suíte + arquitetura + E2E (G2/G3)
+- [x] Red: E2E-01 e E2E-02 falhando pelo motivo certo
+- [x] Green: `AddDockerComposeEnvironment`, `aspire publish`, `infra/caddy/Caddyfile`, `tools/compose-up.sh`, `smoke_test` e `critical_journeys` no sdd-config; jornada completa passando localmente
+- [x] Validar: build + suíte + arquitetura + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
+- [x] Review independente (G4)
 - [ ] Integração + CI verde (G5) e aprovação (H2)
 - [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
 - [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
@@ -196,9 +196,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ce9c7a3 | 2026-10-16 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 0aab194 | 2026-10-16 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 872ms) — 0aab194 | 2026-10-16 |
-| G4 Review | FAIL | Reviewer independente (2ª rodada): CHANGES_REQUESTED em 0aab194 — M1–M3 e minors 1–4 e 7 resolvidos; novos: (B1) IT-05 chama a Aspire CLI, que não existe nos jobs test e integration do CI; (M4) matcher do proxy /((?!_)[^/]+) devolve 404 para arquivos públicos (robots.txt, favicon, futuros manifest/sw.js do PWA). Minors: ADR-0016 com matcher antigo; teste de fidelidade do OpenAPI reaproveitando CT-01; ruído benigno do EF no start (POSTGRES_DB opcional) | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — b4e70c0 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 885ms) — b4e70c0 | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (3ª rodada): APPROVED em b4e70c0 — B1 (Aspire CLI nos jobs test/integration) e M4 (matcher sem arquivos públicos) resolvidos, minors 1–3 da 2ª rodada resolvidos; lockfiles fora de red justificados. Minors: soft 404 para caminhos de um segmento com ponto (limitação registrada no ADR-0016; favicon na SPEC-0011); teste de política da CLI na SPEC-0013 (prova atual: CI) — b4e70c0 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -248,7 +248,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
-| 1 (escopo e testes) | 2026-10-16 | Emenda 6 (2ª revisão G4): a Aspire CLI 13.6.1 entra nos jobs `test` e `integration` do CI (o IT-05 publica com ela); o matcher do proxy exclui segmentos com ponto (arquivos públicos e metadata) e `web/public/robots.txt` entra nos `touches` com um caso no E2E-01; o teste de fidelidade do OpenAPI vira CT-02; `POSTGRES_DB` no Postgres publicado para evitar o ruído do EF no start | B1 e M4 da 2ª rodada | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
+| 1 (escopo e testes) | 2026-10-16 | Emenda 6 (2ª revisão G4): a Aspire CLI 13.6.1 entra nos jobs `test` e `integration` do CI (o IT-05 publica com ela); o matcher do proxy exclui segmentos com ponto (arquivos públicos e metadata) — ressalva: um caminho com ponto que não é arquivo público recebe a página de não encontrada com 200 (limitação registrada no ADR-0016) e `web/public/robots.txt` entra nos `touches` com um caso no E2E-01; o teste de fidelidade do OpenAPI vira CT-02; `POSTGRES_DB` no Postgres publicado para evitar o ruído do EF no start | B1 e M4 da 2ª rodada | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo e testes) | 2026-10-16 | Emenda 5 (revisão G4): tela devolve 404 também para slug fora do padrão e ignora o cabeçalho interno vindo do cliente (E2E-01 ampliado); IT-04 contra o build de produção; novos UT-04 (`AllowAnonymous`) e IT-05 (Compose publicado com API em Production por padrão e sem dashboard nightly); OpenAPI fiel ao contrato §6 (padrão do slug, UF com 2 letras, enum de status, `startsAt` com fuso, `code` no ProblemDetails); `tools/compose-up.sh` falha com logs se `/health` não sobe e confere `curl`; riscos `PublishAsPackageScript` e até 3 chamadas por página registrados no ADR-0016; endurecimento do artefato de deploy (Caddy, root, tags completas, Seq/Mailpit) movido para o épico SPEC-0003 | Majors M1–M3 e minors da revisão G4 | SPEC-0003 | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 4 (achados do Implementer): entram nos `touches` `web/src/proxy.ts` (o Next só aceita o proxy em `src/` ou na raiz), o `packages.lock.json` dos testes da API (muda ao referenciar o Events) e `web/.nvmrc`/`web/.dockerignore` (Node 24 na imagem gerada pelo Aspire, que hoje usa `node:22`); ADR-0016 registra o status 404/503 via proxy do Next; `smoke_test` gravado no sdd-config; falta um UT para `to` antes de hoje sem `from` (`agenda.invalid_range`) | G4 do verify reprovou escopo; Node fora do ADR-0009 na imagem | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | Emenda 3 (achados do Test-writer): `touches` corrigido para `web/src/app/(public)/**` (o app Next fica em `web/src/app`); `tests/Subsolo.ArchitectureTests/**` entra para referenciar os projetos do Events nas regras (IT-06/IT-09 da SPEC-0007); a consulta é validada no endpoint com o `GetCityAgendaQueryValidator`, devolvendo o código específico (`agenda.invalid_slug`/`agenda.invalid_range`), porque o decorator comum não valida consultas; E2E-02 também marcado `@smoke`; com `BASE_URL` definido nenhum servidor é subido e o IT-04 é pulado | Caminho errado do app na spec; regra de arquitetura exige referência de todo módulo | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
