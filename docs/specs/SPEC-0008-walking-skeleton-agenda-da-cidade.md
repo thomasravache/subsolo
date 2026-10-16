@@ -4,13 +4,13 @@ title: "Walking skeleton: agenda da cidade"
 tier: full
 type: foundation
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0006, SPEC-0007]
 consumes_contract: []
 contract_version: 1
-touches: [.editorconfig, src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
+touches: [.editorconfig, .gitignore, .github/workflows/ci.yml, Directory.Packages.props, src/Subsolo.Api/**, e2e/playwright.config.ts, e2e/package.json, e2e/pnpm-lock.yaml, web/pnpm-lock.yaml, tests/Common/Subsolo.AppHost.IntegrationTests/**, src/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.AppHost/**, tests/Modules/Events/**, web/app/(public)/**, web/src/api/**, web/package.json, e2e/tests/agenda/**, infra/caddy/**, tools/compose-up.sh, docs/api/**, docs/specs/sdd-config.yml, Subsolo.slnx]
 adrs: [ADR-0001, ADR-0002, ADR-0004, ADR-0012, ADR-0013]
 external: []
 size: M
@@ -133,7 +133,7 @@ Compose local:
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` (SPEC-0007), quando `(cd web && pnpm api:check)` roda, então o cliente gerado é idêntico ao versionado; uma mudança no OpenAPI sem regenerar o cliente faz o check falhar.
 
 ### 7.5 Testes E2E
-- **E2E-01** — Dado o app subido pelo AppHost, quando o fã abre `/cidade-exemplo` no projeto mobile, então vê "Agenda Cidade Exemplo" e o estado vazio, sem violações do axe; ao abrir `/cidade-inexistente`, vê "Cidade não encontrada" [jornada: agenda] @smoke.
+- **E2E-01** — Dada a aplicação completa (a mesma pilha do Compose gerado pelo Aspire, subida pelo `webServer` do Playwright), quando o fã abre `/cidade-exemplo` no projeto mobile, então vê "Agenda Cidade Exemplo" e o estado vazio, sem violações do axe; ao abrir `/cidade-inexistente`, vê "Cidade não encontrada" [jornada: agenda] @smoke.
 - **E2E-02** — Dado o Compose gerado por `aspire publish` e iniciado por `tools/compose-up.sh`, quando o smoke roda com `BASE_URL=http://localhost:8080`, então `/health` responde 200, a agenda da cidade de exemplo carrega e o p95 de 20 carregamentos fica abaixo de 800 ms [jornada: agenda].
 
 ### 7.6 Outros
@@ -241,5 +241,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0008`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-16 | Emenda 2: o comando `test_e2e` continua `(cd e2e && pnpm test)`; o `webServer` do Playwright sobe a pilha completa via `tools/compose-up.sh` (Compose gerado por `aspire publish`) para as jornadas, e o job `e2e` do CI ganha .NET SDK + Aspire CLI; E2E-01 e E2E-02 rodam contra essa pilha (o AppHost em modo dev já é provado pelo IT-07 da SPEC-0007). Entram nos `touches`: `.gitignore` (`artifacts/`), `.github/workflows/ci.yml`, `Directory.Packages.props` (Aspire.Hosting.Docker), `src/Subsolo.Api/**`, `e2e/playwright.config.ts`, `e2e/package.json`, lockfiles do `e2e/` e do `web/` e o teste do AppHost | Preparação do Architect antes do Red: sem isso o E2E não tem aplicação para testar no CI e o escopo ficaria fora dos `touches` | SPEC-0006 (o job `e2e` muda, mantendo o comando literal) | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 (escopo) | 2026-10-16 | `.editorconfig` entra nos `touches` para marcar `**/Migrations/*.cs` como código gerado (as migrações do módulo Events quebram o build com IDE0161 sem isso); consome o contrato v3 da SPEC-0007 (`IDomainEvent` com Id, `AddModule`, `AddEndpoints`/`MapEndpoints`) | Revisão G4 da SPEC-0007 | Nenhuma | thomas (delegado: piloto automático, 2026-10-16) |
 | 1 | 2026-10-13 | Comandos pnpm chamados de dentro de `web/` e `e2e/` em vez de `pnpm -C`. Contrato HTTP e de tela inalterados. | Emenda v2 da SPEC-0004 / IMP-02 | — | thomas (chat, 2026-10-13) |
