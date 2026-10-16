@@ -40,6 +40,7 @@ Da revisão das Emendas v6 (SPEC-0005) e v4 (SPEC-0006), em 2026-10-16:
 12. Com `tools/sdd/**` isento de escopo, um PR pode alterar o próprio verificador do gate sem sinal; falta CODEOWNERS ou checagem de que a cópia bate com a versão vendorizada.
 13. O comentário de `CiWorkflowCommandsContractTests.cs` ainda cita o contrato SPEC-0005@2 (o atual é @4).
 14. A chave do cache do pnpm agora é compartilhada por quatro jobs (agrava o item 6).
+15. Revisão da SPEC-0012: o `<summary>` de `CommitMessageRuleTests.cs` ainda descreve só `Refs: SPEC-NNNN` (desatualizado após a Emenda v3 da SPEC-0004).
 
 ## 2. Causa Raiz
 Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 5–6: padrões de concorrência e cache copiados para todos os jobs sem considerar push na `main` nem os dois lockfiles. Item 7: asserção fraca demais. Item 8: verificação ficou para depois da primeira execução no GitHub.
@@ -51,6 +52,7 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 - `ci.yml`: grupo de concorrência `ci-<número do PR ou github.sha>` (único por commit no push); chaves de cache `pnpm-store-web-…` e `pnpm-store-e2e-…`, cada uma com o hash do próprio lockfile.
 - IT-05 da SPEC-0006: ignorar a anotação "SDD pr-check" e exigir uma anotação que cite a spec ou a regra violada.
 - CodeQL: confirmar a supressão por comentário; se não funcionar, documentar no `ci.yml` o caminho real (`query-filters` num config do CodeQL, com o motivo).
+- `CommitMessageRuleTests.cs`: comentário de resumo com a regra atual (spec citada em qualquer parte da mensagem ou `[no-spec]` no assunto).
 - `tests/README.md`: comando `test_commands_contract` literal; comentário do contrato atualizado para SPEC-0005@4.
 - Teste de política: filtros de `test`, `test_integration` e o padrão do `coverage.sh` não selecionam `Kind=CommandContract`; nenhum job do CI roda `test_commands_contract`; o UT-02 da SPEC-0006 passa a incluir essa chave.
 - `CODEOWNERS` com `tools/sdd/**`, `docs/specs/sdd-config.yml` e `.github/workflows/**` exigindo o dono do repositório.
@@ -81,6 +83,18 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
+
+**Fase 1: Regressão e guardas**
+- [ ] Red: UT-01, UT-03, IT-01..IT-04 falhando pelo motivo certo; UT-02 escrito como guarda (passa hoje), todos com a tag `SPEC-0013:<ID>`; ajustar a asserção do IT-05 da SPEC-0006 (anotação genérica não basta)
+- [ ] Green: `coverage.sh` compatível com bash 3.2 e checagem da base no início; `static-server.mjs` com 400 para URL malformada; lint de `e2e/`; concorrência e chaves de cache no `ci.yml`; CODEOWNERS; README e comentários
+- [ ] Validar: build + suíte + lint + arquitetura (G2/G3)
+- [ ] Rodar o IT-05 fortalecido e confirmar a supressão do CodeQL com `SDD_GITHUB_VERIFY=1` (fase 2, depois do G4)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live (SPEC-0003)
+- [ ] Relatório de Entrega e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->

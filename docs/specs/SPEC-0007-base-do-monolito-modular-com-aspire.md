@@ -9,7 +9,7 @@ created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0005]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 touches: [src/Common/**, src/Subsolo.Api/**, src/Subsolo.ServiceDefaults/**, src/Subsolo.AppHost/**, tests/Common/**, tests/Subsolo.ArchitectureTests/**, docs/api/**, Directory.Packages.props, Subsolo.slnx]
 adrs: [ADR-0001, ADR-0002, ADR-0004, ADR-0010]
 external: []
@@ -31,7 +31,7 @@ Constrói a base do monólito modular (ADR-0001) e o AppHost do Aspire (ADR-0004
 **Objetivos (dentro do escopo):**
 - `Subsolo.Common.Domain`: `Entity`, `Result`/`Result<T>`, `Error` (tipos: Validation, NotFound, Conflict, Forbidden, Unauthorized), `IDomainEvent`.
 - `Subsolo.Common.Application`: `ICommand`/`ICommand<T>`/`IQuery<T>` e handlers; decorators de validação (FluentValidation 12) e de log; `IIntegrationEvent`, `IEventBus`, `IIntegrationEventHandler<T>`; `IDateTimeProvider` via `TimeProvider`.
-- `Subsolo.Common.Infrastructure`: base `ModuleDbContext` (schema por módulo), tabelas `outbox_messages`/`inbox_messages` por schema, interceptor que grava os eventos de domínio na outbox na mesma transação, jobs Quartz `ProcessOutbox`/`ProcessInbox` por módulo, `IFileStorage` (disco local; usado pela feature de flyer).
+- `Subsolo.Common.Infrastructure`: base `ModuleDbContext` (schema por módulo), tabelas `outbox_messages`/`inbox_messages` por schema, interceptor que grava os eventos de domínio na outbox na mesma transação, jobs Quartz `ProcessOutbox`/`ProcessInbox` por módulo. (`IFileStorage` saiu na Emenda v1: entra com a feature de flyer do épico SPEC-0002, junto com os testes do ADR-0015.)
 - `Subsolo.Common.Presentation`: `IEndpoint`, descoberta de endpoints por módulo, `Result` → `ProblemDetails` (RFC 9457).
 - `Subsolo.Api`: compõe os módulos via `services.AddXModule(config)` / `app.MapXModuleEndpoints()`, OpenAPI em `/openapi/v1.json`, health checks.
 - `Subsolo.ServiceDefaults`: OpenTelemetry, health checks, resiliência de HttpClient e service discovery (template do Aspire 13.6).
@@ -66,7 +66,7 @@ Constrói a base do monólito modular (ADR-0001) e o AppHost do Aspire (ADR-0004
 - **Desempenho e escala:** evento publicado na outbox é entregue ao handler de outro módulo em ≤ 5 s com o job a cada 2 s — medido no IT-03.
 - **Segurança:** `ProblemDetails` nunca expõe stack trace fora de Development — verificado no IT-05.
 - **Privacidade e dados pessoais:** o decorator de log não registra o payload dos comandos, só o nome e o resultado — verificado no UT-04.
-- **Disponibilidade e resiliência:** inbox idempotente (o mesmo evento entregue duas vezes é processado uma vez) e retry da outbox com backoff — IT-04.
+- **Disponibilidade e resiliência:** inbox idempotente (o mesmo evento entregue duas vezes é processado uma vez) e retry da outbox até o sucesso, sem reprocessar depois — IT-04 (o intervalo crescente do backoff é implementado, mas não medido: não é verificável de forma determinística).
 - **Acessibilidade (UI):** N/A — sem tela nesta spec.
 - **Custo:** zero; tudo local (ADR-0012).
 
@@ -87,23 +87,27 @@ public interface IQueryHandler<in TQuery, TResponse> { Task<Result<TResponse>> H
 public interface IIntegrationEvent { Guid Id; DateTime OccurredOnUtc; }
 public interface IEventBus { Task PublishAsync<T>(T e, CancellationToken ct) where T : IIntegrationEvent; }
 public interface IIntegrationEventHandler<in T> where T : IIntegrationEvent { Task Handle(T e, CancellationToken ct); }
+public interface IDomainEventHandler<in T> where T : IDomainEvent { Task Handle(T e, CancellationToken ct); }   // ProcessOutbox → IDomainEventHandler → IEventBus → inbox do outro módulo → ProcessInbox → IIntegrationEventHandler
 
 // Infrastructure
-public abstract class ModuleDbContext(string schema) : DbContext;   // HasDefaultSchema(schema) + outbox/inbox
-public interface IFileStorage { Task<string> SaveAsync(Stream s, string path, string contentType, CancellationToken ct); Task<Stream?> OpenAsync(string path, CancellationToken ct); }
+public abstract class ModuleDbContext : DbContext { protected ModuleDbContext(DbContextOptions options, string schema); }   // HasDefaultSchema(schema) + outbox/inbox
+services.AddCommonInfrastructure(configuration);              // uma vez no host (connection string "subsolo", Quartz, EventBus)
+services.AddModule<TDbContext>(configuration, params Assembly[] moduleAssemblies);   // DbContext, handlers, decorators, jobs da outbox/inbox do módulo
 
 // Presentation
 public interface IEndpoint { void MapEndpoint(IEndpointRouteBuilder app); }
 // Result → HTTP: Validation 400 | NotFound 404 | Conflict 409 | Unauthorized 401 | Forbidden 403 | Failure 500 (ProblemDetails, code em "extensions.code")
 
 // Registro de módulo (padrão)
-services.AddEventsModule(configuration);  app.MapEventsModuleEndpoints();
+services.AddEventsModule(configuration);   // chama AddModule<EventsDbContext>(...) e services.AddEndpoints(typeof(...).Assembly)
+app.MapEndpoints();                         // uma vez no host: mapeia todo IEndpoint registrado
+// Result → HTTP: ApiResults.Problem(result) ; Error.ValidationErrors (campo → mensagens)
 ```
 
 ```text
 AppHost (aspire run):
   recursos: postgres (18.6, volume subsolo-pg) → database por ambiente "subsolo"
-            seq ; mailpit (SMTP 1025, UI 8025)
+            seq ; mailpit (contêiner axllent/mailpit com tag fixa; SMTP 1025, UI 8025)
             api (Subsolo.Api) → referencia postgres, seq, mailpit ; /health, /alive, /openapi/v1.json
             web (pnpm dev em web/) → referencia api (variável API_URL)
 Erros:
@@ -189,7 +193,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase 2: Infraestrutura, outbox/inbox e arquitetura**
 - [ ] Red: IT-01..IT-06 falhando
-- [ ] Green: `ModuleDbContext`, outbox/inbox por schema, jobs Quartz, `IEventBus`, `IFileStorage` em disco, regras ArchUnitNET do ADR-0001
+- [ ] Green: `ModuleDbContext`, outbox/inbox por schema, jobs Quartz, `IEventBus`, `IDomainEventHandler`, regras ArchUnitNET do ADR-0001; migrações dos módulos de exemplo (dublês em `tests/Common/Modules/**`, geradas pelo Implementer — artefato gerado, não asserção)
 - [ ] Refactor mantendo tudo verde
 - [ ] Validar: build + suíte + arquitetura (G2/G3)
 
@@ -264,3 +268,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0007`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-16 | Emenda v1 (lacunas do esboço do contrato apontadas pelo Test-writer): `IDomainEventHandler<T>` como ponte outbox → evento de integração; registro `AddCommonInfrastructure` + `AddModule<TDbContext>`; endpoints com `AddEndpoints(assembly)` por módulo e `app.MapEndpoints()` uma vez no host (no lugar de `MapXModuleEndpoints`); `ModuleDbContext(DbContextOptions, schema)`; `ApiResults.Problem` e `Error.ValidationErrors`; `IFileStorage` sai para a feature de flyer (SPEC-0002), onde o ADR-0015 define os testes; backoff da outbox implementado mas não medido; Mailpit como contêiner com tag fixa; Quartz 4.5.1 (patch acima do citado no ADR-0001) | Contrato era esboço; testes precisavam de assinaturas concretas; código sem teste não entra | Nenhuma (primeira versão consumida pela SPEC-0008) | thomas (delegado: piloto automático, 2026-10-16, recomendações do Architect) |

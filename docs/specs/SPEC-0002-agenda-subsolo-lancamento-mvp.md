@@ -65,7 +65,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | a criar | Contas e login (link mágico + Google), exclusão e exportação de dados | full | feature | M | fundação | — |
 | a criar | Cidades e estilos (admin, lista editável) | full | feature | S | fundação | — |
 | a criar | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
-| a criar | Upload e processamento de flyer | full | feature | S | fundação | — |
+| a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
 | a criar | Agenda da cidade com filtro por data e estilo | full | feature | M | Cadastro de show | — |
 | a criar | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |
