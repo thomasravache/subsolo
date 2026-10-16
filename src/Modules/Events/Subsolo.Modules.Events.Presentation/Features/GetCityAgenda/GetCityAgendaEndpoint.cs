@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -27,7 +28,8 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> HandleAsync(
-        string slug,
+        // Só documenta o formato no OpenAPI; quem valida (com o código agenda.invalid_slug) é o validador.
+        [RegularExpression(GetCityAgendaQuery.SlugPattern)] string slug,
         DateOnly? from,
         DateOnly? to,
         IValidator<GetCityAgendaQuery> validator,

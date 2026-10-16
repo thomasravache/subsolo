@@ -7,4 +7,8 @@ namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 /// (padrão: de hoje, no fuso da cidade, até +60 dias; no máximo 180 dias).
 /// </summary>
 public sealed record GetCityAgendaQuery(string Slug, DateOnly? From = null, DateOnly? To = null)
-    : IQuery<CityAgendaResponse>;
+    : IQuery<CityAgendaResponse>
+{
+    /// <summary>Formato do slug da cidade na URL.</summary>
+    public const string SlugPattern = "^[a-z0-9-]{2,60}$";
+}
