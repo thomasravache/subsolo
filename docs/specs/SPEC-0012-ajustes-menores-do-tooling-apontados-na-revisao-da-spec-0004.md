@@ -4,7 +4,7 @@ title: Ajustes menores do tooling apontados na revisão da SPEC-0004
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: []
