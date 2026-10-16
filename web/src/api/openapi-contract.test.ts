@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * SPEC-0008 CT-01 (Emenda 5) — o snapshot `docs/api/openapi.v1.json`, de onde sai o cliente TypeScript, é fiel ao
+ * SPEC-0008 CT-02 (Emendas 5 e 6) — o snapshot `docs/api/openapi.v1.json`, de onde sai o cliente TypeScript, é fiel ao
  * contrato §6 de `GET /api/v1/cities/{slug}/agenda`: padrão do slug, UF com 2 caracteres, enum de status do
  * ShowSummary, `startsAt` como date-time e o `code` no ProblemDetails dos erros 400 e 404.
  */
@@ -120,7 +120,7 @@ function showSummary(): Schema {
 }
 
 describe("OpenAPI da agenda fiel ao contrato §6", () => {
-  it("SPEC-0008:CT-01 slug com pattern ^[a-z0-9-]{2,60}$", () => {
+  it("SPEC-0008:CT-02 slug com pattern ^[a-z0-9-]{2,60}$", () => {
     const slug = agenda().parameters?.find(
       (parameter) => parameter.name === "slug" && parameter.in === "path",
     );
@@ -128,7 +128,7 @@ describe("OpenAPI da agenda fiel ao contrato §6", () => {
     expect(resolve(slug?.schema).pattern).toBe("^[a-z0-9-]{2,60}$");
   });
 
-  it("SPEC-0008:CT-01 state da cidade com exatamente 2 caracteres", () => {
+  it("SPEC-0008:CT-02 state da cidade com exatamente 2 caracteres", () => {
     const state = property(city(), "state") ?? {};
 
     expect(types(state)).toContain("string");
@@ -136,7 +136,7 @@ describe("OpenAPI da agenda fiel ao contrato §6", () => {
     expect(state.maxLength).toBe(2);
   });
 
-  it("SPEC-0008:CT-01 status do ShowSummary com enum scheduled|cancelled|postponed", () => {
+  it("SPEC-0008:CT-02 status do ShowSummary com enum scheduled|cancelled|postponed", () => {
     const status = property(showSummary(), "status") ?? {};
 
     expect([...enumValues(status)].sort()).toEqual([
@@ -146,7 +146,7 @@ describe("OpenAPI da agenda fiel ao contrato §6", () => {
     ]);
   });
 
-  it("SPEC-0008:CT-01 startsAt do ShowSummary como date-time", () => {
+  it("SPEC-0008:CT-02 startsAt do ShowSummary como date-time", () => {
     const startsAt = property(showSummary(), "startsAt") ?? {};
 
     expect(types(startsAt)).toContain("string");
@@ -154,7 +154,7 @@ describe("OpenAPI da agenda fiel ao contrato §6", () => {
   });
 
   it.each(["400", "404"])(
-    "SPEC-0008:CT-01 ProblemDetails do %s declara o code",
+    "SPEC-0008:CT-02 ProblemDetails do %s declara o code",
     (status) => {
       const code = property(
         responseSchema(status, "application/problem+json"),
