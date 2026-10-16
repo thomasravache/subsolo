@@ -46,13 +46,20 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
 if (builder.ExecutionContext.IsPublishMode)
 {
     // A API só sobe com o PostgreSQL aceitando conexões (no Compose, `depends_on` sozinho espera só o contêiner).
-    postgres.PublishAsDockerComposeService((_, service) => service.Healthcheck = new Healthcheck
+    postgres.PublishAsDockerComposeService((_, service) =>
     {
-        Test = ["CMD-SHELL", "pg_isready -U postgres"],
-        Interval = "2s",
-        Timeout = "5s",
-        Retries = 30,
-        StartPeriod = "5s",
+        service.Healthcheck = new Healthcheck
+        {
+            Test = ["CMD-SHELL", "pg_isready -U postgres"],
+            Interval = "2s",
+            Timeout = "5s",
+            Retries = 30,
+            StartPeriod = "5s",
+        };
+
+        // O banco da aplicação já nasce com o contêiner: a primeira migração não precisa criá-lo (sem o erro de
+        // conexão que o EF registra ao checar um banco inexistente).
+        service.Environment["POSTGRES_DB"] = database.Resource.DatabaseName;
     });
     api.PublishAsDockerComposeService((_, service) =>
     {
