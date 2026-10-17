@@ -215,9 +215,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0680945 | 2026-10-17 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 6f368a5 | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 352ms) — 6f368a5 | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 6f368a5 — checklist OWASP de sessão atendido (token novo de 256 bits por entrada, só SHA-256 no banco, cookie __Host-, revogação imediata, teto de 90 dias), papéis lidos da sessão, no-store, rate limit em todo endpoint, CSRF no logout, e-mail fora dos logs, 503 sem detalhes, fronteiras do ADR-0001, sem pacote novo; verify só reprova os lock files pela cópia antiga da spec na worktree (cobertos pela emenda de escopo); 0 bloqueantes, 0 importantes, 6 menores → SPEC-0016 Emenda 2 — 6f368a5 | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
