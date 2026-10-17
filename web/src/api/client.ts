@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import createClient from "openapi-fetch";
 
 import type { components, paths } from "./schema";
@@ -25,6 +27,33 @@ export function apiBaseUrl(): string {
   return url;
 }
 
-export function apiClient() {
-  return createClient<paths>({ baseUrl: apiBaseUrl() });
+/** Cabeçalho com o IP do visitante, posto pelo Caddy na requisição recebida e repassado à API. */
+export const forwardedForHeader = "x-forwarded-for";
+
+/**
+ * SPEC-0014 (Emenda v3) — o `X-Forwarded-For` da requisição recebida (o IP do visitante, posto pelo Caddy), lido de
+ * `next/headers` — nas páginas e também no `proxy`, que roda com o escopo da requisição. Fora desse escopo ou sem o
+ * cabeçalho, `undefined`.
+ */
+async function incomingForwardedFor(): Promise<string | undefined> {
+  try {
+    return (await headers()).get(forwardedForHeader) ?? undefined;
+  } catch (error) {
+    // Os sinais internos do Next.js (renderização dinâmica, prerender) seguem adiante; só a falta de escopo vira "sem IP".
+    unstable_rethrow(error);
+    return undefined;
+  }
+}
+
+/**
+ * Cliente da API para a requisição atual. SPEC-0014 (Emenda v3): repassa o IP do visitante em `X-Forwarded-For`,
+ * para o rate limit da API valer por visitante e não para o servidor do site inteiro; sem o cabeçalho na requisição
+ * recebida, não envia nenhum.
+ */
+export async function apiClient() {
+  const visitor = await incomingForwardedFor();
+  return createClient<paths>({
+    baseUrl: apiBaseUrl(),
+    headers: visitor ? { [forwardedForHeader]: visitor } : undefined,
+  });
 }
