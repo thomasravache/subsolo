@@ -3,13 +3,13 @@ id: SPEC-0002
 title: Agenda Subsolo — lançamento (MVP)
 tier: epic
 type: feature
-status: proposed
+status: approved
 created: 2026-10-13
 depends_on: [SPEC-0001]
 adrs: []
 external: []
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0002 — Agenda Subsolo — lançamento (MVP) (Épico)

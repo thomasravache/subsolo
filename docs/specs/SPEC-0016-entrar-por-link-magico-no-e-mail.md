@@ -4,19 +4,19 @@ title: Entrar por link mágico no e-mail
 tier: full
 type: feature
 user_facing: true
-status: proposed
+status: approved
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014]
 consumes_contract: [SPEC-0018@1]
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/entrar/**, web/src/app/(public)/conta/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/app/(public)/layout.tsx, e2e/tests/auth/**, e2e/playwright.config.ts, tools/compose-up.sh, docs/design/**]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/entrar/**, web/src/app/(public)/conta/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/app/(public)/layout.tsx, e2e/tests/auth/**, e2e/tests/security/**, web/src/security/**, e2e/playwright.config.ts, tools/compose-up.sh, docs/design/**]
 adrs: [ADR-0003, ADR-0008, ADR-0013, ADR-0014, ADR-0016, ADR-0017]
 external: []
 size: M
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0016 — Entrar por link mágico no e-mail
@@ -35,6 +35,8 @@ O fã entra no Subsolo sem senha: digita o e-mail em `/entrar`, recebe um link q
 - Limites: o de IP que já existe (`auth`, 5 por minuto) e um novo, por e-mail: 3 links a cada 15 minutos. O pedido que passa do limite por e-mail responde igual, mas não envia nada.
 - `returnTo` aceita só caminho relativo do próprio site, para não virar redirecionamento aberto.
 - Telas (Stitch, aprovadas no H1): `/entrar` (formulário), "Confira seu e-mail" (reenviar em 60 s, usar outro e-mail), `/entrar/confirmar` (botão "Entrar no Subsolo", sem consumir o token ao carregar, porque leitores de e-mail abrem links sozinhos) e o estado "link expirado ou já usado". Mais `/conta` mínima, com o e-mail e "Sair".
+- A sessão vive só no cookie `__Host-subsolo` (HttpOnly): nada de token ou dado da sessão em `localStorage`, `sessionStorage` ou cache. Apagou os cookies, recarregou → deslogado. `/conta` é dinâmica e responde `Cache-Control: no-store` (nem o Next nem o navegador guardam a página).
+- Nenhuma variável de ambiente chega ao navegador: proibido `NEXT_PUBLIC_*`; `process.env` só em código de servidor; o navegador fala com a API pelo mesmo domínio (`/api/...`), sem URL vinda do ambiente.
 - Navegação: a aba "Conta" (mobile) e o link "Entrar"/"Conta" no cabeçalho (desktop) mudam conforme a sessão (`GET /api/v1/me`).
 
 **Não-objetivos (fora do escopo):**
@@ -62,7 +64,7 @@ O fã entra no Subsolo sem senha: digita o e-mail em `/entrar`, recebe um link q
 
 ## 5. Requisitos Não-Funcionais
 - **Desempenho e escala:** do envio do formulário até a tela "Confira seu e-mail" em ≤ 3 s p95 com o Mailpit (E2E-01); consumir o link em ≤ 300 ms p95 (IT-02).
-- **Segurança:** token de 256 bits só como hash; uso único com proteção a corrida (dois consumos simultâneos → um só sucesso, IT-03); `returnTo` só relativo (`/` seguido de algo que não seja `/` ou `\\`), senão vira `/` (UT-03); limites por IP (429) e por e-mail (silencioso) (IT-04); mutações com X-CSRF; sessão nova a cada entrada (contra fixação, SPEC-0014).
+- **Segurança:** token de 256 bits só como hash; uso único com proteção a corrida (dois consumos simultâneos → um só sucesso, IT-03); `returnTo` só relativo (`/` seguido de algo que não seja `/` ou `\\`), senão vira `/` (UT-03); limites por IP (429) e por e-mail (silencioso) (IT-04); mutações com X-CSRF; sessão nova a cada entrada (contra fixação, SPEC-0014); sessão só no cookie HttpOnly, sem cópia no navegador, e `/conta` com `no-store` (E2E-03); nenhuma variável de ambiente no código do navegador (UT-05, E2E-04).
 - **Privacidade e dados pessoais:** e-mail e token nunca em claro nos logs (IT-05); tokens usados ou expirados apagados depois de 24 h por uma tarefa periódica (IT-06); resposta igual exista a conta ou não (IT-01).
 - **Disponibilidade e resiliência:** SMTP fora do ar → 503 `notifications.email_unavailable`, e a tela mostra "Não conseguimos mandar o e-mail agora. Tente de novo em alguns minutos." (IT-07, E2E-02).
 - **Acessibilidade (UI):** WCAG 2.2 AA nas quatro telas, com axe no E2E; rótulo visível no campo; erro ligado ao campo (`aria-describedby`); o contador de reenvio anunciado por `aria-live="polite"`; alvos de toque ≥ 44 px.
@@ -102,12 +104,12 @@ E-mail: modelo MagicLink (SPEC-0018) com link = {App:PublicUrl}/entrar/confirmar
 /entrar/confirmar?token=… (SSR; não consome no carregamento)
   h1 "QUASE LÁ"; botão "Entrar no Subsolo" → POST consume → navega para returnTo
   400 → "Este link expirou ou já foi usado." + botão "Pedir outro link" (/entrar)
-/conta (SSR; anônimo → redireciona para /entrar?returnTo=/conta)
-  h1 "MINHA CONTA"; e-mail; botão "Sair" → POST /api/v1/auth/logout → /entrar
+/conta (SSR dinâmica, Cache-Control: no-store; anônimo → redireciona para /entrar?returnTo=/conta)
+  h1 "MINHA CONTA"; seção "SEUS DADOS" com o e-mail (só leitura); botão "Sair" → POST /api/v1/auth/logout → /entrar
 Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (anônimo) ou /conta (logado)
 ```
 
-**Design:** Stitch, projeto "Subsolo — Agenda de shows underground" (15194126668426659178): telas "Entrar - Subsolo" (eefd8a676a5d4a8881cec1c1abb29738) e "Confira seu e-mail - Subsolo" (52a2270f7b25402eb6ec7428afda013d), mobile, aprovadas no H1. Ajustes combinados: sem o selo "ANTI-SPAM" e sem o rótulo "IDENTIFICAÇÃO RÁPIDA"; o botão do Google fica de fora até a spec do Google; o bloco "manifesto" vai para o rodapé do shell, que já existe. As telas "confirmar" e `/conta` mínima seguem o mesmo layout (título, texto, botão), sem tela própria. Capturas em `docs/design/stitch/` depois do H1.
+**Design:** Stitch, projeto "Subsolo — Agenda de shows underground" (15194126668426659178): telas "Entrar - Subsolo" (eefd8a676a5d4a8881cec1c1abb29738) e "Confira seu e-mail - Subsolo" (52a2270f7b25402eb6ec7428afda013d), mobile, aprovadas no H1. Ajustes combinados: sem o selo "ANTI-SPAM" e sem o rótulo "IDENTIFICAÇÃO RÁPIDA"; o botão do Google fica de fora até a spec do Google; o bloco "manifesto" vai para o rodapé do shell, que já existe. As telas próprias no Stitch: "Quase lá - Subsolo" (5583b548089a48b399ef15892ba82d18) para `/entrar/confirmar`, sem o e-mail no texto (a página não consulta o token antes do clique: "Toque no botão para entrar no Subsolo.") e sem "Não recebeu o link? Reenviar"; "Link inválido - Subsolo" (ead4698691cd43018d4264cf4cb1d95e) para o erro; `/conta` mínima usa "Minha Conta - Subsolo" (3b3765cf36c344f6bb48e52429570e12) só com a seção do e-mail e "Sair" (nome, exportar e excluir entram na onda 3; sem o selo "Entrou com Google" e sem o cartão de aparelho/cidade). Nas três, o topo segue o shell atual. Capturas em `docs/design/stitch/` depois do H1.
 
 **Arquivos/módulos afetados:** ver `touches` no frontmatter.
 
@@ -130,6 +132,9 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 | Limpeza | tokens usados ou expirados há > 24 h | apagados pela tarefa periódica | IT-06 |
 | Navegação conforme a sessão | anônimo × logado | "Conta" leva a `/entrar` ou a `/conta`; `/conta` anônimo → `/entrar?returnTo=/conta`; `/entrar` logado → `/conta` | UT-04, E2E-01 |
 | Sair | botão "Sair" em `/conta` | sessão revogada; volta a `/entrar` | E2E-01 |
+| Cookies apagados | logado, apaga cookies e dados do site e recarrega | deslogado: `/conta` → `/entrar?returnTo=/conta`; "Conta" leva a `/entrar`; voltar no navegador depois de sair não mostra o e-mail | E2E-03 |
+| Sessão fora do navegador | após entrar | nada da sessão em `localStorage`/`sessionStorage`; cookie HttpOnly; `/conta` com `no-store` | E2E-03 |
+| Variáveis de ambiente | código do navegador e HTML servido | nenhum `NEXT_PUBLIC_*`, nenhum `process.env` em código de cliente, nenhum valor do ambiente do container | UT-05, E2E-04 |
 | Contratos consumidos | `INotificationsApi` e `/me` | como em SPEC-0018@1 e SPEC-0014 | CT-01, CT-02 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
@@ -142,6 +147,7 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 - **UT-02** — Dados 3 pedidos para o mesmo e-mail em 15 min, quando chega o 4º, então retorna sucesso sem chamar o dublê; aos 15 min e 1 s, envia de novo.
 - **UT-03** — Dados `returnTo` = `/curitiba`, `//evil.com`, `https://evil.com`, `/\\evil.com`, `javascript:alert(1)`, vazio e `null`, quando saneados, então só `/curitiba` é mantido e os outros viram `/`.
 - **UT-04** — Dado o componente de navegação com e sem usuário, quando renderizado (Vitest + Testing Library), então "Conta" aponta para `/conta` ou `/entrar`, e o item ativo tem `aria-current="page"`.
+- **UT-05** — Dados os arquivos de `web/src/**` e `web/next.config.ts`, quando o teste (Vitest) os varre, então nenhum usa `NEXT_PUBLIC_`, nenhum arquivo com `"use client"` lê `process.env`, e o `next.config.ts` não declara `env` nem `publicRuntimeConfig`; um arquivo de exemplo com `process.env.X` num componente cliente é reprovado.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API, o PostgreSQL e o Mailpit reais, quando `POST /magic-link` é chamado para um e-mail com conta e outro sem, então as duas respostas são 202 com o mesmo corpo, as duas mensagens chegam ao Mailpit com o link, e a tabela guarda só hashes.
@@ -160,9 +166,12 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 ### 7.5 Testes E2E
 - **E2E-01** — Dada a aplicação completa com o Mailpit, nos projetos mobile-chrome e mobile-safari: o fã em `/cidade-exemplo` toca em "Conta" e cai em `/entrar`; digita o e-mail e manda; vê "Confira seu e-mail" com o contador; o teste lê o link na API do Mailpit e o abre (o token continua válido depois do carregamento); toca em "Entrar no Subsolo" e volta para `/cidade-exemplo`. Agora "Conta" leva a `/conta`, que mostra o e-mail; "Sair" leva de volta a `/entrar`, e `/conta` passa a redirecionar para `/entrar?returnTo=/conta`. Sem violações do axe nas telas visitadas. O tempo do envio até "Confira seu e-mail" é ≤ 3 s p95 em 5 repetições. [jornada: entrar]
 - **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome: e-mail inválido mostra "Digite um e-mail válido." ligado ao campo; o link reaproveitado mostra "Este link expirou ou já foi usado." com "Pedir outro link"; com o limite de IP baixo (configuração de teste), aparece "Muitas tentativas…"; com o Mailpit parado, aparece "Não conseguimos mandar o e-mail agora…". Sem violações do axe. [jornada: entrar]
+- **E2E-03** — Dada a aplicação completa, nos projetos mobile-chrome e mobile-safari: o fã entra pelo link do Mailpit; o teste confere que o cookie `__Host-subsolo` é HttpOnly, que `localStorage` e `sessionStorage` não guardam nada da sessão e que a resposta de `/conta` tem `Cache-Control: no-store`; então apaga os cookies e os dados do site (`context.clearCookies()` e limpeza do storage) e recarrega `/conta` → cai em `/entrar?returnTo=/conta`, e "Conta" leva a `/entrar`. Em outro passo, depois de "Sair", o botão voltar do navegador não mostra o e-mail. [jornada: entrar]
+- **E2E-04** — Dada a pilha do Compose com valores sentinela no ambiente do container `web` (injetados pelo `tools/compose-up.sh`: uma variável comum, uma com nome de segredo) e a URL interna da API, quando o teste baixa o HTML de `/`, `/entrar`, `/entrar/confirmar` e `/conta` e todo script `/_next/static/**` que eles referenciam, então nenhum desses valores aparece, nem `Password=` ou `ConnectionStrings`.
 
 ### 7.6 Outros
 - Acessibilidade: axe nas quatro telas (E2E-01 e E2E-02).
+- Sessão e variáveis de ambiente: pedidos do Thomas no H1 (2026-10-17) — E2E-03, E2E-04 e UT-05.
 - Segurança: checklist OWASP de autenticação no G4 (enumeração de contas, redirecionamento aberto, força bruta, fixação de sessão).
 
 **Dublês e dados de teste:** dublê de `INotificationsApi` nos unitários; Mailpit real no IT e no E2E; e-mails `@subsolo.test`; limites de taxa reduzidos por configuração só no ambiente de teste.
@@ -180,6 +189,8 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 ## 9. Questões em Aberto
 - [x] Telas Entrar e Confira seu e-mail — geradas no Stitch em 2026-10-17 e apresentadas no H1 com os ajustes do §6 (aprovação junto com o H1)
 - [x] Para onde volta quem entra? — Para a página de onde saiu (`returnTo`); sem ela, para `/` (recomendação do Architect, 2026-10-17; confirmada no H1)
+- [x] Telas Quase lá e Link inválido — o Thomas exige tela no Stitch para toda funcionalidade com interface (2026-10-17); geradas no mesmo dia e listadas no §6
+- [x] Sessão e variáveis de ambiente — o Thomas pediu (2026-10-17) que apagar os cookies deslogue de verdade e que nenhuma variável de ambiente chegue ao navegador: E2E-03, E2E-04 e UT-05
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
@@ -191,7 +202,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
-| G0 Spec | PASS | validate: 0 erro(s) — 93aac2d (árvore suja) | 2026-10-17 |
+| G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PENDING | | |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |

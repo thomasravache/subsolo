@@ -4,7 +4,7 @@ title: Título da página presente na navegação no cliente
 tier: lite
 type: fix
 user_facing: true
-status: proposed
+status: approved
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -13,8 +13,8 @@ touches: [web/next.config.ts, web/src/next-config.test.ts, e2e/tests/agenda/**, 
 adrs: [ADR-0013]
 external: []
 size: S
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0015 — Título da página presente na navegação no cliente

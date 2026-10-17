@@ -4,19 +4,19 @@ title: "Módulo Users: conta, sessão e papéis"
 tier: full
 type: feature
 user_facing: false
-status: proposed
+status: approved
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0008, ADR-0010]
 external: []
 size: M
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0014 — Módulo Users: conta, sessão e papéis
@@ -32,9 +32,11 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 **Objetivos (dentro do escopo):**
 - Módulo `Users` com o padrão do ADR-0001 (Domain, Application, Infrastructure, Presentation, IntegrationEvents) e schema `users` (ADR-0002).
 - `User`: id, e-mail normalizado (minúsculas, sem espaços) e único, nome de exibição opcional (até 60 caracteres), papéis (`fan` sempre; `admin` quando o e-mail está em `Users:AdminEmails`), data de criação.
-- `Session`: id aleatório de 256 bits (guardado só como hash), usuário, criada em, último uso, expira em (30 dias deslizantes), revogada em, método de entrada (`magic_link` | `google`).
+- `Session`: id aleatório de 256 bits (guardado só como hash), usuário, criada em, último uso, expira em (30 dias deslizantes), expira de vez em (90 dias desde a entrada, sem renovação), revogada em, método de entrada (`magic_link` | `google`).
 - Serviço interno `ISignInService.SignInAsync(email, method)` — encontra ou cria o usuário, atualiza os papéis de admin, cria a sessão e emite o cookie com o id da sessão. As specs de login só chamam esse serviço.
-- Validação da sessão em cada requisição autenticada (`OnValidatePrincipal`): sessão inexistente, revogada ou expirada → cookie rejeitado (401); renovação do prazo no máximo uma vez por hora.
+- Validação da sessão em cada requisição autenticada (`OnValidatePrincipal`): sessão inexistente, revogada ou expirada (30 dias sem uso ou 90 dias desde a entrada) → cookie rejeitado (401); renovação do prazo no máximo uma vez por hora, nunca além do teto de 90 dias. Sem o cookie no navegador não existe sessão: nada de login lembrado por outro meio.
+- Respostas de `/me` e `/logout` com `Cache-Control: no-store`, para que nenhum cache guarde dados de quem está logado.
+- Rate limit em **todo** endpoint da API: `/me` e `/logout` na política `default`; os endpoints que hoje não declaram limite (`GET /api/v1/cities`, a agenda da cidade e o token anti-forgery) passam a usar `default`; um teste de arquitetura reprova endpoint novo sem política de rate limit (exceto `/health`, chamado pelo monitor e pelo orquestrador).
 - `GET /api/v1/me` e `POST /api/v1/auth/logout` (revoga a sessão e apaga o cookie).
 - Evento de integração `UserRegistered` (id, data) na primeira entrada, pela outbox, para o módulo de avisos consumir depois. Leva só o id: o e-mail não sai do módulo `Users`.
 
@@ -63,7 +65,7 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 
 ## 5. Requisitos Não-Funcionais
 - **Desempenho e escala:** validação da sessão em ≤ 5 ms p95 (uma consulta por chave primária) — medida no IT-04 com 200 requisições; renovação gravada no máximo 1 vez por hora por sessão.
-- **Segurança:** id da sessão aleatório de 256 bits, guardado só como hash SHA-256 (vazamento do banco não dá sessões válidas); logout revoga no servidor; `/me` e `/logout` exigem usuário autenticado; logout é mutação e passa pelo anti-forgery; endpoints com política explícita (teste de arquitetura existente) — UT-03, IT-02, IT-03, IT-05.
+- **Segurança:** id da sessão aleatório de 256 bits, guardado só como hash SHA-256 (vazamento do banco não dá sessões válidas); logout revoga no servidor; teto absoluto de 90 dias por sessão (decisão do Thomas em 2026-10-17); `Cache-Control: no-store` nas respostas com dados do usuário; rate limit declarado em todo endpoint (IT-10); `/me` e `/logout` exigem usuário autenticado; logout é mutação e passa pelo anti-forgery; endpoints com política explícita (teste de arquitetura existente) — UT-03, UT-04, IT-02, IT-03, IT-05, IT-10.
 - **Privacidade e dados pessoais:** guarda e-mail e nome opcional (base legal: execução do serviço pedido pelo usuário, ADR-0008); o e-mail nunca vai para logs nem traces (mascarado `f***@email.com`) — IT-06; exportação e exclusão em spec própria da onda 3.
 - **Disponibilidade e resiliência:** banco fora do ar durante a validação → 503 em ProblemDetails, nunca usuário anônimo silencioso nem 500 com detalhes — IT-07.
 - **Acessibilidade (UI):** N/A — sem tela nesta spec.
@@ -73,14 +75,21 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 **Interface:** `GET /api/v1/me` · `POST /api/v1/auth/logout` · `ISignInService` · `ISessionValidator` · evento `UserRegistered`
 
 ```yaml
-GET /api/v1/me:                       # RequireAuthorization(fan)
+GET /api/v1/me:                       # RequireAuthorization(fan) + RequireRateLimiting(default)
   200: { id: uuid, email: string, displayName: string|null, roles: ("fan"|"artist"|"admin")[] }
-  401: ProblemDetails code=auth.required          # sem cookie, sessão revogada ou expirada
+  401: ProblemDetails code=auth.required          # sem cookie, sessão revogada ou expirada (30 dias sem uso ou 90 desde a entrada)
+  429: ProblemDetails code=security.rate_limited (+ Retry-After)
+  # toda resposta: Cache-Control: no-store
 
-POST /api/v1/auth/logout:             # RequireAuthorization(fan) + X-CSRF
+POST /api/v1/auth/logout:             # RequireAuthorization(fan) + X-CSRF + RequireRateLimiting(default)
   204: sessão revogada; Set-Cookie __Host-subsolo apagado
   401: ProblemDetails code=auth.required
   400: ProblemDetails code=security.csrf_invalid   # sem X-CSRF válido (SPEC-0010)
+  429: ProblemDetails code=security.rate_limited
+  # toda resposta: Cache-Control: no-store
+
+GET /api/v1/cities, GET /api/v1/cities/{cidade}/agenda, GET do token anti-forgery:
+  passam a declarar RequireRateLimiting(default); 429 ProblemDetails code=security.rate_limited + Retry-After acima de 100/min por IP
 ```
 
 ```csharp
@@ -99,7 +108,7 @@ record UserRegisteredIntegrationEvent(Guid UserId, DateTimeOffset RegisteredAtUt
 ```text
 Configuração: Users:AdminEmails — lista de e-mails (não é segredo; appsettings/parâmetro do AppHost)
 Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_utc),
-                      sessions(id_hash PK, user_id FK, method, created_at_utc, last_seen_at_utc, expires_at_utc, revoked_at_utc)
+                      sessions(id_hash PK, user_id FK, method, created_at_utc, last_seen_at_utc, expires_at_utc, absolute_expires_at_utc, revoked_at_utc)
 ```
 
 **Design:** N/A — sem interface (as telas Entrar e Confira seu e-mail são da SPEC-0016).
@@ -118,6 +127,9 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 | Sair | cookie válido + X-CSRF | 204, sessão revogada, cookie apagado; o mesmo cookie depois → 401 | IT-03 |
 | Sair sem anti-forgery | sem X-CSRF | 400 `security.csrf_invalid`, sessão continua válida | IT-05 |
 | Prazo deslizante | uso depois de 1 h | `expires_at` renovado para +30 dias; uso antes de 1 h não grava | UT-04, IT-04 |
+| Teto de 90 dias | sessão usada sempre, 90 dias desde a entrada | renovação nunca passa do teto; depois dele → 401, precisa entrar de novo | UT-03, UT-04, IT-04 |
+| Sem cache de dados do usuário | `/me` e `/logout` | `Cache-Control: no-store` | IT-02, IT-03 |
+| Rate limit em todo endpoint | endpoint da API sem política de rate limit | teste de arquitetura reprova; `/me` acima de 100/min → 429 | IT-10 |
 | Papel admin exigido | usuário só `fan` num endpoint `admin` | 403 `auth.forbidden` | IT-08 |
 | E-mail fora dos logs | entrada e `/me` com logs e traces capturados | nenhum e-mail em claro | IT-06 |
 | Banco fora do ar | validação da sessão sem banco | 503 ProblemDetails | IT-07 |
@@ -132,19 +144,20 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 ### 7.2 Testes Unitários
 - **UT-01** — Dado um repositório em memória, quando `SignInAsync(" Fulano@Email.COM ", MagicLink)` é chamado duas vezes, então existe um único `User` com e-mail `fulano@email.com`, papel `fan`, duas sessões, e `UserRegistered` foi gerado só na primeira vez.
 - **UT-02** — Dado `Users:AdminEmails = [admin@subsolo.test]`, quando esse e-mail entra, então os papéis são `fan` e `admin`; dado o e-mail fora da lista numa entrada seguinte, então o papel `admin` sai; dado `"sem-arroba"` ou 255 caracteres, então retorna `users.invalid_email` e nada é gravado.
-- **UT-03** — Dadas sessões revogada, expirada (com `FakeTimeProvider`) e inexistente, quando `ISessionValidator.ValidateAsync` é chamado, então retorna `null`; dada uma sessão válida, retorna o usuário e os papéis atuais.
-- **UT-04** — Dada uma sessão usada há 59 min, quando validada, então `expires_at` não muda; usada há 61 min, então passa a `agora + 30 dias`.
+- **UT-03** — Dadas sessões revogada, expirada (com `FakeTimeProvider`) e inexistente, quando `ISessionValidator.ValidateAsync` é chamado, então retorna `null`; dada uma sessão usada todo dia mas criada há 90 dias e 1 minuto, também retorna `null`; dada uma sessão válida, retorna o usuário e os papéis atuais.
+- **UT-04** — Dada uma sessão usada há 59 min, quando validada, então `expires_at` não muda; usada há 61 min, então passa a `agora + 30 dias`; criada há 75 dias e usada há 61 min, então passa ao teto (`criada + 90 dias`), não a `agora + 30 dias`.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dado o PostgreSQL real (Testcontainers) e a API, quando um usuário entra pelo `ISignInService` (host de teste) duas vezes, uma delas com um e-mail de admin, então o banco tem um usuário, duas sessões com id guardado só como hash (o valor do cookie não aparece na tabela), os papéis certos e uma mensagem `UserRegistered` na outbox.
-- **IT-02** — Dado um cookie emitido pelo `SignInAsync`, quando `GET /api/v1/me` é chamado, então 200 com o contrato do §6; sem cookie, então 401 `auth.required`.
-- **IT-03** — Dado um cookie válido e o token X-CSRF, quando `POST /api/v1/auth/logout` é chamado, então 204, `Set-Cookie` apaga `__Host-subsolo`, `revoked_at` é gravado e o mesmo cookie em `/me` volta 401.
-- **IT-04** — Dado um `FakeTimeProvider` avançado 2 h, quando `/me` é chamado, então `expires_at` é renovado uma vez; 200 chamadas seguidas têm validação com p95 ≤ 5 ms e não gravam de novo.
+- **IT-02** — Dado um cookie emitido pelo `SignInAsync`, quando `GET /api/v1/me` é chamado, então 200 com o contrato do §6 e `Cache-Control: no-store`; sem cookie, então 401 `auth.required`.
+- **IT-03** — Dado um cookie válido e o token X-CSRF, quando `POST /api/v1/auth/logout` é chamado, então 204 com `Cache-Control: no-store`, `Set-Cookie` apaga `__Host-subsolo`, `revoked_at` é gravado e o mesmo cookie em `/me` volta 401.
+- **IT-04** — Dado um `FakeTimeProvider` avançado 2 h, quando `/me` é chamado, então `expires_at` é renovado uma vez; com o relógio 90 dias e 1 minuto depois da entrada (usando a sessão a cada 20 dias), `/me` volta 401; 200 chamadas seguidas têm validação com p95 ≤ 5 ms e não gravam de novo.
 - **IT-05** — Dado um cookie válido sem X-CSRF, quando `/logout` é chamado, então 400 `security.csrf_invalid` e a sessão segue válida.
 - **IT-06** — Dados os logs e spans capturados (coletor em memória do OpenTelemetry) durante a entrada e o `/me`, quando inspecionados, então o e-mail não aparece em claro.
 - **IT-07** — Dado o container do PostgreSQL pausado, quando `/me` é chamado com cookie, então 503 em ProblemDetails sem detalhes da exceção.
 - **IT-08** — Dado um usuário só `fan`, quando chama um endpoint de teste `RequireAuthorization(admin)`, então 403 `auth.forbidden`; com papel `admin`, 200.
 - **IT-09** — Dados os testes de arquitetura (SPEC-0007), quando rodam com o módulo `Users`, então as regras do ADR-0001 valem para ele sem configuração extra e nenhum outro módulo referencia `Users.Domain`, `Users.Application` ou `Users.Infrastructure` (guarda: passa antes da mudança).
+- **IT-10** — Dados os endpoints mapeados da API, quando o teste de arquitetura de rate limit (ao lado de `EndpointAuthorizationRules`) os inspeciona, então todos, exceto `/health`, declaram uma política de rate limit, e um endpoint de exemplo sem política é reprovado; com a política `default` configurada para 3 por minuto no teste, a 4ª chamada a `/me` e a `GET /api/v1/cities` recebe 429 `security.rate_limited` com `Retry-After`.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json`, quando lido, então `/api/v1/me` e `/api/v1/auth/logout` têm os esquemas e os códigos de erro (`auth.required`, `security.csrf_invalid`) do §6, e `(cd web && pnpm api:check)` passa com o cliente regenerado. O consumidor (SPEC-0016) depende desse contrato.
@@ -162,7 +175,7 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 
 ## 8. Plano de Rollout
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003).
-- **Dados/schema:** migração inicial do schema `users` (tabelas `users` e `sessions`), aditiva.
+- **Dados/schema:** migração inicial do schema `users` (tabelas `users` e `sessions`), aditiva. Os endpoints públicos existentes ganham rate limit `default` (100/min por IP), folgado para uso normal.
 - **Compatibilidade:** cookies emitidos antes desta spec (só em testes; não há usuários) passam a ser rejeitados por não terem sessão — sem impacto real.
 - **Observabilidade:** contador `subsolo.users.sign_ins` (por método) e `subsolo.users.sessions_revoked`; logs de entrada e saída com o id do usuário, nunca o e-mail.
 - **Rollback:** reverter o merge commit; a migração é aditiva e pode ficar.
@@ -170,6 +183,8 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 
 ## 9. Questões em Aberto
 - [x] Como o administrador inicial é definido? — Pela configuração `Users:AdminEmails` (e-mail do Thomas no go-live), sem tela; mudar o admin é mudar a configuração (recomendação do Architect dentro do piloto automático, 2026-10-17; confirmada no H1)
+- [x] A sessão tem teto absoluto, mesmo com uso contínuo? — Sim, 90 dias desde a entrada; depois disso a pessoa entra de novo pelo e-mail (Thomas, 2026-10-17)
+- [x] Sessão some ao apagar os cookies? Rate limit em tudo? — O Thomas pediu (2026-10-17) que a sessão termine de verdade (sem login "infinito") e que exista rate limit; viraram o teto de 90 dias, o `no-store`, o IT-10 aqui e o E2E-03 da SPEC-0016
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
@@ -181,7 +196,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
-| G0 Spec | PASS | validate: 0 erro(s) — 93aac2d (árvore suja) | 2026-10-17 |
+| G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PENDING | | |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |

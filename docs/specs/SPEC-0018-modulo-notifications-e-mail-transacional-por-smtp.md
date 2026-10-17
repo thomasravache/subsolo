@@ -4,7 +4,7 @@ title: "Módulo Notifications: e-mail transacional por SMTP"
 tier: full
 type: feature
 user_facing: false
-status: proposed
+status: approved
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -15,8 +15,8 @@ touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Subs
 adrs: [ADR-0001, ADR-0008, ADR-0009, ADR-0010, ADR-0014]
 external: []
 size: M
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0018 — Módulo Notifications: e-mail transacional por SMTP

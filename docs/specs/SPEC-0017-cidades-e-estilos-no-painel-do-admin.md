@@ -172,7 +172,7 @@ UF: as 27 siglas. Fuso: qualquer IANA válido; a tela oferece os fusos do Brasil
 
 ## 9. Questões em Aberto
 - [x] Cidade e estilo podem ser apagados? — Não no MVP: só criar e editar ou renomear; o slug não muda (recomendação do Architect, 2026-10-17; confirmada no H1)
-- [ ] Tela "Cidades e estilos" aprovada no Stitch (Thomas) — a geração no desktop estourou o tempo em 2026-10-17; refazer antes do H1 desta spec
+- [x] Tela "Cidades e estilos" aprovada no Stitch (Thomas) — gerada em 2026-10-17 ("Admin - Cidades e Estilos", a14b19f0df03454483d4dd012d44ea8f, desktop); ajustes propostos: sem textos de exclusão nem a caixa "Regra da cena", sem contagens de shows, menu só com o que existe, endereço só leitura na edição, domínio real no lugar de "subsolo.art". Aprovada com esses ajustes pelo Thomas em 2026-10-17
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
@@ -184,7 +184,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
-| G0 Spec | PENDING | | |
+| G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PENDING | | |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
