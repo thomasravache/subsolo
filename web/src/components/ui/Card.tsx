@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import type { components } from "@/api/schema";
@@ -82,12 +81,14 @@ export function Card({
         className={`flex h-28 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xs border border-border bg-bg md:aspect-[4/5] md:h-auto md:w-full ${cancelled ? "grayscale" : ""}`}
       >
         {flyerSrc ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element -- o next/image injeta style="color:transparent", barrado pela CSP sem estilo inline (SPEC-0010/ADR-0017); a imagem já não era otimizada.
+          <img
             src={flyerSrc}
             alt={`Flyer de ${title}`}
             width={400}
             height={500}
-            unoptimized
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain"
           />
         ) : (
