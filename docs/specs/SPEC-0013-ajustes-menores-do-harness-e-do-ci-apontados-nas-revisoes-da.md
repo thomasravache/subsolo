@@ -4,7 +4,7 @@ title: Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
