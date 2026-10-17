@@ -58,6 +58,9 @@
     <ProjectReference Include="../../src/Modules/Notifications/Subsolo.Modules.Notifications.Infrastructure/Subsolo.Modules.Notifications.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Notifications/Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
     <ProjectReference Include="../../src/Modules/Notifications/Subsolo.Modules.Notifications.Presentation/Subsolo.Modules.Notifications.Presentation.csproj" />
+    <!-- SPEC-0018 IT-05 (Emenda 2): a regra "só o Notifications usa SMTP" também avalia os hosts (Api e ServiceDefaults). -->
+    <ProjectReference Include="../../src/Subsolo.Api/Subsolo.Api.csproj" />
+    <ProjectReference Include="../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
     <!-- SPEC-0007 IT-06: assembly de exemplo com uma violação de cada regra do ADR-0001. -->
     <ProjectReference Include="../Common/Subsolo.Common.ArchitectureViolations/Subsolo.Common.ArchitectureViolations.csproj" />
   </ItemGroup>
