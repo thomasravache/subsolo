@@ -9,7 +9,7 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
 consumes_contract: []
-touches: [web/next.config.ts, web/src/next-config.test.ts, e2e/tests/agenda/**, e2e/tests/design/**]
+touches: [web/next.config.ts, web/src/next-config.test.ts]
 adrs: [ADR-0013]
 external: []
 size: S
@@ -38,12 +38,12 @@ O Next 16 faz *streaming* dos metadados para quem não é robô: o `<title>` sai
 
 **Rollback:** revert do commit.
 
-**Outras ocorrências:** nenhuma hoje. Toda spec do MVP com link interno herda a proteção; o E2E-01 serve de guarda.
+**Outras ocorrências:** nenhuma hoje. Toda spec do MVP com link interno herda a proteção; o UT-01 serve de guarda, e o E2E entra com a primeira página interna (Emenda 1).
 
 ## 4. Plano de Testes (TDD)
-- Caracterização: N/A — o defeito é o comportamento atual; o E2E-01 reproduz e falha antes da correção.
+- Caracterização: N/A — o defeito é a configuração atual; o UT-01 falha antes da correção.
 - **UT-01** — Dado o `web/next.config.ts`, quando importado em `web/src/next-config.test.ts`, então `htmlLimitedBots` casa com um user agent comum de Chrome mobile e de Safari iOS.
-- **E2E-01** — Dada a aplicação completa, nos projetos mobile-chrome e mobile-safari, um `MutationObserver` instalado antes do clique registra todo valor de `document.title`. Quando o fã sai de `/cidade-exemplo` por um `next/link` do shell para outra página com título próprio, então nenhum valor registrado é vazio, o título final é o da página nova, e o axe (`document-title`) roda logo depois da troca de URL sem violação. Falha antes da correção. [jornada: agenda]
+- E2E: N/A — Emenda 1: no código atual nenhum `next/link` leva a uma página interna que responda 200 (`/apoie` e `/privacidade` ainda não existem, dão 404 no RSC e o Next recarrega o documento inteiro), então o título vazio não acontece em nenhuma jornada. O E2E do título (MutationObserver + axe `document-title` na navegação no cliente) passa a ser obrigatório na primeira spec que criar uma página interna 200 alcançável por `next/link` (Página do show ou Apoie), registrado no épico SPEC-0002. O UT-01 é o teste de regressão desta spec.
 
 ## 5. Questões em Aberto
 - [x] Qual solução adotar? — Metadados bloqueantes com `htmlLimitedBots` global, provados por teste; se não resolverem a navegação no cliente, navegação completa nos links afetados (Thomas, 2026-10-17)
@@ -55,10 +55,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Título na navegação**
-- [ ] Red: UT-01 e E2E-01 com a tag `SPEC-0015:<ID>`, falhando pelo motivo certo (E2E-01 vê o título vazio durante a navegação por `next/link`)
-- [ ] Green: `htmlLimitedBots: /.*/` no `next.config.ts`; se o E2E-01 não passar, parar e reportar `SPEC_DEFECT` (emenda para navegação completa nos links afetados)
+- [ ] Red: UT-01 com a tag `SPEC-0015:UT-01`, falhando pelo motivo certo (E2E-01 virou N/A pela Emenda 1)
+- [ ] Green: `htmlLimitedBots: /.*/` no `next.config.ts`
 - [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + E2E nos três projetos (G2/G3)
+- [ ] Validar: build + suíte + E2E existentes (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
@@ -84,6 +84,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G1 | spec | E2E-01 não reproduz o título vazio no código atual: os únicos next/link do shell que levam a outra página (/apoie, /privacidade) dão 404 no RSC e o Next cai em navegação completa; nenhuma página interna 200 é alcançável por navegação no cliente | Test-writer: link Apoie nos 3 projetos com marcador de recarga; respostas RSC inspecionadas; fallback MPA do Next lido (fetch-server-response.js) | Architect + Thomas | Emenda 1 — E2E-01 N/A, E2E do título herdado pela primeira spec com página interna 200 (épico SPEC-0002); aprovada pelo Thomas em 2026-10-17 | 2026-10-17 |
 
 ## 10. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
@@ -116,3 +117,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (testes e escopo) | 2026-10-17 | E2E-01 vira N/A; o E2E do título passa para a primeira spec com página interna 200 alcançável por `next/link`; `touches` sem `e2e/**`; UT-01 é o teste de regressão | IMP-01: o bug não é alcançável no código atual (único destino interno dá 404 e o Next faz navegação completa) | SPEC-0002 (critério registrado no épico) | thomas, 2026-10-17 |

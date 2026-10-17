@@ -62,6 +62,8 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 
 **Revisão de 2026-10-17 (Architect):** "Contas e login" não cabia numa spec M. Ficou dividida em módulo `Users` (SPEC-0014), link mágico (SPEC-0016), Google e Minha conta. O e-mail do link mágico exige o módulo `Notifications` antes (ADR-0014: só ele fala com SMTP), por isso entrou a SPEC-0018, e "Inscrição de push" passa a estender esse módulo. A SPEC-0015 resolve a questão em aberto do título na navegação no cliente. As specs filhas são detalhadas por onda, com as telas no Stitch.
 
+**Herança da SPEC-0015 (Emenda 1, 2026-10-17):** a primeira spec que criar uma página interna que responda 200 e seja alcançável por `next/link` (Página do show ou Apoie) leva o E2E do título na navegação no cliente: um `MutationObserver` registra todo `document.title` durante o clique, nenhum valor fica vazio e o axe `document-title` passa logo depois da troca de URL. Achado junto: a página de cidade inexistente carregada direto mostrou o título "Subsolo" em vez de "Cidade não encontrada · Subsolo" — investigar na mesma spec.
+
 | Spec | Título | Tier | Tipo | Tamanho | Depende de | Consome contrato de |
 |---|---|---|---|---|---|---|
 | SPEC-0014 | Módulo Users: conta, sessão e papéis | full | feature | M | fundação | — |

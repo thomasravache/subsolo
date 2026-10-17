@@ -4,9 +4,9 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 15 aviso(s)** — rode `spec_graph.py validate`
-- Specs: proposed 1, approved 4, implemented 10
-- Impedimentos: **0 aberto(s)**, 12 resolvido(s)
+- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
+- Specs: proposed 1, approved 2, in-progress 2, implemented 10
+- Impedimentos: **0 aberto(s)**, 13 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -40,14 +40,14 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0014, SPEC-0015  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0014, SPEC-0015
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0014 | Módulo Users: conta, sessão e papéis | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0015 | Título da página presente na navegação no cliente | lite/S | approved | ✅ pronta |  |
+| 1 | SPEC-0014 | Módulo Users: conta, sessão e papéis | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0015 | Título da página presente na navegação no cliente | lite/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0014 |  |
 | 2 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0014 |
 | 3 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | proposed | ⏳ aguardando aprovação (H1) |  |
@@ -67,8 +67,8 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 ```mermaid
 flowchart LR
   subgraph E0002["SPEC-0002 · Agenda Subsolo — lançamento (MVP)"]
-    S0014["SPEC-0014<br/>Módulo Users: conta, sessão e papéis"]:::approved
-    S0015["SPEC-0015<br/>Título da página presente na navegação …"]:::approved
+    S0014["SPEC-0014<br/>Módulo Users: conta, sessão e papéis"]:::inprogress
+    S0015["SPEC-0015<br/>Título da página presente na navegação …"]:::inprogress
     S0016["SPEC-0016<br/>Entrar por link mágico no e-mail"]:::approved
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::proposed
     S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::approved
@@ -101,8 +101,8 @@ flowchart LR
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | implemented | 2026-10-14 | SPEC-0001 | — | — |
-| [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | approved | 2026-10-17 | SPEC-0002 | — | — |
-| [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | approved | 2026-10-17 | SPEC-0002 | — | — |
+| [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | in-progress | 2026-10-17 | SPEC-0002 | — | — |
+| [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | in-progress | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014 | SPEC-0018@1 |
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | proposed | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | approved | 2026-10-17 | SPEC-0002 | — | — |
