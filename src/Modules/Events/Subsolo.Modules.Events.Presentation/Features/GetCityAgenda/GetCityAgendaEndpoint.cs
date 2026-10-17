@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Routing;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
 using Subsolo.Common.Presentation;
+using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 
 namespace Subsolo.Modules.Events.Presentation.Features.GetCityAgenda;
 
-/// <summary>SPEC-0008 — <c>GET /api/v1/cities/{slug}/agenda?from=&amp;to=</c>, público (<c>AllowAnonymous</c>).</summary>
+/// <summary>SPEC-0008 — <c>GET /api/v1/cities/{slug}/agenda?from=&amp;to=</c>, público (<c>AllowAnonymous</c>, rate limit <c>default</c> — SPEC-0014).</summary>
 internal sealed class GetCityAgendaEndpoint : IEndpoint
 {
     public const string Route = "/api/v1/cities/{slug}/agenda";
@@ -18,6 +19,7 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet(Route, HandleAsync)
             .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Default)
             .WithName("GetCityAgenda")
             .WithTags("Agenda")
             .WithSummary("Agenda da cidade")

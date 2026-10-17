@@ -1,6 +1,7 @@
 // SPEC-0007 — composição do host da API (ADR-0001): infraestrutura comum, módulos e endpoints.
 // SPEC-0010 — segurança base (ADR-0003): autorização negada por padrão, anti-forgery e rate limiting.
 using System.Text.Json.Serialization;
+using OpenTelemetry.Metrics;
 using Subsolo.Api.OpenApi;
 using Subsolo.Api.Security;
 using Subsolo.Common.Infrastructure;
@@ -15,7 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi(options => options.AddSchemaTransformer<ProblemDetailsCodeSchemaTransformer>());
+builder.Services.AddOpenApi(options => options
+    .AddSchemaTransformer<ProblemDetailsCodeSchemaTransformer>()
+    .AddOperationTransformer<ProblemCodeOperationTransformer>());
 
 // Números só como números no JSON: o contrato (e o cliente TypeScript gerado) não aceita inteiros em string.
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
@@ -25,6 +28,9 @@ builder.Services.AddApiSecurity(builder.Configuration);
 // Módulos: services.Add<M>Module(builder.Configuration) — cada um chama AddModule e AddEndpoints.
 builder.Services.AddEventsModule(builder.Configuration);
 builder.Services.AddUsersModule(builder.Configuration);
+
+// SPEC-0014: métricas dos módulos (subsolo.users.sign_ins e subsolo.users.sessions_revoked).
+builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(UsersModule.MeterName));
 
 var app = builder.Build();
 

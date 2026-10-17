@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) instancia o emissor do cookie de sessão. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Users.Infrastructure" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
   </ItemGroup>
