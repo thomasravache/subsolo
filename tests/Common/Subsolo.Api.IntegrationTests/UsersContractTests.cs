@@ -6,7 +6,8 @@ namespace Subsolo.Api.IntegrationTests;
 /// SPEC-0014 CT-01 — o snapshot <c>docs/api/openapi.v1.json</c> (igual ao documento gerado pela API, conferido pelo
 /// CT-01 da SPEC-0007) publica <c>GET /api/v1/me</c> (200 <c>{id, email, displayName, roles}</c>, 401
 /// <c>auth.required</c>, 429) e <c>POST /api/v1/auth/logout</c> (204, 400 <c>security.csrf_invalid</c>, 401
-/// <c>auth.required</c>, 429), e o cliente TypeScript <c>web/src/api/schema.d.ts</c> foi regenerado com eles (a
+/// <c>auth.required</c>, 429), os dois com 503 <c>service.unavailable</c> (banco das sessões fora do ar; SPEC-0016 CT-03,
+/// §7.6 d), e o cliente TypeScript <c>web/src/api/schema.d.ts</c> foi regenerado com eles (a
 /// igualdade exata com o snapshot é o <c>pnpm api:check</c> do CI). O consumidor é a SPEC-0016.
 /// </summary>
 public sealed class UsersContractTests
@@ -16,12 +17,13 @@ public sealed class UsersContractTests
 
     [Fact]
     [Trait("Spec", "SPEC-0014:CT-01")]
+    [Trait("Spec", "SPEC-0016:CT-03")]
     public async Task MeIsPublishedWithTheContractSchemaAndErrors()
     {
         var operation = await OperationAsync("/api/v1/me", "get");
 
         var responses = operation["responses"].ShouldBeOfType<JsonObject>();
-        responses.Select(response => response.Key).ShouldBe(["200", "401", "429"], ignoreOrder: true);
+        responses.Select(response => response.Key).ShouldBe(["200", "401", "429", "503"], ignoreOrder: true);
 
         var schema = Resolve(await SnapshotAsync(), responses["200"]?["content"]?["application/json"]?["schema"])
             .ShouldBeOfType<JsonObject>("200 de /api/v1/me sem schema JSON");
@@ -37,21 +39,24 @@ public sealed class UsersContractTests
 
         ShouldBeProblem(responses, "401", "auth.required");
         ShouldBeProblem(responses, "429", "security.rate_limited");
+        ShouldBeProblem(responses, "503", "service.unavailable");
     }
 
     [Fact]
     [Trait("Spec", "SPEC-0014:CT-01")]
+    [Trait("Spec", "SPEC-0016:CT-03")]
     public async Task LogoutIsPublishedWithTheContractErrors()
     {
         var operation = await OperationAsync("/api/v1/auth/logout", "post");
 
         var responses = operation["responses"].ShouldBeOfType<JsonObject>();
-        responses.Select(response => response.Key).ShouldBe(["204", "400", "401", "429"], ignoreOrder: true);
+        responses.Select(response => response.Key).ShouldBe(["204", "400", "401", "429", "503"], ignoreOrder: true);
         (responses["204"]?["content"]).ShouldBeNull("204 não tem corpo");
 
         ShouldBeProblem(responses, "400", "security.csrf_invalid");
         ShouldBeProblem(responses, "401", "auth.required");
         ShouldBeProblem(responses, "429", "security.rate_limited");
+        ShouldBeProblem(responses, "503", "service.unavailable");
     }
 
     [Fact]
