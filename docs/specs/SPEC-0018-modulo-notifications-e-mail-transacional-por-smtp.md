@@ -91,7 +91,8 @@ public enum EmailTemplate { MagicLink }
 ```text
 Configuração (Notifications:Smtp): Host, Port, Security (None|StartTls|SslOnConnect), User, Password, FromAddress, FromName="Subsolo"
   Development/CI: referência "smtp" do Mailpit (AppHost), Security=None
-  Production: Security ≠ None obrigatório (a API não sobe sem isso); senha por segredo (ADR-0008)
+  Fora de Development: Security ≠ None obrigatório (a API não sobe sem isso); senha por segredo (ADR-0008)
+  Compose publicado: Host/Port do endpoint smtp do Mailpit e Security = ${SMTP_SECURITY:-StartTls} (a pilha local do compose-up.sh usa None em Development) — Emenda 2
 E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botão "Entrar no Subsolo" → {link};
   "O link vale por {minutes} minutos e só funciona uma vez."; "Se não foi você, ignore este e-mail."
 ```
@@ -108,10 +109,10 @@ E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botã
 | Dados inválidos | `link` ausente, não absoluto ou `minutes` fora de 1–60 | `notifications.invalid_data`, nada enviado | UT-02 |
 | Escape de HTML | dado com `<script>` | aparece como texto no HTML | UT-02 |
 | SMTP fora do ar | servidor parado ou sem resposta | `notifications.email_unavailable` em ≤ 10 s, sem exceção | IT-03 |
-| TLS em produção | `Security=None` em Production | a API não inicia (validação de opções) | UT-03 |
+| TLS fora de Development | `Security=None` em Production ou Staging | a API não inicia (validação de opções) | UT-03 |
 | Dados pessoais fora dos logs | envio com logs e spans capturados | e-mail mascarado, conteúdo e link ausentes | IT-04 |
 | Só o Notifications usa SMTP | arquitetura | nenhum outro projeto referencia MailKit | IT-05 |
-| AppHost liga o SMTP | `aspire run` / modelo do AppHost | a API recebe a referência `smtp` do Mailpit | IT-02 |
+| AppHost liga o SMTP | `aspire run` e o Compose publicado | a API recebe Host/Port do Mailpit; no publicado, Security vem de `SMTP_SECURITY` com padrão `StartTls` | IT-02 |
 | API pública estável | consumidor (SPEC-0016) | assinatura, enum e códigos de erro do §6 | CT-01 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
@@ -122,11 +123,11 @@ E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botã
 ### 7.2 Testes Unitários
 - **UT-01** — Dado o modelo `MagicLink` com `link=https://subsolo.test/entrar/confirmar?token=abc` e `minutes=15`, quando renderizado, então o assunto, o HTML (`lang="pt-BR"`, botão com o link, "15 minutos") e o texto puro contêm o link exato e as frases do §6, e as cores do botão têm contraste AA.
 - **UT-02** — Dados `To="sem-arroba"`, `To` com 255 caracteres, `link` ausente, `link="/relativo"`, `minutes=0` e `minutes=61`, quando `SendEmailAsync` valida, então retorna `notifications.invalid_recipient` ou `notifications.invalid_data` sem chamar o canal; dado um dado com `<script>`, então ele aparece escapado no HTML.
-- **UT-03** — Dado o ambiente Production com `Notifications:Smtp:Security=None`, quando as opções são validadas na inicialização, então falha com mensagem clara; em Development, aceita.
+- **UT-03** — Dado o ambiente Production ou Staging com `Notifications:Smtp:Security=None`, quando as opções são validadas na inicialização, então falha com mensagem clara; em Development, aceita.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dado o Mailpit real em container (Testcontainers), quando `SendEmailAsync` manda o `MagicLink` 20 vezes, então a API HTTP do Mailpit mostra as 20 mensagens com remetente "Subsolo", assunto, partes HTML e texto e o link exato, e o p95 do envio fica ≤ 2 s.
-- **IT-02** — Dado o modelo do AppHost (teste do AppHost, padrão da SPEC-0007), quando lido, então a API tem a referência `smtp` do Mailpit e a seção `Notifications:Smtp` resolvida para ela.
+- **IT-02** — Dado o modelo do AppHost (teste do AppHost, padrão da SPEC-0007), quando lido, então a API tem a referência `smtp` do Mailpit e a seção `Notifications:Smtp` resolvida para ela; no modo publish (Compose), também Host e Port do Mailpit e `Security=${SMTP_SECURITY:-StartTls}` (Emenda 2).
 - **IT-03** — Dado um servidor TCP que aceita a conexão e não responde, e depois uma porta fechada, quando `SendEmailAsync` é chamado, então retorna `notifications.email_unavailable` em ≤ 10 s nos dois casos, sem lançar exceção.
 - **IT-04** — Dados os logs e spans capturados (coletor em memória do OpenTelemetry) durante um envio, quando inspecionados, então o destinatário aparece só mascarado, e nem o link nem o corpo aparecem.
 - **IT-05** — Dados os testes de arquitetura, quando rodam, então só os projetos `Subsolo.Modules.Notifications.*` referenciam `MailKit`/`MimeKit`, e um projeto de violação de propósito (padrão `Subsolo.Common.ArchitectureViolations`) faz a regra falhar.
@@ -168,7 +169,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase 2: SMTP real**
 - [ ] Red: IT-01..IT-05 e CT-01 falhando pelo motivo certo
-- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório em Production, timeout de 10 s, Mailpit no AppHost
+- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório fora de Development, timeout de 10 s, Mailpit no AppHost
 - [ ] Refactor mantendo tudo verde
 - [ ] Validar: build + suíte completa + arquitetura (G2/G3)
 
@@ -186,7 +187,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 3cac14d | 2026-10-17 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em 59d9d11 — major: SMTP não ligado ao Mailpit no Compose publicado (E2E da SPEC-0016 depende); menores: QUIT falho vira email_unavailable, regex de destinatário mais frouxa que o MimeKit, regra SMTP sem os hosts, TLS só em Production vs §5, comentário do csproj desatualizado | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -237,5 +238,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0018`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (comportamento e testes) | 2026-10-17 | Emenda 2: TLS obrigatório fora de Development (alinha §6 e UT-03 ao §5); Compose publicado ligado ao Mailpit com `SMTP_SECURITY` (padrão `StartTls`); testes novos: UT-02 com endereços que o MimeKit recusa (`a>@x.com`, `a@b.com>,<c`) → `invalid_recipient`, UT-03 com Staging, IT-02 no modo publish, IT-05 avaliando também `Subsolo.Api` e `Subsolo.ServiceDefaults` | Revisão G4 (CHANGES_REQUESTED): o E2E da SPEC-0016 roda no Compose e não recebia SMTP; regex de destinatário mais frouxa que o MimeKit; regra do ADR-0014 sem os hosts | SPEC-0016 (usa `SMTP_SECURITY=None` no `compose-up.sh`, já nos `touches` dela) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 1 (arquitetura) | 2026-10-17 | Sem mudança no contrato: o ADR-0001 foi esclarecido para permitir em `IntegrationEvents` os tipos `Result`, `Result<T>`, `Error` e `ErrorType` de `Common.Domain` (e só eles); a regra `IntegrationEventsDependencies` dos testes de arquitetura é atualizada pelo Test-writer com essa exceção e um exemplo que reprova entidade de domínio | IMP-01: o `Task<Result>` do §6 reprovava as guardas do ADR-0001 | nenhuma (SPEC-0016 segue fixada em @1) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 1 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
