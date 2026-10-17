@@ -4,7 +4,7 @@ title: Título da página presente na navegação no cliente
 tier: lite
 type: fix
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []

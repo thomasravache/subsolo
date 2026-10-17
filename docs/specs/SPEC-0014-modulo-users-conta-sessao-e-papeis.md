@@ -4,7 +4,7 @@ title: "Módulo Users: conta, sessão e papéis"
 tier: full
 type: feature
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
