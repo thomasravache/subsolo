@@ -494,12 +494,10 @@ jobs:
   # CodeQL (ADR-0006): gratuito em repositório público. O check falha quando a análise do PR tem alerta com
   # security-severity >= 7.0 (High/Critical); como a main só recebe merge com o check verde, todo alerta assim é novo.
   # O gate lê o SARIF desta execução, não o estado dos alertas no GitHub: dispensar ("Dismiss") um alerta na interface
-  # de Code scanning NÃO libera o check. Para um falso positivo, suprima no próprio código, com o motivo na mesma linha
-  # (ADR-0006; vira `suppressions` no SARIF e é ignorado aqui) — ou corrija o código.
-  # Formato do comentário: `// codeql[<id da query>] <motivo>` (as queries AlertSuppression do CodeQL o reconhecem e
-  # geram `suppressions` no SARIF). A confirmação de que isso funciona para C# e TypeScript com a suíte padrão é
-  # manual (SPEC-0013, item 8); se não funcionar, o caminho é um config do CodeQL (`config-file` no init) com
-  # `query-filters: - exclude: id: <id da query>`, com o motivo comentado ao lado.
+  # de Code scanning NÃO libera o check. Para um falso positivo, corrija o código ou exclua a regra num config do
+  # CodeQL (`config-file` no init) com `query-filters: - exclude: id: <id da query>`, com o motivo comentado ao lado
+  # (ADR-0006). O comentário `// codeql[<id da query>] <motivo>` NÃO suprime o alerta neste pipeline: verificado em
+  # 2026-10-17 num PR descartável (SPEC-0013, item 8) — `cs/sql-injection` continuou reprovando o job.
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 30
