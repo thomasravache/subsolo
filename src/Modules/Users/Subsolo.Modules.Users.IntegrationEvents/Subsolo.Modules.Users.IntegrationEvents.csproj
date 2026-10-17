@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0014 — contrato público do módulo Users (ADR-0001: só depende de Common.Application): ISessionValidator (usado
+    pelo host na validação do cookie) e o evento UserRegisteredIntegrationEvent.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Users.IntegrationEvents</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+  </ItemGroup>
+
+</Project>

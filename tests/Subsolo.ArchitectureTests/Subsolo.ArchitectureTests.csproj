@@ -44,6 +44,12 @@
     <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Infrastructure/Subsolo.Modules.Events.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
     <ProjectReference Include="../../src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
+    <!-- SPEC-0014: módulo Users. -->
+    <ProjectReference Include="../../src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/Users/Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Users/Subsolo.Modules.Users.Infrastructure/Subsolo.Modules.Users.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../src/Modules/Users/Subsolo.Modules.Users.Presentation/Subsolo.Modules.Users.Presentation.csproj" />
     <!-- SPEC-0007 IT-06: assembly de exemplo com uma violação de cada regra do ADR-0001. -->
     <ProjectReference Include="../Common/Subsolo.Common.ArchitectureViolations/Subsolo.Common.ArchitectureViolations.csproj" />
   </ItemGroup>

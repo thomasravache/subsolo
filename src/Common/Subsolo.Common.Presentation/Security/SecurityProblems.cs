@@ -20,6 +20,9 @@ public static class SecurityProblems
     /// <summary>429: limite de requisições da política excedido.</summary>
     public const string RateLimited = "security.rate_limited";
 
+    /// <summary>503: a sessão não pôde ser validada porque o banco não respondeu (SPEC-0014).</summary>
+    public const string ServiceUnavailable = "service.unavailable";
+
     public static IResult Unauthorized() =>
         Problem(StatusCodes.Status401Unauthorized, AuthRequired, "É preciso entrar para acessar este recurso.");
 
@@ -31,6 +34,9 @@ public static class SecurityProblems
 
     public static IResult TooManyRequests() =>
         Problem(StatusCodes.Status429TooManyRequests, RateLimited, "Muitas requisições. Tente de novo mais tarde.");
+
+    public static IResult Unavailable() =>
+        Problem(StatusCodes.Status503ServiceUnavailable, ServiceUnavailable, "Serviço temporariamente indisponível. Tente de novo em instantes.");
 
     private static IResult Problem(int status, string code, string detail) =>
         Results.Problem(

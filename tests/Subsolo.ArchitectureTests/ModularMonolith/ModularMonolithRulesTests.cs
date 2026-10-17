@@ -31,6 +31,11 @@ public sealed class ModularMonolithRulesTests
                 "Subsolo.Modules.Template",
                 "Subsolo.Modules.Template.IntegrationEvents",
                 "Subsolo.Modules.TemplateB",
+                "Subsolo.Modules.Users.Application",
+                "Subsolo.Modules.Users.Domain",
+                "Subsolo.Modules.Users.Infrastructure",
+                "Subsolo.Modules.Users.IntegrationEvents",
+                "Subsolo.Modules.Users.Presentation",
             ],
             ignoreOrder: true);
     }

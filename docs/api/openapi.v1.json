@@ -98,6 +98,93 @@
           }
         }
       }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Sair",
+        "description": "Revoga a sessão atual no servidor e apaga o cookie de sessão. Exige o cabeçalho X-CSRF.",
+        "operationId": "Logout",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Quem sou eu",
+        "description": "Id, e-mail, nome de exibição e papéis do usuário da sessão atual.",
+        "operationId": "GetMe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -157,6 +244,36 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "MeResponse": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -274,6 +391,9 @@
     },
     {
       "name": "Agenda"
+    },
+    {
+      "name": "Conta"
     }
   ]
 }
