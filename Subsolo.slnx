@@ -46,4 +46,13 @@
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Events/Subsolo.Events.UnitTests/Subsolo.Events.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/tests/Observability/">
+    <Project Path="tests/Observability/Subsolo.Observability.AppHostTests/Subsolo.Observability.AppHostTests.csproj" />
+    <Project Path="tests/Observability/Subsolo.Observability.IntegrationTests/Subsolo.Observability.IntegrationTests.csproj" />
+    <Project Path="tests/Observability/Subsolo.Observability.UnitTests/Subsolo.Observability.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Security/">
+    <Project Path="tests/Security/Subsolo.Security.IntegrationTests/Subsolo.Security.IntegrationTests.csproj" />
+    <Project Path="tests/Security/Subsolo.Security.UnitTests/Subsolo.Security.UnitTests.csproj" />
+  </Folder>
 </Solution>

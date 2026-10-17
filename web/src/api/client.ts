@@ -9,6 +9,9 @@ import type { components, paths } from "./schema";
  */
 export type CityAgenda = components["schemas"]["CityAgendaResponse"];
 
+/** SPEC-0011 — cidade da lista pública (`GET /api/v1/cities`): slug e nome. */
+export type CitySummary = components["schemas"]["CitySummaryResponse"];
+
 /** Tempo máximo de uma chamada à API antes de tratá-la como indisponível. */
 export const apiTimeoutMs = 5_000;
 

@@ -64,5 +64,8 @@ public sealed class GetCityAgendaQueryHandlerTests
     {
         public Task<City?> GetBySlugAsync(string slug, CancellationToken cancellationToken) =>
             Task.FromResult(cities.FirstOrDefault(city => city.Slug == slug));
+
+        public Task<IReadOnlyList<City>> ListAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<City>>([.. cities.OrderBy(city => city.Name, StringComparer.Ordinal)]);
     }
 }

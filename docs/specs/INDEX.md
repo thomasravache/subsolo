@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 4, implemented 6
+- Specs: approved 1, in-progress 3, implemented 6
 - Impedimentos: **0 aberto(s)**, 7 resolvido(s)
 
 ## Cobertura de Pilares
@@ -20,7 +20,7 @@ Perfil: **padrao**
 | Entrega contínua e ambientes | coberto | ADR-0004 |
 | Fluxo de mudança | coberto | ADR-0007 |
 | Segredos e dados sensíveis | coberto | ADR-0008 |
-| Identidade e acesso | coberto | ADR-0003 |
+| Identidade e acesso | coberto | ADR-0003, ADR-0017 |
 | Dependências e ciclo de vida da stack | coberto | ADR-0009 |
 | Observabilidade | coberto | ADR-0010 |
 | Resiliência e recuperação | coberto | ADR-0011 |
@@ -38,16 +38,16 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0009, SPEC-0010, SPEC-0011  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0009, SPEC-0010, SPEC-0011
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0009 | Observabilidade base | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0010 | Segurança base | full/M | approved | ✅ pronta |  |
-| 1 | SPEC-0011 | Design system escuro e shell do app | full/M | approved | ✅ pronta |  |
-| 2 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0009, SPEC-0010, SPEC-0011 |
+| 1 | SPEC-0009 | Observabilidade base | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0011 | Design system escuro e shell do app | full/M | in-progress | 🔄 em andamento |  |
+| 2 | SPEC-0010 | Segurança base | full/M | in-progress | 🔄 em andamento | saiu da onda 1: arquivos em comum com SPEC-0009 |
+| 3 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0009, SPEC-0011; saiu da onda 2: arquivos em comum com SPEC-0010 |
 
 ## Épicos
 
@@ -65,9 +65,9 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 flowchart LR
   subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
     S0008["SPEC-0008<br/>Walking skeleton: agenda da cidade"]:::implemented
-    S0009["SPEC-0009<br/>Observabilidade base"]:::approved
-    S0010["SPEC-0010<br/>Segurança base"]:::approved
-    S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::approved
+    S0009["SPEC-0009<br/>Observabilidade base"]:::inprogress
+    S0010["SPEC-0010<br/>Segurança base"]:::inprogress
+    S0011["SPEC-0011<br/>Design system escuro e shell do app"]:::inprogress
     S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::approved
   end
   S0008 --> S0009
@@ -92,9 +92,9 @@ flowchart LR
 | [SPEC-0006](SPEC-0006-pipeline-de-ci-no-github-actions.md) | Pipeline de CI no GitHub Actions | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0004 | SPEC-0005@4 |
 | [SPEC-0007](SPEC-0007-base-do-monolito-modular-com-aspire.md) | Base do monólito modular com Aspire | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0005 | — |
 | [SPEC-0008](SPEC-0008-walking-skeleton-agenda-da-cidade.md) | Walking skeleton: agenda da cidade | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0006, SPEC-0007 | — |
-| [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
-| [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
-| [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | approved | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0009](SPEC-0009-observabilidade-base.md) | Observabilidade base | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
+| [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | in-progress | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | approved | 2026-10-14 | SPEC-0001 | — | — |
 
@@ -118,3 +118,4 @@ flowchart LR
 | [ADR-0014](../adr/ADR-0014-avisos-por-web-push-e-e-mail.md) | Avisos por Web Push e e-mail | accepted | teste de arquitetura (canais só implementam INotificationChannel no módulo Notifications) + testes de integração com Mailpit e servidor de push falso |
 | [ADR-0015](../adr/ADR-0015-armazenamento-e-processamento-de-flyers.md) | Armazenamento e processamento de flyers | accepted | teste de arquitetura (só Common.Infrastructure referencia NetVips e o sistema de arquivos) + testes de integração de upload |
 | [ADR-0016](../adr/ADR-0016-status-http-das-paginas-ssr-via-proxy-do-next-js.md) | Status HTTP das páginas SSR via proxy do Next.js | accepted | E2E-01 (404 da cidade inexistente) e IT-04 (503 com a API fora) da SPEC-0008, rodando em todo PR |
+| [ADR-0017](../adr/ADR-0017-csp-com-nonce-e-paginas-renderizadas-por-requisicao.md) | CSP com nonce e páginas renderizadas por requisição | accepted | UT-02, IT-05 e E2E-01 da SPEC-0010 (CSP com nonce presente e nenhuma violação de CSP no navegador em `/`, na agenda e na página de não encontrado) |

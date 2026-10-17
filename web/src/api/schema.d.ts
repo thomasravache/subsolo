@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+  "/api/v1/cities": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Cidades com agenda
+     * @description Cidades cadastradas no Subsolo, como slug e nome, ordenadas pelo nome.
+     */
+    get: operations["ListCities"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/cities/{slug}/agenda": {
     parameters: {
       query?: never;
@@ -37,6 +57,10 @@ export interface components {
       name: string;
       state: string;
       timeZone: string;
+    };
+    CitySummaryResponse: {
+      slug: string;
+      name: string;
     };
     ProblemDetails: {
       type?: null | string;
@@ -74,6 +98,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  ListCities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CitySummaryResponse"][];
+        };
+      };
+    };
+  };
   GetCityAgenda: {
     parameters: {
       query?: {

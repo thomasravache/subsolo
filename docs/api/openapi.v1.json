@@ -5,6 +5,31 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/v1/cities": {
+      "get": {
+        "tags": [
+          "Cidades"
+        ],
+        "summary": "Cidades com agenda",
+        "description": "Cidades cadastradas no Subsolo, como slug e nome, ordenadas pelo nome.",
+        "operationId": "ListCities",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CitySummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cities/{slug}/agenda": {
       "get": {
         "tags": [
@@ -120,6 +145,21 @@
           }
         }
       },
+      "CitySummaryResponse": {
+        "required": [
+          "slug",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -229,6 +269,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Cidades"
+    },
     {
       "name": "Agenda"
     }

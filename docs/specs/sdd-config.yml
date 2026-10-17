@@ -4,14 +4,14 @@
 # Deixe "" quando ainda não existir — e registre o gate como N/A apontando a spec que vai criá-lo.
 
 base_branch: main
-max_parallel: 3
+max_parallel: 1
 
 # --- Build e testes (G2, G5) ---
 # Exemplos: "dotnet build" | "npm run build" | "./gradlew build" | "go build ./..."
 build: "./tools/build.sh"
 # Suíte completa. Exemplos: "dotnet test" | "npm test" | "pytest" | "go test ./..."
-test: "dotnet test Subsolo.slnx --filter \"Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract\" && (cd web && pnpm test)"
-test_integration: "dotnet test Subsolo.slnx --filter \"Kind=Integration\""
+test: "dotnet test Subsolo.slnx --filter \"Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract\" --max-parallel-test-modules 1 && (cd web && pnpm test)"
+test_integration: "dotnet test Subsolo.slnx --filter \"Kind=Integration\" --max-parallel-test-modules 1"
 # Sob demanda (G2/G5 locais): testes que rodam os próprios comandos deste arquivo (SPEC-0005, Emenda v6). No CI cada comando já é um job.
 test_commands_contract: "dotnet test Subsolo.slnx --filter \"Kind=CommandContract\" --max-parallel-test-modules 1"
 # E2E da jornada do usuário. Exemplos: "npx playwright test" | "npx cypress run" | "maestro test flows/"

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0009 — testes da observabilidade na aplicação inteira, com o Subsolo.AppHost (Aspire.Hosting.Testing) e a
+    Aspire CLI: trace web → api → postgres num coletor OTLP de teste (IT-01), rota /{cidade} inalterada com a
+    instrumentação (CT-01), Seq sem porta publicada no Compose (IT-04) e alerta "Erros 5xx" por e-mail no Mailpit
+    (IT-06). Usa Docker, Node.js, pnpm e a Aspire CLI. Projeto separado dos testes da API porque AppHost e API têm,
+    cada um, o seu Program.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Observability.AppHostTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <ProjectReference Include="../../../src/Subsolo.AppHost/Subsolo.AppHost.csproj" />
+  </ItemGroup>
+
+</Project>

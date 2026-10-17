@@ -31,6 +31,7 @@ Levar o Subsolo, já redondo localmente, para produção em `agendasubsolo.com.b
 - Monitor externo de disponibilidade e alertas de produção (ADR-0010).
 
 - Endurecimento do artefato de deploy apontado na revisão da SPEC-0008: cabeçalhos de segurança no Caddy (HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors`), imagem do web sem root, imagens base com versão completa ou digest (Node e `aspnet`), Seq de produção com autenticação e sem Mailpit no artefato de produção, portas ligadas só ao necessário.
+- Itens de produção apontados na revisão da SPEC-0010: Caddy com `SITE_ADDRESS=<domínio>`, `HTTP_PORT=80` e `TLS_ISSUER` obrigatório (sem ele o Caddy cai em `tls internal`; não existe mais `HTTPS_PORT`); `X-Content-Type-Options: nosniff` global no Caddy; X-Forwarded-For aceito só da sub-rede do Compose ou do IP do Caddy; `ignoreHTTPSErrors` do Playwright só para a pilha local (não no smoke com `BASE_URL`).
 
 **Não-objetivos (fora do escopo):**
 - Features novas do produto (épico SPEC-0002).
@@ -78,6 +79,7 @@ Os IDs de teste são definidos quando as filhas forem criadas.
 ## 8. Questões em Aberto
 - [ ] Provedor, região, vCPU/RAM/disco e sistema operacional da VPS, e o que mais já roda nela? (Thomas)
 - [ ] Aprovação dos custos do ADR-0012 revisados: domínio, e-mail (recomendado: Amazon SES), backup (recomendado: Cloudflare R2), monitor externo (Thomas)
+- [ ] Endereço definitivo do Instagram do Subsolo (perfil ainda não criado; hoje o rodapé aponta para o provisório `https://www.instagram.com/subsolo.app` em `web/src/components/ui/Footer.tsx`, SPEC-0011) — trocar antes do lançamento (Thomas)
 
 ## 9. Aprovação (H1)
 Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com ele. Registrada no frontmatter (`approved_by`, `approved_at`) do épico e de cada filha.

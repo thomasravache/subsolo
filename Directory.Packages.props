@@ -44,6 +44,8 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />
+    <!-- SPEC-0009: exportador em memória do OpenTelemetry (logs e spans exportados nos testes de observabilidade). -->
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="1.20.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.4" />

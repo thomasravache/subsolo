@@ -9,7 +9,8 @@ import { appURL } from "./environment";
  * públicos com ponto no caminho (`/robots.txt`) são servidos pelo web, sem passar pelo 404 do proxy da agenda
  * (Emenda 6).
  */
-test.use({ baseURL: appURL });
+// SPEC-0010: o Caddy do Compose redireciona HTTP para HTTPS com o certificado local (`tls internal`), não confiável.
+test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
 test.describe("agenda da cidade", () => {
   test("SPEC-0008:E2E-01 fã vê a agenda vazia da cidade no celular e a página de cidade inexistente [jornada: agenda] @smoke", async ({

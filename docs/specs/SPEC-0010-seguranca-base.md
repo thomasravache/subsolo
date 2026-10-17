@@ -4,14 +4,14 @@ title: Segurança base
 tier: full
 type: foundation
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
 consumes_contract: []
 contract_version: 1
-touches: [src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/middleware.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
-adrs: [ADR-0003, ADR-0008, ADR-0004]
+touches: [Subsolo.slnx, web/src/proxy.test.ts, web/src/app/layout.tsx, web/src/app/page.tsx, web/src/app/not-found.tsx, src/Subsolo.AppHost/Program.cs, tests/Common/Subsolo.AppHost.IntegrationTests/**, src/Subsolo.ServiceDefaults/Extensions.cs, e2e/tests/agenda/**, e2e/playwright.config.ts, tools/compose-up.sh, tests/Common/Subsolo.Api.IntegrationTests/ThrowingEndpoint.cs, src/Common/Subsolo.Common.Presentation/Security/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/Program.cs, web/src/proxy.ts, web/next.config.ts, infra/caddy/**, docs/runbooks/checklist-seguranca.md, tests/Security/**, tests/Subsolo.ArchitectureTests/Security/**, e2e/tests/security/**]
+adrs: [ADR-0003, ADR-0008, ADR-0004, ADR-0017]
 external: []
 size: M
 approved_by: thomas
@@ -49,7 +49,7 @@ Aplica a segurança base dos ADR-0003 e ADR-0008 antes da primeira feature com u
 ## 4. Decisão Arquitetural
 **Contexto:** projeto novo; ADR-0003 (identidade própria, nega por padrão) e ADR-0008.
 
-**Decisão:** segurança como configuração central (`Common.Presentation` + `web/middleware.ts`), com teste de arquitetura impedindo endpoint sem política.
+**Decisão:** segurança como configuração central (`Common.Presentation` + `web/src/proxy.ts`), com teste de arquitetura impedindo endpoint sem política.
 
 **Justificativa:** com agentes escrevendo endpoints, a regra precisa falhar no CI, não depender da revisão.
 
@@ -174,10 +174,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — dfad7fe | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 27ea040 | 2026-10-16 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 240ms) — 27ea040 | 2026-10-16 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 27ea040 — autorização negada por padrão, CSRF, rate limiting, CSP com nonce e Caddy com HTTPS/HSTS conferidos; aviso do verify justificado (helper do scaffold 663e4e4 preenchido em 18da406 sem mudar asserções); 0 bloqueantes, 0 importantes, 7 menores (X-Forwarded-For de redes privadas, partição IPv6 por /64 e teste via Caddy, bind parcial do rate limit, nosniff global no Caddy, TLS_ISSUER obrigatório no go-live, ignoreHTTPSErrors só local, regra de filtro CSRF em todo não-GET) → SPEC-0003/backlog — 27ea040 | 2026-10-16 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -187,6 +187,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-16 | G2 | spec | SPEC-0007:IT-05 recebe 401 em vez de 500: o dublê ThrowingEndpoint (/__tests/throws) cai no fallback autenticado; o arquivo está fora dos touches | Implementer conferiu que bastaria .AllowAnonymous() no dublê, sem mudar asserções | Architect | Emenda 3 — escopo ampliado e E2E local por HTTPS (https://localhost:8443) | 2026-10-16 |
+| IMP-02 | 2026-10-16 | G2 | spec | Readiness do webServer do Playwright segue o 308 para https://localhost:8443/health e rejeita o certificado tls internal (timeout de 20 min); e2e/playwright.config.ts fora dos touches | ignoreHTTPSErrors testado temporariamente e revertido | Architect | Emenda 3 — escopo ampliado e E2E local por HTTPS (https://localhost:8443) | 2026-10-16 |
+| IMP-03 | 2026-10-16 | G2 | spec | WebKit aplica o HSTS de localhost:8443 a todo o host localhost e quebra navegação http://localhost:8080 (SPEC-0008:E2E-01 no mobile-safari) | Opções: E2E local em https://localhost:8443 (recomendada), sem HSTS em localhost, pular mobile-safari | Architect | Emenda 3 — escopo ampliado e E2E local por HTTPS (https://localhost:8443) | 2026-10-16 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -227,3 +230,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0010`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-17 | Emenda 4 (integração da onda 5, SPEC-0001 IMP-01): o WebKit dispara `style-src-attr` para o `<select>` nativo (estilo interno do shadow DOM do controle, `sample` vazio) mesmo sem nenhum atributo `style` no HTML — falso positivo do motor, reproduzido com uma página mínima; o Chromium não dispara. O `recordCspViolations` do SPEC-0010:E2E-01 ignora apenas, no projeto WebKit: violações `style-src-attr` com `sample` vazio cujo alvo é um `SELECT` ou o `#document` (o `<select>` criado pelo React antes de ser anexado) quando a página tem um `<select>`, e o erro de console `Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline'…` no máximo tantas vezes quanto as violações descartadas — evidência: página mínima com `<select>` produz os três sinais no WebKit e nenhum no Chromium, e as páginas reais sem o `<select>` ficam limpas nos três motores; o webServer do Compose no `playwright.config.ts` espera `${appURL}/` (web atrás do Caddy), e o `compose-up.sh` também, para não dar 502 nos primeiros testes; a política (`style-src 'self' 'nonce-…'`, sem `'unsafe-inline'`) e o `<select>` nativo do `CitySwitcher` (SPEC-0011, acessibilidade) ficam como estão. O `Card` passou a usar `<img>` simples (o `next/image` injeta `style="color:transparent"`), prevenindo violação real quando houver flyers | SPEC-0010:E2E-01 vermelho no mobile-safari na bateria da onda 5 | SPEC-0011 (Card sem `next/image`) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
+| 1 (escopo) | 2026-10-16 | Emenda 3 (impedimentos IMP-01..03 do Implementer): entram nos `touches` `tests/Common/Subsolo.Api.IntegrationTests/ThrowingEndpoint.cs` (o dublê `/__tests/throws` da SPEC-0007:IT-05 ganha `.AllowAnonymous()`, sem mudar asserções — mudança do Test-writer), `e2e/playwright.config.ts` e `tools/compose-up.sh`. A pilha local é acessada por HTTPS: o padrão de `BASE_URL`/`appURL` passa a ser `https://localhost:8443`; o Playwright aceita o certificado `tls internal` (`ignoreHTTPSErrors` no `use` e no `webServer`); o `httpURL()` de `caddy.spec.ts` mapeia 8443→8080; o readiness de `compose-up.sh` consulta `https://localhost:8443/health` (com `-k`), porque o HSTS que o WebKit grava para `localhost` quebrava a navegação por `http://localhost:8080`. O HSTS continua no contrato (IT-06). Nota para a SPEC-0003: o Caddyfile não tem mais `HTTPS_PORT`; em produção, `SITE_ADDRESS=<domínio>` e HTTPS na 443 | IMP-01, IMP-02, IMP-03 (test e test_e2e vermelhos no G2) | SPEC-0007 (dublê de teste), SPEC-0008 (E2E passa a usar HTTPS local), SPEC-0009 (também toca `playwright.config.ts` e `compose-up.sh`: conflito resolvido na integração), SPEC-0003 | thomas (delegado: piloto automático, 2026-10-16, recomendação do Architect) |
+| 1 (escopo) | 2026-10-16 | Emenda 2 (impedimentos do Test-writer): IMP-B → ADR-0017: a CSP com nonce vale em todas as páginas renderizando-as por requisição (`await connection()`), mantendo o Cache Components; IMP-A → entram nos `touches` o `Subsolo.slnx` (projetos de `tests/Security`), `web/src/proxy.test.ts` (UT-02), o layout raiz, `page.tsx` e `not-found.tsx` (renderização por requisição), o AppHost e seus testes (porta HTTPS do Caddy para o IT-06) e `src/Subsolo.ServiceDefaults/Extensions.cs` só para `/health` e `/alive` declararem `AllowAnonymous` (arquivo também da SPEC-0009; o Integrator resolve o merge); `GET /api/v1/antiforgery` fica fora do OpenAPI (`ExcludeFromDescription`), sem mudar o snapshot nem o cliente | IMP-A e IMP-B do Test-writer | SPEC-0009 (mesmo arquivo do ServiceDefaults), SPEC-0011 (layout raiz) | thomas (delegado: piloto automático, 2026-10-16) |
+| 1 (escopo) | 2026-10-16 | Emenda 1 (preparação do Architect): no Next 16 o middleware chama-se `proxy.ts` e já existe em `web/src/proxy.ts` (status da agenda, ADR-0016); a CSP e os cabeçalhos entram nesse mesmo proxy, ampliando o matcher para todas as páginas sem mudar o comportamento da agenda (E2E-01/IT-04 da SPEC-0008 continuam verdes; `e2e/tests/agenda/**` entra só se for preciso ajustar o ambiente desses testes, nunca as asserções). Se a CSP com nonce conflitar com o Cache Components do ADR-0013 (nonce exige renderização dinâmica), o Test-writer/Implementer reporta impedimento antes de escolher | Estrutura real do projeto e convivência com o ADR-0016 | SPEC-0008 | thomas (delegado: piloto automático, 2026-10-16) |
