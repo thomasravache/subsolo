@@ -5,6 +5,7 @@ import { apiClient, apiTimeoutMs, type CityAgenda } from "./client";
  * - `ok`: a cidade e os shows (`GET /api/v1/cities/{slug}/agenda`);
  * - `not-found`: cidade não cadastrada (404) ou slug inválido (400), que também não é uma cidade;
  * - `unavailable`: API fora do ar (conexão recusada, tempo esgotado) ou com erro 5xx.
+ * SPEC-0014: com o IP do visitante em `X-Forwarded-For` (o rate limit da API vale por visitante).
  */
 export type CityAgendaResult =
   | { kind: "ok"; agenda: CityAgenda }
@@ -13,7 +14,8 @@ export type CityAgendaResult =
 
 export async function getCityAgenda(slug: string): Promise<CityAgendaResult> {
   try {
-    const { data, response } = await apiClient().GET(
+    const client = await apiClient();
+    const { data, response } = await client.GET(
       "/api/v1/cities/{slug}/agenda",
       {
         params: { path: { slug } },

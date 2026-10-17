@@ -15,6 +15,10 @@
 #
 # SPEC-0009 — só neste Compose local, um override publica o Seq em 127.0.0.1:${SEQ_PORT:-5341} (API e interface),
 # para consultar logs e traces (o E2E-01 usa SEQ_URL); o artefato publicado continua sem porta do Seq.
+#
+# SPEC-0014 (Emenda v3) — só neste Compose local (a pilha do E2E), o rate limit `default` da API sobe para
+# ${DEFAULT_RATE_LIMIT:-10000} por minuto: a suíte inteira do Playwright sai de um IP só e estouraria os 100/min de
+# produção. O artefato publicado e os padrões da API não mudam.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -27,6 +31,11 @@ readonly APP_URL="https://localhost:8443"
 readonly SEQ_PORT="${SEQ_PORT:-5341}"
 if ! [[ "$SEQ_PORT" =~ ^[0-9]+$ ]] || ((10#$SEQ_PORT < 1 || 10#$SEQ_PORT > 65535)); then
   echo "compose-up: SEQ_PORT inválido ('$SEQ_PORT'): use um número de porta entre 1 e 65535" >&2
+  exit 2
+fi
+readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
+if ! [[ "$DEFAULT_RATE_LIMIT" =~ ^[0-9]+$ ]] || ((10#$DEFAULT_RATE_LIMIT < 1)); then
+  echo "compose-up: DEFAULT_RATE_LIMIT inválido ('$DEFAULT_RATE_LIMIT'): use um número inteiro positivo" >&2
   exit 2
 fi
 
@@ -78,13 +87,18 @@ CADDY_BINDMOUNT_0=$root/infra/caddy/Caddyfile
 POSTGRES_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 ENV
 
-# Override só local (SPEC-0009): o Seq acessível apenas pelo localhost.
+# Override só local: o Seq acessível apenas pelo localhost (SPEC-0009) e o rate limit `default` de teste
+# (SPEC-0014, Emenda v3; a janela continua de 1 minuto).
 override_file="$OUT/docker-compose.local.yaml"
 cat >"$override_file" <<YAML
 services:
   seq:
     ports:
       - "127.0.0.1:$SEQ_PORT:80"
+  api:
+    environment:
+      Security__RateLimiting__default__PermitLimit: "$((10#$DEFAULT_RATE_LIMIT))"
+      Security__RateLimiting__default__Window: "00:01:00"
 YAML
 
 compose() {

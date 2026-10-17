@@ -23,6 +23,9 @@ internal sealed class UsersApiClient(HttpClient http) : IDisposable
     /// <summary>IP de origem das próximas requisições (<see cref="UsersApiFactory.RemoteIpHeader"/>); nulo = IP padrão.</summary>
     public string? RemoteIp { get; set; }
 
+    /// <summary><c>X-Forwarded-For</c> das próximas requisições (o IP do visitante repassado pelo proxy); nulo = sem o cabeçalho.</summary>
+    public string? ForwardedFor { get; set; }
+
     /// <summary>Valor atual do cookie de sessão no pote, ou nulo.</summary>
     public string? SessionCookie => _cookies.GetValueOrDefault(SessionCookieName);
 
@@ -58,6 +61,11 @@ internal sealed class UsersApiClient(HttpClient http) : IDisposable
         if (RemoteIp is not null)
         {
             request.Headers.Add(UsersApiFactory.RemoteIpHeader, RemoteIp);
+        }
+
+        if (ForwardedFor is not null)
+        {
+            request.Headers.Add("X-Forwarded-For", ForwardedFor);
         }
 
         var response = await http.SendAsync(request, cancellationToken);
