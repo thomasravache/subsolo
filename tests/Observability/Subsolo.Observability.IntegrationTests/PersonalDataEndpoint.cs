@@ -9,7 +9,8 @@ namespace Subsolo.Observability.IntegrationTests;
 
 /// <summary>
 /// Dublê de teste (SPEC-0009 IT-02): endpoint que loga o e-mail recebido e o cookie da requisição e os coloca como
-/// atributos do span atual — o descuido que o redator do ServiceDefaults precisa neutralizar.
+/// atributos do span atual — o descuido que o redator do ServiceDefaults precisa neutralizar. Anônimo porque o
+/// fallback de autorização da SPEC-0010 exige usuário autenticado e o IT-02 precisa chegar ao handler (204), não ao 401.
 /// </summary>
 public sealed partial class PersonalDataEndpoint : IEndpoint
 {
@@ -23,7 +24,7 @@ public sealed partial class PersonalDataEndpoint : IEndpoint
             Activity.Current?.SetTag("user.email", email);
             Activity.Current?.SetTag("http.request.header.cookie", cookie);
             return Results.NoContent();
-        });
+        }).AllowAnonymous();
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Cadastro de {Email} com o cookie {Cookie}")]
     private static partial void LogSignup(ILogger logger, string email, string cookie);
