@@ -104,6 +104,7 @@ Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com e
 <!-- Problemas que envolvem várias filhas (conflito de integração da onda, CI quebrado, decisão transversal). Impedimento que trava uma filha específica vai na própria filha. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G5 | trabalho | Integração da onda 5: (1) endpoints de teste da SPEC-0009 (PersonalDataEndpoint, PersonalDataExceptionEndpoint) recebem 401 da política de fallback da SPEC-0010; (2) o next/image do Card (SPEC-0011) injeta style="color:transparent" e a CSP estrita da SPEC-0010 bloqueia (style-src-attr) — SPEC-0010:E2E-01 falha no mobile-safari | Bateria G5 local em b67ec6f: test/integration 2 falhas, e2e 2 falhas | Architect |  |  |
 
 ## 11. Relatório de Entrega
 <!-- Preenchido ao fechar o épico: o que foi entregue, como (ondas e deploys com versão/data), resultado dos critérios de aceite com os testes que os provam, métricas pós-release, pendências como novas specs. `spec_graph.py report SPEC-0001` ajuda a montar. -->
