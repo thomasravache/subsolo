@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/ci-check/">
+    <Project Path="ci-check/SqlInjectionSample/SqlInjectionSample.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Subsolo.Api/Subsolo.Api.csproj" />
     <Project Path="src/Subsolo.AppHost/Subsolo.AppHost.csproj" />
@@ -10,6 +13,7 @@
     <Project Path="src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
     <Project Path="src/Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Events/">
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Domain/Subsolo.Modules.Events.Domain.csproj" />
@@ -42,6 +46,7 @@
     <Project Path="tests/Examples/Subsolo.Examples.Sample/Subsolo.Examples.Sample.csproj" />
     <Project Path="tests/Examples/Subsolo.Examples.UnitTests/Subsolo.Examples.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/tests/Modules/" />
   <Folder Name="/tests/Modules/Events/">
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Events/Subsolo.Events.UnitTests/Subsolo.Events.UnitTests.csproj" />
