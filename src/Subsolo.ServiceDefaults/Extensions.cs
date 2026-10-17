@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Subsolo.ServiceDefaults;
 using Subsolo.ServiceDefaults.Redaction;
 
 namespace Microsoft.Extensions.Hosting;
@@ -33,6 +35,9 @@ public static class Extensions
     /// repetido aqui para o ServiceDefaults não depender do Quartz).
     /// </summary>
     private const string QuartzSource = "Quartz";
+
+    /// <summary>Atributo do resource com o ambiente (contrato da SPEC-0009).</summary>
+    private const string DeploymentEnvironmentAttribute = "deployment.environment";
 
     /// <summary>Fonte das consultas do Npgsql (o que o pacote <c>Npgsql.OpenTelemetry</c> assina).</summary>
     private const string NpgsqlSource = "Npgsql";
@@ -60,6 +65,9 @@ public static class Extensions
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
+
+            // Antes dos exportadores: o nome do evento como atributo consultável no Seq.
+            logging.AddProcessor(new EventNameLogProcessor());
         });
 
         // Todo log passa pelo redator antes de chegar a qualquer provedor (OTLP, console).
@@ -71,6 +79,11 @@ public static class Extensions
                 services.GetService<IExternalScopeProvider>()))));
 
         builder.Services.AddOpenTelemetry()
+            // Resource de logs, spans e métricas: service.name (OTEL_SERVICE_NAME) e o ambiente do host.
+            .ConfigureResource(resource => resource.AddAttributes(
+            [
+                new KeyValuePair<string, object>(DeploymentEnvironmentAttribute, builder.Environment.EnvironmentName),
+            ]))
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
@@ -88,7 +101,7 @@ public static class Extensions
                         !context.Request.Path.StartsWithSegments(AlivenessEndpointPath))
                 .AddHttpClientInstrumentation()
                 // Antes dos exportadores: nenhum span sai sem o mascaramento.
-                .AddProcessor(new RedactingActivityProcessor()));
+                .AddProcessor<RedactingActivityProcessor>());
 
         builder.AddOpenTelemetryExporters();
         return builder;

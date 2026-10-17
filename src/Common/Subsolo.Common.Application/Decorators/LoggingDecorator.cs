@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Subsolo.Common.Application.Diagnostics;
@@ -20,7 +22,7 @@ public static partial class LoggingDecorator
         where TCommand : ICommand
     {
         public Task<Result> Handle(TCommand command, CancellationToken cancellationToken) =>
-            TraceAsync(logger, "comando", typeof(TCommand).Name, () => innerHandler.Handle(command, cancellationToken));
+            TraceAsync(logger, "comando", typeof(TCommand), () => innerHandler.Handle(command, cancellationToken));
     }
 
     public sealed class CommandHandler<TCommand, TResponse>(
@@ -30,7 +32,7 @@ public static partial class LoggingDecorator
         where TCommand : ICommand<TResponse>
     {
         public Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken) =>
-            TraceAsync(logger, "comando", typeof(TCommand).Name, () => innerHandler.Handle(command, cancellationToken));
+            TraceAsync(logger, "comando", typeof(TCommand), () => innerHandler.Handle(command, cancellationToken));
     }
 
     public sealed class QueryHandler<TQuery, TResponse>(
@@ -40,13 +42,18 @@ public static partial class LoggingDecorator
         where TQuery : IQuery<TResponse>
     {
         public Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken) =>
-            TraceAsync(logger, "consulta", typeof(TQuery).Name, () => innerHandler.Handle(query, cancellationToken));
+            TraceAsync(logger, "consulta", typeof(TQuery), () => innerHandler.Handle(query, cancellationToken));
     }
 
-    /// <summary>Executa o handler dentro de uma atividade com o nome da mensagem e registra o resultado.</summary>
-    private static async Task<TResult> TraceAsync<TResult>(ILogger logger, string kind, string name, Func<Task<TResult>> handle)
+    /// <summary>
+    /// Executa o handler dentro de uma atividade com o nome da mensagem e registra o resultado. SPEC-0009: todo log
+    /// do handler (deste decorador e de dentro dele) leva <c>module</c> e <c>feature</c> num escopo de log.
+    /// </summary>
+    private static async Task<TResult> TraceAsync<TResult>(ILogger logger, string kind, Type message, Func<Task<TResult>> handle)
         where TResult : Result
     {
+        var name = message.Name;
+        using var scope = ModuleLogScope.For(message) is { } fields ? logger.BeginScope(fields) : null;
         using var activity = ApplicationTelemetry.Source.StartActivity(name);
         activity?.SetTag(ApplicationTelemetry.RequestKindTag, kind);
         LogProcessing(logger, kind, name);
@@ -105,4 +112,66 @@ public static partial class LoggingDecorator
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{RequestKind} {RequestName} concluído com erro {ErrorCode} ({ErrorType})")]
     private static partial void LogFailed(ILogger logger, string requestKind, string requestName, string errorCode, ErrorType errorType);
+
+    /// <summary>
+    /// SPEC-0009 — campos <c>module</c> e <c>feature</c> dos logs de um handler de módulo, tirados do namespace da
+    /// mensagem (<c>Subsolo.Modules.&lt;Módulo&gt;.Application.Features.&lt;Feature&gt;</c> → <c>module</c> em
+    /// minúsculas, <c>feature</c> como está). Usado como estado de escopo de log (lista de pares chave/valor).
+    /// </summary>
+    private sealed class ModuleLogScope : IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        public const string ModuleField = "module";
+        public const string FeatureField = "feature";
+
+        private const string ModulesPrefix = "Subsolo.Modules.";
+        private const string FeaturesSegment = ".Application.Features.";
+
+        private static readonly ConcurrentDictionary<Type, ModuleLogScope?> Cache = new();
+
+        private readonly KeyValuePair<string, object?>[] _fields;
+
+        private ModuleLogScope(string module, string feature) =>
+            _fields = [new(ModuleField, module), new(FeatureField, feature)];
+
+        public int Count => _fields.Length;
+
+        public KeyValuePair<string, object?> this[int index] => _fields[index];
+
+        /// <summary>Escopo da mensagem <paramref name="message"/>, ou <see langword="null"/> fora do padrão de módulo.</summary>
+        public static ModuleLogScope? For(Type message) => Cache.GetOrAdd(message, Parse);
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() =>
+            ((IEnumerable<KeyValuePair<string, object?>>)_fields).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public override string ToString() => $"{ModuleField}={_fields[0].Value} {FeatureField}={_fields[1].Value}";
+
+        private static ModuleLogScope? Parse(Type message)
+        {
+            var ns = message.Namespace;
+            if (ns is null || !ns.StartsWith(ModulesPrefix, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var features = ns.IndexOf(FeaturesSegment, ModulesPrefix.Length, StringComparison.Ordinal);
+            if (features <= ModulesPrefix.Length)
+            {
+                return null;
+            }
+
+            var module = ns[ModulesPrefix.Length..features];
+            var feature = ns[(features + FeaturesSegment.Length)..];
+            var dot = feature.IndexOf('.', StringComparison.Ordinal);
+            if (dot >= 0)
+            {
+                feature = feature[..dot];
+            }
+
+            return module.Contains('.', StringComparison.Ordinal) || feature.Length == 0
+                ? null
+                : new ModuleLogScope(module.ToLowerInvariant(), feature);
+        }
+    }
 }
