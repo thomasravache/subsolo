@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0018 — casos de uso do módulo Notifications (ADR-0001, ADR-0014): envio de e-mail transacional
+    (INotificationsApi) com validação e modelos internos, sobre os canais plugáveis (INotificationChannel).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Notifications.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) instancia os serviços internos; os testes trocam o canal por um dublê. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Notifications.Infrastructure" />
+    <InternalsVisibleTo Include="Subsolo.Notifications.UnitTests" />
+    <InternalsVisibleTo Include="Subsolo.Notifications.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Notifications.Domain/Subsolo.Modules.Notifications.Domain.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

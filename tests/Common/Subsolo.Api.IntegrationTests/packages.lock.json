@@ -639,6 +639,15 @@
         "resolved": "5.0.0",
         "contentHash": "dDoKi0PnDz31yAyETfRntsLArTlVAVzUzCIvvEDsDsucrl33Dl8pIJG06ePTJTI3tGpeyHS9Cq7Foc/s4EeKcg=="
       },
+      "MimeKit": {
+        "type": "Transitive",
+        "resolved": "4.18.1",
+        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "2.7.0",
+          "System.Security.Cryptography.Pkcs": "10.0.0"
+        }
+      },
       "OpenTelemetry": {
         "type": "Transitive",
         "resolved": "1.20.0",
@@ -809,6 +818,7 @@
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Users.Infrastructure": "[1.0.0, )",
           "Subsolo.ServiceDefaults": "[1.0.0, )"
         }
@@ -885,6 +895,43 @@
           "Subsolo.Modules.Events.Application": "[1.0.0, )"
         }
       },
+      "subsolo.modules.notifications.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.notifications.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.notifications.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "MailKit": "[4.18.1, )",
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Application": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.notifications.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.notifications.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.users.application": {
         "type": "Project",
         "dependencies": {
@@ -954,6 +1001,15 @@
         "dependencies": {
           "FluentValidation": "12.2.0",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "2.1.0"
+        }
+      },
+      "MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[4.18.1, )",
+        "resolved": "4.18.1",
+        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
+        "dependencies": {
+          "MimeKit": "4.18.1"
         }
       },
       "Microsoft.AspNetCore.OpenApi": {
@@ -1117,6 +1173,12 @@
           "DiffEngine": "11.3.0",
           "EmptyFiles": "4.4.0"
         }
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
       },
       "Testcontainers.PostgreSql": {
         "type": "CentralTransitive",

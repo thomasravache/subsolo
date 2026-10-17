@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0018 — testes de integração do módulo Notifications (IT-01, IT-03, IT-04): o módulo num host genérico com os
+    ServiceDefaults (OpenTelemetry com mascaramento, como na API) envia o MagicLink a um Mailpit real em container
+    (Testcontainers), devolve notifications.email_unavailable com SMTP mudo ou fechado e não exporta o destinatário em
+    claro, o link nem o corpo nos logs e spans (exportador em memória).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Notifications.IntegrationTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
+    <ProjectReference Include="../../../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
+    <ProjectReference Include="../../../../src/Modules/Notifications/Subsolo.Modules.Notifications.Infrastructure/Subsolo.Modules.Notifications.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
