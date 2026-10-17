@@ -21,9 +21,10 @@ permissions:
   contents: read
   pull-requests: read
 
-# Um push novo no mesmo PR cancela a execução anterior; na main cada commit termina a sua.
+# Um push novo no mesmo PR cancela a execução anterior; fora de PR o grupo é o próprio commit (github.sha): com o ref,
+# o GitHub cancelaria o run da main que está esperando e o commit ficaria sem CI (SPEC-0013).
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -58,12 +59,12 @@ jobs:
           cd web
           pnpm --version
           echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - name: Cache do store do pnpm
+      - name: Cache do store do pnpm (web/)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm.outputs.store }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          key: pnpm-store-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-web-${{ runner.os }}-
 
       - name: build (sdd-config)
         run: ./tools/build.sh
@@ -93,12 +94,19 @@ jobs:
           cd web
           pnpm --version
           echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - name: Cache do store do pnpm
+      # web/ e e2e/ têm lockfiles e pacotes diferentes: uma chave de cache por lockfile (SPEC-0013).
+      - name: Cache do store do pnpm (web/)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm.outputs.store }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          key: pnpm-store-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-web-${{ runner.os }}-
+      - name: Cache do store do pnpm (e2e/)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-e2e-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-e2e-${{ runner.os }}-
 
       # O Semgrep do lint.sh só roda quando instalado; no CI ele roda no job `security`.
       - name: lint (sdd-config)
@@ -135,12 +143,19 @@ jobs:
           cd web
           pnpm --version
           echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - name: Cache do store do pnpm
+      # web/ e e2e/ têm lockfiles e pacotes diferentes: uma chave de cache por lockfile (SPEC-0013).
+      - name: Cache do store do pnpm (web/)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm.outputs.store }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          key: pnpm-store-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-web-${{ runner.os }}-
+      - name: Cache do store do pnpm (e2e/)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-e2e-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-e2e-${{ runner.os }}-
       - name: Dependências do front (lockfile)
         working-directory: web
         run: pnpm install --frozen-lockfile
@@ -201,12 +216,19 @@ jobs:
           cd web
           pnpm --version
           echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - name: Cache do store do pnpm
+      # web/ e e2e/ têm lockfiles e pacotes diferentes: uma chave de cache por lockfile (SPEC-0013).
+      - name: Cache do store do pnpm (web/)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm.outputs.store }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          key: pnpm-store-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-web-${{ runner.os }}-
+      - name: Cache do store do pnpm (e2e/)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-e2e-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-e2e-${{ runner.os }}-
 
       # Imagens dos Testcontainers (PostgreSQL, Mailpit, Ryuk): salvas depois da primeira execução e
       # recarregadas nas seguintes; a chave muda quando as fixtures de integração mudam.
@@ -285,12 +307,19 @@ jobs:
           cd e2e
           pnpm --version
           echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - name: Cache do store do pnpm
+      # web/ e e2e/ têm lockfiles e pacotes diferentes: uma chave de cache por lockfile (SPEC-0013).
+      - name: Cache do store do pnpm (web/)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm.outputs.store }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          key: pnpm-store-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-web-${{ runner.os }}-
+      - name: Cache do store do pnpm (e2e/)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-e2e-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-e2e-${{ runner.os }}-
       # O IT-04 sobe o Next.js de web/ (sem API) pelo webServer do Playwright.
       - name: Dependências do front (lockfile)
         working-directory: web
@@ -467,6 +496,10 @@ jobs:
   # O gate lê o SARIF desta execução, não o estado dos alertas no GitHub: dispensar ("Dismiss") um alerta na interface
   # de Code scanning NÃO libera o check. Para um falso positivo, suprima no próprio código, com o motivo na mesma linha
   # (ADR-0006; vira `suppressions` no SARIF e é ignorado aqui) — ou corrija o código.
+  # Formato do comentário: `// codeql[<id da query>] <motivo>` (as queries AlertSuppression do CodeQL o reconhecem e
+  # geram `suppressions` no SARIF). A confirmação de que isso funciona para C# e TypeScript com a suíte padrão é
+  # manual (SPEC-0013, item 8); se não funcionar, o caminho é um config do CodeQL (`config-file` no init) com
+  # `query-filters: - exclude: id: <id da query>`, com o motivo comentado ao lado.
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 30

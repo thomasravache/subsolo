@@ -2,7 +2,9 @@ namespace Subsolo.Tooling.Tests;
 
 /// <summary>
 /// SPEC-0004 UT-01 e SPEC-0012 UT-01 — a regra de validação do hook commit-msg, avaliada diretamente sobre o script
-/// <c>.githooks/commit-msg</c> (sem repositório git): aceita apenas mensagens Conventional Commits com <c>Refs: SPEC-NNNN</c>.
+/// <c>.githooks/commit-msg</c> (sem repositório git): aceita apenas mensagens Conventional Commits que citam uma spec
+/// (<c>SPEC-NNNN</c>) em qualquer parte da mensagem — o rodapé <c>Refs: SPEC-NNNN</c> é o formato padrão — ou que
+/// trazem <c>[no-spec]</c> no assunto (mudanças sem comportamento; Emenda v3 da SPEC-0004).
 /// </summary>
 public sealed class CommitMessageRuleTests
 {

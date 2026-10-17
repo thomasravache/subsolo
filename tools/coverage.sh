@@ -23,6 +23,12 @@ base_ref="${COVERAGE_BASE:-origin/main}"
 filter="${COVERAGE_FILTER:-Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract}"
 out="$root/coverage"
 
+# Base conferida antes de compilar e rodar a suíte: sem ela o relatório das linhas alteradas não sai (SPEC-0013).
+if ! base="$(git merge-base "$base_ref" HEAD 2>/dev/null)"; then
+  echo "coverage: base $base_ref não encontrada (git fetch origin main?)" >&2
+  exit 2
+fi
+
 solution="$(find . -maxdepth 1 -name '*.slnx' -print -quit)"
 if [[ -z "$solution" ]]; then
   echo "coverage: nenhuma solution (*.slnx) na raiz" >&2
@@ -35,10 +41,14 @@ mkdir -p "$out/raw"
 echo ">>> dotnet build $solution -c $CONFIGURATION"
 dotnet build "$solution" -c "$CONFIGURATION" -nologo -warnaserror
 
-mapfile -t projects < <(dotnet sln "$solution" list | grep -E '\.csproj$')
+# Leitura em laço (bash 3.2 do macOS não tem mapfile); o array vazio é expandido com guarda por causa do `set -u`.
+projects=()
+while IFS= read -r project; do
+  projects+=("$project")
+done < <(dotnet sln "$solution" list | grep -E '\.csproj$')
 
 ran=0
-for project in "${projects[@]}"; do
+for project in ${projects[@]+"${projects[@]}"}; do
   props="$(dotnet msbuild "$project" -nologo -p:Configuration="$CONFIGURATION" \
     -getProperty:IsTestProject -getProperty:TargetPath)"
   [[ "$(grep -o '"IsTestProject": *"[^"]*"' <<<"$props" | sed 's/.*"\([^"]*\)"$/\1/')" == "true" ]] || continue
@@ -72,11 +82,7 @@ dotnet tool exec "dotnet-reportgenerator-globaltool@$REPORTGENERATOR_VERSION" --
   "-reporttypes:Cobertura;TextSummary;Html" \
   "-verbosity:Warning"
 
-# Linhas alteradas: diff (sem contexto) entre o merge-base com a base e a árvore de trabalho.
-if ! base="$(git merge-base "$base_ref" HEAD 2>/dev/null)"; then
-  echo "coverage: base $base_ref não encontrada (git fetch origin main?)" >&2
-  exit 2
-fi
+# Linhas alteradas: diff (sem contexto) entre o merge-base com a base (conferida no início) e a árvore de trabalho.
 
 echo
 git diff --unified=0 --no-color --no-ext-diff --diff-filter=AMR "$base" -- '*.cs' >"$out/changed.diff"
