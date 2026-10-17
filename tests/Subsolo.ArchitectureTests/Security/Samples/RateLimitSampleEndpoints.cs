@@ -38,3 +38,27 @@ public sealed class HealthSampleEndpoint : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app) => app.MapGet(Route, () => Results.Ok()).AllowAnonymous();
 }
+
+/// <summary>SPEC-0014 IT-10 (Emenda v2) — <c>/alive</c> de exemplo, sem política: dispensado pela regra.</summary>
+public sealed class AliveSampleEndpoint : IEndpoint
+{
+    public const string Route = "/alive";
+
+    public void MapEndpoint(IEndpointRouteBuilder app) => app.MapGet(Route, () => Results.Ok()).AllowAnonymous();
+}
+
+/// <summary>SPEC-0014 IT-10 (Emenda v2) — documento OpenAPI de exemplo, sem política: dispensado pela regra.</summary>
+public sealed class OpenApiSampleEndpoint : IEndpoint
+{
+    public const string Route = "/openapi/{documentName}.json";
+
+    public void MapEndpoint(IEndpointRouteBuilder app) => app.MapGet(Route, () => Results.Ok()).AllowAnonymous();
+}
+
+/// <summary>SPEC-0014 IT-10 — rota que só começa como uma sonda: não é dispensada.</summary>
+public sealed class HealthLookalikeSampleEndpoint : IEndpoint
+{
+    public const string Route = "/health/details";
+
+    public void MapEndpoint(IEndpointRouteBuilder app) => app.MapGet(Route, () => Results.Ok()).AllowAnonymous();
+}

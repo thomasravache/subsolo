@@ -8,8 +8,8 @@ namespace Subsolo.Security.IntegrationTests;
 
 /// <summary>
 /// SPEC-0014 IT-10 (endpoints reais do host) — no Subsolo.Api de verdade (sem os dublês de teste), em Development e em
-/// Production, todo endpoint mapeado declara uma política de rate limit (<c>RequireRateLimiting</c>), exceto
-/// <c>/health</c>; o token anti-forgery, <c>/api/v1/me</c>, <c>/api/v1/auth/logout</c>, <c>/api/v1/cities</c> e a
+/// Production, todo endpoint mapeado declara uma política de rate limit (<c>RequireRateLimiting</c>), exceto as sondas
+/// <c>/health</c> e <c>/alive</c> e o <c>/openapi/*</c> de desenvolvimento (Emenda v2); o token anti-forgery, <c>/api/v1/me</c>, <c>/api/v1/auth/logout</c>, <c>/api/v1/cities</c> e a
 /// agenda usam <c>default</c>. A regra com os endpoints de exemplo fica em <c>Subsolo.ArchitectureTests/Security</c>.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -29,7 +29,7 @@ public sealed class HostEndpointsRateLimitTests(PostgresFixture postgres)
     [Trait("Kind", "Integration")]
     [InlineData("Development")]
     [InlineData("Production")]
-    public void EveryHostEndpointExceptHealthDeclaresARateLimitPolicy(string environment)
+    public void EveryHostEndpointExceptProbesAndOpenApiDeclaresARateLimitPolicy(string environment)
     {
         using var factory = new SecurityApiFactory(environment, postgres.ConnectionString, withTestDoubles: false);
         var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
@@ -37,13 +37,13 @@ public sealed class HostEndpointsRateLimitTests(PostgresFixture postgres)
             .ToList();
         var routes = endpoints.Select(endpoint => endpoint.RoutePattern.RawText ?? endpoint.DisplayName).ToList();
 
-        foreach (var route in DefaultPolicyRoutes.Append("/health"))
+        foreach (var route in DefaultPolicyRoutes.Append("/health").Append("/alive"))
         {
             routes.ShouldContain(route, $"{route} não está mapeado ({environment})");
         }
 
         var undeclared = endpoints
-            .Where(endpoint => endpoint.RoutePattern.RawText != "/health" && PolicyOf(endpoint) is null)
+            .Where(endpoint => !IsExempt(endpoint.RoutePattern.RawText) && PolicyOf(endpoint) is null)
             .Select(endpoint => endpoint.RoutePattern.RawText ?? endpoint.DisplayName)
             .ToList();
         undeclared.ShouldBeEmpty(
@@ -55,6 +55,10 @@ public sealed class HostEndpointsRateLimitTests(PostgresFixture postgres)
                 .ShouldAllBe(endpoint => PolicyOf(endpoint) == "default", $"{route} precisa da política default ({environment})");
         }
     }
+
+    /// <summary>Sondas <c>/health</c> e <c>/alive</c> e o documento OpenAPI (só em desenvolvimento).</summary>
+    private static bool IsExempt(string? route) =>
+        route is "/health" or "/alive" || route?.StartsWith("/openapi/", StringComparison.Ordinal) == true;
 
     private static string? PolicyOf(Microsoft.AspNetCore.Http.Endpoint endpoint) =>
         endpoint.Metadata.GetMetadata<DisableRateLimitingAttribute>() is null

@@ -66,12 +66,12 @@ internal sealed class SessionValidationTimings
 
     private sealed class TimedSessionValidator(ISessionValidator inner, SessionValidationTimings timings) : ISessionValidator
     {
-        public async Task<SessionPrincipal?> ValidateAsync(Guid sessionId, CancellationToken cancellationToken)
+        public async Task<SessionPrincipal?> ValidateAsync(string sessionToken, CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
             try
             {
-                return await inner.ValidateAsync(sessionId, cancellationToken);
+                return await inner.ValidateAsync(sessionToken, cancellationToken);
             }
             finally
             {

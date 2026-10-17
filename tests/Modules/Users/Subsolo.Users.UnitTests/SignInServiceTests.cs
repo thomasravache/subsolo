@@ -32,7 +32,7 @@ public sealed class SignInServiceTests
 
         harness.Sessions.All.Count.ShouldBe(2);
         harness.Sessions.All.ShouldAllBe(session => session.UserId == user.Id && session.Method == SignInMethod.MagicLink);
-        firstSession.ShouldNotBe(secondSession, "cada entrada cria uma sessão nova (id novo)");
+        firstSession.ShouldNotBe(secondSession, "cada entrada cria uma sessão nova (token novo)");
     }
 
     [Fact]
@@ -51,16 +51,16 @@ public sealed class SignInServiceTests
 
     [Fact]
     [Trait("Spec", "SPEC-0014:UT-01")]
-    public async Task SessionIdIsStoredOnlyAsAHash()
+    public async Task SessionTokenIs256BitsAndIsStoredOnlyAsItsSha256Hash()
     {
         var harness = new UsersHarness();
 
-        var (result, sessionId) = await harness.SignInAsync("fulano@email.com");
+        var (result, sessionToken) = await harness.SignInAsync("fulano@email.com");
 
+        SessionTokens.ShouldBe256BitBase64Url(sessionToken);
         var session = harness.SessionOf(result.UserId);
         session.IdHash.ShouldNotBeNullOrWhiteSpace();
-        session.IdHash.ShouldNotContain(sessionId.ToString(), Case.Insensitive);
-        session.IdHash.ShouldNotContain(sessionId.ToString("N"), Case.Insensitive);
+        SessionTokens.ShouldBeHashOf(session.IdHash, sessionToken);
     }
 
     [Fact]

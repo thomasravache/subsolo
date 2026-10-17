@@ -21,9 +21,9 @@ public sealed class SessionValidatorTests
     {
         var harness = new UsersHarness();
         harness.Options.AdminEmails = [];
-        var (result, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (result, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
 
-        var principal = await harness.ValidateAsync(sessionId);
+        var principal = await harness.ValidateAsync(sessionToken);
 
         principal.ShouldNotBeNull("sessão recém-criada é válida");
         principal.UserId.ShouldBe(result.UserId);
@@ -56,7 +56,7 @@ public sealed class SessionValidatorTests
         var harness = new UsersHarness();
         await harness.SignInAsync("fa@subsolo.test");
 
-        (await harness.ValidateAsync(Guid.NewGuid())).ShouldBeNull();
+        (await harness.ValidateAsync(SessionTokens.NewRandom())).ShouldBeNull("token de 256 bits que nenhuma sessão tem");
     }
 
     [Fact]
@@ -64,10 +64,10 @@ public sealed class SessionValidatorTests
     public async Task RevokedSessionReturnsNull()
     {
         var harness = new UsersHarness();
-        var (result, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (result, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
         harness.SessionOf(result.UserId).Revoke(harness.Clock.GetUtcNow());
 
-        (await harness.ValidateAsync(sessionId)).ShouldBeNull();
+        (await harness.ValidateAsync(sessionToken)).ShouldBeNull();
     }
 
     [Fact]
@@ -75,11 +75,11 @@ public sealed class SessionValidatorTests
     public async Task SessionUnusedFor30DaysReturnsNull()
     {
         var harness = new UsersHarness();
-        var (_, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (_, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
 
         harness.Clock.Advance(Sliding + TimeSpan.FromMinutes(1));
 
-        (await harness.ValidateAsync(sessionId)).ShouldBeNull();
+        (await harness.ValidateAsync(sessionToken)).ShouldBeNull();
     }
 
     [Fact]
@@ -87,17 +87,17 @@ public sealed class SessionValidatorTests
     public async Task SessionUsedEveryDayExpiresNinetyDaysAfterTheSignIn()
     {
         var harness = new UsersHarness();
-        var (_, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (_, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
 
         for (var day = 1; day < 90; day++)
         {
             harness.Clock.Advance(TimeSpan.FromDays(1));
-            (await harness.ValidateAsync(sessionId)).ShouldNotBeNull($"usada todo dia, a sessão vale no dia {day}");
+            (await harness.ValidateAsync(sessionToken)).ShouldNotBeNull($"usada todo dia, a sessão vale no dia {day}");
         }
 
         harness.Clock.SetUtcNow(UsersHarness.Start + Absolute + TimeSpan.FromMinutes(1));
 
-        (await harness.ValidateAsync(sessionId)).ShouldBeNull("90 dias e 1 minuto depois da entrada, a sessão acabou");
+        (await harness.ValidateAsync(sessionToken)).ShouldBeNull("90 dias e 1 minuto depois da entrada, a sessão acabou");
     }
 
     [Fact]
@@ -121,11 +121,11 @@ public sealed class SessionValidatorTests
     public async Task UseWithinAnHourDoesNotRenewNorWrite()
     {
         var harness = new UsersHarness();
-        var (result, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (result, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
         var saves = harness.UnitOfWork.Saves;
 
         harness.Clock.Advance(TimeSpan.FromMinutes(59));
-        (await harness.ValidateAsync(sessionId)).ShouldNotBeNull();
+        (await harness.ValidateAsync(sessionToken)).ShouldNotBeNull();
 
         var session = harness.SessionOf(result.UserId);
         session.ExpiresAtUtc.ShouldBe(UsersHarness.Start + Sliding);
@@ -138,11 +138,11 @@ public sealed class SessionValidatorTests
     public async Task UseAfterAnHourRenewsTo30DaysFromNow()
     {
         var harness = new UsersHarness();
-        var (result, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (result, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
         var saves = harness.UnitOfWork.Saves;
 
         harness.Clock.Advance(TimeSpan.FromMinutes(61));
-        (await harness.ValidateAsync(sessionId)).ShouldNotBeNull();
+        (await harness.ValidateAsync(sessionToken)).ShouldNotBeNull();
 
         var now = harness.Clock.GetUtcNow();
         var session = harness.SessionOf(result.UserId);
@@ -157,14 +157,14 @@ public sealed class SessionValidatorTests
     public async Task RenewalNearTheCeilingStopsAtNinetyDaysFromTheSignIn()
     {
         var harness = new UsersHarness();
-        var (result, sessionId) = await harness.SignInAsync("fa@subsolo.test");
+        var (result, sessionToken) = await harness.SignInAsync("fa@subsolo.test");
         var ceiling = UsersHarness.Start + Absolute;
 
         // Mantém a sessão viva (uso a cada 25 dias) até 75 dias depois da entrada.
         foreach (var day in new[] { 25, 50, 75 })
         {
             harness.Clock.SetUtcNow(UsersHarness.Start + TimeSpan.FromDays(day));
-            (await harness.ValidateAsync(sessionId)).ShouldNotBeNull($"sessão usada no dia {day}");
+            (await harness.ValidateAsync(sessionToken)).ShouldNotBeNull($"sessão usada no dia {day}");
         }
 
         var session = harness.SessionOf(result.UserId);
@@ -172,7 +172,7 @@ public sealed class SessionValidatorTests
 
         // Criada há 75 dias e usada há 61 min: renova, mas continua no teto (não vai a agora + 30 dias).
         harness.Clock.Advance(TimeSpan.FromMinutes(61));
-        (await harness.ValidateAsync(sessionId)).ShouldNotBeNull();
+        (await harness.ValidateAsync(sessionToken)).ShouldNotBeNull();
 
         session.ExpiresAtUtc.ShouldBe(ceiling);
         session.ExpiresAtUtc.ShouldNotBe(harness.Clock.GetUtcNow() + Sliding);

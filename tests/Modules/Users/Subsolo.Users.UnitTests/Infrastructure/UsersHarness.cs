@@ -11,7 +11,7 @@ namespace Subsolo.Users.UnitTests.Infrastructure;
 /// <summary>
 /// O <see cref="SignInService"/> e o <see cref="SessionValidator"/> sobre os mesmos dublês em memória: repositórios de
 /// usuários e sessões, unidade de trabalho que conta as gravações e recolhe os eventos de domínio (como o interceptor
-/// da outbox), emissor de cookie que guarda o id de cada sessão emitida, <see cref="UsersOptions"/> mutável e
+/// da outbox), emissor de cookie que guarda o token de cada sessão emitida, <see cref="UsersOptions"/> mutável e
 /// <see cref="FakeTimeProvider"/>.
 /// </summary>
 internal sealed class UsersHarness
@@ -43,8 +43,11 @@ internal sealed class UsersHarness
 
     public SessionValidator Validator { get; }
 
-    /// <summary>Entra com <paramref name="email"/> (link mágico), exige sucesso e devolve o id da sessão emitida no cookie.</summary>
-    public async Task<(SignInResult Result, Guid SessionId)> SignInAsync(string email)
+    /// <summary>
+    /// Entra com <paramref name="email"/> (link mágico), exige sucesso e devolve o token da sessão emitido no cookie
+    /// (256 bits em base64url).
+    /// </summary>
+    public async Task<(SignInResult Result, string SessionToken)> SignInAsync(string email)
     {
         var issued = Cookies.Issued.Count;
         var result = await SignIn.SignInAsync(email, SignInMethod.MagicLink, TestContext.Current.CancellationToken);
@@ -52,11 +55,12 @@ internal sealed class UsersHarness
         Cookies.Issued.Count.ShouldBe(issued + 1, "SignInAsync não emitiu o cookie da sessão");
         var cookie = Cookies.Issued[^1];
         cookie.UserId.ShouldBe(result.Value.UserId, "o cookie leva o id do usuário que entrou");
-        return (result.Value, cookie.SessionId);
+        SessionTokens.ShouldBe256BitBase64Url(cookie.SessionToken);
+        return (result.Value, cookie.SessionToken);
     }
 
-    public Task<Subsolo.Modules.Users.IntegrationEvents.SessionPrincipal?> ValidateAsync(Guid sessionId) =>
-        Validator.ValidateAsync(sessionId, TestContext.Current.CancellationToken);
+    public Task<Subsolo.Modules.Users.IntegrationEvents.SessionPrincipal?> ValidateAsync(string sessionToken) =>
+        Validator.ValidateAsync(sessionToken, TestContext.Current.CancellationToken);
 
     /// <summary>A única sessão gravada para <paramref name="userId"/>.</summary>
     public Session SessionOf(Guid userId) =>
@@ -114,13 +118,13 @@ internal sealed class InMemoryUnitOfWork(InMemoryUsers users, InMemorySessions s
 
 internal sealed class CapturingCookieIssuer : ISessionCookieIssuer
 {
-    private readonly List<(Guid SessionId, Guid UserId)> _issued = [];
+    private readonly List<(string SessionToken, Guid UserId)> _issued = [];
 
-    public IReadOnlyList<(Guid SessionId, Guid UserId)> Issued => _issued;
+    public IReadOnlyList<(string SessionToken, Guid UserId)> Issued => _issued;
 
-    public Task IssueAsync(Guid sessionId, Guid userId, CancellationToken cancellationToken)
+    public Task IssueAsync(string sessionToken, Guid userId, CancellationToken cancellationToken)
     {
-        _issued.Add((sessionId, userId));
+        _issued.Add((sessionToken, userId));
         return Task.CompletedTask;
     }
 }

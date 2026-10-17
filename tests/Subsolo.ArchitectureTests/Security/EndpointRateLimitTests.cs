@@ -7,7 +7,7 @@ namespace Subsolo.ArchitectureTests.Security;
 /// <summary>
 /// SPEC-0014 IT-10 — teste de arquitetura do rate limit (ao lado do <see cref="EndpointAuthorizationRules"/>): um
 /// endpoint sem política de rate limit (ou com o rate limit desligado) faz a regra falhar nomeando-o; o endpoint com
-/// política e o <c>/health</c> passam; todo endpoint real dos módulos declara uma política, e <c>/api/v1/me</c>,
+/// política e as rotas dispensadas (<c>/health</c>, <c>/alive</c>, <c>/openapi/*</c> — Emenda v2) passam; todo endpoint real dos módulos declara uma política, e <c>/api/v1/me</c>,
 /// <c>/api/v1/auth/logout</c>, <c>/api/v1/cities</c> e a agenda da cidade usam <c>default</c>. Os endpoints do host
 /// (token anti-forgery, health) são verificados em <c>tests/Security/Subsolo.Security.IntegrationTests</c>.
 /// </summary>
@@ -22,10 +22,17 @@ public sealed class EndpointRateLimitTests
             new UnlimitedSampleEndpoint(),
             new DisabledRateLimitSampleEndpoint(),
             new LimitedSampleEndpoint(),
-            new HealthSampleEndpoint());
+            new HealthSampleEndpoint(),
+            new AliveSampleEndpoint(),
+            new OpenApiSampleEndpoint(),
+            new HealthLookalikeSampleEndpoint());
 
         endpoints.Select(endpoint => endpoint.RoutePattern.RawText).ShouldBe(
-            [UnlimitedSampleEndpoint.Route, DisabledRateLimitSampleEndpoint.Route, LimitedSampleEndpoint.Route, HealthSampleEndpoint.Route],
+            [
+                UnlimitedSampleEndpoint.Route, DisabledRateLimitSampleEndpoint.Route, LimitedSampleEndpoint.Route,
+                HealthSampleEndpoint.Route, AliveSampleEndpoint.Route, OpenApiSampleEndpoint.Route,
+                HealthLookalikeSampleEndpoint.Route,
+            ],
             ignoreOrder: true);
 
         var failure = Should.Throw<Exception>(() => EndpointRateLimitRules.Check(endpoints));
@@ -35,18 +42,22 @@ public sealed class EndpointRateLimitTests
         var named = failure.Message[EndpointRateLimitRules.Rule.Length..];
         named.ShouldContain(UnlimitedSampleEndpoint.Route, Case.Sensitive, failure.Message);
         named.ShouldContain(DisabledRateLimitSampleEndpoint.Route, Case.Sensitive, failure.Message);
+        named.ShouldContain(HealthLookalikeSampleEndpoint.Route, Case.Sensitive, failure.Message);
         named.ShouldNotContain(LimitedSampleEndpoint.Route, Case.Sensitive, failure.Message);
-        named.ShouldNotContain(HealthSampleEndpoint.Route, Case.Sensitive, failure.Message);
+        named.ShouldNotMatch($@"GET {HealthSampleEndpoint.Route}(;|$)", failure.Message);
+        named.ShouldNotContain(AliveSampleEndpoint.Route, Case.Sensitive, failure.Message);
+        named.ShouldNotContain("/openapi/", Case.Sensitive, failure.Message);
     }
 
     [Fact]
     [Trait("Spec", "SPEC-0014:IT-10")]
     [Trait("Kind", "Integration")]
-    public void EndpointsWithPolicyAndHealthPass()
+    public void EndpointsWithPolicyAndExemptRoutesPass()
     {
-        var endpoints = EndpointAuthorizationRules.EndpointsOf(new LimitedSampleEndpoint(), new HealthSampleEndpoint());
+        var endpoints = EndpointAuthorizationRules.EndpointsOf(
+            new LimitedSampleEndpoint(), new HealthSampleEndpoint(), new AliveSampleEndpoint(), new OpenApiSampleEndpoint());
 
-        endpoints.Count.ShouldBe(2);
+        endpoints.Count.ShouldBe(4);
         Should.NotThrow(() => EndpointRateLimitRules.Check(endpoints));
     }
 

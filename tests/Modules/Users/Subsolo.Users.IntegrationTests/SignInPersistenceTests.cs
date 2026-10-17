@@ -7,8 +7,8 @@ namespace Subsolo.Users.IntegrationTests;
 /// <summary>
 /// SPEC-0014 IT-01 — com PostgreSQL real e a API, duas entradas do mesmo e-mail de admin pelo <c>ISignInService</c>
 /// (uma com outra caixa e espaços) deixam no schema <c>users</c> um usuário com os papéis <c>fan</c> e <c>admin</c>,
-/// duas sessões com o id guardado só como hash (nem o valor do cookie nem o id da sessão que ele leva aparecem na
-/// tabela) e uma única mensagem <c>UserRegistered</c> na outbox.
+/// duas sessões guardadas só pelo hash SHA-256 do token (o cookie leva o token de 256 bits em base64url; nem ele nem o
+/// valor do cookie aparecem na tabela) e uma única mensagem <c>UserRegistered</c> na outbox.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class SignInPersistenceTests(PostgresFixture postgres)
@@ -48,7 +48,7 @@ public sealed class SignInPersistenceTests(PostgresFixture postgres)
     [Fact]
     [Trait("Spec", "SPEC-0014:IT-01")]
     [Trait("Kind", "Integration")]
-    public async Task SessionIdFromTheCookieIsNotStoredInPlainText()
+    public async Task CookieCarries256BitTokenAndTheTableOnlyItsSha256Hash()
     {
         var ct = TestContext.Current.CancellationToken;
         var database = await UsersApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct);
@@ -63,19 +63,15 @@ public sealed class SignInPersistenceTests(PostgresFixture postgres)
         claims.ShouldContain(
             claim => claim.Value == signedIn.UserId.ToString(),
             $"o cookie leva o id do usuário; claims: {Describe(claims)}");
-        var others = claims.Where(claim => claim.Value != signedIn.UserId.ToString()).ToList();
-        others.ShouldNotBeEmpty($"o cookie leva o id da sessão; claims: {Describe(claims)}");
+        var token = claims.Where(claim => claim.Value.Length == 43)
+            .ShouldHaveSingleItem($"o cookie leva o token da sessão (256 bits em base64url, 43 caracteres); claims: {Describe(claims)}")
+            .Value;
+        SessionTokens.ShouldBe256BitBase64Url(token);
 
         var session = (await UsersDatabase.SessionsAsync(database, ct)).ShouldHaveSingleItem();
         session.Json.ShouldNotContain(signedIn.SessionCookie, Case.Sensitive, "o valor do cookie aparece na tabela");
-        foreach (var claim in others)
-        {
-            session.Json.ShouldNotContain(claim.Value, Case.Insensitive, $"o claim {claim.Type} do cookie aparece em claro na tabela");
-            if (Guid.TryParse(claim.Value, out var id))
-            {
-                session.Json.ShouldNotContain(id.ToString("N"), Case.Insensitive, $"o claim {claim.Type} do cookie aparece em claro na tabela");
-            }
-        }
+        session.Json.ShouldNotContain(token, Case.Sensitive, "o token da sessão aparece em claro na tabela");
+        SessionTokens.ShouldBeHashOf(session.IdHash, token);
     }
 
     private static string Describe(IEnumerable<Claim> claims) =>

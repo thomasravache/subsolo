@@ -33,7 +33,7 @@ internal static class UsersDatabase
         await using var command = new NpgsqlCommand(
             """
             select user_id, method, created_at_utc, last_seen_at_utc, expires_at_utc, absolute_expires_at_utc,
-                   revoked_at_utc, row_to_json(s)::text
+                   revoked_at_utc, row_to_json(s)::text, id_hash::text
             from users.sessions s
             order by created_at_utc
             """,
@@ -49,7 +49,8 @@ internal static class UsersDatabase
                 Utc(reader.GetDateTime(4)),
                 Utc(reader.GetDateTime(5)),
                 reader.IsDBNull(6) ? null : Utc(reader.GetDateTime(6)),
-                reader.GetString(7)));
+                reader.GetString(7),
+                reader.GetString(8)));
         }
 
         return rows;
@@ -72,7 +73,10 @@ internal static class UsersDatabase
 
 internal sealed record UserRow(Guid Id, string Email, string? DisplayName, string Roles);
 
-/// <summary>Uma linha de <c>users.sessions</c>; <see cref="Json"/> é a linha inteira (todas as colunas) em JSON.</summary>
+/// <summary>
+/// Uma linha de <c>users.sessions</c>; <see cref="Json"/> é a linha inteira (todas as colunas) em JSON e
+/// <see cref="IdHash"/> é o <c>id_hash</c> como texto (<c>bytea</c> vira <c>\x…</c> em hex).
+/// </summary>
 internal sealed record SessionRow(
     Guid UserId,
     string Method,
@@ -81,4 +85,5 @@ internal sealed record SessionRow(
     DateTimeOffset ExpiresAtUtc,
     DateTimeOffset AbsoluteExpiresAtUtc,
     DateTimeOffset? RevokedAtUtc,
-    string Json);
+    string Json,
+    string IdHash);
