@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0018 — contrato público do módulo Notifications (ADR-0001: só depende de Common.Application e,
+    de Common.Domain, só dos tipos de resultado Result, Result<T>, Error e ErrorType):
+    INotificationsApi.SendEmailAsync, EmailRequest, EmailTemplate e os códigos de erro (NotificationsErrors).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Notifications.IntegrationEvents</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+  </ItemGroup>
+
+</Project>

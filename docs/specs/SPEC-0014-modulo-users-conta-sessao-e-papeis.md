@@ -4,7 +4,7 @@ title: "Módulo Users: conta, sessão e papéis"
 tier: full
 type: feature
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -196,26 +196,26 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio e sessão**
-- [ ] Red: UT-01..UT-04 com a tag `SPEC-0014:<ID>`, falhando pelo motivo certo
-- [ ] Green: módulo `Users` (5 projetos, padrão do `Events`), `User`, `Session` (hash, 30 dias deslizantes, teto de 90), `ISignInService`, `ISessionValidator`
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01..UT-04 com a tag `SPEC-0014:<ID>`, falhando pelo motivo certo
+- [x] Green: módulo `Users` (5 projetos, padrão do `Events`), `User`, `Session` (hash, 30 dias deslizantes, teto de 90), `ISignInService`, `ISessionValidator`
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e rate limit**
-- [ ] Red: IT-01..IT-10 e CT-01 falhando pelo motivo certo (IT-09 é guarda)
-- [ ] Green: schema `users` e migração, validação no `OnValidatePrincipal`, `/me` e `/logout` com `no-store`, outbox `UserRegistered`, rate limit `default` nos endpoints existentes e regra de arquitetura, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-10 e CT-01 falhando pelo motivo certo (IT-09 é guarda)
+- [x] Green: schema `users` e migração, validação no `OnValidatePrincipal`, `/me` e `/logout` com `no-store`, outbox `UserRegistered`, rate limit `default` nos endpoints existentes e regra de arquitetura, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Limite por visitante (Emenda v3)**
-- [ ] Red: UT-05 e IT-11 falhando pelo motivo certo
-- [ ] Green: repasse do `X-Forwarded-For` no cliente da API do web; `default` alto na pilha da E2E
-- [ ] Validar: suíte completa + E2E integrada (G2/G5)
+- [x] Red: UT-05 e IT-11 falhando pelo motivo certo
+- [x] Green: repasse do `X-Forwarded-For` no cliente da API do web; `default` alto na pilha da E2E
+- [x] Validar: suíte completa + E2E integrada (G2/G5)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -227,9 +227,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 331ms) — c9f1a3a | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em c9f1a3a (delta da Emenda v3) — repasse do X-Forwarded-For sem caminho de falsificação (Caddy sem trusted_proxies, web não exposto, API aceita XFF só da rede privada com ForwardLimit=1), next/headers válido nas três chamadas, override só na pilha local; 3 menores → SPEC-0016 Emenda 2 (g, h) e IT-11 registrado como guarda. Revisão anterior APPROVED em 6f368a5 — c9f1a3a | 2026-10-17 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 31s 144ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 1s 328ms) — fc95fc6 | 2026-10-17 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-17 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #22 (merge fc652fe) | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 7e800f2 (árvore suja) | 2026-10-17 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -242,36 +242,66 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Módulo `Users` (ADR-0001, schema `users`): conta com e-mail normalizado e único, nome opcional e papéis (`fan`; `admin` pela configuração `Users:AdminEmails`).
+- Sessão guardada no banco por trás do cookie `__Host-subsolo`: token aleatório de 256 bits no cookie e só o hash SHA-256 no banco; 30 dias sem uso ou teto absoluto de 90 dias desde a entrada; revogação imediata no "Sair".
+- `GET /api/v1/me` e `POST /api/v1/auth/logout`, com `Cache-Control: no-store`, `X-CSRF` no logout e rate limit.
+- Rate limit `default` em todo endpoint da API (agenda, cidades, anti-forgery, `/me`, `/logout`), contado por visitante: o web repassa o IP do visitante à API.
+- Evento `UserRegistered` pela outbox (só o id), contadores `subsolo.users.sign_ins` e `subsolo.users.sessions_revoked`, e-mail nunca em logs.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (96c751c e 31d1b11 scaffold; a308f21, 0680945, 4b523ac, dd4a3d8 testes) → Implementer (4839ce6, 6f368a5, 7c49df2, c9f1a3a) → Reviewer APPROVED duas vezes (6f368a5 e o delta da Emenda v3 em c9f1a3a).
+- Emendas: v2 (token de 256 bits em vez de Guid; sondas `/alive` e `/openapi` isentas do rate limit; lock files de teste no escopo, aprovadas pelo Thomas) e v3 (limite por visitante atrás do Next, descoberto pela E2E integrada no G5).
+- Pedidos do Thomas no H1 incorporados: teto de 90 dias, `no-store`, rate limit em tudo.
+- Desvios declarados e aceitos na revisão: `ProblemCodeMetadata` + transformer para documentar os códigos no OpenAPI; código `service.unavailable` para o 503.
+- Achados menores das revisões levados para a SPEC-0016 (Emenda 2): janela do cookie × sessão, corrida na primeira entrada, teste de `PublishUserRegistered`, 503 no OpenAPI, `ILogger` obrigatório, `no-store` no 429, `unstable_rethrow` e limite do `DEFAULT_RATE_LIMIT`.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | entrada normaliza o e-mail, um usuário, duas sessões, `UserRegistered` só na primeira | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| UT-02 | admin pela configuração entra e sai; e-mail inválido não grava | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| UT-03 | sessão revogada, expirada, inexistente ou além do teto de 90 dias → null; válida → papéis atuais | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| UT-04 | renovação no máximo 1x/h e nunca além do teto de 90 dias | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| UT-05 | cliente do web repassa o `X-Forwarded-For` do visitante e não inventa um | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-01 | PostgreSQL real: um usuário, sessões só com o hash SHA-256 do token de 256 bits, outbox `UserRegistered` | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-02 | `GET /me` 200 com o contrato e `no-store`; sem cookie 401 | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-03 | logout 204, cookie apagado, sessão revogada, mesmo cookie → 401 | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-04 | renovação deslizante e teto de 90 dias; validação p95 ≤ 5 ms | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-05 | logout sem `X-CSRF` → 400 e sessão segue válida | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-06 | e-mail fora de logs e spans | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-07 | banco fora do ar → 503 sem detalhes | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-08 | papel `admin` exigido → 403 para `fan` | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-09 | regras do ADR-0001 valem para o módulo Users (guarda) | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-10 | rate limit declarado em todo endpoint (exceto sondas e `/openapi`); 429 em `/me` e `/cities` | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| IT-11 | um balde de rate limit por visitante atrás do web (guarda) | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
+| CT-01 | OpenAPI com `/me` e `/logout`, códigos de erro e cliente TS em dia | PASS | `gate G2 --run` em c9f1a3a; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #22 (run 39061454216)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #22 (https://github.com/thomasravache/subsolo/pull/22), merge commit fc652fe em 2026-10-17, com H2 pela política auto-on-green aprovada pelo Thomas.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Achados menores das revisões: entram na SPEC-0016 (Emenda 2, itens a–h).
+- Parâmetro do AppHost para `Users:AdminEmails` no go-live (SPEC-0003): hoje vem de `appsettings`/variável `Users__AdminEmails__0`.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0014`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

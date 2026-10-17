@@ -4,7 +4,7 @@ title: "Módulo Notifications: e-mail transacional por SMTP"
 tier: full
 type: feature
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -91,7 +91,8 @@ public enum EmailTemplate { MagicLink }
 ```text
 Configuração (Notifications:Smtp): Host, Port, Security (None|StartTls|SslOnConnect), User, Password, FromAddress, FromName="Subsolo"
   Development/CI: referência "smtp" do Mailpit (AppHost), Security=None
-  Production: Security ≠ None obrigatório (a API não sobe sem isso); senha por segredo (ADR-0008)
+  Fora de Development: Security ≠ None obrigatório (a API não sobe sem isso); senha por segredo (ADR-0008)
+  Compose publicado: Host/Port do endpoint smtp do Mailpit e Security = ${SMTP_SECURITY:-StartTls} (a pilha local do compose-up.sh usa None em Development) — Emenda 2
 E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botão "Entrar no Subsolo" → {link};
   "O link vale por {minutes} minutos e só funciona uma vez."; "Se não foi você, ignore este e-mail."
 ```
@@ -108,10 +109,10 @@ E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botã
 | Dados inválidos | `link` ausente, não absoluto ou `minutes` fora de 1–60 | `notifications.invalid_data`, nada enviado | UT-02 |
 | Escape de HTML | dado com `<script>` | aparece como texto no HTML | UT-02 |
 | SMTP fora do ar | servidor parado ou sem resposta | `notifications.email_unavailable` em ≤ 10 s, sem exceção | IT-03 |
-| TLS em produção | `Security=None` em Production | a API não inicia (validação de opções) | UT-03 |
+| TLS fora de Development | `Security=None` em Production ou Staging | a API não inicia (validação de opções) | UT-03 |
 | Dados pessoais fora dos logs | envio com logs e spans capturados | e-mail mascarado, conteúdo e link ausentes | IT-04 |
 | Só o Notifications usa SMTP | arquitetura | nenhum outro projeto referencia MailKit | IT-05 |
-| AppHost liga o SMTP | `aspire run` / modelo do AppHost | a API recebe a referência `smtp` do Mailpit | IT-02 |
+| AppHost liga o SMTP | `aspire run` e o Compose publicado | a API recebe Host/Port do Mailpit; no publicado, Security vem de `SMTP_SECURITY` com padrão `StartTls` | IT-02 |
 | API pública estável | consumidor (SPEC-0016) | assinatura, enum e códigos de erro do §6 | CT-01 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
@@ -122,11 +123,11 @@ E-mail MagicLink: assunto "Seu link para entrar no Subsolo"; HTML + texto; botã
 ### 7.2 Testes Unitários
 - **UT-01** — Dado o modelo `MagicLink` com `link=https://subsolo.test/entrar/confirmar?token=abc` e `minutes=15`, quando renderizado, então o assunto, o HTML (`lang="pt-BR"`, botão com o link, "15 minutos") e o texto puro contêm o link exato e as frases do §6, e as cores do botão têm contraste AA.
 - **UT-02** — Dados `To="sem-arroba"`, `To` com 255 caracteres, `link` ausente, `link="/relativo"`, `minutes=0` e `minutes=61`, quando `SendEmailAsync` valida, então retorna `notifications.invalid_recipient` ou `notifications.invalid_data` sem chamar o canal; dado um dado com `<script>`, então ele aparece escapado no HTML.
-- **UT-03** — Dado o ambiente Production com `Notifications:Smtp:Security=None`, quando as opções são validadas na inicialização, então falha com mensagem clara; em Development, aceita.
+- **UT-03** — Dado o ambiente Production ou Staging com `Notifications:Smtp:Security=None`, quando as opções são validadas na inicialização, então falha com mensagem clara; em Development, aceita.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dado o Mailpit real em container (Testcontainers), quando `SendEmailAsync` manda o `MagicLink` 20 vezes, então a API HTTP do Mailpit mostra as 20 mensagens com remetente "Subsolo", assunto, partes HTML e texto e o link exato, e o p95 do envio fica ≤ 2 s.
-- **IT-02** — Dado o modelo do AppHost (teste do AppHost, padrão da SPEC-0007), quando lido, então a API tem a referência `smtp` do Mailpit e a seção `Notifications:Smtp` resolvida para ela.
+- **IT-02** — Dado o modelo do AppHost (teste do AppHost, padrão da SPEC-0007), quando lido, então a API tem a referência `smtp` do Mailpit e a seção `Notifications:Smtp` resolvida para ela; no modo publish (Compose), também Host e Port do Mailpit e `Security=${SMTP_SECURITY:-StartTls}` (Emenda 2).
 - **IT-03** — Dado um servidor TCP que aceita a conexão e não responde, e depois uma porta fechada, quando `SendEmailAsync` é chamado, então retorna `notifications.email_unavailable` em ≤ 10 s nos dois casos, sem lançar exceção.
 - **IT-04** — Dados os logs e spans capturados (coletor em memória do OpenTelemetry) durante um envio, quando inspecionados, então o destinatário aparece só mascarado, e nem o link nem o corpo aparecem.
 - **IT-05** — Dados os testes de arquitetura, quando rodam, então só os projetos `Subsolo.Modules.Notifications.*` referenciam `MailKit`/`MimeKit`, e um projeto de violação de propósito (padrão `Subsolo.Common.ArchitectureViolations`) faz a regra falhar.
@@ -168,7 +169,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 **Fase 2: SMTP real**
 - [ ] Red: IT-01..IT-05 e CT-01 falhando pelo motivo certo
-- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório em Production, timeout de 10 s, Mailpit no AppHost
+- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório fora de Development, timeout de 10 s, Mailpit no AppHost
 - [ ] Refactor mantendo tudo verde
 - [ ] Validar: build + suíte completa + arquitetura (G2/G3)
 
@@ -183,11 +184,11 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 93aac2d (árvore suja) | 2026-10-17 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 3cac14d | 2026-10-17 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 389e61f | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 085ms) — 389e61f | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 389e61f após CHANGES_REQUESTED em 59d9d11 — os 6 achados corrigidos (Compose ligado ao Mailpit com SMTP_SECURITY padrão StartTls, QUIT falho não vira falha, destinatário alinhado ao MimeKit, regra SMTP com os hosts, TLS fora de Development, comentário do csproj); contrato §6 exato, MailKit com timeout de 10 s, template escapado e acessível, sem dados pessoais na telemetria, MailKit/MimeKit/BouncyCastle MIT; testes só ficaram mais rígidos; 2 menores → SPEC-0003 (Compose de produção ainda aponta para o Mailpit) e aceito (letras Unicode no local-part) — 389e61f | 2026-10-17 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 46s 801ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 468ms) — 6f9ee86 | 2026-10-17 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -196,6 +197,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G1 | spec | Contrato §6 (Task<Result> em Notifications.IntegrationEvents) conflita com a regra do ADR-0001 'IntegrationEvents só depende de Common.Application' — Result/Error vivem em Common.Domain; guardas SPEC-0007 IT-06 e SPEC-0014 IT-09 reprovam | Test-writer: scaffold exato do §6; único conflito é o Result | Architect | Emenda 1 (arquitetura) — ADR-0001 esclarecido: Result/Result<T>/Error/ErrorType de Common.Domain permitidos em IntegrationEvents; regra de arquitetura atualizada | 2026-10-17 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -236,4 +238,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0018`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (comportamento e testes) | 2026-10-17 | Emenda 2: TLS obrigatório fora de Development (alinha §6 e UT-03 ao §5); Compose publicado ligado ao Mailpit com `SMTP_SECURITY` (padrão `StartTls`); testes novos: UT-02 com endereços que o MimeKit recusa (`a>@x.com`, `a@b.com>,<c`) → `invalid_recipient`, UT-03 com Staging, IT-02 no modo publish, IT-05 avaliando também `Subsolo.Api` e `Subsolo.ServiceDefaults` | Revisão G4 (CHANGES_REQUESTED): o E2E da SPEC-0016 roda no Compose e não recebia SMTP; regex de destinatário mais frouxa que o MimeKit; regra do ADR-0014 sem os hosts | SPEC-0016 (usa `SMTP_SECURITY=None` no `compose-up.sh`, já nos `touches` dela) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
+| 1 (arquitetura) | 2026-10-17 | Sem mudança no contrato: o ADR-0001 foi esclarecido para permitir em `IntegrationEvents` os tipos `Result`, `Result<T>`, `Error` e `ErrorType` de `Common.Domain` (e só eles); a regra `IntegrationEventsDependencies` dos testes de arquitetura é atualizada pelo Test-writer com essa exceção e um exemplo que reprova entidade de domínio | IMP-01: o `Task<Result>` do §6 reprovava as guardas do ADR-0001 | nenhuma (SPEC-0016 segue fixada em @1) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 1 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |

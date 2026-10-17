@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0018 — infraestrutura do módulo Notifications (ADR-0001, ADR-0014): canal de e-mail por SMTP com MailKit
+    (único projeto que referencia MailKit, regra de arquitetura), configuração Notifications:Smtp e o registro do
+    módulo (AddNotificationsModule).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Notifications.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Notifications.Application/Subsolo.Modules.Notifications.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Notifications.Presentation/Subsolo.Modules.Notifications.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

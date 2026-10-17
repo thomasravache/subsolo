@@ -29,12 +29,28 @@ public static partial class ModularMonolithRules
     public const string ModuleBoundaries =
         "ADR-0001: um módulo só referencia outro módulo pelo IntegrationEvents dele";
 
-    /// <summary><c>&lt;M&gt;.IntegrationEvents</c> não depende de nada do Subsolo além de Common.Application.</summary>
+    /// <summary>
+    /// <c>&lt;M&gt;.IntegrationEvents</c> não depende de nada do Subsolo além de Common.Application e dos tipos de
+    /// resultado de Common.Domain (<c>Result</c>, <c>Result&lt;T&gt;</c>, <c>Error</c>, <c>ErrorType</c>; esclarecimento do
+    /// ADR-0001 na SPEC-0018). Entidades e eventos de domínio continuam proibidos.
+    /// </summary>
     public const string IntegrationEventsDependencies =
-        "ADR-0001: o IntegrationEvents do módulo só depende de Common.Application";
+        "ADR-0001: o IntegrationEvents do módulo só depende de Common.Application e de Result, Result<T>, Error e ErrorType de Common.Domain";
 
     /// <summary>Não há ciclos de dependência entre módulos.</summary>
     public const string NoModuleCycles = "ADR-0001: não há ciclos de dependência entre módulos";
+
+    /// <summary>
+    /// SPEC-0018 — fora do módulo Notifications, nenhum tipo do Subsolo usa as bibliotecas de SMTP (MailKit, MimeKit).
+    /// </summary>
+    public const string SmtpOnlyInNotifications =
+        "ADR-0014: só o módulo Notifications usa bibliotecas de SMTP (MailKit, MimeKit)";
+
+    /// <summary>
+    /// Os únicos tipos de Common.Domain permitidos no IntegrationEvents (nome completo, depois de <c>Subsolo</c>):
+    /// <c>Result</c>, <c>Result&lt;T&gt;</c> (<c>Result`1</c>), <c>Error</c> e <c>ErrorType</c>.
+    /// </summary>
+    private const string AllowedResultTypes = @"\.Common\.Domain\.(?:Result|Result`1|Error|ErrorType)$";
 
     private const string Root = ArchitectureRules.ModulesRoot;
     private static readonly string RootPattern = Regex.Escape(Root);
@@ -48,6 +64,22 @@ public static partial class ModularMonolithRules
             .EnumerateFiles(AppContext.BaseDirectory, $"{Root}.*.dll")
             .Order(StringComparer.Ordinal)
             .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
+
+    /// <summary>
+    /// SPEC-0018 — os assemblies em que a regra <see cref="SmtpOnlyInNotifications"/> vale: todos os módulos
+    /// (<see cref="ModuleAssemblies"/>), os blocos <c>Subsolo.Common.*</c> ao lado do assembly de teste (sem o dublê de
+    /// violações do ADR-0001) e os hosts <see cref="SmtpRuleHosts"/> (Emenda 2).
+    /// </summary>
+    public static IReadOnlyList<Assembly> SmtpRuleAssemblies() =>
+        [.. ModuleAssemblies(), .. Directory
+            .EnumerateFiles(AppContext.BaseDirectory, "Subsolo.Common.*.dll")
+            .Where(path => !Path.GetFileName(path).StartsWith("Subsolo.Common.ArchitectureViolations", StringComparison.Ordinal))
+            .Concat(SmtpRuleHosts.Select(host => Path.Combine(AppContext.BaseDirectory, $"{host}.dll")))
+            .Order(StringComparer.Ordinal)
+            .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
+
+    /// <summary>SPEC-0018 (Emenda 2) — hosts que a regra <see cref="SmtpOnlyInNotifications"/> também avalia.</summary>
+    public static readonly IReadOnlyList<string> SmtpRuleHosts = ["Subsolo.Api", "Subsolo.ServiceDefaults"];
 
     /// <summary>
     /// Nomes (sem extensão) de todos os projetos <c>Subsolo.Modules.*.csproj</c> em <c>src/</c> e <c>tests/</c> de
@@ -127,10 +159,17 @@ public static partial class ModularMonolithRules
             $"^{RootPattern}\\.{Regex.Escape(module)}(?:\\..*)?$",
             $"^{RootPattern}\\.(?!{Regex.Escape(module)}(?:\\.|$))[^.]+(?:\\.(?!IntegrationEvents(?:\\.|$)).*)?$",
             rule)),
-        IntegrationEventsDependencies => modules.Select(module => ForbidDependencies(
+        IntegrationEventsDependencies => modules.Select(module => ForbidDependenciesByFullName(
             Layer(Regex.Escape(module), "IntegrationEvents"),
-            $"^Subsolo(?!\\.Common\\.Application(?:\\.|$))(?!\\.Modules\\.{Regex.Escape(module)}\\.IntegrationEvents(?:\\.|$))(?:\\..*)?$",
+            $"^Subsolo(?!\\.Common\\.Application\\.)(?!\\.Modules\\.{Regex.Escape(module)}\\.IntegrationEvents\\.)(?!{AllowedResultTypes})(?:\\..*)?$",
             rule)),
+        SmtpOnlyInNotifications =>
+        [
+            ForbidDependencies(
+                "^Subsolo(?!\\.Modules\\.Notifications(?:\\.|$))(?:\\..*)?$",
+                "^(?:MailKit|MimeKit)(?:\\..*)?$",
+                rule),
+        ],
         _ => throw new ArgumentException($"Regra desconhecida: \"{rule}\".", nameof(rule)),
     };
 
@@ -190,6 +229,16 @@ public static partial class ModularMonolithRules
         var match = ModuleNamespace().Match(type.Namespace.FullName);
         return match.Success ? match.Groups[1].Value : null;
     }
+
+    /// <summary>
+    /// Como <see cref="ForbidDependencies"/>, mas o alvo proibido é casado pelo nome completo do tipo (para liberar
+    /// tipos específicos, e não um namespace inteiro).
+    /// </summary>
+    private static ArchRule<IType> ForbidDependenciesByFullName(string sourceNamespace, string forbiddenFullName, string rule) =>
+        Types().That().ResideInNamespaceMatching(sourceNamespace)
+            .Should().NotDependOnAnyTypesThat().HaveFullNameMatching(forbiddenFullName)
+            .Because(rule)
+            .WithoutRequiringPositiveResults();
 
     private static ArchRule<IType> ForbidDependencies(string sourceNamespace, string forbiddenNamespace, string rule) =>
         Types().That().ResideInNamespaceMatching(sourceNamespace)

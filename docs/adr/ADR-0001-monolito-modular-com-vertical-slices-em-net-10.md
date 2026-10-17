@@ -74,7 +74,7 @@ web/                                ← Next.js (ADR-0013)
   - `<M>.Domain` não depende de Application, Infrastructure, Presentation nem de EF Core/ASP.NET.
   - `<M>.Application` não depende de Infrastructure nem de Presentation.
   - Um módulo não referencia projetos de outro módulo, exceto `<Outro>.IntegrationEvents`.
-  - `IntegrationEvents` não depende de nada além de `Common.Application`.
+  - `IntegrationEvents` não depende de nada além de `Common.Application` e dos tipos de resultado `Result`, `Result<T>`, `Error` e `ErrorType` de `Common.Domain` (esclarecimento de 2026-10-17, SPEC-0018: interfaces públicas como `INotificationsApi` devolvem `Result`, como os slices; entidades e eventos de domínio continuam proibidos).
   - Tipos de Domain/Application/Infrastructure de um módulo são `internal` sempre que possível (`sealed` por padrão).
 - Cada `DbContext` acessa apenas o schema do seu módulo.
 - Não há ciclos de dependência entre módulos.

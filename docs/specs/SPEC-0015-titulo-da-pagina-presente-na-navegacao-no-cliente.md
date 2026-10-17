@@ -4,7 +4,7 @@ title: Título da página presente na navegação no cliente
 tier: lite
 type: fix
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -55,16 +55,16 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Título na navegação**
-- [ ] Red: UT-01 com a tag `SPEC-0015:UT-01`, falhando pelo motivo certo (E2E-01 virou N/A pela Emenda 1)
-- [ ] Green: `htmlLimitedBots: /.*/` no `next.config.ts`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + E2E existentes (G2/G3)
+- [x] Red: UT-01 com a tag `SPEC-0015:UT-01`, falhando pelo motivo certo (E2E-01 virou N/A pela Emenda 1)
+- [x] Green: `htmlLimitedBots: /.*/` no `next.config.ts`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + E2E existentes (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -75,10 +75,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 33d0944 | 2026-10-17 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 154ms) — 33d0944 | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 33d0944 — htmlLimitedBots /.*/ conferido no Next 16.4.0 (forma documentada de desligar metadata em streaming; bots, PPR de /[cidade] e nonce da CSP sem regressão); 0 bloqueantes, 0 importantes, 2 menores (comentário diz 'todos os agentes' mas requisição sem User-Agent ainda faz streaming; branch com a spec anterior à Emenda 1, resolvido na integração) — 33d0944 | 2026-10-17 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | MANUAL: mesmo resultado integrado da SPEC-0014: gate G5 --run PASS em fc95fc6 (build, test, test_integration, test_e2e, arch_test); PR #22, CI run https://github.com/thomasravache/subsolo/actions/runs/39061454216 — 10/10 checks verdes em 88cc681 | 2026-10-17 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-17 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #22 (merge fc652fe) | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 7e800f2 (árvore suja) | 2026-10-17 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -90,29 +90,36 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- Metadados da página (título) entregues de forma bloqueante para todo navegador: `htmlLimitedBots: /.*/` no `next.config.ts`, para a página nunca ficar sem título na navegação no cliente.
 
 ### Como foi feito
+- TDD: Test-writer (f5a749b) → Implementer (33d0944) → Reviewer APPROVED (conferiu no Next 16.4.0 que é a forma documentada, sem regressão em SEO, PPR de `/[cidade]` e CSP com nonce).
+- Emenda 1: o E2E-01 não reproduzia o bug no código atual (os únicos links internos levavam a páginas 404 e o Next recarregava o documento); o E2E do título foi herdado pela primeira spec com página interna 200 (registrado no épico).
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+Red em f5a749b (`gate G1 --run`, exit ≠ 0): UT-01 falhou com `htmlLimitedBots não configurado: expected undefined to be an instance of RegExp`. Green em 33d0944 (`gate G2 --run`) e no CI do PR #22.
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | a configuração do Next entrega metadados bloqueantes ao Chrome do Android e ao Safari do iOS | PASS | `gate G1 --run` (red em f5a749b); `gate G2 --run` em 33d0944; `gate G5 --run` na integração (fc95fc6); CI do PR #22 (run 39061454216, 10/10 checks em 88cc681) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #22, merge commit fc652fe em 2026-10-17.
 
 ### Pendências
-
+- E2E do título na navegação no cliente: na primeira spec com página interna 200 (épico SPEC-0002, Emenda 1).
+- Comentário do `next.config.ts` diz "todos os agentes", mas requisição sem `User-Agent` ainda recebe metadados em streaming (achado menor da revisão; navegadores sempre mandam o cabeçalho).
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
