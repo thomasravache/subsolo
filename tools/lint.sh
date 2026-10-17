@@ -27,13 +27,21 @@ step "dotnet-format" dotnet format Subsolo.slnx --verify-no-changes --verbosity 
 step "dotnet-build" dotnet build Subsolo.slnx -warnaserror -nologo --verbosity quiet
 
 # Front: dependências do lockfile e lint (eslint + prettier --check + tsc --noEmit).
-# O pnpm roda de dentro de web/ para respeitar o `packageManager` de web/package.json (o pnpm instalado
+# O pnpm roda de dentro de web/ (e de e2e/, abaixo) para respeitar o `packageManager` de web/package.json (o pnpm instalado
 # troca para a versão fixada; com `-C web` a partir da raiz ele não faz essa troca).
 web() { (cd web && pnpm "$@"); }
 if step "web-install" web install --frozen-lockfile --reporter=silent; then
   step "web-lint" web lint
 else
   failed+=("web-lint (não executado: dependências não instaladas)")
+fi
+
+# E2E: dependências do lockfile e checagem de tipos (tsc --noEmit) do TypeScript do Playwright (SPEC-0013).
+e2e() { (cd e2e && pnpm "$@"); }
+if step "e2e-install" e2e install --frozen-lockfile --reporter=silent; then
+  step "e2e-lint" e2e lint
+else
+  failed+=("e2e-lint (não executado: dependências não instaladas)")
 fi
 
 # SAST (ADR-0006): Semgrep CE com .semgrep.yml quando instalado localmente; no CI sempre roda (SPEC-0006).
