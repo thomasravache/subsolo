@@ -30,11 +30,11 @@ public sealed class PersonalDataInSignalsTests(PostgresFixture postgres)
         using var response = await client.SendAsync(request, ct);
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
+        var spans = await api.SpansWhenAsync(IsServerSpanOf(PersonalDataEndpoint.Route), SpanTimeout, ct);
         var logs = api.Logs;
-        var spans = api.Spans;
         logs.ShouldContain(log => (log.Body ?? string.Empty).Contains("Cadastro de", StringComparison.Ordinal),
             "o log do endpoint não foi exportado");
-        spans.ShouldContain(span => span.Kind == System.Diagnostics.ActivityKind.Server,
+        spans.ShouldContain(span => IsServerSpanOf(PersonalDataEndpoint.Route)(span),
             "o span da requisição não foi exportado");
 
         var leaks = logs.SelectMany(log =>
@@ -69,12 +69,10 @@ public sealed class PersonalDataInSignalsTests(PostgresFixture postgres)
             $"{PersonalDataExceptionEndpoint.Route}?email={Uri.EscapeDataString(Email)}", content: null, ct);
         response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
 
+        var spans = await api.SpansWhenAsync(IsServerSpanOf(PersonalDataExceptionEndpoint.Route), SpanTimeout, ct);
         var logs = api.Logs;
-        var spans = api.Spans;
         logs.ShouldContain(log => log.Exception != null, "o log da exceção não foi exportado");
-        var server = spans.Where(span => span.Kind == System.Diagnostics.ActivityKind.Server &&
-                                         span.TagObjects.Any(tag => tag.Value?.ToString()?.Contains(
-                                             PersonalDataExceptionEndpoint.Route, StringComparison.Ordinal) == true))
+        var server = spans.Where(IsServerSpanOf(PersonalDataExceptionEndpoint.Route))
             .ShouldHaveSingleItem("o span da requisição não foi exportado");
         server.Events.ShouldContain(e => e.Name == "exception", "o evento exception não foi exportado no span");
 
@@ -97,6 +95,14 @@ public sealed class PersonalDataInSignalsTests(PostgresFixture postgres)
 
         leaks.ShouldBeEmpty("e-mail da exceção em texto puro nos sinais exportados");
     }
+
+    /// <summary>Prazo para o span do servidor terminar e chegar ao exportador depois da resposta.</summary>
+    private static readonly TimeSpan SpanTimeout = TimeSpan.FromSeconds(5);
+
+    /// <summary>Span de servidor da requisição a <paramref name="route"/>.</summary>
+    private static Func<System.Diagnostics.Activity, bool> IsServerSpanOf(string route) =>
+        span => span.Kind == System.Diagnostics.ActivityKind.Server &&
+                span.TagObjects.Any(tag => tag.Value?.ToString()?.Contains(route, StringComparison.Ordinal) == true);
 
     /// <summary>Trecho do texto em volta do e-mail (o stack inteiro deixaria a mensagem ilegível).</summary>
     private static string Excerpt(string text)

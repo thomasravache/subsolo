@@ -56,6 +56,27 @@ internal sealed class ObservedApiFactory(string connectionString, Uri? otlpEndpo
         }
     }
 
+    /// <summary>
+    /// Os spans exportados, assim que algum satisfaz <paramref name="predicate"/> (ou o último retrato, ao fim de
+    /// <paramref name="timeout"/>, para as asserções relatarem o que chegou). No TestServer o span do servidor pode
+    /// terminar depois que o cliente já recebeu a resposta (ex.: caminho do <c>UseExceptionHandler</c>).
+    /// </summary>
+    public async Task<IReadOnlyList<Activity>> SpansWhenAsync(
+        Func<Activity, bool> predicate, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        var watch = Stopwatch.StartNew();
+        while (true)
+        {
+            var spans = Spans;
+            if (spans.Any(predicate) || watch.Elapsed >= timeout)
+            {
+                return spans;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken);
+        }
+    }
+
     /// <summary>Um database novo (vazio) no servidor de <paramref name="postgresConnectionString"/>.</summary>
     public static async Task<string> IsolatedDatabaseAsync(string postgresConnectionString, CancellationToken cancellationToken)
     {
