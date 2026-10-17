@@ -7,6 +7,11 @@ export interface HeaderProps {
   city: string;
   cities: CityOption[];
   onCityChange: (slug: string) => void;
+  /**
+   * SPEC-0016 — há sessão (`GET /api/v1/me`): o link do cabeçalho (desktop) é "Conta" → `/conta`; sem sessão,
+   * "Entrar" → `/entrar`. Scaffold do Test-writer: ainda sem uso (o link é do Green).
+   */
+  signedIn?: boolean;
 }
 
 const navLink =

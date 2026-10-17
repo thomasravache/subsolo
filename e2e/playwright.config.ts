@@ -7,6 +7,11 @@ import {
   webWithoutApiPort,
   webWithoutApiURL,
 } from "./tests/agenda/environment";
+import {
+  mailpitPort,
+  plainSentinel,
+  secretSentinel,
+} from "./tests/auth/environment";
 
 /**
  * SPEC-0005 — E2E com Playwright (ADR-0005): projetos de celular (Pixel 7, iPhone 14) e desktop.
@@ -19,6 +24,9 @@ import {
  *
  * SPEC-0010 (Emenda 3) — o Caddy local serve HTTPS com o certificado `tls internal`, não confiável: `ignoreHTTPSErrors`
  * vale para todos os projetos e para o probe do webServer do Compose.
+ *
+ * SPEC-0016 — as jornadas de entrada (tests/auth) leem o link mágico na API do Mailpit (`MAILPIT_URL`); o
+ * `compose-up.sh` recebe a porta do Mailpit e as sentinelas do ambiente do web (tests/auth/environment.ts).
  */
 const port = Number(process.env.E2E_STATIC_PORT ?? 4317);
 const baseURL = `http://127.0.0.1:${port}`;
@@ -28,6 +36,8 @@ const isCI = !!process.env.CI;
 const seqPort = Number(process.env.SEQ_PORT ?? 5341);
 if (!externalApp) {
   process.env.SEQ_URL ??= `http://127.0.0.1:${seqPort}`;
+  // SPEC-0016 — as jornadas de entrada leem o link mágico na API do Mailpit, publicada só em 127.0.0.1 pelo override.
+  process.env.MAILPIT_URL ??= `http://127.0.0.1:${mailpitPort}`;
 }
 
 export default defineConfig({
@@ -72,7 +82,13 @@ export default defineConfig({
             timeout: 20 * 60_000,
             stdout: "pipe" as const,
             gracefulShutdown: { signal: "SIGTERM" as const, timeout: 60_000 },
-            env: { SEQ_PORT: String(seqPort) },
+            // SPEC-0016: Mailpit no localhost e as sentinelas do ambiente do web (E2E-04).
+            env: {
+              SEQ_PORT: String(seqPort),
+              MAILPIT_PORT: String(mailpitPort),
+              E2E_PLAIN_SENTINEL: plainSentinel,
+              E2E_SECRET_SENTINEL: secretSentinel,
+            },
           },
           {
             // SPEC-0008 IT-04 (Emenda 5): o web de produção (next build + next start) sem API (conexão recusada).

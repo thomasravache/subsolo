@@ -6,7 +6,12 @@ export interface BottomNavProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
   city: string;
   /** Destino ativo, marcado com `aria-current="page"`. */
-  current?: "agenda" | "apoie";
+  current?: "agenda" | "apoie" | "conta";
+  /**
+   * SPEC-0016 — há sessão (`GET /api/v1/me`): a aba "Conta" leva a `/conta`; sem sessão, a `/entrar`.
+   * Scaffold do Test-writer: ainda sem uso (a aba é do Green).
+   */
+  signedIn?: boolean;
 }
 
 const item =
