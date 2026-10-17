@@ -1,17 +1,26 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
+/* SPEC-0011 — base do tema escuro (único tema do Subsolo). */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, sans-serif;
+  /* Foco sempre visível (WCAG 2.2 AA): anel claro sobre o fundo escuro, inclusive sobre o destaque. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+  }
 }

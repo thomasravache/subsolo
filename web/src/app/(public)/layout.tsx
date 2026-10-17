@@ -1,17 +1,14 @@
-import Link from "next/link";
+import { listCities } from "@/api/cities";
+import { AppShell } from "@/components/ui/AppShell";
 
-/** SPEC-0008 — moldura mínima das páginas públicas (tema escuro provisório; o visual final vem com o design system). */
-export default function PublicLayout({ children }: LayoutProps<"/">) {
-  return (
-    <>
-      <header className="border-b border-foreground/15">
-        <div className="mx-auto w-full max-w-2xl px-4 py-3">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
-            Subsolo
-          </Link>
-        </div>
-      </header>
-      {children}
-    </>
-  );
+/**
+ * SPEC-0011 — shell das páginas públicas (cabeçalho com o seletor de cidade, rodapé e navegação inferior no
+ * celular), com as cidades da API. Sem shell de carregamento: como a agenda, a moldura só sai com a lista pronta
+ * (API fora do ar → lista vazia e o cabeçalho sem seletor).
+ */
+export const instant = false;
+
+export default async function PublicLayout({ children }: LayoutProps<"/">) {
+  const cities = await listCities();
+  return <AppShell cities={cities}>{children}</AppShell>;
 }
