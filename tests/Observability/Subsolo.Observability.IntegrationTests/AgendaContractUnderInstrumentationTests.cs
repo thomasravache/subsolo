@@ -32,7 +32,12 @@ public sealed class AgendaContractUnderInstrumentationTests(PostgresFixture post
         var reference = await GetAsync(plain, path, ct);
         var observed = await GetAsync(instrumented, path, ct);
 
-        instrumented.Spans.ShouldContain(
+        // No TestServer o span do servidor pode terminar depois que o cliente recebeu a resposta.
+        var spans = await instrumented.SpansWhenAsync(
+            span => span.Kind == ActivityKind.Server && span.DisplayName.Contains("agenda", StringComparison.OrdinalIgnoreCase),
+            TimeSpan.FromSeconds(5),
+            ct);
+        spans.ShouldContain(
             span => span.Kind == ActivityKind.Server && span.DisplayName.Contains("agenda", StringComparison.OrdinalIgnoreCase),
             "instrumentação inativa: nenhum span de servidor da agenda exportado");
         reference.Status.ShouldBe(expected, "a referência sem exportação não segue o contrato");
