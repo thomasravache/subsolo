@@ -116,9 +116,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 1ed3cf7 | 2026-10-14 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 2b3ccf3 | 2026-10-17 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — ab4775d | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 144ms) — ab4775d | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em ab4775d — itens 1–20 atendidos (8 manual pós-G4; 12 e 16 já resolvidos; 9, 13, 15 documentação); guardas UT-02/UT-03/UT-04/IT-07 realmente guardam; IT-05 da SPEC-0006 fortalecido; verify PASS com aviso justificado (correções do harness em e2e/ e ArchitectureRules.cs, comentários). Menores: caches do pnpm com o mesmo store (união), UT-05 sem conferir o Id no conteúdo, falha do dotnet sln list dentro de process substitution — ab4775d | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
