@@ -50,13 +50,30 @@ internal sealed partial class SmtpEmailChannel(IOptions<SmtpOptions> options, IL
             }
 
             await client.SendAsync(message, timeout.Token);
-            await client.DisconnectAsync(quit: true, timeout.Token);
+            await DisconnectAsync(client, timeout.Token);
             return Result.Success();
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             LogUnavailable(logger, exception, EmailRecipient.Mask(email.Recipient));
             return Result.Failure(Unavailable);
+        }
+    }
+
+    /// <summary>
+    /// QUIT depois do envio aceito: só cortesia com o servidor. Se falhar, a mensagem já foi entregue ao SMTP, então o
+    /// resultado continua sucesso (o <c>Dispose</c> do cliente fecha a conexão), mesmo com timeout ou cancelamento
+    /// nesse ponto, e a falha vai só para o log de debug.
+    /// </summary>
+    private async Task DisconnectAsync(SmtpClient client, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await client.DisconnectAsync(quit: true, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            LogDisconnectFailed(logger, exception);
         }
     }
 
@@ -82,4 +99,10 @@ internal sealed partial class SmtpEmailChannel(IOptions<SmtpOptions> options, IL
         Level = LogLevel.Warning,
         Message = "E-mail para {Recipient} não enviado: SMTP indisponível, lento ou recusou a mensagem")]
     private static partial void LogUnavailable(ILogger logger, Exception exception, string recipient);
+
+    [LoggerMessage(
+        EventName = "EmailDisconnectFailed",
+        Level = LogLevel.Debug,
+        Message = "SMTP: o QUIT depois de um envio aceito falhou; a conexão é fechada sem ele")]
+    private static partial void LogDisconnectFailed(ILogger logger, Exception exception);
 }

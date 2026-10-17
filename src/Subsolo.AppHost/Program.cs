@@ -36,14 +36,15 @@ var api = builder.AddProject<Projects.Subsolo_Api>("api")
     .WaitFor(database)
     .WithHttpHealthCheck("/health", endpointName: "http");
 
-// SPEC-0018 — no local e no CI, o e-mail transacional da API sai pelo Mailpit, sem TLS. Na publicação (Compose), a
-// seção Notifications:Smtp fica para o go-live (SPEC-0003): provedor real, TLS e senha por segredo (ADR-0008).
+// SPEC-0018 — o e-mail transacional da API sai pelo Mailpit: Host e Port do endpoint smtp nos dois modos. Em `aspire run`
+// (local e CI), sem TLS; no Compose publicado, Security vem de SMTP_SECURITY com padrão StartTls (a API fora de
+// Development exige TLS) — a pilha local usa None. Provedor real, TLS e senha por segredo no go-live (SPEC-0003).
+var smtp = mailpit.GetEndpoint("smtp");
+api.WithEnvironment("Notifications__Smtp__Host", smtp.Property(EndpointProperty.Host))
+    .WithEnvironment("Notifications__Smtp__Port", smtp.Property(EndpointProperty.Port));
 if (!builder.ExecutionContext.IsPublishMode)
 {
-    var smtp = mailpit.GetEndpoint("smtp");
-    api.WithEnvironment("Notifications__Smtp__Host", smtp.Property(EndpointProperty.Host))
-        .WithEnvironment("Notifications__Smtp__Port", smtp.Property(EndpointProperty.Port))
-        .WithEnvironment("Notifications__Smtp__Security", "None");
+    api.WithEnvironment("Notifications__Smtp__Security", "None");
 }
 
 var web = builder.AddJavaScriptApp("web", "../../web", "dev")
@@ -88,6 +89,9 @@ if (builder.ExecutionContext.IsPublishMode)
         // Production efetivo por padrão (migrações pelo pipeline, ADR-0002), mesmo com o .env gerado vazio. O
         // Compose local (tools/compose-up.sh) define API_ENVIRONMENT=Development: migrações e seed no start.
         service.Environment["ASPNETCORE_ENVIRONMENT"] = "${API_ENVIRONMENT:-Production}";
+
+        // SPEC-0018 (Emenda 2): TLS no SMTP por padrão; o operador (ou a pilha local, com o Mailpit) define SMTP_SECURITY.
+        service.Environment["Notifications__Smtp__Security"] = "${SMTP_SECURITY:-StartTls}";
 
         // Sem Kerberos: a imagem aspnet não tem a libgssapi_krb5, e o Npgsql tentaria a criptografia GSS (Prefer) a
         // cada conexão, registrando "cannot open shared object file" antes de seguir sem ela.

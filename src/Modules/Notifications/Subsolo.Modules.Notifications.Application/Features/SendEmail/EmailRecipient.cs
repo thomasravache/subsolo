@@ -3,8 +3,10 @@ using System.Text.RegularExpressions;
 namespace Subsolo.Modules.Notifications.Application.Features.SendEmail;
 
 /// <summary>
-/// SPEC-0018 — destinatário do e-mail: validação (formato, até 254 caracteres, sem espaço nem caractere de controle,
-/// o que barra a injeção de cabeçalho com <c>\r\n</c>) e a forma mascarada para logs (<c>f***@subsolo.test</c>, ADR-0008).
+/// SPEC-0018 — destinatário do e-mail: validação (até 254 caracteres, sem caractere de controle, o que barra a injeção
+/// de cabeçalho com <c>\r\n</c>, e no formato <c>dot-atom@domínio</c> da RFC 5322, um subconjunto do que o MimeKit aceita:
+/// nada de <c>&lt;</c>, <c>&gt;</c>, vírgula ou espaço que viraria outro endereço — Emenda 2) e a forma mascarada para
+/// logs (<c>f***@subsolo.test</c>, ADR-0008).
 /// </summary>
 internal static partial class EmailRecipient
 {
@@ -22,7 +24,13 @@ internal static partial class EmailRecipient
         return at > 0 ? $"{to[0]}***{to[at..]}" : "***";
     }
 
-    /// <summary>Uma parte local e um domínio com ponto, sem espaços nem um segundo <c>@</c>.</summary>
-    [GeneratedRegex(@"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    /// <summary>
+    /// Parte local em dot-atom (atext da RFC 5322, letras Unicode incluídas) e domínio com dois ou mais rótulos de
+    /// letras, dígitos e hífen (sem hífen nas pontas).
+    /// </summary>
+    [GeneratedRegex(
+        @"^[\p{L}\p{N}!#$%&'*+/=?^_`{|}~-]+(?:\.[\p{L}\p{N}!#$%&'*+/=?^_`{|}~-]+)*@[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?(?:\.[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?)+\z",
+        RegexOptions.CultureInvariant,
+        matchTimeoutMilliseconds: 1000)]
     private static partial Regex Format();
 }
