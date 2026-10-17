@@ -36,6 +36,12 @@ public static partial class ModularMonolithRules
     /// <summary>Não há ciclos de dependência entre módulos.</summary>
     public const string NoModuleCycles = "ADR-0001: não há ciclos de dependência entre módulos";
 
+    /// <summary>
+    /// SPEC-0018 — fora do módulo Notifications, nenhum tipo do Subsolo usa as bibliotecas de SMTP (MailKit, MimeKit).
+    /// </summary>
+    public const string SmtpOnlyInNotifications =
+        "ADR-0014: só o módulo Notifications usa bibliotecas de SMTP (MailKit, MimeKit)";
+
     private const string Root = ArchitectureRules.ModulesRoot;
     private static readonly string RootPattern = Regex.Escape(Root);
 
@@ -46,6 +52,18 @@ public static partial class ModularMonolithRules
     public static IReadOnlyList<Assembly> ModuleAssemblies() =>
         [.. Directory
             .EnumerateFiles(AppContext.BaseDirectory, $"{Root}.*.dll")
+            .Order(StringComparer.Ordinal)
+            .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
+
+    /// <summary>
+    /// SPEC-0018 — os assemblies em que a regra <see cref="SmtpOnlyInNotifications"/> vale: todos os módulos
+    /// (<see cref="ModuleAssemblies"/>) e os blocos <c>Subsolo.Common.*</c> ao lado do assembly de teste (sem o dublê de
+    /// violações do ADR-0001).
+    /// </summary>
+    public static IReadOnlyList<Assembly> SmtpRuleAssemblies() =>
+        [.. ModuleAssemblies(), .. Directory
+            .EnumerateFiles(AppContext.BaseDirectory, "Subsolo.Common.*.dll")
+            .Where(path => !Path.GetFileName(path).StartsWith("Subsolo.Common.ArchitectureViolations", StringComparison.Ordinal))
             .Order(StringComparer.Ordinal)
             .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
 
@@ -131,6 +149,13 @@ public static partial class ModularMonolithRules
             Layer(Regex.Escape(module), "IntegrationEvents"),
             $"^Subsolo(?!\\.Common\\.Application(?:\\.|$))(?!\\.Modules\\.{Regex.Escape(module)}\\.IntegrationEvents(?:\\.|$))(?:\\..*)?$",
             rule)),
+        SmtpOnlyInNotifications =>
+        [
+            ForbidDependencies(
+                "^Subsolo(?!\\.Modules\\.Notifications(?:\\.|$))(?:\\..*)?$",
+                "^(?:MailKit|MimeKit)(?:\\..*)?$",
+                rule),
+        ],
         _ => throw new ArgumentException($"Regra desconhecida: \"{rule}\".", nameof(rule)),
     };
 
