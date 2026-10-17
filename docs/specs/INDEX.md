@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 3, in-progress 1, implemented 12
+- Validação (G0): **1 erro(s), 20 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 4, in-progress 1, implemented 12
 - Impedimentos: **0 aberto(s)**, 15 resolvido(s)
 
 ## Cobertura de Pilares
@@ -35,7 +35,7 @@ Perfil: **padrao**
 | Produtor ou banda aprovados cadastram um show em menos de 2 minutos | descoberta | — |
 | Fã abre a página do show e compartilha com o flyer na prévia | descoberta | — |
 | Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | descoberta | — |
-| Fã entra pelo link mágico no e-mail e sai | planejada | SPEC-0016, SPEC-0016, SPEC-0016 |
+| Fã entra pelo link mágico no e-mail e sai | planejada | SPEC-0016, SPEC-0016, SPEC-0016, SPEC-0020, SPEC-0020 |
 | Admin cadastra cidade e estilo | planejada | SPEC-0017, SPEC-0017 |
 | Fã muda o nome, baixa os dados e exclui a conta | planejada | SPEC-0019, SPEC-0019 |
 
@@ -51,13 +51,14 @@ Perfil: **padrao**
 | 2 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0018 |  |
 | 3 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | approved | ⛔ aguarda implementação de SPEC-0016 |  |
 | 4 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 3: arquivos em comum com SPEC-0017 |
+| 5 | SPEC-0020 | Entrar com Google | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 3: arquivos em comum com SPEC-0017; saiu da onda 4: arquivos em comum com SPEC-0019 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 2/6 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 2/7 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -72,6 +73,7 @@ flowchart LR
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::approved
     S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::inprogress
     S0019["SPEC-0019<br/>Minha conta: nome, exportar dados e exc…"]:::approved
+    S0020["SPEC-0020<br/>Entrar com Google"]:::approved
   end
   S0014 --> S0016
   S0018 --> S0016
@@ -80,6 +82,7 @@ flowchart LR
   S0016 --> S0017
   S0014 --> S0019
   S0016 --> S0019
+  S0016 --> S0020
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -110,6 +113,7 @@ flowchart LR
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | in-progress | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0019](SPEC-0019-minha-conta-nome-exportar-dados-e-excluir-conta.md) | Minha conta: nome, exportar dados e excluir conta | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
+| [SPEC-0020](SPEC-0020-entrar-com-google.md) | Entrar com Google | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0016 | — |
 
 ## ADRs
 

@@ -92,8 +92,8 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full | feature | M | fundação | — |
 | SPEC-0016 | Entrar por link mágico no e-mail | full | feature | M | SPEC-0014 | SPEC-0018 |
 | SPEC-0017 | Cidades e estilos no painel do admin | full | feature | M | SPEC-0014, SPEC-0016 | — |
-| a criar | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | S | SPEC-0016 | — |
-| a criar | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
+| SPEC-0020 | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | M | SPEC-0016 | — |
+| SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
 | a criar | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
 | a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
