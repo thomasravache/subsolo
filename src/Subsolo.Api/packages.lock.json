@@ -248,6 +248,7 @@
         "type": "Project",
         "dependencies": {
           "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )",
           "Subsolo.Modules.Users.Domain": "[1.0.0, )",
           "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
         }
