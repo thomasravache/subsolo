@@ -4,7 +4,7 @@ title: Segurança base
 tier: full
 type: foundation
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-13
 parent: SPEC-0001
 depends_on: [SPEC-0008]
@@ -152,22 +152,22 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Autorização, CSRF e rate limiting (API)**
-- [ ] Red: UT-01, IT-01..IT-04 e CT-01 com a tag `SPEC-0010:<ID>`, falhando pelo motivo certo
-- [ ] Green: política de fallback, políticas `fan`/`artist`/`admin`, cookie `__Host-subsolo`, anti-forgery, rate limiting, teste de arquitetura de endpoints
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: UT-01, IT-01..IT-04 e CT-01 com a tag `SPEC-0010:<ID>`, falhando pelo motivo certo
+- [x] Green: política de fallback, políticas `fan`/`artist`/`admin`, cookie `__Host-subsolo`, anti-forgery, rate limiting, teste de arquitetura de endpoints
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 2: Cabeçalhos, Caddy e jornada**
-- [ ] Red: UT-02, IT-05, IT-06 e E2E-01 falhando
-- [ ] Green: middleware de CSP com nonce e cabeçalhos no Next.js; Caddy com HTTPS (`tls internal`) e HSTS; checklist OWASP
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + arquitetura + E2E (G2/G3)
+- [x] Red: UT-02, IT-05, IT-06 e E2E-01 falhando
+- [x] Green: middleware de CSP com nonce e cabeçalhos no Next.js; Caddy com HTTPS (`tls internal`) e HSTS; checklist OWASP
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + arquitetura + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003; validação local pelo Compose quando aplicável
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -178,10 +178,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 27ea040 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 240ms) — 27ea040 | 2026-10-16 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 27ea040 — autorização negada por padrão, CSRF, rate limiting, CSP com nonce e Caddy com HTTPS/HSTS conferidos; aviso do verify justificado (helper do scaffold 663e4e4 preenchido em 18da406 sem mudar asserções); 0 bloqueantes, 0 importantes, 7 menores (X-Forwarded-For de redes privadas, partição IPv6 por /64 e teste via Caddy, bind parcial do rate limit, nosniff global no Caddy, TLS_ISSUER obrigatório no go-live, ignoreHTTPSErrors só local, regra de filtro CSRF em todo não-GET) → SPEC-0003/backlog — 27ea040 | 2026-10-16 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 6m 46s 363ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 883ms); nota: PR #16, CI run https://github.com/thomasravache/subsolo/actions/runs/39005176528 — 10/10 checks verdes; bateria local completa verde em b5bebf7 (build, lint, arch, test, integration, e2e, coverage, commands_contract) — 778f2c7 (árvore suja) | 2026-10-17 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado: piloto automático, 2026-10-16) | 2026-10-17 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003 | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 778f2c7 (árvore suja) | 2026-10-17 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -196,36 +196,60 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+A segurança base do ADR-0003/ADR-0008:
+- API nega por padrão: política de fallback exige usuário autenticado; políticas `fan`, `artist` e `admin`; 401/403 em ProblemDetails; regra de arquitetura que reprova endpoint sem declaração.
+- Endpoints anônimos só os previstos: agenda, cidades, `/health`, `/alive`, `GET /api/v1/antiforgery` (fora do OpenAPI) e OpenAPI só em Development.
+- Anti-forgery por cabeçalho `X-CSRF` + cookie `__Host-subsolo-csrf` em toda mutação; cookie de sessão `__Host-subsolo` (Secure, HttpOnly, SameSite=Lax).
+- Rate limiting `auth`, `report` e `default` por IP (atrás do Caddy), com 429 e `Retry-After`.
+- Web com CSP com nonce em todas as páginas (`proxy.ts` + `await connection()`, ADR-0017) e cabeçalhos de segurança; Compose local por HTTPS (`https://localhost:8443`) com HSTS e redirect 308 do 8080.
+- Checklist OWASP Top 10 em `docs/runbooks/checklist-seguranca.md`.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: scaffolds (663e4e4, b43cec9) → Test-writer (d4f8d81, dfad7fe) → Emenda 2 e ADR-0017 → Implementer (18da406, 662ee01, aa8a773, 1fb982a, 7594a06) → Emenda 3 (E2E local por HTTPS: 2de2742, 27ea040) → Reviewer APPROVED.
+- Integração da onda 5 (SPEC-0001 IMP-01): readiness do web atrás do Caddy (f27dcf4) e Emenda 4 — falso positivo do WebKit no `<select>` nativo ignorado só nesse caso, com evidência de página mínima (b5bebf7).
+- Emendas: 1 (caminhos `web/src/`), 2 (CSP com nonce em todas as páginas, AllowAnonymous do health), 3 (HTTPS local na 8443, Playwright aceitando o certificado `tls internal`), 4 (WebKit/`<select>`).
+- Nenhum pacote novo além do shared framework do ASP.NET Core.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A — type foundation.
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | mutação sem `X-CSRF` → `security.csrf_invalid`; GET passa | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| UT-02 | CSP com nonce novo a cada requisição | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-01 | regra de arquitetura reprova endpoint sem autorização declarada | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-02 | 401 `auth.required` sem login; 403 `auth.forbidden` sem o papel | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-03 | 6ª chamada em 1 min → 429 com `Retry-After` | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-04 | POST sem token 400; com token de `/api/v1/antiforgery` 200 | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-05 | CSP e cabeçalhos de segurança na resposta do web | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| IT-06 | 308 para HTTPS e HSTS no Caddy | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| CT-01 | agenda continua anônima com o fallback ativo | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
+| E2E-01 | agenda e não encontrada sem violação de CSP e sem violações do axe, nos 3 projetos | PASS | `gate G2 --run` da spec; `gate G5 --run` na integração (b5bebf7); CI do PR #16 (run 39005176528, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — bateria local e CI verdes no resultado integrado (PR #16, run 39005176528)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado) — CSP estrita sem `unsafe-inline` (UT-02, IT-05, E2E-01); HSTS (IT-06)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — ambiente-alvo é a `main`: merge do PR #16 (ac71d56); G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout — rollback = revert do merge commit
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — README e CHANGELOG atualizados
+- [x] Pendências registradas como novas specs (ou nenhuma) — apontadas para o épico SPEC-0002 e a SPEC-0003 (ver Pendências)
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #16 (https://github.com/thomasravache/subsolo/pull/16), merge commit ac71d56 em 2026-10-17, com H2 delegado pelo Thomas (autorização de piloto automático) e merge pelo Architect (ADR-0007).
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0003: Caddy com `SITE_ADDRESS`, `HTTP_PORT=80` e `TLS_ISSUER` obrigatório; `nosniff` global no Caddy; X-Forwarded-For aceito só do Caddy/sub-rede do Compose; `ignoreHTTPSErrors` só na pilha local.
+- Épico SPEC-0002: partição do rate limit IPv6 por /64 e teste via Caddy; valores padrão por campo na configuração do rate limit; regra que exija o filtro de CSRF em todo endpoint não-GET.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0010`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

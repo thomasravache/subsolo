@@ -40,20 +40,24 @@ Todos os comandos rodam na raiz do repositório.
 ```bash
 ./tools/build.sh          # dotnet build -warnaserror + pnpm install --frozen-lockfile + pnpm build
 ./tools/lint.sh           # dotnet format --verify-no-changes, build com analisadores, eslint, prettier, tsc (e semgrep, se instalado)
-dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)   # suíte padrão (`test` do sdd-config)
-dotnet test Subsolo.slnx --filter "Kind=Integration"   # integração com PostgreSQL e Mailpit reais (precisa do Docker)
+dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)   # suíte padrão (`test` do sdd-config)
+dotnet test Subsolo.slnx --filter "Kind=Integration" --max-parallel-test-modules 1   # integração com PostgreSQL e Mailpit reais (precisa do Docker)
 dotnet test tests/Subsolo.ArchitectureTests            # regras de arquitetura
 (cd e2e && pnpm install && pnpm exec playwright install && pnpm test)   # E2E com Playwright (mobile e desktop)
 ./tools/coverage.sh       # cobertura das linhas alteradas em relação à main
 
 aspire run                # sobe PostgreSQL 18, Seq, Mailpit, API e front (dashboard do Aspire com logs e traces)
-./tools/compose-up.sh     # sobe a pilha de produção local (Compose gerado pelo Aspire + Caddy) em http://localhost:8080 — a agenda de exemplo fica em /cidade-exemplo
+./tools/compose-up.sh     # sobe a pilha de produção local (Compose gerado pelo Aspire + Caddy) em https://localhost:8443 — a agenda de exemplo fica em /cidade-exemplo
 (cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
 (cd web && pnpm format)   # formata o front com o Prettier
 dotnet format Subsolo.slnx  # formata o C# conforme o .editorconfig
 ```
 
 O `tools/lint.sh` roda todas as verificações e lista no fim as que falharam, em vez de parar na primeira.
+
+Os módulos de teste rodam um de cada vez (`--max-parallel-test-modules 1`): o Next.js 16 aceita um só `next dev` por pasta (os testes do AppHost sobem o front) e isso mantém a suíte dentro de 8 GB de RAM.
+
+Na pilha local do `compose-up.sh` o certificado HTTPS é o da CA interna do Caddy (`tls internal`), que o navegador acusa como não confiável; `http://localhost:8080` só redireciona para o HTTPS. Logs e traces da API e do front vão para o Seq; no `compose-up.sh` ele fica em http://127.0.0.1:5341 (`SEQ_PORT` muda a porta). Os runbooks dos alertas ficam em `docs/runbooks/`, e o checklist de segurança (OWASP Top 10) em `docs/runbooks/checklist-seguranca.md`. O design system está em [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
 
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
