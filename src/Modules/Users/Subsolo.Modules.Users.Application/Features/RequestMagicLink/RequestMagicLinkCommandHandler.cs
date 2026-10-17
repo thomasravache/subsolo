@@ -83,6 +83,10 @@ internal sealed partial class RequestMagicLinkCommandHandler(
     [LoggerMessage(Level = LogLevel.Information, Message = "Link mágico não enviado: limite de {Limit} links em {WindowMinutes} min por e-mail")]
     private static partial void LogEmailLimited(ILogger logger, int limit, double windowMinutes);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Link mágico não enviado: o Notifications respondeu {ErrorCode}")]
+    // Plano de Rollout: EventName base do alerta de falhas de envio do link no Seq (mais de 5 em 10 min).
+    [LoggerMessage(
+        EventName = "MagicLinkSendFailed",
+        Level = LogLevel.Warning,
+        Message = "Link mágico não enviado: o Notifications respondeu {ErrorCode}")]
     private static partial void LogSendFailed(ILogger logger, string errorCode);
 }
