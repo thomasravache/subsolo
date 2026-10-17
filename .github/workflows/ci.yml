@@ -146,7 +146,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: test (sdd-config)
-        run: dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)
+        run: dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)
       - name: arch_test (sdd-config)
         if: ${{ !cancelled() }}
         run: dotnet test tests/Subsolo.ArchitectureTests
@@ -224,7 +224,7 @@ jobs:
           fi
 
       - name: test_integration (sdd-config)
-        run: dotnet test Subsolo.slnx --filter "Kind=Integration"
+        run: dotnet test Subsolo.slnx --filter "Kind=Integration" --max-parallel-test-modules 1
 
       - name: Salva imagens Docker usadas pelos testes
         id: save-images

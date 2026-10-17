@@ -1,0 +1,25 @@
+{
+  "$comment": "SPEC-0009 (ADR-0010) — configuração do Seq como código: retenção, sinais salvos e alertas por e-mail, cada um com o seu runbook. Aplicada pelo AppHost (src/Subsolo.AppHost/SeqConfiguration.cs) quando o Seq local fica pronto; o e-mail sai pelo Mailpit. O Seq de produção e o destinatário real entram no go-live (SPEC-0003).",
+  "retentionDays": 30,
+  "email": {
+    "app": { "packageId": "Seq.App.EmailPlus", "version": "5.0.0" },
+    "from": "alertas@subsolo.local",
+    "to": "responsavel@subsolo.local"
+  },
+  "alerts": [
+    {
+      "title": "Erros 5xx",
+      "filter": "@Resource.service.name = 'api' and @SpanKind = 'Server' and http.response.status_code >= 500",
+      "window": "00:05:00",
+      "having": "count > 5",
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/erros-5xx.md"
+    },
+    {
+      "title": "Falha de job",
+      "filter": "event.name = 'OutboxProcessingFailed'",
+      "window": "00:10:00",
+      "having": "count >= 3",
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
+    }
+  ]
+}

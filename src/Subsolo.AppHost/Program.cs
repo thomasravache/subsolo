@@ -3,6 +3,7 @@
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
 using Microsoft.Extensions.Configuration;
+using Subsolo.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -42,6 +43,15 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
     .WithReference(api)
     .WaitFor(api)
     .WithHttpHealthCheck("/");
+
+// SPEC-0009 — api e web exportam logs e traces para o Seq (ADR-0010); no local, os alertas de infra/seq/alerts.json
+// são aplicados ao Seq e mandam e-mail pelo Mailpit.
+api.WithTelemetryTo(seq);
+web.WithTelemetryTo(seq);
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    seq.WithAlertsFrom(Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "../../infra/seq/alerts.json")), mailpit);
+}
 
 if (builder.ExecutionContext.IsPublishMode)
 {
