@@ -7,8 +7,8 @@ using Xunit;
 namespace Subsolo.ArchitectureTests.ModularMonolith;
 
 /// <summary>
-/// SPEC-0018 IT-05 (ADR-0014) — só o módulo Notifications usa as bibliotecas de SMTP: nenhum tipo dos outros módulos
-/// nem dos blocos Common depende de <c>MailKit</c>/<c>MimeKit</c>; o canal de e-mail do Notifications.Infrastructure
+/// SPEC-0018 IT-05 (ADR-0014) — só o módulo Notifications usa as bibliotecas de SMTP: nenhum tipo dos outros módulos,
+/// dos blocos Common nem dos hosts (Subsolo.Api e Subsolo.ServiceDefaults, Emenda 2) depende de <c>MailKit</c>/<c>MimeKit</c>; o canal de e-mail do Notifications.Infrastructure
 /// usa o MailKit (a regra não passa no vazio); e um dublê que usa o MailKit fora do Notifications faz a regra falhar,
 /// nomeando-a. Os cinco assemblies <c>Subsolo.Modules.Notifications.*</c> estão entre os avaliados.
 /// </summary>
@@ -42,7 +42,10 @@ public sealed class NotificationsModuleRulesTests
     public void OnlyNotificationsUsesSmtpLibraries()
     {
         var assemblies = ModularMonolithRules.SmtpRuleAssemblies().ToArray();
-        assemblies.Select(assembly => assembly.GetName().Name).ShouldContain("Subsolo.Common.Infrastructure");
+        var names = assemblies.Select(assembly => assembly.GetName().Name).ToList();
+        names.ShouldContain("Subsolo.Common.Infrastructure");
+        names.ShouldContain("Subsolo.Api", "Emenda 2: a regra também avalia o host da API");
+        names.ShouldContain("Subsolo.ServiceDefaults", "Emenda 2: a regra também avalia o ServiceDefaults");
 
         Should.NotThrow(() => ModularMonolithRules.Check(ModularMonolithRules.SmtpOnlyInNotifications, assemblies));
     }

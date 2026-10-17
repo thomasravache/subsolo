@@ -67,15 +67,19 @@ public static partial class ModularMonolithRules
 
     /// <summary>
     /// SPEC-0018 — os assemblies em que a regra <see cref="SmtpOnlyInNotifications"/> vale: todos os módulos
-    /// (<see cref="ModuleAssemblies"/>) e os blocos <c>Subsolo.Common.*</c> ao lado do assembly de teste (sem o dublê de
-    /// violações do ADR-0001).
+    /// (<see cref="ModuleAssemblies"/>), os blocos <c>Subsolo.Common.*</c> ao lado do assembly de teste (sem o dublê de
+    /// violações do ADR-0001) e os hosts <see cref="SmtpRuleHosts"/> (Emenda 2).
     /// </summary>
     public static IReadOnlyList<Assembly> SmtpRuleAssemblies() =>
         [.. ModuleAssemblies(), .. Directory
             .EnumerateFiles(AppContext.BaseDirectory, "Subsolo.Common.*.dll")
             .Where(path => !Path.GetFileName(path).StartsWith("Subsolo.Common.ArchitectureViolations", StringComparison.Ordinal))
+            .Concat(SmtpRuleHosts.Select(host => Path.Combine(AppContext.BaseDirectory, $"{host}.dll")))
             .Order(StringComparer.Ordinal)
             .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
+
+    /// <summary>SPEC-0018 (Emenda 2) — hosts que a regra <see cref="SmtpOnlyInNotifications"/> também avalia.</summary>
+    public static readonly IReadOnlyList<string> SmtpRuleHosts = ["Subsolo.Api", "Subsolo.ServiceDefaults"];
 
     /// <summary>
     /// Nomes (sem extensão) de todos os projetos <c>Subsolo.Modules.*.csproj</c> em <c>src/</c> e <c>tests/</c> de
