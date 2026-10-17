@@ -196,6 +196,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G1 | spec | Contrato §6 (Task<Result> em Notifications.IntegrationEvents) conflita com a regra do ADR-0001 'IntegrationEvents só depende de Common.Application' — Result/Error vivem em Common.Domain; guardas SPEC-0007 IT-06 e SPEC-0014 IT-09 reprovam | Test-writer: scaffold exato do §6; único conflito é o Result | Architect | Emenda 1 (arquitetura) — ADR-0001 esclarecido: Result/Result<T>/Error/ErrorType de Common.Domain permitidos em IntegrationEvents; regra de arquitetura atualizada | 2026-10-17 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -236,4 +237,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0018`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (arquitetura) | 2026-10-17 | Sem mudança no contrato: o ADR-0001 foi esclarecido para permitir em `IntegrationEvents` os tipos `Result`, `Result<T>`, `Error` e `ErrorType` de `Common.Domain` (e só eles); a regra `IntegrationEventsDependencies` dos testes de arquitetura é atualizada pelo Test-writer com essa exceção e um exemplo que reprova entidade de domínio | IMP-01: o `Task<Result>` do §6 reprovava as guardas do ADR-0001 | nenhuma (SPEC-0016 segue fixada em @1) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 1 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
