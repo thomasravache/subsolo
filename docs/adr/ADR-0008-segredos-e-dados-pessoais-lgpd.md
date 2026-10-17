@@ -60,6 +60,11 @@ Credencial no código ou no log e dado pessoal sem controle são as falhas de se
 ### Confirmação (G3)
 Varredura de segredos (gitleaks) em `security_scan`; teste de mascaramento de logs no plano de testes do walking skeleton; testes de exclusão de conta na spec de contas.
 
+**Atualização de 2026-10-17 (decisão do Thomas, recomendação do Architect) — dados pessoais em repouso:**
+- E-mail e nome ficam em texto no banco, protegidos em camadas: disco criptografado em produção (do provedor ou LUKS, SPEC-0003), TLS, backup criptografado (ADR-0011), banco sem porta exposta e acessado só pela aplicação, dados pessoais só no módulo `Users` (os outros módulos guardam o id), tokens de login e de sessão só como hash SHA-256, e-mail mascarado em logs e traces.
+- Criptografia por coluna na aplicação (AES-GCM + índice HMAC para busca) foi avaliada e adiada: atende ao art. 46 da LGPD a proteção proporcional a dados não sensíveis (e-mail e nome opcional), e a coluna cifrada traria gestão e rotação de chave e risco de perda de dados para uma pessoa só. `pgcrypto` descartado (a chave trafega nas consultas).
+- Gatilho para rever: entrar telefone, endereço, documento ou dado sensível (art. 5º, II), ou pedido do Thomas — vira spec própria, com migração que cifra os dados existentes.
+
 ## Prós e Contras das Opções
 | Critério (peso) | Environments GitHub + .env | Cofre self-hosted | Cofre gerenciado |
 |---|---|---|---|

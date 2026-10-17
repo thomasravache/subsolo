@@ -812,6 +812,7 @@
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Users.Infrastructure": "[1.0.0, )",
           "Subsolo.ServiceDefaults": "[1.0.0, )"
         }
       },
@@ -885,6 +886,42 @@
         "dependencies": {
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Events.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Users.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Users.Application": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Users.Application": "[1.0.0, )"
         }
       },
       "subsolo.servicedefaults": {

@@ -14,6 +14,9 @@ namespace Subsolo.Api.Security;
 /// SPEC-0010 — segurança base da API (ADR-0003): sessão por cookie <c>__Host-subsolo</c>, autorização negada por padrão
 /// (política de fallback = usuário autenticado) com as políticas <c>fan</c>, <c>artist</c> e <c>admin</c>, 401/403 em
 /// ProblemDetails (nunca redirecionamento), anti-forgery por cabeçalho <c>X-CSRF</c> e rate limiting por IP.
+/// SPEC-0014 — o cookie é validado contra a sessão no banco (<see cref="SessionCookieValidation"/>), o banco fora do ar
+/// na validação vira 503, os endpoints marcados com <see cref="NoStoreMetadata"/> respondem <c>Cache-Control: no-store</c>
+/// e o token anti-forgery usa o rate limit <c>default</c>.
 /// </summary>
 internal static class SecurityExtensions
 {
@@ -54,6 +57,9 @@ internal static class SecurityExtensions
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);
                 options.SlidingExpiration = true;
 
+                // SPEC-0014: o cookie só vale com a sessão do banco por trás (revogável); os papéis vêm dela.
+                options.Events.OnValidatePrincipal = SessionCookieValidation.ValidatePrincipalAsync;
+
                 // API: o desafio e a proibição respondem ProblemDetails, nunca 302 para uma página de login.
                 options.Events.OnRedirectToLogin = context => RejectAsync(context.HttpContext, SecurityProblems.Unauthorized(), SecurityProblems.AuthRequired);
                 options.Events.OnRedirectToAccessDenied = context => RejectAsync(context.HttpContext, SecurityProblems.Forbidden(), SecurityProblems.AuthForbidden);
@@ -65,6 +71,8 @@ internal static class SecurityExtensions
             .AddPolicy(AuthorizationPolicies.Fan, policy => policy.RequireAuthenticatedUser().RequireRole(AuthorizationPolicies.Fan))
             .AddPolicy(AuthorizationPolicies.Artist, policy => policy.RequireAuthenticatedUser().RequireRole(AuthorizationPolicies.Artist))
             .AddPolicy(AuthorizationPolicies.Admin, policy => policy.RequireAuthenticatedUser().RequireRole(AuthorizationPolicies.Admin));
+
+        services.AddExceptionHandler<SessionStoreUnavailableExceptionHandler>();
 
         services.AddAntiforgery(options =>
         {
@@ -124,6 +132,7 @@ internal static class SecurityExtensions
     public static WebApplication UseApiSecurity(this WebApplication app)
     {
         app.UseForwardedHeaders();
+        app.Use(ApplyNoStore);
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -139,8 +148,27 @@ internal static class SecurityExtensions
                 return TypedResults.Ok(new AntiforgeryToken(tokens.RequestToken!));
             })
             .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Default)
             .ExcludeFromDescription();
         return app;
+    }
+
+    /// <summary>
+    /// <c>Cache-Control: no-store</c> em toda resposta de endpoint com <see cref="NoStoreMetadata"/> — inclusive as que
+    /// saem antes do endpoint (429 do rate limit, 401 do desafio).
+    /// </summary>
+    private static Task ApplyNoStore(HttpContext httpContext, RequestDelegate next)
+    {
+        if (httpContext.GetEndpoint()?.Metadata.GetMetadata<NoStoreMetadata>() is not null)
+        {
+            httpContext.Response.OnStarting(() =>
+            {
+                httpContext.Response.Headers.CacheControl = NoStoreMetadata.CacheControl;
+                return Task.CompletedTask;
+            });
+        }
+
+        return next(httpContext);
     }
 
     private static async Task RejectAsync(HttpContext httpContext, IResult problem, string code)

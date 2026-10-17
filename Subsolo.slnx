@@ -17,6 +17,13 @@
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Users/">
+    <Project Path="src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
+    <Project Path="src/Modules/Users/Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
+    <Project Path="src/Modules/Users/Subsolo.Modules.Users.Infrastructure/Subsolo.Modules.Users.Infrastructure.csproj" />
+    <Project Path="src/Modules/Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Users/Subsolo.Modules.Users.Presentation/Subsolo.Modules.Users.Presentation.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Subsolo.ArchitectureTests/Subsolo.ArchitectureTests.csproj" />
     <Project Path="tests/Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
@@ -45,6 +52,10 @@
   <Folder Name="/tests/Modules/Events/">
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Events/Subsolo.Events.UnitTests/Subsolo.Events.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Users/">
+    <Project Path="tests/Modules/Users/Subsolo.Users.IntegrationTests/Subsolo.Users.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Users/Subsolo.Users.UnitTests/Subsolo.Users.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Observability/">
     <Project Path="tests/Observability/Subsolo.Observability.AppHostTests/Subsolo.Observability.AppHostTests.csproj" />

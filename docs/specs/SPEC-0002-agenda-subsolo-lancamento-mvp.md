@@ -3,13 +3,13 @@ id: SPEC-0002
 title: Agenda Subsolo — lançamento (MVP)
 tier: epic
 type: feature
-status: proposed
+status: approved
 created: 2026-10-13
 depends_on: [SPEC-0001]
 adrs: []
 external: []
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0002 — Agenda Subsolo — lançamento (MVP) (Épico)
@@ -60,10 +60,26 @@ Events <──consulta pública IProfilesApi── Profiles (nomes e links de ba
 ## 4. Decomposição
 Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundação fechar, e cada spec com tela tem as suas telas aprovadas no Stitch antes do próprio H1 (decisão do Thomas, 2026-10-13).
 
+**Revisão de 2026-10-17 (Architect):** "Contas e login" não cabia numa spec M. Ficou dividida em módulo `Users` (SPEC-0014), link mágico (SPEC-0016), Google e Minha conta. O e-mail do link mágico exige o módulo `Notifications` antes (ADR-0014: só ele fala com SMTP), por isso entrou a SPEC-0018, e "Inscrição de push" passa a estender esse módulo. A SPEC-0015 resolve a questão em aberto do título na navegação no cliente. As specs filhas são detalhadas por onda, com as telas no Stitch.
+
+**Radar LGPD (pedido do Thomas, 2026-10-17):** o que já está coberto e o que entra em cada spec.
+- Já coberto: classificação dos dados, base legal e retenção (ADR-0008); TLS e HSTS (SPEC-0010); backup criptografado (ADR-0011); token e sessão guardados só como hash e e-mail mascarado nos logs (SPEC-0014 e SPEC-0016); resposta igual exista a conta ou não.
+- "Minha conta" (onda 4+): exportar e excluir os próprios dados, com teste de que a exclusão apaga a conta, as sessões, os tokens, os "vou" e os seguidos.
+- "Apoie, privacidade e termos": política de privacidade com finalidades, bases legais e retenção do ADR-0008; canal de contato do titular (agente de pequeno porte dispensado de encarregado, Resolução CD/ANPD nº 2/2022, mas o canal é obrigatório); aviso de que dados excluídos somem dos backups em até 6 meses (retenção do ADR-0011); plano curto de resposta a incidente (comunicação à ANPD e aos titulares, Resolução CD/ANPD nº 15/2024) em `docs/runbooks/`.
+- Go-live (SPEC-0003): criptografia em repouso do disco do banco e dos flyers (questão aberta lá).
+- Criptografia por coluna: adiada por decisão do Thomas em 2026-10-17 (ADR-0008, atualização da mesma data); volta se entrar dado mais delicado.
+
+**Herança da SPEC-0015 (Emenda 1, 2026-10-17):** a primeira spec que criar uma página interna que responda 200 e seja alcançável por `next/link` (Página do show ou Apoie) leva o E2E do título na navegação no cliente: um `MutationObserver` registra todo `document.title` durante o clique, nenhum valor fica vazio e o axe `document-title` passa logo depois da troca de URL. Achado junto: a página de cidade inexistente carregada direto mostrou o título "Subsolo" em vez de "Cidade não encontrada · Subsolo" — investigar na mesma spec.
+
 | Spec | Título | Tier | Tipo | Tamanho | Depende de | Consome contrato de |
 |---|---|---|---|---|---|---|
-| a criar | Contas e login (link mágico + Google), exclusão e exportação de dados | full | feature | M | fundação | — |
-| a criar | Cidades e estilos (admin, lista editável) | full | feature | S | fundação | — |
+| SPEC-0014 | Módulo Users: conta, sessão e papéis | full | feature | M | fundação | — |
+| SPEC-0015 | Título da página presente na navegação no cliente | lite | fix | S | fundação | — |
+| SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full | feature | M | fundação | — |
+| SPEC-0016 | Entrar por link mágico no e-mail | full | feature | M | SPEC-0014 | SPEC-0018 |
+| SPEC-0017 | Cidades e estilos no painel do admin | full | feature | M | SPEC-0014, SPEC-0016 | — |
+| a criar | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | S | SPEC-0016 | — |
+| a criar | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
 | a criar | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
 | a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
@@ -112,7 +128,9 @@ Os IDs de teste são definidos quando as filhas forem criadas; cada critério ab
 - [x] Lista de estilos? — Começa com death, black, grind, doom e thrash; o admin adiciona outros pelo painel; um show pode ter vários estilos (Thomas, 2026-10-13)
 - [x] Apoio via Pix e marca apoiadora no lançamento? — Página "Apoie" estática com chave/QR Pix e lista de apoiadores, com link discreto no rodapé; nada no meio da agenda; sem integração de pagamento (Thomas, 2026-10-13)
 - [x] Como será feito o design das telas? — Stitch (mobile e desktop): design system escuro primeiro, depois as telas de cada spec de interface antes do H1 dela (Thomas, 2026-10-13)
-- [ ] Navegação no cliente fica ~300 ms sem `<title>` no Next 16 (metadados em bloco separado; achado na SPEC-0011, Emenda 3). Recomendação do Architect: decidir antes das telas do MVP entre `htmlLimitedBots` global, navegação completa nos links afetados ou aguardar correção do Next — com teste axe `document-title` após navegar
+- [x] Navegação no cliente fica ~300 ms sem `<title>` no Next 16 (metadados em bloco separado; achado na SPEC-0011, Emenda 3) — Metadados bloqueantes com `htmlLimitedBots` global, provados por teste axe `document-title` depois de navegar; se o teste mostrar que não resolve a navegação no cliente, os links afetados passam a navegação completa (Thomas, 2026-10-17)
+- [x] Como fazer as telas no Stitch? — Por onda: as telas das specs de cada onda são feitas e aprovadas antes do H1 delas (Thomas, 2026-10-17)
+- [x] Quando criar o cliente OAuth do Google? — No go-live (SPEC-0003); localmente e no CI, provedor OIDC falso em contêiner e link mágico pelo Mailpit (Thomas, 2026-10-17)
 
 ## 9. Aprovação (H1)
 Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com ele. Registrada no frontmatter (`approved_by`, `approved_at`) do épico e de cada filha.
