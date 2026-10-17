@@ -136,6 +136,7 @@ public sealed partial class GitHubCiVerificationTests
 
     [Fact]
     [Trait("Spec", "SPEC-0006:IT-05")]
+    [Trait("Spec", "SPEC-0013:IT-05")]
     [Trait("Kind", "GitHubVerification")]
     public async Task PullRequestWithoutApprovedSpecTurnsSddCheckRedWithAnnotation()
     {
