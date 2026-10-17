@@ -54,6 +54,18 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
+**Fase 1: Título na navegação**
+- [ ] Red: UT-01 e E2E-01 com a tag `SPEC-0015:<ID>`, falhando pelo motivo certo (E2E-01 vê o título vazio durante a navegação por `next/link`)
+- [ ] Green: `htmlLimitedBots: /.*/` no `next.config.ts`; se o E2E-01 não passar, parar e reportar `SPEC_DEFECT` (emenda para navegação completa nos links afetados)
+- [ ] Refactor mantendo tudo verde
+- [ ] Validar: build + suíte + E2E nos três projetos (G2/G3)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
 | Gate | Status | Evidência | Data |

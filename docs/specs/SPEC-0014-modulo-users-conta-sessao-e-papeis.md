@@ -192,6 +192,23 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 ## 11. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
+**Fase 1: Domínio e sessão**
+- [ ] Red: UT-01..UT-04 com a tag `SPEC-0014:<ID>`, falhando pelo motivo certo
+- [ ] Green: módulo `Users` (5 projetos, padrão do `Events`), `User`, `Session` (hash, 30 dias deslizantes, teto de 90), `ISignInService`, `ISessionValidator`
+- [ ] Refactor mantendo tudo verde
+
+**Fase 2: API, persistência e rate limit**
+- [ ] Red: IT-01..IT-10 e CT-01 falhando pelo motivo certo (IT-09 é guarda)
+- [ ] Green: schema `users` e migração, validação no `OnValidatePrincipal`, `/me` e `/logout` com `no-store`, outbox `UserRegistered`, rate limit `default` nos endpoints existentes e regra de arquitetura, OpenAPI e cliente TS regenerados
+- [ ] Refactor mantendo tudo verde
+- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |

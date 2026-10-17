@@ -161,6 +161,23 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 ## 11. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
+**Fase 1: Contrato e validação**
+- [ ] Red: UT-01..UT-03 com a tag `SPEC-0018:<ID>`, falhando pelo motivo certo
+- [ ] Green: módulo `Notifications` (padrão do `Events`), `INotificationsApi` em `IntegrationEvents`, modelo `MagicLink`, validação de destinatário e dados
+- [ ] Refactor mantendo tudo verde
+
+**Fase 2: SMTP real**
+- [ ] Red: IT-01..IT-05 e CT-01 falhando pelo motivo certo
+- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório em Production, timeout de 10 s, Mailpit no AppHost
+- [ ] Refactor mantendo tudo verde
+- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
