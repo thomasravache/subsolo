@@ -64,7 +64,7 @@ public sealed partial class ComposePublishTests
         }
     }
 
-    private static async Task PublishAsync(string output, CancellationToken ct)
+    internal static async Task PublishAsync(string output, CancellationToken ct)
     {
         var root = RepositoryRoot();
         var start = new ProcessStartInfo("aspire")
@@ -105,7 +105,7 @@ public sealed partial class ComposePublishTests
     /// Valor efetivo de uma entrada do Compose com o <c>.env</c>: <c>${X}</c> e <c>${X-d}</c> (d só se X não existe)
     /// e <c>${X:-d}</c> (d se X não existe ou está vazio), como o Docker Compose interpola.
     /// </summary>
-    private static string Effective(string value, Dictionary<string, string> env) =>
+    internal static string Effective(string value, Dictionary<string, string> env) =>
         Interpolation().Replace(value, match =>
         {
             var name = match.Groups["name"].Value;
@@ -121,17 +121,17 @@ public sealed partial class ComposePublishTests
             return useDefault ? match.Groups["default"].Value : current!;
         });
 
-    private static Dictionary<string, string> ParseEnvFile(IEnumerable<string> lines) =>
+    internal static Dictionary<string, string> ParseEnvFile(IEnumerable<string> lines) =>
         lines
             .Select(line => line.Trim())
             .Where(line => line.Length > 0 && !line.StartsWith('#') && line.Contains('=', StringComparison.Ordinal))
             .Select(line => line.Split('=', 2))
             .ToDictionary(parts => parts[0].Trim(), parts => parts[1].Trim().Trim('"', '\''), StringComparer.Ordinal);
 
-    private static string FormatEnv(Dictionary<string, string> env) =>
+    internal static string FormatEnv(Dictionary<string, string> env) =>
         string.Join(", ", env.Select(entry => $"{entry.Key}={entry.Value}"));
 
-    private static List<ComposeService> Services(string compose)
+    internal static List<ComposeService> Services(string compose)
     {
         var yaml = new YamlStream();
         using (var reader = new StringReader(compose))
@@ -192,5 +192,5 @@ public sealed partial class ComposePublishTests
     [GeneratedRegex(@"\$\{(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:(?<op>:?-)(?<default>[^}]*))?\}")]
     private static partial Regex Interpolation();
 
-    private sealed record ComposeService(string Name, string Image, IReadOnlyDictionary<string, string> Environment);
+    internal sealed record ComposeService(string Name, string Image, IReadOnlyDictionary<string, string> Environment);
 }

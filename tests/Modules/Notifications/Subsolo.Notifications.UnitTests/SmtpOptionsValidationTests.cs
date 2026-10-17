@@ -6,20 +6,23 @@ using Subsolo.Notifications.UnitTests.Infrastructure;
 namespace Subsolo.Notifications.UnitTests;
 
 /// <summary>
-/// SPEC-0018 UT-03 — a configuração <c>Notifications:Smtp</c> é validada na inicialização do host: em Production,
-/// <c>Security=None</c> impede o start com uma mensagem que nomeia <c>Notifications:Smtp:Security</c>; em Production com
+/// SPEC-0018 UT-03 — a configuração <c>Notifications:Smtp</c> é validada na inicialização do host: fora de
+/// Development (Production, Staging — Emenda 2), <c>Security=None</c> impede o start com uma mensagem que nomeia
+/// <c>Notifications:Smtp:Security</c>; em Production com
 /// TLS (<c>StartTls</c> ou <c>SslOnConnect</c>) e em Development com <c>None</c> (Mailpit), o host sobe.
 /// </summary>
 public sealed class SmtpOptionsValidationTests
 {
-    [Fact]
+    [Theory]
     [Trait("Spec", "SPEC-0018:UT-03")]
-    public async Task ProductionWithoutTlsDoesNotStart()
+    [InlineData("Production")]
+    [InlineData("Staging")]
+    public async Task OutsideDevelopmentWithoutTlsDoesNotStart(string environment)
     {
         var ct = TestContext.Current.CancellationToken;
-        using var host = BuildHost("Production", "None");
+        using var host = BuildHost(environment, "None");
 
-        var failure = await Should.ThrowAsync<Exception>(() => host.StartAsync(ct), "a API subiu em Production sem TLS no SMTP");
+        var failure = await Should.ThrowAsync<Exception>(() => host.StartAsync(ct), $"a API subiu em {environment} sem TLS no SMTP");
 
         failure.ShouldNotBeOfType<NotImplementedException>();
         failure.ToString().ShouldContain("Notifications:Smtp:Security", Case.Sensitive, failure.ToString());
@@ -29,6 +32,7 @@ public sealed class SmtpOptionsValidationTests
     [Trait("Spec", "SPEC-0018:UT-03")]
     [InlineData("Production", "StartTls")]
     [InlineData("Production", "SslOnConnect")]
+    [InlineData("Staging", "StartTls")]
     [InlineData("Development", "None")]
     public async Task AcceptedConfigurationStarts(string environment, string security)
     {

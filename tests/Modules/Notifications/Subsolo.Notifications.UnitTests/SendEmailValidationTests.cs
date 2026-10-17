@@ -20,6 +20,10 @@ public sealed class SendEmailValidationTests
         "   ",
         "fa@subsolo.test\r\nBcc: alvo@subsolo.test",
         "fa@subsolo.test\nBcc: alvo@subsolo.test",
+
+        // Emenda 2: endereços que o MimeKit (MailboxAddress.Parse) recusa.
+        "a>@x.com",
+        "a@b.com>,<c",
     };
 
     [Theory]
