@@ -178,9 +178,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 18e1d4c | 2026-10-16 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — f4ce5e4 | 2026-10-16 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 040ms) — f4ce5e4 | 2026-10-16 |
-| G4 Review | FAIL | Reviewer independente: REPROVADO em f4ce5e4 — B1 campos module/feature/environment do contrato não emitidos; I1 exceções, escopos e valores não-string escapam do redator (logs e eventos de span); I2 alerta 'Falha de job' não cobre falha por mensagem nem inbox e não tem teste; I2b timeout da regex lança dentro do log | 2026-10-16 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 730c3ab | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 070ms) — 730c3ab | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente (3ª rodada): APPROVED em 730c3ab — B1, I1, I2, I2b e IMP-A resolvidos (contrato v2, Emenda 4); verify PASS com aviso justificado (playwright.config.ts só SEQ_URL/SEQ_PORT; trace.spec.ts só o skip com motivo); testes de estabilidade 47b4c46/0ab8975 sem afrouxar asserções. Pendências menores: tipo original da exceção mascarada, deployment.environment do web normalizado, ActivityListener restrito às fontes do TracerProvider, limite de tamanho/varredura linear no redator, event.name só para eventos conhecidos, IT-02 pelo caminho OTLP → épico SPEC-0002/SPEC-0003 — 730c3ab | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
