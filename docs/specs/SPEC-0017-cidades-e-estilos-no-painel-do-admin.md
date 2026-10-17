@@ -4,7 +4,7 @@ title: Cidades e estilos no painel do admin
 tier: full
 type: feature
 user_facing: true
-status: proposed
+status: approved
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0016]
@@ -15,8 +15,8 @@ touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/a
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0013, ADR-0016]
 external: []
 size: M
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-17
 ---
 
 # SPEC-0017 — Cidades e estilos no painel do admin
@@ -176,6 +176,8 @@ UF: as 27 siglas. Fuso: qualquer IANA válido; a tela oferece os fusos do Brasil
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
+
+H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no piloto automático com o recomendado"); a tela do admin foi aprovada por ele com os ajustes no mesmo dia.
 
 ## 11. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
