@@ -11,7 +11,7 @@ depends_on: []
 consumes_contract: []
 contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts, tests/**/packages.lock.json]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts, tests/**/packages.lock.json, web/src/api/client.ts, web/src/api/agenda.ts, web/src/api/cities.ts, web/src/api/client.test.ts, tools/compose-up.sh]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0008, ADR-0010]
 external: []
 size: M
@@ -36,7 +36,7 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 - Serviço interno `ISignInService.SignInAsync(email, method)` — encontra ou cria o usuário, atualiza os papéis de admin, cria a sessão e emite o cookie com o id da sessão. As specs de login só chamam esse serviço.
 - Validação da sessão em cada requisição autenticada (`OnValidatePrincipal`): sessão inexistente, revogada ou expirada (30 dias sem uso ou 90 dias desde a entrada) → cookie rejeitado (401); renovação do prazo no máximo uma vez por hora, nunca além do teto de 90 dias. Sem o cookie no navegador não existe sessão: nada de login lembrado por outro meio.
 - Respostas de `/me` e `/logout` com `Cache-Control: no-store`, para que nenhum cache guarde dados de quem está logado.
-- Rate limit em **todo** endpoint da API: `/me` e `/logout` na política `default`; os endpoints que hoje não declaram limite (`GET /api/v1/cities`, a agenda da cidade e o token anti-forgery) passam a usar `default`; um teste de arquitetura reprova endpoint novo sem política de rate limit (exceto as sondas `/health` e `/alive`, chamadas pelo monitor e pelo orquestrador, e o `/openapi/*` que só existe em desenvolvimento — Emenda v2).
+- Rate limit em **todo** endpoint da API: `/me` e `/logout` na política `default`; os endpoints que hoje não declaram limite (`GET /api/v1/cities`, a agenda da cidade e o token anti-forgery) passam a usar `default`; o Next, ao chamar a API pelo servidor, repassa o IP do visitante em `X-Forwarded-For` (o valor que o Caddy pôs na requisição recebida), para o limite valer por visitante e não para o servidor do site inteiro (Emenda v3); um teste de arquitetura reprova endpoint novo sem política de rate limit (exceto as sondas `/health` e `/alive`, chamadas pelo monitor e pelo orquestrador, e o `/openapi/*` que só existe em desenvolvimento — Emenda v2).
 - `GET /api/v1/me` e `POST /api/v1/auth/logout` (revoga a sessão e apaga o cookie).
 - Evento de integração `UserRegistered` (id, data) na primeira entrada, pela outbox, para o módulo de avisos consumir depois. Leva só o id: o e-mail não sai do módulo `Users`.
 
@@ -129,6 +129,7 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 | Prazo deslizante | uso depois de 1 h | `expires_at` renovado para +30 dias; uso antes de 1 h não grava | UT-04, IT-04 |
 | Teto de 90 dias | sessão usada sempre, 90 dias desde a entrada | renovação nunca passa do teto; depois dele → 401, precisa entrar de novo | UT-03, UT-04, IT-04 |
 | Sem cache de dados do usuário | `/me` e `/logout` | `Cache-Control: no-store` | IT-02, IT-03 |
+| Limite por visitante atrás do Next | chamada do servidor do site com o IP do visitante | um balde por visitante, não um para o site inteiro | UT-05, IT-11 |
 | Rate limit em todo endpoint | endpoint da API sem política de rate limit | teste de arquitetura reprova; `/me` acima de 100/min → 429 | IT-10 |
 | Papel admin exigido | usuário só `fan` num endpoint `admin` | 403 `auth.forbidden` | IT-08 |
 | E-mail fora dos logs | entrada e `/me` com logs e traces capturados | nenhum e-mail em claro | IT-06 |
@@ -157,6 +158,8 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 - **IT-07** — Dado o container do PostgreSQL pausado, quando `/me` é chamado com cookie, então 503 em ProblemDetails sem detalhes da exceção.
 - **IT-08** — Dado um usuário só `fan`, quando chama um endpoint de teste `RequireAuthorization(admin)`, então 403 `auth.forbidden`; com papel `admin`, 200.
 - **IT-09** — Dados os testes de arquitetura (SPEC-0007), quando rodam com o módulo `Users`, então as regras do ADR-0001 valem para ele sem configuração extra e nenhum outro módulo referencia `Users.Domain`, `Users.Application` ou `Users.Infrastructure` (guarda: passa antes da mudança).
+- **UT-05** — Dado o cliente da API do web chamado durante uma requisição que traz `x-forwarded-for: 203.0.113.7`, quando faz a chamada à API, então envia `X-Forwarded-For: 203.0.113.7`; sem o cabeçalho na requisição recebida, não inventa nenhum (Emenda v3).
+- **IT-11** — Dada a API recebendo, de um endereço da rede privada, chamadas com `X-Forwarded-For` de dois visitantes diferentes e o `default` em 3 por minuto, quando cada um faz 3 chamadas a `GET /api/v1/cities`, então nenhuma recebe 429 (um balde por visitante), e a 4ª do mesmo visitante recebe 429 (Emenda v3).
 - **IT-10** — Dados os endpoints mapeados da API, quando o teste de arquitetura de rate limit (ao lado de `EndpointAuthorizationRules`) os inspeciona, então todos, exceto `/health`, `/alive` e `/openapi/*` (só em desenvolvimento), declaram uma política de rate limit, e um endpoint de exemplo sem política é reprovado; com a política `default` configurada para 3 por minuto no teste, a 4ª chamada a `/me` e a `GET /api/v1/cities` recebe 429 `security.rate_limited` com `Retry-After`.
 
 ### 7.4 Testes de Contrato
@@ -203,6 +206,11 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 - [ ] Refactor mantendo tudo verde
 - [ ] Validar: build + suíte completa + arquitetura (G2/G3)
 
+**Fase 3: Limite por visitante (Emenda v3)**
+- [ ] Red: UT-05 e IT-11 falhando pelo motivo certo
+- [ ] Green: repasse do `X-Forwarded-For` no cliente da API do web; `default` alto na pilha da E2E
+- [ ] Validar: suíte completa + E2E integrada (G2/G5)
+
 **Fase final: Integração, entrega e documentação**
 - [ ] Review independente (G4)
 - [ ] Integração + CI verde (G5) e aprovação (H2)
@@ -218,7 +226,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 6f368a5 | 2026-10-17 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 352ms) — 6f368a5 | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 6f368a5 — checklist OWASP de sessão atendido (token novo de 256 bits por entrada, só SHA-256 no banco, cookie __Host-, revogação imediata, teto de 90 dias), papéis lidos da sessão, no-store, rate limit em todo endpoint, CSRF no logout, e-mail fora dos logs, 503 sem detalhes, fronteiras do ADR-0001, sem pacote novo; verify só reprova os lock files pela cópia antiga da spec na worktree (cobertos pela emenda de escopo); 0 bloqueantes, 0 importantes, 6 menores → SPEC-0016 Emenda 2 — 6f368a5 | 2026-10-17 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 27s 647ms); test_e2e exit 1 ([ELIFECYCLE] Test failed. See above for more details.); arch_test exit 0 (duration: 1s 404ms) — fc725a6 | 2026-10-17 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -227,6 +235,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G5 | spec | Rate limit default nas páginas públicas conta todos os visitantes como um só IP: o Next chama a API pelo servidor sem repassar o IP do visitante (X-Forwarded-For), e a E2E integrada estoura 100/min (13 falhas com security.rate_limited) | E2E da onda 1 em fc725a6 duas vezes; log da API com security.rate_limited; leitura do SecurityExtensions (XFF aceito de redes privadas) e do web/src/api/client.ts (não repassa o IP) | Architect | Emenda v3 — IP do visitante repassado pelo Next (UT-05, IT-11) e limite de teste na pilha da E2E | 2026-10-17 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -267,5 +276,6 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0014`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 (comportamento e escopo) | 2026-10-17 | Emenda v3: o cliente da API do Next repassa o IP do visitante em `X-Forwarded-For` (UT-05) e a API mantém um balde por visitante (IT-11); a pilha da E2E sobe com o `default` alto por configuração de teste (`tools/compose-up.sh`), porque a suíte inteira sai de um IP só; `touches` ganha `web/src/api/*` e `tools/compose-up.sh` | IMP-01: a E2E integrada da onda 1 mostrou todo o tráfego do site contando como um IP (13 falhas `security.rate_limited`) — em produção, 100 páginas por minuto somando todos os fãs | nenhuma (contrato HTTP igual) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 2 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 2 | 2026-10-17 | `ISessionValidator.ValidateAsync(string sessionToken)` no lugar de `Guid sessionId`: o cookie leva o token de 256 bits em base64url e o banco guarda só o hash; IT-10 isenta `/alive` e `/openapi/*` (só desenvolvimento) além de `/health` | Relatório do Test-writer: Guid tem 128 bits, abaixo dos 256 do §5 e do ADR-0003; `/alive` é sonda do orquestrador e `/openapi` não existe em produção | nenhuma (o único consumidor de `ISessionValidator` é o `SecurityExtensions`, dentro desta spec; `impacted` sem consumidores fixados) | thomas, 2026-10-17 |
