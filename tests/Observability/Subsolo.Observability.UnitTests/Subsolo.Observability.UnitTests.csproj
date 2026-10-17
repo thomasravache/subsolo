@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    SPEC-0009 — testes unitários da observabilidade (UT-01, UT-02): redator de dados pessoais no pipeline do
+    SPEC-0009 — testes unitários da observabilidade (UT-01..UT-05): redator de dados pessoais no pipeline do
     ServiceDefaults (logs e spans exportados, exportador em memória), health check da outbox com FakeTimeProvider
     e a assinatura das fontes do Subsolo (Subsolo.Application, Subsolo.Messaging) pelo ServiceDefaults.
   -->
@@ -36,6 +36,8 @@
     <ProjectReference Include="../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <ProjectReference Include="../../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
     <ProjectReference Include="../../../src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <!-- UT-03: a consulta real do módulo Events (GetCityAgenda) passa pelo LoggingDecorator. -->
+    <ProjectReference Include="../../../src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Subsolo.Observability.UnitTests;
@@ -19,12 +22,25 @@ internal sealed class ServiceDefaultsTelemetry : IDisposable
     private readonly List<Activity> _spans = [];
 
     public ServiceDefaultsTelemetry(params string[] extraSources)
+        : this("Testing", new Dictionary<string, string?>(), extraSources)
+    {
+    }
+
+    /// <summary>
+    /// Host no ambiente <paramref name="environmentName"/> com a configuração <paramref name="configuration"/> (ex.:
+    /// <c>OTEL_SERVICE_NAME</c>, que o AppHost injeta com o nome do recurso).
+    /// </summary>
+    public ServiceDefaultsTelemetry(
+        string environmentName,
+        IReadOnlyDictionary<string, string?> configuration,
+        params string[] extraSources)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
         {
             ApplicationName = "Subsolo.Observability.UnitTests",
-            EnvironmentName = "Testing",
+            EnvironmentName = environmentName,
         });
+        builder.Configuration.AddInMemoryCollection(configuration);
         builder.AddServiceDefaults();
         builder.Services.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
         builder.Services.ConfigureOpenTelemetryTracerProvider(tracing =>
@@ -43,6 +59,16 @@ internal sealed class ServiceDefaultsTelemetry : IDisposable
         _ = _host.Services.GetRequiredService<TracerProvider>();
         _ = _host.Services.GetRequiredService<ILoggerFactory>();
     }
+
+    public IServiceProvider Services => _host.Services;
+
+    /// <summary>Atributos do resource dos logs (o que o exportador OTLP envia em <c>resource</c>).</summary>
+    public IReadOnlyDictionary<string, string?> LogResource =>
+        ResourceAttributes(_host.Services.GetRequiredService<LoggerProvider>().GetResource());
+
+    /// <summary>Atributos do resource dos spans.</summary>
+    public IReadOnlyDictionary<string, string?> SpanResource =>
+        ResourceAttributes(_host.Services.GetRequiredService<TracerProvider>().GetResource());
 
     public ILogger CreateLogger(string category) =>
         _host.Services.GetRequiredService<ILoggerFactory>().CreateLogger(category);
@@ -72,4 +98,9 @@ internal sealed class ServiceDefaultsTelemetry : IDisposable
     }
 
     public void Dispose() => _host.Dispose();
+
+    private static Dictionary<string, string?> ResourceAttributes(Resource resource) =>
+        resource.Attributes
+            .GroupBy(attribute => attribute.Key, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Last().Value?.ToString(), StringComparer.Ordinal);
 }
