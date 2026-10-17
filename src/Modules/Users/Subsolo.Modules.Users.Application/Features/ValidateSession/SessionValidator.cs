@@ -18,7 +18,7 @@ internal sealed class SessionValidator(
     TimeProvider clock)
     : ISessionValidator
 {
-    public Task<SessionPrincipal?> ValidateAsync(Guid sessionId, CancellationToken cancellationToken) =>
+    public Task<SessionPrincipal?> ValidateAsync(string sessionToken, CancellationToken cancellationToken) =>
         throw new NotImplementedException("SPEC-0014: ISessionValidator.ValidateAsync ainda não implementado.");
 }
 

@@ -3,8 +3,8 @@ using Subsolo.Common.Domain;
 namespace Subsolo.Modules.Users.Domain.Sessions;
 
 /// <summary>
-/// SPEC-0014 — sessão guardada no banco por trás do cookie <c>__Host-subsolo</c> (ADR-0003): id aleatório guardado só
-/// como hash (<see cref="IdHash"/>), prazo deslizante de <see cref="SlidingLifetime"/> renovado no máximo uma vez a cada
+/// SPEC-0014 — sessão guardada no banco por trás do cookie <c>__Host-subsolo</c> (ADR-0003): token aleatório de 256 bits
+/// (base64url, só no cookie) guardado só como hash SHA-256 (<see cref="IdHash"/>; Emenda v2), prazo deslizante de <see cref="SlidingLifetime"/> renovado no máximo uma vez a cada
 /// <see cref="RenewalInterval"/>, teto absoluto de <see cref="AbsoluteLifetime"/> desde a entrada e revogação no servidor.
 /// </summary>
 public sealed class Session : Entity
@@ -22,7 +22,7 @@ public sealed class Session : Entity
     {
     }
 
-    /// <summary>Hash do id da sessão (o id em claro só existe no cookie).</summary>
+    /// <summary>Hash SHA-256 do token da sessão (o token em claro só existe no cookie).</summary>
     public string IdHash { get; private set; } = string.Empty;
 
     public Guid UserId { get; private set; }
