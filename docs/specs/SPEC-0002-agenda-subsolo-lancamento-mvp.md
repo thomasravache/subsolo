@@ -112,7 +112,9 @@ Os IDs de teste são definidos quando as filhas forem criadas; cada critério ab
 - [x] Lista de estilos? — Começa com death, black, grind, doom e thrash; o admin adiciona outros pelo painel; um show pode ter vários estilos (Thomas, 2026-10-13)
 - [x] Apoio via Pix e marca apoiadora no lançamento? — Página "Apoie" estática com chave/QR Pix e lista de apoiadores, com link discreto no rodapé; nada no meio da agenda; sem integração de pagamento (Thomas, 2026-10-13)
 - [x] Como será feito o design das telas? — Stitch (mobile e desktop): design system escuro primeiro, depois as telas de cada spec de interface antes do H1 dela (Thomas, 2026-10-13)
-- [ ] Navegação no cliente fica ~300 ms sem `<title>` no Next 16 (metadados em bloco separado; achado na SPEC-0011, Emenda 3). Recomendação do Architect: decidir antes das telas do MVP entre `htmlLimitedBots` global, navegação completa nos links afetados ou aguardar correção do Next — com teste axe `document-title` após navegar
+- [x] Navegação no cliente fica ~300 ms sem `<title>` no Next 16 (metadados em bloco separado; achado na SPEC-0011, Emenda 3) — Metadados bloqueantes com `htmlLimitedBots` global, provados por teste axe `document-title` depois de navegar; se o teste mostrar que não resolve a navegação no cliente, os links afetados passam a navegação completa (Thomas, 2026-10-17)
+- [x] Como fazer as telas no Stitch? — Por onda: as telas das specs de cada onda são feitas e aprovadas antes do H1 delas (Thomas, 2026-10-17)
+- [x] Quando criar o cliente OAuth do Google? — No go-live (SPEC-0003); localmente e no CI, provedor OIDC falso em contêiner e link mágico pelo Mailpit (Thomas, 2026-10-17)
 
 ## 9. Aprovação (H1)
 Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com ele. Registrada no frontmatter (`approved_by`, `approved_at`) do épico e de cada filha.

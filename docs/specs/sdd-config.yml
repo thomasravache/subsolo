@@ -99,6 +99,8 @@ critical_journeys:
   cadastro-show: "Produtor ou banda aprovados cadastram um show em menos de 2 minutos"
   compartilhar-show: "Fã abre a página do show e compartilha com o flyer na prévia"
   seguir-e-avisar: "Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera"
+  entrar: "Fã entra pelo link mágico no e-mail e sai"
+  admin-cidades: "Admin cadastra cidade e estilo"
 
 # --- Pilares de entrega (references/pillars.md) ---
 # profile: minimo | padrao | rigoroso — ativa a checagem de cobertura (`pillars`, validate, INDEX).
