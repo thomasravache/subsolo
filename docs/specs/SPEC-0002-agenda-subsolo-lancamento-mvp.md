@@ -60,10 +60,17 @@ Events <──consulta pública IProfilesApi── Profiles (nomes e links de ba
 ## 4. Decomposição
 Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundação fechar, e cada spec com tela tem as suas telas aprovadas no Stitch antes do próprio H1 (decisão do Thomas, 2026-10-13).
 
+**Revisão de 2026-10-17 (Architect):** "Contas e login" não cabia numa spec M. Ficou dividida em módulo `Users` (SPEC-0014), link mágico (SPEC-0016), Google e Minha conta. O e-mail do link mágico exige o módulo `Notifications` antes (ADR-0014: só ele fala com SMTP), por isso entrou a SPEC-0018, e "Inscrição de push" passa a estender esse módulo. A SPEC-0015 resolve a questão em aberto do título na navegação no cliente. As specs filhas são detalhadas por onda, com as telas no Stitch.
+
 | Spec | Título | Tier | Tipo | Tamanho | Depende de | Consome contrato de |
 |---|---|---|---|---|---|---|
-| a criar | Contas e login (link mágico + Google), exclusão e exportação de dados | full | feature | M | fundação | — |
-| a criar | Cidades e estilos (admin, lista editável) | full | feature | S | fundação | — |
+| SPEC-0014 | Módulo Users: conta, sessão e papéis | full | feature | M | fundação | — |
+| SPEC-0015 | Título da página presente na navegação no cliente | lite | fix | S | fundação | — |
+| SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full | feature | M | fundação | — |
+| SPEC-0016 | Entrar por link mágico no e-mail | full | feature | M | SPEC-0014 | SPEC-0018 |
+| SPEC-0017 | Cidades e estilos no painel do admin | full | feature | M | SPEC-0014, SPEC-0016 | — |
+| a criar | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | S | SPEC-0016 | — |
+| a criar | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
 | a criar | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
 | a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |

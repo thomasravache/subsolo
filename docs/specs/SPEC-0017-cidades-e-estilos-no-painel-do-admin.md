@@ -172,7 +172,7 @@ UF: as 27 siglas. Fuso: qualquer IANA válido; a tela oferece os fusos do Brasil
 
 ## 9. Questões em Aberto
 - [x] Cidade e estilo podem ser apagados? — Não no MVP: só criar e editar ou renomear; o slug não muda (recomendação do Architect, 2026-10-17; confirmada no H1)
-- [x] Tela do admin — gerada no Stitch em 2026-10-17 e apresentada no H1 (aprovação junto com o H1)
+- [ ] Tela "Cidades e estilos" aprovada no Stitch (Thomas) — a geração no desktop estourou o tempo em 2026-10-17; refazer antes do H1 desta spec
 
 ## 10. Aprovação (H1)
 Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado". O arquiteto nunca aprova a própria spec.
