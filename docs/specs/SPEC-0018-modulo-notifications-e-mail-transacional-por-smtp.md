@@ -188,7 +188,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 389e61f | 2026-10-17 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 085ms) — 389e61f | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 389e61f após CHANGES_REQUESTED em 59d9d11 — os 6 achados corrigidos (Compose ligado ao Mailpit com SMTP_SECURITY padrão StartTls, QUIT falho não vira falha, destinatário alinhado ao MimeKit, regra SMTP com os hosts, TLS fora de Development, comentário do csproj); contrato §6 exato, MailKit com timeout de 10 s, template escapado e acessível, sem dados pessoais na telemetria, MailKit/MimeKit/BouncyCastle MIT; testes só ficaram mais rígidos; 2 menores → SPEC-0003 (Compose de produção ainda aponta para o Mailpit) e aceito (letras Unicode no local-part) — 389e61f | 2026-10-17 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 46s 801ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 468ms) — 6f9ee86 | 2026-10-17 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
