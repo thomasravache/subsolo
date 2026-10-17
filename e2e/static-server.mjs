@@ -18,9 +18,17 @@ const types = {
 };
 
 createServer(async (request, response) => {
-  const path = decodeURIComponent(
-    new URL(request.url ?? "/", "http://localhost").pathname,
-  );
+  let path;
+  try {
+    path = decodeURIComponent(
+      new URL(request.url ?? "/", "http://localhost").pathname,
+    );
+  } catch {
+    // URL malformada (ex.: /%E0%A4%A): 400 em vez de derrubar o servidor (SPEC-0013).
+    response.writeHead(400, { "content-type": "text/plain; charset=utf-8" });
+    response.end("requisição inválida");
+    return;
+  }
   const file = normalize(
     join(root, path.endsWith("/") ? `${path}index.html` : path),
   );
