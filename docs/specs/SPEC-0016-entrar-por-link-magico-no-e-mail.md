@@ -7,7 +7,7 @@ user_facing: true
 status: approved
 created: 2026-10-17
 parent: SPEC-0002
-depends_on: [SPEC-0014]
+depends_on: [SPEC-0014, SPEC-0018]
 consumes_contract: [SPEC-0018@1]
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
@@ -279,3 +279,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0016`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (ordem) | 2026-10-17 | `depends_on` ganha SPEC-0018: a 0016 roda depois do módulo Notifications implementado | O IT e o E2E desta spec usam o Notifications real com o Mailpit, e as duas specs regravam os mesmos `packages.lock.json` de teste; sem a ordem, o `waves` punha a 0018 depois da 0016 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |

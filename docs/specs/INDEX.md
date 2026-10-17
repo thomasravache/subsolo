@@ -48,9 +48,9 @@ Perfil: **padrao**
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0014 | Módulo Users: conta, sessão e papéis | full/M | in-progress | 🔄 em andamento |  |
 | 1 | SPEC-0015 | Título da página presente na navegação no cliente | lite/S | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0014 |  |
 | 2 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0014 |
-| 3 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | proposed | ⏳ aguardando aprovação (H1) |  |
+| 3 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0014; aguarda implementação de SPEC-0018 |  |
+| 4 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | proposed | ⏳ aguardando aprovação (H1) |  |
 
 ## Épicos
 
@@ -74,6 +74,7 @@ flowchart LR
     S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::approved
   end
   S0014 --> S0016
+  S0018 --> S0016
   S0018 -. contrato v1 .-> S0016
   S0014 --> S0017
   S0016 --> S0017
@@ -103,7 +104,7 @@ flowchart LR
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | implemented | 2026-10-14 | SPEC-0001 | — | — |
 | [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | in-progress | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | in-progress | 2026-10-17 | SPEC-0002 | — | — |
-| [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014 | SPEC-0018@1 |
+| [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0018 | SPEC-0018@1 |
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | proposed | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | approved | 2026-10-17 | SPEC-0002 | — | — |
 

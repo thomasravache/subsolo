@@ -11,7 +11,7 @@ depends_on: []
 consumes_contract: []
 contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts, tests/**/packages.lock.json]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0008, ADR-0010]
 external: []
 size: M
@@ -267,4 +267,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0014`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 2 | 2026-10-17 | `ISessionValidator.ValidateAsync(string sessionToken)` no lugar de `Guid sessionId`: o cookie leva o token de 256 bits em base64url e o banco guarda só o hash; IT-10 isenta `/alive` e `/openapi/*` (só desenvolvimento) além de `/health` | Relatório do Test-writer: Guid tem 128 bits, abaixo dos 256 do §5 e do ADR-0003; `/alive` é sonda do orquestrador e `/openapi` não existe em produção | nenhuma (o único consumidor de `ISessionValidator` é o `SecurityExtensions`, dentro desta spec; `impacted` sem consumidores fixados) | thomas, 2026-10-17 |

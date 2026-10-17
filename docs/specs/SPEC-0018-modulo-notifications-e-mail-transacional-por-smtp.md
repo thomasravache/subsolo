@@ -11,7 +11,7 @@ depends_on: []
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.AppHost/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.AppHost.IntegrationTests/**, Directory.Packages.props, Subsolo.slnx]
+touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.AppHost/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.AppHost.IntegrationTests/**, Directory.Packages.props, Subsolo.slnx, tests/**/packages.lock.json]
 adrs: [ADR-0001, ADR-0008, ADR-0009, ADR-0010, ADR-0014]
 external: []
 size: M
@@ -236,3 +236,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0018`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-17 | `touches` ganha `tests/**/packages.lock.json` | Referenciar um módulo novo no `Subsolo.Api` regrava o lock dos projetos de teste que referenciam a API (o CI restaura em modo travado); achado no verify da SPEC-0014 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
