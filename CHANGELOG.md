@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Contas e sessão (SPEC-0014): módulo `Users` com conta (e-mail, nome, papéis; admin pela configuração), sessão no banco por trás do cookie `__Host-subsolo` (token de 256 bits, só o hash guardado, 30 dias sem uso e teto de 90 dias, revogação imediata), `GET /api/v1/me` e `POST /api/v1/auth/logout` com `no-store`, e rate limit em todo endpoint contado por visitante (o web repassa o IP do visitante à API).
 - Design system escuro e shell do app (SPEC-0011): identidade "Subsolo Dark" (`docs/design/DESIGN.md`, tokens Tailwind 4 com contraste WCAG testado, fontes self-hosted), componentes base acessíveis (Card, Badge, Chip, Header, Footer, BottomNav, CitySwitcher), shell aplicado à agenda, ícones do app e `GET /api/v1/cities` com a segunda cidade seed.
 - Segurança base (SPEC-0010): API nega por padrão (políticas `fan`, `artist`, `admin`), anti-forgery por `X-CSRF`, cookies `__Host-`, rate limiting com `Retry-After`, CSP com nonce em todas as páginas do web (ADR-0017), pilha local por HTTPS com HSTS (https://localhost:8443) e checklist OWASP Top 10.
 - Observabilidade base (SPEC-0009): logs e traces da API e do web por OTLP no Seq com um trace único até o banco, campos `module`/`feature`/`deployment.environment`, redator de dados pessoais (logs, spans, exceções e console), `/health` com PostgreSQL e outbox, alertas por e-mail ("Erros 5xx" e "Falha de job") com runbooks.
@@ -19,5 +20,6 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- Título da página na navegação no cliente (SPEC-0015): metadados entregues de forma bloqueante para todo navegador (`htmlLimitedBots`).
 - Ajustes do harness e do CI (SPEC-0013): `coverage.sh` compatível com bash 3.2 e checando a base no início, servidor estático do E2E resistente a URL malformada, lint do TypeScript de `e2e/`, concorrência e cache do pnpm por lockfile no CI, `OccurredOnUtc` pelo `TimeProvider`, regra `OnlyReferences` alinhada ao ADR-0001 e guardas de CODEOWNERS, Aspire CLI e testes de contrato de comandos.
 - Ajustes do tooling (SPEC-0012): `.env.example` versionável, `.claude/` ignorado e testes dos hooks cobrindo `[no-spec]` e chave Google API.

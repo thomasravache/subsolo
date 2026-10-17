@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 4, in-progress 2, implemented 10
+- Validação (G0): **1 erro(s), 21 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 4, implemented 12
 - Impedimentos: **0 aberto(s)**, 14 resolvido(s)
 
 ## Cobertura de Pilares
@@ -41,25 +41,23 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0014, SPEC-0015  
+**Em andamento:** —  
 **Paradas por impedimento:** —  
-**Próximo lote:** —
+**Próximo lote:** SPEC-0018
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0014 | Módulo Users: conta, sessão e papéis | full/M | in-progress | 🔄 em andamento |  |
-| 1 | SPEC-0015 | Título da página presente na navegação no cliente | lite/S | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0014 |
-| 3 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0014; aguarda implementação de SPEC-0018 |  |
-| 4 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | approved | ⛔ aguarda implementação de SPEC-0014; aguarda implementação de SPEC-0016 |  |
-| 5 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full/M | approved | ⛔ aguarda implementação de SPEC-0014; aguarda implementação de SPEC-0016 | saiu da onda 4: arquivos em comum com SPEC-0017 |
+| 1 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full/M | approved | ✅ pronta |  |
+| 2 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0018 |  |
+| 3 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | approved | ⛔ aguarda implementação de SPEC-0016 |  |
+| 4 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 3: arquivos em comum com SPEC-0017 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 0/6 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 2/6 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -69,8 +67,7 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 ```mermaid
 flowchart LR
   subgraph E0002["SPEC-0002 · Agenda Subsolo — lançamento (MVP)"]
-    S0014["SPEC-0014<br/>Módulo Users: conta, sessão e papéis"]:::inprogress
-    S0015["SPEC-0015<br/>Título da página presente na navegação …"]:::inprogress
+    S0014["SPEC-0014<br/>Módulo Users: conta, sessão e papéis"]:::implemented
     S0016["SPEC-0016<br/>Entrar por link mágico no e-mail"]:::approved
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::approved
     S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::approved
@@ -107,8 +104,8 @@ flowchart LR
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | implemented | 2026-10-14 | SPEC-0001 | — | — |
-| [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | in-progress | 2026-10-17 | SPEC-0002 | — | — |
-| [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | in-progress | 2026-10-17 | SPEC-0002 | — | — |
+| [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | implemented | 2026-10-17 | SPEC-0002 | — | — |
+| [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | implemented | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0018 | SPEC-0018@1 |
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | approved | 2026-10-17 | SPEC-0002 | — | — |
