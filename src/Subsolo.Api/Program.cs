@@ -9,6 +9,7 @@ using Subsolo.Common.Presentation;
 using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Events.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure.Cities;
+using Subsolo.Modules.Users.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,7 @@ builder.Services.AddApiSecurity(builder.Configuration);
 
 // Módulos: services.Add<M>Module(builder.Configuration) — cada um chama AddModule e AddEndpoints.
 builder.Services.AddEventsModule(builder.Configuration);
+builder.Services.AddUsersModule(builder.Configuration);
 
 var app = builder.Build();
 

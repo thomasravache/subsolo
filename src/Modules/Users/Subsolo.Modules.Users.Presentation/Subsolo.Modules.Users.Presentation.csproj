@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SPEC-0014 — endpoints Minimal API do módulo Users (ADR-0001): GET /api/v1/me e POST /api/v1/auth/logout. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Users.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
+  </ItemGroup>
+
+</Project>
