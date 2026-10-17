@@ -177,7 +177,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — ? | 2026-10-13 |
-| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ff83806 | 2026-10-16 |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 18e1d4c | 2026-10-16 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ next typegen && tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — f4ce5e4 | 2026-10-16 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 040ms) — f4ce5e4 | 2026-10-16 |
 | G4 Review | FAIL | Reviewer independente: REPROVADO em f4ce5e4 — B1 campos module/feature/environment do contrato não emitidos; I1 exceções, escopos e valores não-string escapam do redator (logs e eventos de span); I2 alerta 'Falha de job' não cobre falha por mensagem nem inbox e não tem teste; I2b timeout da regex lança dentro do log | 2026-10-16 |
