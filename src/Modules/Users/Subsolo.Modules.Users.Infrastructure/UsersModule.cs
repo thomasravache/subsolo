@@ -6,8 +6,10 @@ using Subsolo.Modules.Users.Application;
 using Subsolo.Modules.Users.Application.Diagnostics;
 using Subsolo.Modules.Users.Application.Features.SignIn;
 using Subsolo.Modules.Users.Application.Features.ValidateSession;
+using Subsolo.Modules.Users.Domain.MagicLinks;
 using Subsolo.Modules.Users.Domain.Sessions;
 using Subsolo.Modules.Users.Domain.Users;
+using Subsolo.Modules.Users.Infrastructure.MagicLinks;
 using Subsolo.Modules.Users.Infrastructure.Sessions;
 using Subsolo.Modules.Users.Infrastructure.Users;
 using Subsolo.Modules.Users.IntegrationEvents;
@@ -35,6 +37,7 @@ public static class UsersModule
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
+        services.AddScoped<IMagicLinkTokenRepository, MagicLinkTokenRepository>();
         services.AddScoped<IUsersUnitOfWork>(provider => provider.GetRequiredService<UsersDbContext>());
         services.AddScoped<ISessionCookieIssuer, HttpSessionCookieIssuer>();
         services.AddScoped<ISignInService, SignInService>();

@@ -11,6 +11,9 @@ public static class UsersErrors
     /// <summary>Usuário da sessão não encontrado.</summary>
     public const string UserNotFound = "users.not_found";
 
+    /// <summary>SPEC-0016 — link mágico inexistente, expirado ou já usado (o mesmo código para os três).</summary>
+    public const string MagicLinkInvalid = "users.magic_link_invalid";
+
     internal static Error InvalidEmailError() =>
         Error.Validation(
             InvalidEmail,

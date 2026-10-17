@@ -20,6 +20,8 @@
     <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
+    <!-- SPEC-0016: o link mágico sai pela API pública do Notifications (SPEC-0018@1, ADR-0014). -->
+    <ProjectReference Include="../../Notifications/Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
   </ItemGroup>
 
 </Project>
