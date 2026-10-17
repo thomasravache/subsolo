@@ -105,6 +105,17 @@ internal sealed class UsersApiFactory(
         return new NpgsqlConnectionStringBuilder(serverConnectionString) { Database = name }.ConnectionString;
     }
 
+    /// <summary>
+    /// Para o host e devolve ao PostgreSQL as conexões ociosas do pool deste banco: cada teste usa um banco próprio, e
+    /// os pools dos hosts já parados (até 5 min ociosos no Npgsql) esgotariam o <c>max_connections</c> do container.
+    /// </summary>
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        using var connection = new NpgsqlConnection(connectionString);
+        NpgsqlConnection.ClearPool(connection);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(environment);
