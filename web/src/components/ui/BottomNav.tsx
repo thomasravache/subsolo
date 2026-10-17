@@ -1,24 +1,52 @@
 import Link from "next/link";
 
 import { CalendarIcon, HeartIcon } from "./icons";
+import { accountHref } from "./shell";
 
 export interface BottomNavProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
   city: string;
   /** Destino ativo, marcado com `aria-current="page"`. */
   current?: "agenda" | "apoie" | "conta";
-  /**
-   * SPEC-0016 — há sessão (`GET /api/v1/me`): a aba "Conta" leva a `/conta`; sem sessão, a `/entrar`.
-   * Scaffold do Test-writer: ainda sem uso (a aba é do Green).
-   */
+  /** SPEC-0016 — há sessão (`GET /api/v1/me`): a aba "Conta" leva a `/conta`; sem sessão, a `/entrar`. */
   signedIn?: boolean;
+  /** SPEC-0016 — página atual, para a volta depois de entrar (`/entrar?returnTo=…`). */
+  returnTo?: string;
+}
+
+/** SPEC-0016 — ícone da aba "Conta" (pessoa), no traço dos ícones do shell; decorativo. */
+function UserIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  );
 }
 
 const item =
   "flex h-full min-w-11 flex-1 flex-col items-center justify-center gap-0.5 font-label text-[11px] font-bold uppercase tracking-wider";
 
-/** SPEC-0011 — navegação inferior fixa, só no celular (< 768 px); no desktop a navegação fica no cabeçalho. */
-export function BottomNav({ city, current }: BottomNavProps) {
+/**
+ * SPEC-0011 — navegação inferior fixa, só no celular (< 768 px); no desktop a navegação fica no cabeçalho.
+ * SPEC-0016 — a aba "Conta" leva a `/conta` com sessão e a `/entrar` (com a volta para a página atual) sem sessão.
+ */
+export function BottomNav({
+  city,
+  current,
+  signedIn = false,
+  returnTo,
+}: BottomNavProps) {
   // Ativo: texto claro com ícone e barra no destaque (o destaque não tem contraste para texto pequeno).
   const tone = (name: BottomNavProps["current"]) =>
     current === name
@@ -44,6 +72,14 @@ export function BottomNav({ city, current }: BottomNavProps) {
       >
         <HeartIcon />
         Apoie
+      </Link>
+      <Link
+        href={accountHref(signedIn, returnTo)}
+        aria-current={current === "conta" ? "page" : undefined}
+        className={`${item} ${tone("conta")}`}
+      >
+        <UserIcon />
+        Conta
       </Link>
     </nav>
   );

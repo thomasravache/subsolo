@@ -45,11 +45,17 @@ if ! [[ "$MAILPIT_PORT" =~ ^[0-9]+$ ]] || ((10#$MAILPIT_PORT < 1 || 10#$MAILPIT_
   echo "compose-up: MAILPIT_PORT inválido ('$MAILPIT_PORT'): use um número de porta entre 1 e 65535" >&2
   exit 2
 fi
+# Limite de rate limit: inteiro de 1 a 2147483647 (o PermitLimit da API é um int de 32 bits; SPEC-0016, §7.6 h). O
+# tamanho é conferido antes da conta, para um número enorme não estourar a aritmética do bash.
+check_rate_limit() {
+  local name=$1 value=$2
+  if ! [[ "$value" =~ ^[0-9]{1,10}$ ]] || ((10#$value < 1 || 10#$value > 2147483647)); then
+    echo "compose-up: $name inválido ('$value'): use um número inteiro de 1 a 2147483647" >&2
+    exit 2
+  fi
+}
 readonly AUTH_RATE_LIMIT="${AUTH_RATE_LIMIT:-10000}"
-if ! [[ "$AUTH_RATE_LIMIT" =~ ^[0-9]+$ ]] || ((10#$AUTH_RATE_LIMIT < 1)); then
-  echo "compose-up: AUTH_RATE_LIMIT inválido ('$AUTH_RATE_LIMIT'): use um número inteiro positivo" >&2
-  exit 2
-fi
+check_rate_limit AUTH_RATE_LIMIT "$AUTH_RATE_LIMIT"
 readonly E2E_PLAIN_SENTINEL="${E2E_PLAIN_SENTINEL:-subsolo-sentinela-comum-e2e04}"
 readonly E2E_SECRET_SENTINEL="${E2E_SECRET_SENTINEL:-subsolo-sentinela-segredo-e2e04}"
 for sentinel in "$E2E_PLAIN_SENTINEL" "$E2E_SECRET_SENTINEL"; do
@@ -59,10 +65,7 @@ for sentinel in "$E2E_PLAIN_SENTINEL" "$E2E_SECRET_SENTINEL"; do
   fi
 done
 readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
-if ! [[ "$DEFAULT_RATE_LIMIT" =~ ^[0-9]+$ ]] || ((10#$DEFAULT_RATE_LIMIT < 1)); then
-  echo "compose-up: DEFAULT_RATE_LIMIT inválido ('$DEFAULT_RATE_LIMIT'): use um número inteiro positivo" >&2
-  exit 2
-fi
+check_rate_limit DEFAULT_RATE_LIMIT "$DEFAULT_RATE_LIMIT"
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then

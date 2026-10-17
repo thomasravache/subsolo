@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CitySwitcher, type CityOption } from "./CitySwitcher";
+import { accountHref } from "./shell";
 
 export interface HeaderProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
@@ -9,9 +10,11 @@ export interface HeaderProps {
   onCityChange: (slug: string) => void;
   /**
    * SPEC-0016 — há sessão (`GET /api/v1/me`): o link do cabeçalho (desktop) é "Conta" → `/conta`; sem sessão,
-   * "Entrar" → `/entrar`. Scaffold do Test-writer: ainda sem uso (o link é do Green).
+   * "Entrar" → `/entrar`.
    */
   signedIn?: boolean;
+  /** SPEC-0016 — página atual, para a volta depois de entrar (`/entrar?returnTo=…`). */
+  returnTo?: string;
 }
 
 const navLink =
@@ -19,9 +22,16 @@ const navLink =
 
 /**
  * SPEC-0011 — cabeçalho do app: wordmark "Subsolo", navegação (só no desktop; no celular fica a navegação inferior)
- * e o seletor de cidade (quando há cidades para escolher).
+ * e o seletor de cidade (quando há cidades para escolher). SPEC-0016 — a navegação termina em "Entrar" (sem sessão)
+ * ou "Conta" (com sessão).
  */
-export function Header({ city, cities, onCityChange }: HeaderProps) {
+export function Header({
+  city,
+  cities,
+  onCityChange,
+  signedIn = false,
+  returnTo,
+}: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4">
@@ -37,6 +47,9 @@ export function Header({ city, cities, onCityChange }: HeaderProps) {
           </Link>
           <Link href="/apoie" className={navLink}>
             Apoie
+          </Link>
+          <Link href={accountHref(signedIn, returnTo)} className={navLink}>
+            {signedIn ? "Conta" : "Entrar"}
           </Link>
         </nav>
         {cities.length > 0 && (

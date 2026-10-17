@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
 import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
+import { isAccountPage } from "@/components/ui/shell";
 
 /**
  * SPEC-0010 — toda página passa por aqui: o proxy gera um nonce novo por requisição, monta a Content-Security-Policy
@@ -13,6 +14,10 @@ import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
  * Components a página começa a ser enviada (status 200) pelo shell estático antes de os dados da API chegarem.
  * Cidade inexistente ou slug fora do padrão → 404 e API fora do ar → 503. A página é avisada pelo cabeçalho
  * interno {@link agendaStatusHeader}, que o proxy sempre sobrescreve: o valor mandado pelo cliente nunca chega lá.
+ *
+ * SPEC-0016 — as páginas de entrar e da conta (`/entrar`, `/entrar/confirmar`, `/conta`) são exceções explícitas
+ * (ADR-0016): não são cidades e seguem direto para o Next.js, com `Cache-Control: no-store` (dados de quem está
+ * logado, nunca guardados pelo navegador nem por intermediários).
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -21,7 +26,7 @@ const citySlug = /^[a-z0-9-]{2,60}$/;
 /**
  * Caminho da agenda: um segmento (`/{cidade}`), menos os internos do Next.js (`/_next/…`, `/_not-found` etc.); os
  * arquivos públicos (com ponto, ex.: `/robots.txt`; um slug nunca tem ponto) nem passam pelo proxy. Uma página
- * estática nova de um segmento (ex.: `/sobre`) precisa entrar na exceção.
+ * nova de um segmento (ex.: `/sobre`) precisa entrar na exceção, como as de entrar e da conta ({@link isAccountPage}).
  */
 const agendaPath = /^\/(?!_)[^/.]+$/;
 
@@ -74,9 +79,11 @@ export async function proxy(request: NextRequest) {
   headers.set("Content-Security-Policy", csp);
 
   const { pathname } = request.nextUrl;
-  const kind = agendaPath.test(pathname)
-    ? await agendaKind(pathname)
-    : undefined;
+  const accountPage = isAccountPage(pathname);
+  const kind =
+    !accountPage && agendaPath.test(pathname)
+      ? await agendaKind(pathname)
+      : undefined;
   if (kind) {
     headers.set(agendaStatusHeader, kind);
   } else {
@@ -94,6 +101,9 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", csp);
   for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
+  }
+  if (accountPage) {
+    response.headers.set("Cache-Control", "no-store");
   }
   return response;
 }
