@@ -149,6 +149,49 @@ namespace Subsolo.Modules.Users.Infrastructure.Migrations
                     b.ToTable("outbox_message_consumers", "users");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Users.Domain.MagicLinks.MagicLinkToken", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("token_hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<string>("ReturnTo")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("return_to");
+
+                    b.Property<DateTimeOffset?>("UsedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at_utc");
+
+                    b.HasKey("TokenHash");
+
+                    b.HasIndex("ExpiresAtUtc");
+
+                    b.HasIndex("UsedAtUtc");
+
+                    b.HasIndex("Email", "CreatedAtUtc");
+
+                    b.ToTable("magic_link_tokens", "users");
+                });
+
             modelBuilder.Entity("Subsolo.Modules.Users.Domain.Sessions.Session", b =>
                 {
                     b.Property<string>("IdHash")

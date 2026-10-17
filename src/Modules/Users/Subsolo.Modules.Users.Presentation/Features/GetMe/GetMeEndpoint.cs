@@ -30,7 +30,8 @@ internal sealed class GetMeEndpoint : IEndpoint
             .WithDescription("Id, e-mail, nome de exibição e papéis do usuário da sessão atual.")
             .Produces<MeResponse>(StatusCodes.Status200OK)
             .ProducesProblemCode(StatusCodes.Status401Unauthorized, SecurityProblems.AuthRequired)
-            .ProducesProblemCode(StatusCodes.Status429TooManyRequests, SecurityProblems.RateLimited);
+            .ProducesProblemCode(StatusCodes.Status429TooManyRequests, SecurityProblems.RateLimited)
+            .ProducesProblemCode(StatusCodes.Status503ServiceUnavailable, SecurityProblems.ServiceUnavailable);
 
     private static async Task<IResult> HandleAsync(
         ClaimsPrincipal user,

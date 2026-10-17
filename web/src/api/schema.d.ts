@@ -64,6 +64,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/auth/magic-link": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Pedir link de acesso
+     * @description Manda por e-mail um link de acesso de uso único, válido por 15 minutos. A resposta é a mesma exista a conta ou não. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["RequestMagicLink"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me": {
     parameters: {
       query?: never;
@@ -78,6 +98,26 @@ export interface paths {
     get: operations["GetMe"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/auth/magic-link/consume": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Entrar pelo link de acesso
+     * @description Troca o token do link de acesso pela sessão (cookie de sessão novo) e devolve o caminho de volta. O link vale uma vez só. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["ConsumeMagicLink"];
     delete?: never;
     options?: never;
     head?: never;
@@ -102,6 +142,12 @@ export interface components {
       slug: string;
       name: string;
     };
+    ConsumeMagicLinkRequest: {
+      token: string;
+    };
+    ConsumeMagicLinkResponse: {
+      returnTo: string;
+    };
     MeResponse: {
       /** Format: uuid */
       id: string;
@@ -119,6 +165,11 @@ export interface components {
       /** @description Código estável do erro (ex.: agenda.invalid_slug, agenda.city_not_found). */
       code?: string;
     };
+    RequestMagicLinkRequest: {
+      email: string;
+      returnTo: null | string;
+    };
+    RequestMagicLinkResponse: Record<string, never>;
     /** @enum {unknown} */
     ShowStatus: "scheduled" | "cancelled" | "postponed";
     ShowSummaryResponse: {
@@ -251,6 +302,66 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  RequestMagicLink: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestMagicLinkRequest"];
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RequestMagicLinkResponse"];
+        };
+      };
+      /** @description Bad Request (code=users.invalid_email) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=notifications.email_unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
     };
   };
   GetMe: {
@@ -273,6 +384,57 @@ export interface operations {
       };
       /** @description Unauthorized (code=auth.required) */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ConsumeMagicLink: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConsumeMagicLinkRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ConsumeMagicLinkResponse"];
+        };
+      };
+      /** @description Bad Request (code=users.magic_link_invalid) (code=security.csrf_invalid) */
+      400: {
         headers: {
           [name: string]: unknown;
         };

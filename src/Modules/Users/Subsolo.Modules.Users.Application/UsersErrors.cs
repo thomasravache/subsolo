@@ -23,6 +23,15 @@ public static class UsersErrors
                 ["email"] = ["Informe um e-mail válido com até 254 caracteres."],
             });
 
+    internal static Error MagicLinkInvalidError() =>
+        Error.Validation(
+            MagicLinkInvalid,
+            "Este link expirou ou já foi usado.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["token"] = ["O link é inexistente, expirou ou já foi usado. Peça outro link."],
+            });
+
     internal static Error UserNotFoundError() =>
         Error.NotFound(UserNotFound, "Usuário não encontrado.");
 }

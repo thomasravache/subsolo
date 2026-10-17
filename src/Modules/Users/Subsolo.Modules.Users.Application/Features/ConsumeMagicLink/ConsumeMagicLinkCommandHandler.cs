@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
+using Subsolo.Modules.Users.Application.Diagnostics;
 using Subsolo.Modules.Users.Application.Features.SignIn;
 using Subsolo.Modules.Users.Domain.MagicLinks;
+using Subsolo.Modules.Users.Domain.Sessions;
 
 namespace Subsolo.Modules.Users.Application.Features.ConsumeMagicLink;
 
@@ -11,16 +13,39 @@ namespace Subsolo.Modules.Users.Application.Features.ConsumeMagicLink;
 /// <see cref="ISignInService"/> (método <c>magic_link</c>, sessão nova e cookie); inexistente, expirado ou já usado →
 /// <see cref="UsersErrors.MagicLinkInvalid"/> (o mesmo código para os três).
 /// </summary>
-/// <remarks>Scaffold do Test-writer: sem lógica (a implementação é do Green).</remarks>
-#pragma warning disable CS9113 // scaffold: os parâmetros são usados pela implementação do Green
-internal sealed class ConsumeMagicLinkCommandHandler(
+/// <remarks>Os logs não levam o e-mail nem o token (ADR-0008).</remarks>
+internal sealed partial class ConsumeMagicLinkCommandHandler(
     IMagicLinkTokenRepository tokens,
     ISignInService signIn,
     TimeProvider clock,
     ILogger<ConsumeMagicLinkCommandHandler> logger)
     : ICommandHandler<ConsumeMagicLinkCommand, ConsumeMagicLinkResponse>
-#pragma warning restore CS9113
 {
-    public Task<Result<ConsumeMagicLinkResponse>> Handle(ConsumeMagicLinkCommand command, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0016: ConsumeMagicLink");
+    public async Task<Result<ConsumeMagicLinkResponse>> Handle(ConsumeMagicLinkCommand command, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        var now = clock.GetUtcNow();
+        var hash = MagicLinkToken.HashToken(command.Token ?? string.Empty);
+        var token = await tokens.GetByHashAsync(hash, cancellationToken);
+
+        // Marcar como usado é atômico no banco: de dois consumos simultâneos, só um passa daqui.
+        if (token is null || !token.IsUsable(now) || !await tokens.TryMarkUsedAsync(hash, now, cancellationToken))
+        {
+            UsersTelemetry.MagicLinkConsumed(UsersTelemetry.ConsumeInvalid);
+            LogInvalid(logger);
+            return Result.Failure<ConsumeMagicLinkResponse>(UsersErrors.MagicLinkInvalidError());
+        }
+
+        var signedIn = await signIn.SignInAsync(token.Email, SignInMethod.MagicLink, cancellationToken);
+        if (signedIn.IsFailure)
+        {
+            return Result.Failure<ConsumeMagicLinkResponse>(signedIn.Error);
+        }
+
+        UsersTelemetry.MagicLinkConsumed(UsersTelemetry.ConsumeOk);
+        return Result.Success(new ConsumeMagicLinkResponse(token.ReturnTo));
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Link mágico recusado: inexistente, expirado ou já usado")]
+    private static partial void LogInvalid(ILogger logger);
 }

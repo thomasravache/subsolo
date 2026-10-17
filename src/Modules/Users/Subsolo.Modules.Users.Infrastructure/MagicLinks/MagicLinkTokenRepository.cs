@@ -1,28 +1,30 @@
+using Microsoft.EntityFrameworkCore;
 using Subsolo.Modules.Users.Domain.MagicLinks;
 
 namespace Subsolo.Modules.Users.Infrastructure.MagicLinks;
 
-/// <summary>SPEC-0016 — links mágicos na tabela <c>users.magic_link_tokens</c>.</summary>
-/// <remarks>
-/// Scaffold do Test-writer: registrado só para o host montar o contêiner com os handlers novos; sem lógica (a tabela,
-/// a migração e as consultas são do Green).
-/// </remarks>
-#pragma warning disable CS9113 // scaffold: o DbContext é usado pela implementação do Green
+/// <summary>
+/// SPEC-0016 — links mágicos na tabela <c>users.magic_link_tokens</c>. O uso é marcado com um <c>UPDATE</c> condicional
+/// (não usado e dentro da validade), atômico no banco: de dois consumos simultâneos do mesmo token, só um altera a linha.
+/// </summary>
 internal sealed class MagicLinkTokenRepository(UsersDbContext db) : IMagicLinkTokenRepository
-#pragma warning restore CS9113
 {
-    public void Add(MagicLinkToken token) =>
-        throw new NotImplementedException("SPEC-0016: MagicLinkTokenRepository.Add");
+    public void Add(MagicLinkToken token) => db.MagicLinkTokens.Add(token);
 
     public Task<MagicLinkToken?> GetByHashAsync(string tokenHash, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0016: MagicLinkTokenRepository.GetByHashAsync");
+        db.MagicLinkTokens.AsNoTracking().SingleOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
 
     public Task<int> CountIssuedSinceAsync(string normalizedEmail, DateTimeOffset sinceUtc, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0016: MagicLinkTokenRepository.CountIssuedSinceAsync");
+        db.MagicLinkTokens.CountAsync(
+            token => token.Email == normalizedEmail && token.CreatedAtUtc > sinceUtc, cancellationToken);
 
-    public Task<bool> TryMarkUsedAsync(string tokenHash, DateTimeOffset nowUtc, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0016: MagicLinkTokenRepository.TryMarkUsedAsync");
+    public async Task<bool> TryMarkUsedAsync(string tokenHash, DateTimeOffset nowUtc, CancellationToken cancellationToken) =>
+        await db.MagicLinkTokens
+            .Where(token => token.TokenHash == tokenHash && token.UsedAtUtc == null && token.ExpiresAtUtc > nowUtc)
+            .ExecuteUpdateAsync(update => update.SetProperty(token => token.UsedAtUtc, nowUtc), cancellationToken) == 1;
 
     public Task<int> DeleteStaleAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0016: MagicLinkTokenRepository.DeleteStaleAsync");
+        db.MagicLinkTokens
+            .Where(token => token.UsedAtUtc < cutoffUtc || token.ExpiresAtUtc < cutoffUtc)
+            .ExecuteDeleteAsync(cancellationToken);
 }
