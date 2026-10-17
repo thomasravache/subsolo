@@ -4,8 +4,8 @@ namespace Subsolo.ServiceDefaults.Redaction;
 
 /// <summary>
 /// SPEC-0009 (ADR-0008) — <see cref="ILoggerFactory"/> do host: envolve a fábrica padrão e mascara dados pessoais
-/// e segredos no estado, na mensagem e nos escopos de todo log, antes de qualquer provedor (OpenTelemetry/OTLP,
-/// console) recebê-lo.
+/// e segredos no estado, na mensagem, nos escopos (listas e dicionários de pares) e na exceção de todo log, antes de
+/// qualquer provedor (OpenTelemetry/OTLP, console) recebê-lo.
 /// </summary>
 internal sealed class RedactingLoggerFactory(ILoggerFactory inner) : ILoggerFactory
 {
@@ -19,7 +19,7 @@ internal sealed class RedactingLoggerFactory(ILoggerFactory inner) : ILoggerFact
     {
         public IDisposable? BeginScope<TState>(TState state)
             where TState : notnull =>
-            state is IReadOnlyList<KeyValuePair<string, object?>> values &&
+            state is IEnumerable<KeyValuePair<string, object?>> values &&
             RedactedLogState.From(values, state.ToString) is { } redacted
                 ? inner.BeginScope(redacted)
                 : inner.BeginScope(state);
@@ -39,14 +39,23 @@ internal sealed class RedactingLoggerFactory(ILoggerFactory inner) : ILoggerFact
                 return;
             }
 
+            // A exceção também vai mascarada (mensagem, pilha e ToString) a todos os provedores.
+            var redactedException = RedactedException.From(exception);
             if (state is IReadOnlyList<KeyValuePair<string, object?>> values &&
                 RedactedLogState.From(values, () => formatter(state, exception)) is { } redacted)
             {
-                inner.Log(logLevel, eventId, redacted, exception, static (s, _) => s.ToString());
+                inner.Log(logLevel, eventId, redacted, redactedException, static (s, _) => s.ToString());
                 return;
             }
 
-            inner.Log(logLevel, eventId, state, exception, formatter);
+            if (ReferenceEquals(redactedException, exception))
+            {
+                inner.Log(logLevel, eventId, state, exception, formatter);
+                return;
+            }
+
+            var message = PersonalDataRedactor.MaskEmails(formatter(state, exception));
+            inner.Log(logLevel, eventId, state, redactedException, (_, _) => message);
         }
     }
 }

@@ -24,8 +24,9 @@ internal sealed class RedactedLogState(KeyValuePair<string, object?>[] values, s
     /// só traz o modelo e os valores, então também não muda). A mensagem (<paramref name="format"/>, chamada só quando
     /// algo muda) recebe os mesmos valores trocados e o mascaramento de e-mails.
     /// </summary>
-    public static RedactedLogState? From(IReadOnlyList<KeyValuePair<string, object?>> values, Func<string?> format)
+    public static RedactedLogState? From(IEnumerable<KeyValuePair<string, object?>> pairs, Func<string?> format)
     {
+        var values = pairs as IReadOnlyList<KeyValuePair<string, object?>> ?? [.. pairs];
         KeyValuePair<string, object?>[]? redacted = null;
         for (var i = 0; i < values.Count; i++)
         {
