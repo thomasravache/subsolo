@@ -19,4 +19,5 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- Ajustes do harness e do CI (SPEC-0013): `coverage.sh` compatível com bash 3.2 e checando a base no início, servidor estático do E2E resistente a URL malformada, lint do TypeScript de `e2e/`, concorrência e cache do pnpm por lockfile no CI, `OccurredOnUtc` pelo `TimeProvider`, regra `OnlyReferences` alinhada ao ADR-0001 e guardas de CODEOWNERS, Aspire CLI e testes de contrato de comandos.
 - Ajustes do tooling (SPEC-0012): `.env.example` versionável, `.claude/` ignorado e testes dos hooks cobrindo `[no-spec]` e chave Google API.
