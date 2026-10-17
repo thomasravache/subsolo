@@ -75,6 +75,7 @@ if (builder.ExecutionContext.IsPublishMode)
     });
 
     // Caddy na frente (ADR-0004): /api/* e /health → api; o resto → web. Mesmo Caddyfile do deploy na VPS.
+    // SPEC-0010: HTTPS em :8443 (certificado local `tls internal`, HSTS); o HTTP em :8080 redireciona com 308.
     // No Compose, o contêiner do web roda `next start` sobre o build de produção (Dockerfile gerado pelo Aspire).
 #pragma warning disable ASPIREJAVASCRIPT001 // API em avaliação no Aspire 13.6; é o modo de publicação do Next.js sem `output: "standalone"`.
     web.PublishAsPackageScript("start");
@@ -83,6 +84,7 @@ if (builder.ExecutionContext.IsPublishMode)
     builder.AddContainer("caddy", "caddy", "2.11.7-alpine")
         .WithBindMount("../../infra/caddy/Caddyfile", "/etc/caddy/Caddyfile", isReadOnly: true)
         .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http")
+        .WithHttpsEndpoint(port: 8443, targetPort: 8443, name: "https")
         .WithExternalHttpEndpoints()
         .WithEnvironment("API_UPSTREAM", api.GetEndpoint("http").Property(EndpointProperty.HostAndPort))
         .WithEnvironment("WEB_UPSTREAM", web.GetEndpoint("http").Property(EndpointProperty.HostAndPort))

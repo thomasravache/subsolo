@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Compose local do Subsolo (SPEC-0008, ADR-0004): a aplicação inteira pelo Docker Compose gerado pelo Aspire, com o
-# Caddy na frente em http://localhost:8080 (/api/* e /health → api; o resto → web).
+# Caddy na frente em https://localhost:8443 (/api/* e /health → api; o resto → web). SPEC-0010: o certificado é o
+# da CA interna do Caddy (`tls internal`, não confiável fora da máquina); http://localhost:8080 só redireciona (308)
+# para o HTTPS.
 #
 #   tools/compose-up.sh          gera o Compose (`aspire publish -o artifacts/compose`), monta as imagens da API e do
 #                                web com a tag local-<sha> e sobe tudo
@@ -18,7 +20,7 @@ root="$PWD"
 readonly APPHOST="src/Subsolo.AppHost/Subsolo.AppHost.csproj"
 readonly OUT="artifacts/compose"
 readonly PROJECT="subsolo-local"
-readonly APP_URL="http://localhost:8080"
+readonly APP_URL="https://localhost:8443"
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -93,7 +95,8 @@ compose up --detach
 
 healthy=0
 for _ in $(seq 1 120); do
-  if curl -fsS -o /dev/null "$APP_URL/health" 2>/dev/null; then
+  # -k: o certificado local (`tls internal`) não é confiável fora do contêiner do Caddy.
+  if curl -fsSk -o /dev/null "$APP_URL/health" 2>/dev/null; then
     healthy=1
     break
   fi

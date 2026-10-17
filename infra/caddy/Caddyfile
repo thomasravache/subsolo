@@ -1,8 +1,22 @@
 # SPEC-0008 — Caddy na frente da aplicação (ADR-0004), no Compose gerado pelo `aspire publish`.
-# Local: http://localhost:8080 (SITE_ADDRESS padrão :8080). Na VPS (go-live), SITE_ADDRESS = domínio, com TLS
-# automático. API_UPSTREAM e WEB_UPSTREAM (host:porta dos serviços) vêm do AppHost.
-{$SITE_ADDRESS::8080} {
+# SPEC-0010 — HTTPS com HSTS. Local: https://localhost:8443 com o certificado da CA interna do Caddy (`tls internal`,
+# não confiável fora da máquina); http://localhost:8080 responde 308 para o HTTPS. Na VPS (go-live), SITE_ADDRESS =
+# domínio, HTTP_PORT = 80 e TLS_ISSUER = e-mail do ACME (certificado público). API_UPSTREAM e WEB_UPSTREAM (host:porta
+# dos serviços) vêm do AppHost.
+# A porta HTTPS local fica no endereço do site, não em `https_port`: o redirecionamento automático do Caddy omite a
+# porta quando ela é igual ao `https_port` (iria para https://localhost/, a 443) e a inclui quando é outra.
+{
+	http_port {$HTTP_PORT:8080}
+	# A CA interna fica só no contêiner: nada é instalado no sistema.
+	skip_install_trust
+}
+
+{$SITE_ADDRESS:localhost:8443} {
+	tls {$TLS_ISSUER:internal}
 	encode zstd gzip
+
+	# Só HTTPS por um ano (o HTTP já redireciona com 308).
+	header Strict-Transport-Security "max-age=31536000"
 
 	# API .NET: rotas /api/* e o health check da aplicação.
 	@api path /api/* /health
