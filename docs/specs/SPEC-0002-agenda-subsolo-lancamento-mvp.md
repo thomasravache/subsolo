@@ -62,6 +62,12 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 
 **Revisão de 2026-10-17 (Architect):** "Contas e login" não cabia numa spec M. Ficou dividida em módulo `Users` (SPEC-0014), link mágico (SPEC-0016), Google e Minha conta. O e-mail do link mágico exige o módulo `Notifications` antes (ADR-0014: só ele fala com SMTP), por isso entrou a SPEC-0018, e "Inscrição de push" passa a estender esse módulo. A SPEC-0015 resolve a questão em aberto do título na navegação no cliente. As specs filhas são detalhadas por onda, com as telas no Stitch.
 
+**Radar LGPD (pedido do Thomas, 2026-10-17):** o que já está coberto e o que entra em cada spec.
+- Já coberto: classificação dos dados, base legal e retenção (ADR-0008); TLS e HSTS (SPEC-0010); backup criptografado (ADR-0011); token e sessão guardados só como hash e e-mail mascarado nos logs (SPEC-0014 e SPEC-0016); resposta igual exista a conta ou não.
+- "Minha conta" (onda 4+): exportar e excluir os próprios dados, com teste de que a exclusão apaga a conta, as sessões, os tokens, os "vou" e os seguidos.
+- "Apoie, privacidade e termos": política de privacidade com finalidades, bases legais e retenção do ADR-0008; canal de contato do titular (agente de pequeno porte dispensado de encarregado, Resolução CD/ANPD nº 2/2022, mas o canal é obrigatório); aviso de que dados excluídos somem dos backups em até 6 meses (retenção do ADR-0011); plano curto de resposta a incidente (comunicação à ANPD e aos titulares, Resolução CD/ANPD nº 15/2024) em `docs/runbooks/`.
+- Go-live (SPEC-0003): criptografia em repouso do disco do banco e dos flyers (questão aberta lá).
+
 **Herança da SPEC-0015 (Emenda 1, 2026-10-17):** a primeira spec que criar uma página interna que responda 200 e seja alcançável por `next/link` (Página do show ou Apoie) leva o E2E do título na navegação no cliente: um `MutationObserver` registra todo `document.title` durante o clique, nenhum valor fica vazio e o axe `document-title` passa logo depois da troca de URL. Achado junto: a página de cidade inexistente carregada direto mostrou o título "Subsolo" em vez de "Cidade não encontrada · Subsolo" — investigar na mesma spec.
 
 | Spec | Título | Tier | Tipo | Tamanho | Depende de | Consome contrato de |
