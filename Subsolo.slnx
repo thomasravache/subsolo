@@ -17,6 +17,13 @@
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Application/Subsolo.Modules.Notifications.Application.csproj" />
+    <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Domain/Subsolo.Modules.Notifications.Domain.csproj" />
+    <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Infrastructure/Subsolo.Modules.Notifications.Infrastructure.csproj" />
+    <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Presentation/Subsolo.Modules.Notifications.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Users/">
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
@@ -52,6 +59,10 @@
   <Folder Name="/tests/Modules/Events/">
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Events/Subsolo.Events.UnitTests/Subsolo.Events.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Notifications/">
+    <Project Path="tests/Modules/Notifications/Subsolo.Notifications.IntegrationTests/Subsolo.Notifications.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Notifications/Subsolo.Notifications.UnitTests/Subsolo.Notifications.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Users/">
     <Project Path="tests/Modules/Users/Subsolo.Users.IntegrationTests/Subsolo.Users.IntegrationTests.csproj" />
