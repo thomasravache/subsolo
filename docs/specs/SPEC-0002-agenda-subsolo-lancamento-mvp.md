@@ -62,6 +62,20 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 
 **Revisão de 2026-10-17 (Architect):** "Contas e login" não cabia numa spec M. Ficou dividida em módulo `Users` (SPEC-0014), link mágico (SPEC-0016), Google e Minha conta. O e-mail do link mágico exige o módulo `Notifications` antes (ADR-0014: só ele fala com SMTP), por isso entrou a SPEC-0018, e "Inscrição de push" passa a estender esse módulo. A SPEC-0015 resolve a questão em aberto do título na navegação no cliente. As specs filhas são detalhadas por onda, com as telas no Stitch.
 
+**Telas no Stitch (projeto 15194126668426659178), por spec — atualizado em 2026-10-17:**
+| Spec | Tela (id) |
+|---|---|
+| Agenda com filtros | "Agenda Curitiba - Subsolo" (5d1946463ad9484b83c67cc2e6d78fd3, mobile) e "Agenda Curitiba - Desktop" (a9c7a58a62a5431bb833a132609c0c70) — conferir os filtros no H1 |
+| Página do show | "Página do Show - Noite da Peste II" (98cc07285ec5439197d3273da0f7a11d, mobile) e desktop (ddae50bdb35f4cdaa2437a12f23fe257) |
+| Cadastro de show + flyer | "Cadastrar Show - Subsolo" (0eda9cdf97fa484188933d53f1605783) |
+| Perfis (pedido, aprovação, reivindicar) | "Pedir Perfil - Subsolo" (af62730f71414b6082259d068b025b00) e "Fila do Admin - Subsolo" (600bfe18de6e44a995790033ab0f817e) |
+| Perfil público | "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a) |
+| Seguir + push e preferências | "Avisos e Seguindo - Subsolo" (35b282364c47425c9e9cfe89e7b1c1e2) |
+| Denúncia e moderação | "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e a "Fila do Admin" |
+| Apoie, privacidade e termos | "Apoie o Subsolo" (gerada; id a confirmar no canvas — a ferramenta estourou o tempo) |
+| Minha conta | SPEC-0019 |
+| Entrar com Google | botão já na tela "Entrar - Subsolo" (SPEC-0016) |
+
 **Radar LGPD (pedido do Thomas, 2026-10-17):** o que já está coberto e o que entra em cada spec.
 - Já coberto: classificação dos dados, base legal e retenção (ADR-0008); TLS e HSTS (SPEC-0010); backup criptografado (ADR-0011); token e sessão guardados só como hash e e-mail mascarado nos logs (SPEC-0014 e SPEC-0016); resposta igual exista a conta ou não.
 - "Minha conta" (onda 4+): exportar e excluir os próprios dados, com teste de que a exclusão apaga a conta, as sessões, os tokens, os "vou" e os seguidos.
