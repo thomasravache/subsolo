@@ -9,6 +9,7 @@ namespace Subsolo.Common.Infrastructure.Outbox;
 /// <summary>
 /// SPEC-0007 — antes do <c>SaveChanges</c> de um <see cref="ModuleDbContext"/>, transforma os eventos de domínio
 /// pendentes das entidades em linhas da outbox do módulo, que são gravadas no mesmo comando (mesma transação).
+/// SPEC-0013 — o <c>OccurredOnUtc</c> de cada <see cref="DomainEvent"/> é carimbado aqui com o <see cref="TimeProvider"/>.
 /// </summary>
 internal sealed class InsertOutboxMessagesInterceptor(TimeProvider clock) : SaveChangesInterceptor
 {
@@ -46,6 +47,10 @@ internal sealed class InsertOutboxMessagesInterceptor(TimeProvider clock) : Save
                 entity.ClearDomainEvents();
                 return domainEvents;
             })
+            // OccurredOnUtc vem do TimeProvider da aplicação, não do relógio do sistema (SPEC-0013); o Id é preservado.
+            .Select(domainEvent => domainEvent is DomainEvent stamped
+                ? stamped with { OccurredOnUtc = occurredOnUtc }
+                : domainEvent)
             .Select(domainEvent => new OutboxMessage
             {
                 // O Id da mensagem é o do evento de domínio: identidade estável entre tentativas.
