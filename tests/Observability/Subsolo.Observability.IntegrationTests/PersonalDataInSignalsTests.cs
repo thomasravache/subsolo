@@ -1,4 +1,5 @@
 using System.Net;
+using Subsolo.Common.Presentation.Security;
 using Subsolo.IntegrationTests.Common;
 using Subsolo.Observability.IntegrationTests.Infrastructure;
 
@@ -22,10 +23,12 @@ public sealed class PersonalDataInSignalsTests(PostgresFixture postgres)
     {
         var ct = TestContext.Current.CancellationToken;
         await using var api = new ObservedApiFactory(await ObservedApi.DatabaseAsync(postgres, ct), withTestEndpoints: true);
-        using var client = api.CreateClient();
+        using var client = api.CreateHttpsClient();
+        var (token, antiforgeryCookie) = await ObservedApiFactory.AntiforgeryAsync(client, ct);
         using var request = new HttpRequestMessage(
             HttpMethod.Post, $"{PersonalDataEndpoint.Route}?email={Uri.EscapeDataString(Email)}");
-        request.Headers.Add("Cookie", CookieValue);
+        request.Headers.Add(AntiforgeryFilter.HeaderName, token);
+        request.Headers.Add("Cookie", $"{CookieValue}; {antiforgeryCookie}");
 
         using var response = await client.SendAsync(request, ct);
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -63,10 +66,14 @@ public sealed class PersonalDataInSignalsTests(PostgresFixture postgres)
     {
         var ct = TestContext.Current.CancellationToken;
         await using var api = new ObservedApiFactory(await ObservedApi.DatabaseAsync(postgres, ct), withTestEndpoints: true);
-        using var client = api.CreateClient();
+        using var client = api.CreateHttpsClient();
+        var (token, antiforgeryCookie) = await ObservedApiFactory.AntiforgeryAsync(client, ct);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, $"{PersonalDataExceptionEndpoint.Route}?email={Uri.EscapeDataString(Email)}");
+        request.Headers.Add(AntiforgeryFilter.HeaderName, token);
+        request.Headers.Add("Cookie", antiforgeryCookie);
 
-        using var response = await client.PostAsync(
-            $"{PersonalDataExceptionEndpoint.Route}?email={Uri.EscapeDataString(Email)}", content: null, ct);
+        using var response = await client.SendAsync(request, ct);
         response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
 
         var spans = await api.SpansWhenAsync(IsServerSpanOf(PersonalDataExceptionEndpoint.Route), SpanTimeout, ct);

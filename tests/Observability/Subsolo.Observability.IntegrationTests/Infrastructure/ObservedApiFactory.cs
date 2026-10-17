@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Json;
 using System.Net.Sockets;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -11,6 +13,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
+using Subsolo.Common.Presentation.Security;
 using Subsolo.IntegrationTests.Common;
 
 namespace Subsolo.Observability.IntegrationTests.Infrastructure;
@@ -75,6 +78,42 @@ internal sealed class ObservedApiFactory(string connectionString, Uri? otlpEndpo
 
             await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken);
         }
+    }
+
+    /// <summary>Endpoint que emite o token anti-forgery (SPEC-0010).</summary>
+    private const string AntiforgeryRoute = "/api/v1/antiforgery";
+
+    /// <summary>Cookie <c>__Host-</c> (Secure) par do token enviado em <see cref="AntiforgeryFilter.HeaderName"/>.</summary>
+    private const string AntiforgeryCookieName = "__Host-subsolo-csrf";
+
+    /// <summary>
+    /// Cliente HTTPS (o cookie <c>__Host-</c> do anti-forgery é Secure) sem contêiner de cookies: o teste monta o
+    /// cabeçalho <c>Cookie</c> por conta própria, juntando o cookie do anti-forgery aos seus.
+    /// </summary>
+    public HttpClient CreateHttpsClient() =>
+        CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false,
+            HandleCookies = false,
+        });
+
+    /// <summary>
+    /// <c>GET /api/v1/antiforgery</c>: o token (para o cabeçalho <see cref="AntiforgeryFilter.HeaderName"/>) e o par
+    /// <c>nome=valor</c> do cookie anti-forgery (para o cabeçalho <c>Cookie</c>) que as mutações da SPEC-0010 exigem.
+    /// </summary>
+    public static async Task<(string Token, string Cookie)> AntiforgeryAsync(HttpClient client, CancellationToken cancellationToken)
+    {
+        using var response = await client.GetAsync(new Uri(AntiforgeryRoute, UriKind.Relative), cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+        var token = payload.GetProperty("token").GetString()
+            ?? throw new InvalidOperationException("GET /api/v1/antiforgery sem token");
+        var cookie = response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.Select(value => value.Split(';', 2)[0])
+                .FirstOrDefault(pair => pair.StartsWith($"{AntiforgeryCookieName}=", StringComparison.Ordinal))
+            : null;
+        return (token, cookie ?? throw new InvalidOperationException("GET /api/v1/antiforgery sem o cookie anti-forgery"));
     }
 
     /// <summary>Um database novo (vazio) no servidor de <paramref name="postgresConnectionString"/>.</summary>
