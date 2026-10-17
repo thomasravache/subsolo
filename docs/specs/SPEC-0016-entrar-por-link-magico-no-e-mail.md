@@ -4,7 +4,7 @@ title: Entrar por link mágico no e-mail
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0018]
