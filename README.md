@@ -61,6 +61,8 @@ Na pilha local do `compose-up.sh` o certificado HTTPS é o da CA interna do Cadd
 
 Contas (SPEC-0014): o admin inicial vem da configuração `Users:AdminEmails` (ex.: variável `Users__AdminEmails__0`); a sessão é guardada no banco, vale 30 dias sem uso e no máximo 90 dias, e o rate limit da API conta por visitante — na pilha do `compose-up.sh` o limite `default` sobe para 10000/min (`DEFAULT_RATE_LIMIT`), porque toda a E2E sai de um IP só.
 
+E-mail (SPEC-0018): só o módulo `Notifications` envia, por SMTP; no `aspire run` os e-mails caem no Mailpit (dashboard do Aspire), e fora de desenvolvimento o TLS é obrigatório (`Notifications:Smtp:Security`).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções
