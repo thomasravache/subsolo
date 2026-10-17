@@ -226,7 +226,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — c9f1a3a | 2026-10-17 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 331ms) — c9f1a3a | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em c9f1a3a (delta da Emenda v3) — repasse do X-Forwarded-For sem caminho de falsificação (Caddy sem trusted_proxies, web não exposto, API aceita XFF só da rede privada com ForwardLimit=1), next/headers válido nas três chamadas, override só na pilha local; 3 menores → SPEC-0016 Emenda 2 (g, h) e IT-11 registrado como guarda. Revisão anterior APPROVED em 6f368a5 — c9f1a3a | 2026-10-17 |
-| G5 Integração & CI | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 27s 647ms); test_e2e exit 1 ([ELIFECYCLE] Test failed. See above for more details.); arch_test exit 0 (duration: 1s 404ms) — fc725a6 | 2026-10-17 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 31s 144ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 1s 328ms) — fc95fc6 | 2026-10-17 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
