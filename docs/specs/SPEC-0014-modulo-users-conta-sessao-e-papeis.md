@@ -9,7 +9,7 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/Security/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, tests/Common/Subsolo.Api.IntegrationTests/**, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/ListCities/ListCitiesEndpoint.cs, src/Modules/Events/Subsolo.Modules.Events.Presentation/Features/GetCityAgenda/GetCityAgendaEndpoint.cs, src/Subsolo.AppHost/**, Subsolo.slnx, docs/api/**, web/src/api/schema.d.ts]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0008, ADR-0010]
@@ -36,7 +36,7 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 - Serviço interno `ISignInService.SignInAsync(email, method)` — encontra ou cria o usuário, atualiza os papéis de admin, cria a sessão e emite o cookie com o id da sessão. As specs de login só chamam esse serviço.
 - Validação da sessão em cada requisição autenticada (`OnValidatePrincipal`): sessão inexistente, revogada ou expirada (30 dias sem uso ou 90 dias desde a entrada) → cookie rejeitado (401); renovação do prazo no máximo uma vez por hora, nunca além do teto de 90 dias. Sem o cookie no navegador não existe sessão: nada de login lembrado por outro meio.
 - Respostas de `/me` e `/logout` com `Cache-Control: no-store`, para que nenhum cache guarde dados de quem está logado.
-- Rate limit em **todo** endpoint da API: `/me` e `/logout` na política `default`; os endpoints que hoje não declaram limite (`GET /api/v1/cities`, a agenda da cidade e o token anti-forgery) passam a usar `default`; um teste de arquitetura reprova endpoint novo sem política de rate limit (exceto `/health`, chamado pelo monitor e pelo orquestrador).
+- Rate limit em **todo** endpoint da API: `/me` e `/logout` na política `default`; os endpoints que hoje não declaram limite (`GET /api/v1/cities`, a agenda da cidade e o token anti-forgery) passam a usar `default`; um teste de arquitetura reprova endpoint novo sem política de rate limit (exceto as sondas `/health` e `/alive`, chamadas pelo monitor e pelo orquestrador, e o `/openapi/*` que só existe em desenvolvimento — Emenda v2).
 - `GET /api/v1/me` e `POST /api/v1/auth/logout` (revoga a sessão e apaga o cookie).
 - Evento de integração `UserRegistered` (id, data) na primeira entrada, pela outbox, para o módulo de avisos consumir depois. Leva só o id: o e-mail não sai do módulo `Users`.
 
@@ -53,7 +53,7 @@ Cria o módulo `Users`, a base de identidade do Subsolo (ADR-0003): a conta do u
 ## 4. Decisão Arquitetural
 **Contexto:** padrão do módulo `Events` (SPEC-0008): `src/Modules/Events/**`, slices em `Features/<Caso>/` (consulta + handler + validator + endpoint `IEndpoint`), `ModuleDbContext` com schema próprio, outbox (SPEC-0009) e testes em `tests/Modules/Events/**`. Segurança base em `src/Subsolo.Api/Security/SecurityExtensions.cs` (SPEC-0010).
 
-**Decisão:** novo módulo `Users` copiando a estrutura do `Events`. A configuração do cookie continua no `SecurityExtensions`, que passa a delegar a validação do principal a `ISessionValidator`, exposto pelo `Users` em `Subsolo.Modules.Users.IntegrationEvents` (a superfície pública do módulo pelo ADR-0001). O cookie leva só o id da sessão e o id do usuário; os papéis são lidos da sessão validada, então revogar ou trocar o papel vale na hora.
+**Decisão:** novo módulo `Users` copiando a estrutura do `Events`. A configuração do cookie continua no `SecurityExtensions`, que passa a delegar a validação do principal a `ISessionValidator`, exposto pelo `Users` em `Subsolo.Modules.Users.IntegrationEvents` (a superfície pública do módulo pelo ADR-0001). O cookie leva só o token da sessão (256 bits aleatórios, base64url; no banco, só o hash SHA-256) e o id do usuário; os papéis são lidos da sessão validada, então revogar ou trocar o papel vale na hora.
 
 **Justificativa:** o ADR-0003 exige sessão revogável no servidor e permissões num só lugar. Guardar a sessão no banco custa uma consulta por requisição autenticada, irrelevante no volume do lançamento.
 
@@ -99,7 +99,7 @@ Task<Result<SignInResult>> ISignInService.SignInAsync(string email, SignInMethod
 //   erro: users.invalid_email (e-mail fora do formato ou > 254 caracteres)
 
 // Subsolo.Modules.Users.IntegrationEvents (público)
-Task<SessionPrincipal?> ISessionValidator.ValidateAsync(Guid sessionId, CancellationToken ct);
+Task<SessionPrincipal?> ISessionValidator.ValidateAsync(string sessionToken, CancellationToken ct);   // token de 256 bits do cookie (base64url); Emenda v2
 //   null → sessão inexistente, revogada ou expirada
 //   SessionPrincipal { Guid UserId, IReadOnlyList<string> Roles }
 record UserRegisteredIntegrationEvent(Guid UserId, DateTimeOffset RegisteredAtUtc);
@@ -157,7 +157,7 @@ Banco (schema users): users(id, email UNIQUE, display_name, roles, created_at_ut
 - **IT-07** — Dado o container do PostgreSQL pausado, quando `/me` é chamado com cookie, então 503 em ProblemDetails sem detalhes da exceção.
 - **IT-08** — Dado um usuário só `fan`, quando chama um endpoint de teste `RequireAuthorization(admin)`, então 403 `auth.forbidden`; com papel `admin`, 200.
 - **IT-09** — Dados os testes de arquitetura (SPEC-0007), quando rodam com o módulo `Users`, então as regras do ADR-0001 valem para ele sem configuração extra e nenhum outro módulo referencia `Users.Domain`, `Users.Application` ou `Users.Infrastructure` (guarda: passa antes da mudança).
-- **IT-10** — Dados os endpoints mapeados da API, quando o teste de arquitetura de rate limit (ao lado de `EndpointAuthorizationRules`) os inspeciona, então todos, exceto `/health`, declaram uma política de rate limit, e um endpoint de exemplo sem política é reprovado; com a política `default` configurada para 3 por minuto no teste, a 4ª chamada a `/me` e a `GET /api/v1/cities` recebe 429 `security.rate_limited` com `Retry-After`.
+- **IT-10** — Dados os endpoints mapeados da API, quando o teste de arquitetura de rate limit (ao lado de `EndpointAuthorizationRules`) os inspeciona, então todos, exceto `/health`, `/alive` e `/openapi/*` (só em desenvolvimento), declaram uma política de rate limit, e um endpoint de exemplo sem política é reprovado; com a política `default` configurada para 3 por minuto no teste, a 4ª chamada a `/me` e a `GET /api/v1/cities` recebe 429 `security.rate_limited` com `Retry-After`.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json`, quando lido, então `/api/v1/me` e `/api/v1/auth/logout` têm os esquemas e os códigos de erro (`auth.required`, `security.csrf_invalid`) do §6, e `(cd web && pnpm api:check)` passa com o cliente regenerado. O consumidor (SPEC-0016) depende desse contrato.
@@ -267,3 +267,4 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0014`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-17 | `ISessionValidator.ValidateAsync(string sessionToken)` no lugar de `Guid sessionId`: o cookie leva o token de 256 bits em base64url e o banco guarda só o hash; IT-10 isenta `/alive` e `/openapi/*` (só desenvolvimento) além de `/health` | Relatório do Test-writer: Guid tem 128 bits, abaixo dos 256 do §5 e do ADR-0003; `/alive` é sonda do orquestrador e `/openapi` não existe em produção | nenhuma (o único consumidor de `ISessionValidator` é o `SecurityExtensions`, dentro desta spec; `impacted` sem consumidores fixados) | thomas, 2026-10-17 |

@@ -72,9 +72,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 93aac2d (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 1 (red: [ELIFECYCLE] Test failed. See above for more details.) — f5a749b | 2026-10-17 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 33d0944 | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 154ms) — 33d0944 | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 33d0944 — htmlLimitedBots /.*/ conferido no Next 16.4.0 (forma documentada de desligar metadata em streaming; bots, PPR de /[cidade] e nonce da CSP sem regressão); 0 bloqueantes, 0 importantes, 2 menores (comentário diz 'todos os agentes' mas requisição sem User-Agent ainda faz streaming; branch com a spec anterior à Emenda 1, resolvido na integração) — 33d0944 | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
