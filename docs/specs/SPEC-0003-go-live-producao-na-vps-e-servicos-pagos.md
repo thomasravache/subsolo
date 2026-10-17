@@ -79,7 +79,7 @@ Os IDs de teste são definidos quando as filhas forem criadas.
 ## 8. Questões em Aberto
 - [ ] Provedor, região, vCPU/RAM/disco e sistema operacional da VPS, e o que mais já roda nela? (Thomas)
 - [ ] Aprovação dos custos do ADR-0012 revisados: domínio, e-mail (recomendado: Amazon SES), backup (recomendado: Cloudflare R2), monitor externo (Thomas)
-- [ ] Criptografia em repouso do banco e dos flyers (pedido do Thomas, 2026-10-17; pendência do ADR-0008): o provedor da VPS criptografa o disco? Se não, volume de dados do PostgreSQL e de `/media` com LUKS. Recomendação do Architect: disco criptografado + TLS + backup criptografado (restic) cobrem o MVP; criptografia por coluna fica de fora porque e-mail precisa ser buscável e não há dado sensível (art. 5º, II da LGPD) (Thomas)
+- [ ] Criptografia em repouso do banco e dos flyers (pedido do Thomas, 2026-10-17; pendência do ADR-0008): o provedor da VPS criptografa o disco? Se não, volume de dados do PostgreSQL e de `/media` com LUKS. Recomendação do Architect: disco criptografado + TLS + backup criptografado (restic) cobrem o MVP; criptografia por coluna fica de fora porque e-mail precisa ser buscável e não há dado sensível (art. 5º, II da LGPD). O Thomas aprovou LUKS caso o provedor não criptografe o disco (2026-10-17); falta só saber o provedor (Thomas)
 - [ ] Endereço definitivo do Instagram do Subsolo (perfil ainda não criado; hoje o rodapé aponta para o provisório `https://www.instagram.com/subsolo.app` em `web/src/components/ui/Footer.tsx`, SPEC-0011) — trocar antes do lançamento (Thomas)
 
 ## 9. Aprovação (H1)
