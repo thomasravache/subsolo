@@ -111,17 +111,21 @@ compose down --volumes --remove-orphans --timeout 10 >/dev/null 2>&1 || true
 echo ">>> docker compose up ($PROJECT, imagens :$tag)"
 compose up --detach
 
+# Pronta = a API (/health) e o web pelo Caddy: `/` com 2xx ou 404, não o 502 do web ainda subindo.
 healthy=0
 for _ in $(seq 1 120); do
   # -k: o certificado local (`tls internal`) não é confiável fora do contêiner do Caddy.
   if curl -fsSk -o /dev/null "$APP_URL/health" 2>/dev/null; then
-    healthy=1
-    break
+    web_status="$(curl -sSk -o /dev/null -w '%{http_code}' "$APP_URL/" 2>/dev/null || true)"
+    if [[ "$web_status" == 2?? || "$web_status" == 404 ]]; then
+      healthy=1
+      break
+    fi
   fi
   sleep 1
 done
 if ((healthy == 0)); then
-  echo "compose-up: $APP_URL/health não respondeu em 120 s; logs da pilha:" >&2
+  echo "compose-up: $APP_URL/health ou o web ($APP_URL/) não responderam em 120 s; logs da pilha:" >&2
   compose ps --all >&2 || true
   compose logs --no-color --tail 200 >&2 || true
   exit 1
