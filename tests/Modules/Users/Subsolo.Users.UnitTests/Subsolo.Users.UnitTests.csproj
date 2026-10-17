@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0014 — testes unitários do módulo Users (UT-01..UT-04): ISignInService (usuário único por e-mail normalizado,
+    papel admin pela configuração, e-mail inválido) e ISessionValidator (revogada, expirada, teto de 90 dias, renovação
+    no máximo 1 vez por hora), com repositórios em memória e FakeTimeProvider.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Subsolo.Users.UnitTests</RootNamespace>
+    <!--
+      Com `dotnet test Subsolo.slnx` e filtro (comandos do sdd-config), um projeto sem nenhum teste no filtro
+      termina com o código 8 do Microsoft.Testing.Platform ("zero testes"); isso não é falha.
+    -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
+    <ProjectReference Include="../../../../src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
+  </ItemGroup>
+
+</Project>
