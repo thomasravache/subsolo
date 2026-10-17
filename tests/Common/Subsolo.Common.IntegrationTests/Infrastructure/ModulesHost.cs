@@ -46,7 +46,15 @@ internal sealed class ModulesHost : IAsyncDisposable
 
     public IServiceProvider Services => _host.Services;
 
-    public static async Task<ModulesHost> CreateAsync(PostgresFixture postgres, CancellationToken cancellationToken)
+    public static Task<ModulesHost> CreateAsync(PostgresFixture postgres, CancellationToken cancellationToken) =>
+        CreateAsync(postgres, configureServices: null, cancellationToken);
+
+    /// <summary>Como <see cref="CreateAsync(PostgresFixture, CancellationToken)"/>, com registros extras do teste
+    /// (ex.: interceptors do EF Core) aplicados depois dos módulos.</summary>
+    public static async Task<ModulesHost> CreateAsync(
+        PostgresFixture postgres,
+        Action<IServiceCollection>? configureServices,
+        CancellationToken cancellationToken)
     {
         var connectionString = await IsolatedDatabase.CreateAsync(postgres, cancellationToken);
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 16, 12, 0, 0, TimeSpan.Zero));
@@ -60,6 +68,7 @@ internal sealed class ModulesHost : IAsyncDisposable
         builder.Services.AddTemplateModule(builder.Configuration);
         builder.Services.AddTemplateBModule(builder.Configuration);
         builder.Services.Replace(ServiceDescriptor.Singleton<TimeProvider>(clock));
+        configureServices?.Invoke(builder.Services);
 
         return new ModulesHost(builder.Build(), clock, connectionString);
     }
