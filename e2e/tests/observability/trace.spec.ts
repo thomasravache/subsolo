@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 import { expect, test } from "../fixtures";
-import { appURL } from "../agenda/environment";
+import { appURL, externalApp } from "../agenda/environment";
 
 /**
  * SPEC-0009 E2E-01 — com a aplicação no ar, o fã abre a agenda da cidade no celular: a página carrega normalmente e
@@ -27,6 +27,10 @@ test.describe("observabilidade da agenda", () => {
     test.skip(
       !testInfo.project.name.startsWith("mobile"),
       "jornada do fã no celular (projetos mobile)",
+    );
+    test.skip(
+      externalApp && !seqURL,
+      "BASE_URL externo sem SEQ_URL: o Seq do ambiente não é acessível daqui (sem porta publicada; acesso por túnel)",
     );
 
     const traceId = randomBytes(16).toString("hex");

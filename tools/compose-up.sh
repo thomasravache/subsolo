@@ -23,6 +23,10 @@ readonly OUT="artifacts/compose"
 readonly PROJECT="subsolo-local"
 readonly APP_URL="http://localhost:8080"
 readonly SEQ_PORT="${SEQ_PORT:-5341}"
+if ! [[ "$SEQ_PORT" =~ ^[0-9]+$ ]] || ((10#$SEQ_PORT < 1 || 10#$SEQ_PORT > 65535)); then
+  echo "compose-up: SEQ_PORT inválido ('$SEQ_PORT'): use um número de porta entre 1 e 65535" >&2
+  exit 2
+fi
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then

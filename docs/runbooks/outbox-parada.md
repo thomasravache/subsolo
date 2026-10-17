@@ -4,14 +4,20 @@ Sinais (SPEC-0009):
 - **`/health` → `entries.outbox` Unhealthy**: o job `ProcessOutbox` não executa há mais de 60 s
   (`OutboxHealthCheck`, alimentado por um listener do Quartz).
 - Alerta do Seq **"Falha de job"** (`infra/seq/alerts.json`): 3 ou mais eventos `OutboxProcessingFailed` em
-  10 minutos — execuções do job `<Módulo>.ProcessOutbox` que terminaram com exceção.
+  10 minutos. O evento (nome do evento de log, `EventId.Name`; no Seq, o atributo `event.name`) é emitido, com a
+  exceção, quando:
+  - uma mensagem da **outbox** ou da **inbox** falha ao ser processada (handler lançou, tipo de evento desconhecido)
+    — o job agenda nova tentativa com backoff, então uma mensagem que falha sempre gera um evento por tentativa;
+  - o job **inteiro** (`<Módulo>.ProcessOutbox` ou `<Módulo>.ProcessInbox`) termina com exceção — tipicamente o
+    PostgreSQL fora do ar (um evento a cada execução, a cada 2 s).
 
 Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se perde), mas os efeitos assíncronos
 (avisos, integrações entre módulos) atrasam.
 
 ## 1. Confirmar
 1. `GET /health` da API: veja `entries.outbox` e `entries.postgres`.
-2. No Seq, filtre `@Message like 'OutboxProcessingFailed%'` e abra a exceção do evento mais recente.
+2. No Seq, filtre `event.name = 'OutboxProcessingFailed'` e abra a exceção do evento mais recente: a
+   mensagem diz se foi uma mensagem ("Falha ao processar ... (tentativa N)") ou o job inteiro.
 3. Veja os spans `ProcessOutbox <Evento>` (fonte `Subsolo.Messaging`) com status de erro: a tag
    `subsolo.message.id` identifica a mensagem.
 

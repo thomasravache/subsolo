@@ -1,12 +1,15 @@
 # Runbook — Erros 5xx
 
-Alerta do Seq **"Erros 5xx"** (`infra/seq/alerts.json`, SPEC-0009): mais de 5 respostas com status ≥ 500 (spans de
-servidor da `api` ou do `web`) em 5 minutos.
+Alerta do Seq **"Erros 5xx"** (`infra/seq/alerts.json`, SPEC-0009): mais de 5 respostas com status ≥ 500 da `api`
+(spans de servidor com `service.name = 'api'`) em 5 minutos.
+
+> Só a API conta: quando a API falha, o `web` responde a agenda com 503 ("indisponível") e não duplica a contagem.
+> Erros 5xx só do `web` aparecem no Seq (`@Resource.service.name = 'web'`), mas não disparam este alerta.
 
 ## 1. Confirmar
 1. Abra o Seq (local: dashboard do Aspire → `seq`; Compose: só por túnel, sem porta publicada) e rode o sinal
-   **Erros 5xx**: `@SpanKind = 'Server' and coalesce(http.response.status_code, http.status_code) >= 500`.
-2. Agrupe por rota e serviço: `select count(*) from stream where <filtro> group by @Resource.service.name, http.route`.
+   **Erros 5xx**: `@Resource.service.name = 'api' and @SpanKind = 'Server' and http.response.status_code >= 500`.
+2. Agrupe por rota: `select count(*) from stream where <filtro> group by http.route`.
 3. Abra um dos traces (`@TraceId`) para ver onde o erro nasceu: web → api → PostgreSQL.
 
 ## 2. Diagnosticar

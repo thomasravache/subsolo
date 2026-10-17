@@ -136,6 +136,7 @@ internal abstract partial class ProcessMessagesJob<TDbContext, TMessage, TConsum
     [LoggerMessage(Level = LogLevel.Error, Message = "Falha ao gravar o estado de {MessageKind} {MessageId} do módulo {Module}; nova leitura na próxima execução")]
     private static partial void LogSaveFailure(ILogger logger, Exception exception, string messageKind, Guid messageId, string module);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Falha ao processar {MessageKind} {MessageId} do módulo {Module} (tentativa {Attempt})")]
+    // SPEC-0009 — EventName base do alerta "Falha de job" do Seq (infra/seq/alerts.json): falha de uma mensagem.
+    [LoggerMessage(EventName = "OutboxProcessingFailed", Level = LogLevel.Error, Message = "Falha ao processar {MessageKind} {MessageId} do módulo {Module} (tentativa {Attempt})")]
     private static partial void LogFailure(ILogger logger, Exception exception, string messageKind, Guid messageId, string module, int attempt);
 }

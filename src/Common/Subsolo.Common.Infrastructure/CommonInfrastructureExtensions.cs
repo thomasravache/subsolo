@@ -21,7 +21,7 @@ public static class CommonInfrastructureExtensions
     /// connection string <see cref="ConnectionStringName"/> é lida de <paramref name="configuration"/> quando o
     /// DbContext de um módulo é criado.
     /// SPEC-0009 — health checks <c>postgres</c> e <c>outbox</c> do <c>/health</c>, com o heartbeat da outbox
-    /// alimentado por um listener dos jobs <c>ProcessOutbox</c>.
+    /// alimentado por um listener dos jobs <c>ProcessOutbox</c> (que também registra a falha dos jobs <c>ProcessInbox</c>).
     /// </summary>
     public static IServiceCollection AddCommonInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -36,7 +36,10 @@ public static class CommonInfrastructureExtensions
             .AddCheck<OutboxHealthCheck>(OutboxHealthCheck.Name);
 
         services.AddQuartz(quartz => quartz.AddJobListener<OutboxHeartbeatListener>(
-            [NameMatcher<JobKey>.NameEndsWith(OutboxHeartbeatListener.JobNameSuffix)]));
+            [
+                NameMatcher<JobKey>.NameEndsWith(OutboxHeartbeatListener.OutboxJobSuffix),
+                NameMatcher<JobKey>.NameEndsWith(OutboxHeartbeatListener.InboxJobSuffix),
+            ]));
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
         return services;
     }

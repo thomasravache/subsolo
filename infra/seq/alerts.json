@@ -9,17 +9,17 @@
   "alerts": [
     {
       "title": "Erros 5xx",
-      "filter": "@SpanKind = 'Server' and coalesce(http.response.status_code, http.status_code) >= 500",
+      "filter": "@Resource.service.name = 'api' and @SpanKind = 'Server' and http.response.status_code >= 500",
       "window": "00:05:00",
       "having": "count > 5",
-      "runbook": "docs/runbooks/erros-5xx.md"
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/erros-5xx.md"
     },
     {
       "title": "Falha de job",
-      "filter": "@Message like 'OutboxProcessingFailed%'",
+      "filter": "event.name = 'OutboxProcessingFailed'",
       "window": "00:10:00",
       "having": "count >= 3",
-      "runbook": "docs/runbooks/outbox-parada.md"
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
     }
   ]
 }
