@@ -6,12 +6,14 @@ namespace Subsolo.Tooling.Tests.CiPolicy;
 /// SPEC-0006 UT-02 (Emenda v4) — todo job do <c>ci.yml</c> que roda um comando do sdd-config dependente de Node/pnpm
 /// prepara o ambiente antes: um step <c>actions/setup-node</c> e um step que habilita o pnpm via corepack
 /// (<c>corepack enable</c>). Dependem de Node/pnpm os comandos que chamam <c>tools/*.sh</c> ou <c>pnpm</c> e os comandos
-/// <c>test</c>/<c>test_integration</c>, que executam os testes de integração do <c>tools/lint.sh</c> (chamam pnpm).
+/// <c>test</c>/<c>test_integration</c>, que executam os testes de integração do <c>tools/lint.sh</c> (chamam pnpm), e o
+/// <c>test_commands_contract</c>, que roda os próprios comandos do sdd-config (inclusive <c>lint</c> e <c>test_e2e</c>) —
+/// SPEC-0013, item 11.
 /// </summary>
 public sealed class CiWorkflowToolchainTests
 {
-    /// <summary>Comandos que rodam os testes de integração do <c>lint.sh</c> mesmo sem citar pnpm literalmente.</summary>
-    private static readonly string[] CommandsRunningLintIntegrationTests = ["test", "test_integration"];
+    /// <summary>Comandos que rodam o <c>lint.sh</c> ou o pnpm indiretamente (pelos testes) sem citar pnpm literalmente.</summary>
+    private static readonly string[] CommandsRunningLintIntegrationTests = ["test", "test_integration", "test_commands_contract"];
 
     /// <summary>Chaves de comando do sdd-config que podem aparecer num job do CI.</summary>
     private static readonly string[] SddConfigCommandKeys =
@@ -63,7 +65,8 @@ public sealed class CiWorkflowToolchainTests
         }
 
         violations.ShouldBeEmpty(
-            "jobs que rodam comandos do sdd-config dependentes de Node/pnpm (tools/*.sh, pnpm, test, test_integration) " +
+            "jobs que rodam comandos do sdd-config dependentes de Node/pnpm (tools/*.sh, pnpm, test, test_integration, " +
+            "test_commands_contract) " +
             "devem preparar Node (actions/setup-node) e pnpm (corepack enable) antes do comando");
     }
 

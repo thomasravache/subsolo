@@ -219,16 +219,24 @@ internal sealed class GitHubCiVerification : IAsyncDisposable
         return log.StandardOutput;
     }
 
-    /// <summary>Mensagens das anotações do check run, sem a genérica "Process completed with exit code N".</summary>
-    public async Task<IReadOnlyList<string>> SpecificAnnotationsAsync(PullRequestCheck check, CancellationToken ct)
+    /// <summary>
+    /// Anotações (título e mensagem) do check run escritas pela ferramenta que falhou, sem a genérica do runner
+    /// ("Process completed with exit code N") nem as genéricas do próprio workflow (título "SDD pr-check"/"SDD validate",
+    /// que só dizem "veja as falhas acima") — SPEC-0013, item 7.
+    /// </summary>
+    public async Task<IReadOnlyList<(string Title, string Message)>> ToolAnnotationsAsync(PullRequestCheck check, CancellationToken ct)
     {
         check.JobId.ShouldNotBeNull($"id do check run não encontrado no link do check {check}");
         var result = await Gh(["api", $"repos/{Repository}/check-runs/{check.JobId}/annotations"], WorkTree, ShortTimeout, ct);
         result.ExitCode.ShouldBe(0, $"não foi possível ler as anotações do check {check}:{Environment.NewLine}{result}");
         using var json = JsonDocument.Parse(result.StandardOutput);
         return [.. json.RootElement.EnumerateArray()
-            .Select(a => a.TryGetProperty("message", out var m) ? m.GetString() ?? string.Empty : string.Empty)
-            .Where(m => m.Length > 0 && !m.StartsWith("Process completed with exit code", StringComparison.Ordinal))];
+            .Select(a => (
+                Title: a.TryGetProperty("title", out var t) ? t.GetString() ?? string.Empty : string.Empty,
+                Message: a.TryGetProperty("message", out var m) ? m.GetString() ?? string.Empty : string.Empty))
+            .Where(a => a.Message.Length > 0
+                && !a.Message.StartsWith("Process completed with exit code", StringComparison.Ordinal)
+                && a.Title is not ("SDD pr-check" or "SDD validate"))];
     }
 
     /// <summary>

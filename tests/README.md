@@ -9,9 +9,9 @@ Todos rodam na raiz do repositório (são os comandos do `docs/specs/sdd-config.
 
 | Chave | Comando | O que roda |
 |---|---|---|
-| `test` | `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" && (cd web && pnpm test)` | suíte .NET (unitários e integração) + Vitest do front |
-| `test_integration` | `dotnet test Subsolo.slnx --filter "Kind=Integration"` | só os testes `Kind=Integration` |
-| `test_commands_contract` | `dotnet test Subsolo.slnx --filter "Kind=CommandContract"` | sob demanda (G2/G5 locais): testes que rodam os próprios comandos do sdd-config; no CI cada comando já é um job |
+| `test` | `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` | suíte .NET (unitários e integração) + Vitest do front |
+| `test_integration` | `dotnet test Subsolo.slnx --filter "Kind=Integration" --max-parallel-test-modules 1` | só os testes `Kind=Integration` |
+| `test_commands_contract` | `dotnet test Subsolo.slnx --filter "Kind=CommandContract" --max-parallel-test-modules 1` | sob demanda (G2/G5 locais): testes que rodam os próprios comandos do sdd-config; no CI cada comando já é um job |
 | `arch_test` | `dotnet test tests/Subsolo.ArchitectureTests` | regras de arquitetura (ArchUnitNET) |
 | `test_e2e` | `(cd e2e && pnpm test)` | Playwright nos projetos mobile e desktop |
 | `coverage` | `./tools/coverage.sh` | cobertura (coverlet + ReportGenerator) e % das linhas alteradas vs `origin/main` |
@@ -128,7 +128,8 @@ ArchitectureRules.ForModule("Events")
 - Sem assemblies, avalia os `Subsolo.Modules.<Módulo>.*.dll` ao lado do assembly de teste (referencie os projetos do
   módulo); `ForModule("X", assembly1, assembly2)` avalia só os informados.
 - Cada regra é avaliada na hora e falha o teste nomeando os tipos da dependência proibida.
-- `OnlyReferences` permite, de outros módulos, só os namespaces `<Outro>.Contracts`.
+- `OnlyReferences` permite, de outros módulos, só o contrato público `<Outro>.IntegrationEvents` (ADR-0001) dos
+  módulos informados.
 
 ## Front (Vitest)
 

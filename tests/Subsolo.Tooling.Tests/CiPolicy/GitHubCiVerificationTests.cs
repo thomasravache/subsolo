@@ -136,6 +136,7 @@ public sealed partial class GitHubCiVerificationTests
 
     [Fact]
     [Trait("Spec", "SPEC-0006:IT-05")]
+    [Trait("Spec", "SPEC-0013:IT-05")]
     [Trait("Kind", "GitHubVerification")]
     public async Task PullRequestWithoutApprovedSpecTurnsSddCheckRedWithAnnotation()
     {
@@ -153,8 +154,12 @@ public sealed partial class GitHubCiVerificationTests
 
         var failed = run.ChecksOf(checks, "sdd").Where(c => c.Failed).ToList();
         failed.ShouldNotBeEmpty($"check `sdd` deveria falhar no PR sem spec ({run.PullRequestUrl})");
-        (await run.SpecificAnnotationsAsync(failed[0], ct)).ShouldNotBeEmpty(
-            "o check `sdd` deve deixar uma anotação explicando o motivo (além da genérica de exit code)");
+        // SPEC-0013 (item 7): a anotação genérica do workflow ("SDD pr-check") não basta — o próprio pr-check precisa
+        // explicar o motivo, citando a spec ou a regra violada.
+        var annotations = await run.ToolAnnotationsAsync(failed[0], ct);
+        annotations.Where(a => a.Message.Contains("spec", StringComparison.OrdinalIgnoreCase)).ShouldNotBeEmpty(
+            "o check `sdd` deve ter uma anotação do pr-check citando a spec ou a regra violada (a genérica do workflow, " +
+            $"\"SDD pr-check\", e a de exit code não contam). Anotações: {string.Join(" | ", annotations.Select(a => $"{a.Title}: {a.Message}"))}");
     }
 
     [Fact]

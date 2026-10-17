@@ -94,7 +94,10 @@ public sealed class ModuleArchitectureRules
         return this;
     }
 
-    /// <summary>O módulo só referencia, de outros módulos, os contratos públicos informados.</summary>
+    /// <summary>
+    /// O módulo só referencia, de outros módulos, o contrato público (<c>&lt;Outro&gt;.IntegrationEvents</c>, ADR-0001)
+    /// dos módulos informados; qualquer outro namespace de outro módulo reprova.
+    /// </summary>
     public ModuleArchitectureRules OnlyReferences(params string[] allowedModules)
     {
         ArgumentNullException.ThrowIfNull(allowedModules);
@@ -102,14 +105,14 @@ public sealed class ModuleArchitectureRules
         var module = Regex.Escape(_module);
         var allowedContracts = allowedModules.Length == 0
             ? string.Empty
-            : $"(?!(?:{string.Join('|', allowedModules.Select(Regex.Escape))})\\.Contracts(?:\\.|$))";
+            : $"(?!(?:{string.Join('|', allowedModules.Select(Regex.Escape))})\\.IntegrationEvents(?:\\.|$))";
         var otherModules = $"^{root}\\.(?!{module}(?:\\.|$)){allowedContracts}[^.]+(?:\\..*)?$";
 
         Types().That().ResideInNamespaceMatching($"^{root}\\.{module}(?:\\..*)?$")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(otherModules))
             .Because(allowedModules.Length == 0
                 ? $"o módulo {_module} não referencia outros módulos (ADR-0001)"
-                : $"o módulo {_module} só referencia os contratos de {string.Join(", ", allowedModules)} (ADR-0001)")
+                : $"o módulo {_module} só referencia os IntegrationEvents de {string.Join(", ", allowedModules)} (ADR-0001)")
             .Check(_architecture);
         return this;
     }

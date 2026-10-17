@@ -2,7 +2,7 @@ namespace Subsolo.Tooling.Tests.CiPolicy;
 
 /// <summary>
 /// SPEC-0006 CT-01 — os jobs do <c>ci.yml</c> chamam exatamente os comandos do sdd-config publicados pela
-/// SPEC-0005@2 (<c>test</c>, <c>arch_test</c>, <c>coverage</c> no job <c>test</c>; <c>test_integration</c> no
+/// SPEC-0005@4 (<c>test</c>, <c>arch_test</c>, <c>coverage</c> no job <c>test</c>; <c>test_integration</c> no
 /// <c>integration</c>; <c>test_e2e</c> no <c>e2e</c>) e os scripts da SPEC-0004 (<c>build</c>, <c>lint</c>).
 /// Nenhuma lógica de build existe só no YAML: o comando aparece literalmente num step <c>run:</c> do job.
 /// </summary>

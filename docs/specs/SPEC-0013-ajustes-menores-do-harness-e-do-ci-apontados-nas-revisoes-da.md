@@ -4,12 +4,12 @@ title: Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
 consumes_contract: []
-touches: [src/Common/Subsolo.Common.Domain/DomainEvent.cs, src/Common/Subsolo.Common.Domain/Entity.cs, src/Common/Subsolo.Common.Infrastructure/Messaging/**, tests/Common/Subsolo.Common.IntegrationTests/**, .gitignore, tests/Subsolo.ArchitectureTests/ArchitectureRules.cs, tests/Subsolo.ArchitectureTests/HarnessExamples/**, tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
+touches: [src/Common/Subsolo.Common.Domain/DomainEvent.cs, src/Common/Subsolo.Common.Domain/Entity.cs, src/Common/Subsolo.Common.Infrastructure/Messaging/**, src/Common/Subsolo.Common.Infrastructure/Outbox/InsertOutboxMessagesInterceptor.cs, tests/Common/Subsolo.Common.IntegrationTests/**, .gitignore, tests/Subsolo.ArchitectureTests/ArchitectureRules.cs, tests/Subsolo.ArchitectureTests/HarnessExamples/**, tests/README.md, CODEOWNERS, .github/CODEOWNERS, tools/coverage.sh, tools/lint.sh, e2e/static-server.mjs, e2e/package.json, e2e/pnpm-lock.yaml, e2e/tsconfig.json, .github/workflows/ci.yml, tests/Subsolo.Tooling.Tests/**, e2e/tests/**]
 adrs: [ADR-0005, ADR-0006, ADR-0009]
 external: []
 size: S
@@ -71,18 +71,23 @@ Itens 1–4: escritos e validados só no Linux/bash 5 e no caminho feliz. Itens 
 
 **Rollback:** revert do merge commit.
 
-**Outras ocorrências:** `ArchitectureRules.OnlyReferences` sem teste próprio vai para a SPEC-0007 (que cria as regras do monólito sobre ele). O tempo do comando `test` (~4 min por causa dos testes de contrato aninhados) fica como questão para decidir na SPEC-0007, quando a suíte crescer.
+**Outras ocorrências:** o teste próprio do `ArchitectureRules.OnlyReferences` fica nesta spec (IT-06, Emenda 1). O tempo do comando `test` (~4 min por causa dos testes de contrato aninhados) fica como questão para decidir na SPEC-0007, quando a suíte crescer.
 
 ## 4. Plano de Testes (TDD)
 - Caracterização: N/A — área já coberta pelos testes das SPEC-0004/0005/0006.
 - **UT-01** — Dado o `ci.yml`, quando a política de CI é avaliada, então o grupo de concorrência usa `github.sha` fora de PR e os caches do pnpm de `web/` e `e2e/` têm chaves distintas, cada uma com o hash do próprio lockfile (falha antes da correção).
-- **IT-01** — Dado o servidor estático do E2E rodando, quando recebe `GET /%E0%A4%A`, então responde 400 e continua respondendo 200 em `/` (falha antes: o processo cai).
+- **IT-01** — Dado o servidor estático do E2E rodando, quando recebe `GET /%E0%A4%A`, então responde 400 e continua respondendo 200 numa página existente (`/harness/acessivel.html`; `/` não tem `index.html`) (falha antes: o processo cai).
 - **IT-02** — Dado um repositório sem a base `origin/main`, quando `tools/coverage.sh` roda, então termina com exit ≠ 0 e a mensagem da base em poucos segundos, sem rodar a suíte (falha antes da correção).
 - **IT-03** — Dado o `tools/coverage.sh`, quando analisado, então não usa `mapfile`/`readarray` e roda num shell bash 3.2 compatível (checagem estática; falha antes da correção).
 - **IT-04** — Dado um arquivo `.ts` em `e2e/` com erro de tipo, quando `tools/lint.sh` roda, então o passo `e2e-lint` falha (falha antes da correção).
 - **UT-02** — Dados o sdd-config, o `coverage.sh` e o `ci.yml`, quando a política é avaliada, então nenhum filtro de `test`, `test_integration` ou do coverage seleciona `Kind=CommandContract` e nenhum job roda `test_commands_contract` (guarda: passa hoje, falha se alguém reintroduzir).
-- **UT-03** — Dado o repositório, quando o `CODEOWNERS` é lido, então `tools/sdd/**`, `docs/specs/sdd-config.yml` e `.github/workflows/**` têm dono (falha antes da correção).
+- **UT-03** — Dado o repositório, quando o `CODEOWNERS` é lido, então `tools/sdd/**`, `docs/specs/sdd-config.yml` e `.github/workflows/**` têm dono (guarda: o `.github/CODEOWNERS` atual já cobre; falha se a regra sumir — Emenda 1).
+- **UT-04** — Dado o `ci.yml`, quando a política é avaliada, então todo job cuja suíte inclui testes que chamam a Aspire CLI (`test`, `integration`) instala `Aspire.Cli` na versão fixada antes do passo de testes (guarda — Emenda 1).
+- **UT-05** — Dado um `TimeProvider` falso fixado num instante, quando uma entidade levanta um evento de domínio e ele é gravado na outbox, então `OccurredOnUtc` é o instante do `TimeProvider`, não o relógio do sistema (falha antes da correção — Emenda 1).
+- **IT-06** — Dado um módulo de exemplo que referencia `<Outro>.Contracts` e outro que referencia `<Outro>.IntegrationEvents`, quando a regra `OnlyReferences` roda, então o primeiro reprova e o segundo passa, conforme o ADR-0001 (falha antes da correção — Emenda 1).
+- **IT-07** — Dado o `ProcessMessagesJob` com um `SaveChangesInterceptor` que falha uma vez ao gravar o estado de uma mensagem, quando o lote roda, então a próxima mensagem do lote é processada e a que falhou é reprocessada depois sem rodar o handler de novo (falha antes se o caminho não for tratado; guarda se já for — Emenda 1).
 - IT-05 da SPEC-0006 fortalecido (anotação genérica não basta) e a confirmação do CodeQL rodam sob demanda com `SDD_GITHUB_VERIFY=1`, como as demais verificações no GitHub.
+- Itens sem teste automatizado (Emenda 1): a confirmação da supressão do CodeQL (item 8) é verificação manual no GitHub registrada no Relatório de Entrega; itens 9, 13 e 15 são documentação/comentários; o item 16 (`aspire.config.json` no `.gitignore`) já estava resolvido.
 
 ## 5. Questões em Aberto
 Nenhuma
@@ -110,10 +115,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 1ed3cf7 | 2026-10-14 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 2b3ccf3 | 2026-10-17 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — ab4775d | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 144ms) — ab4775d | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em ab4775d — itens 1–20 atendidos (8 manual pós-G4; 12 e 16 já resolvidos; 9, 13, 15 documentação); guardas UT-02/UT-03/UT-04/IT-07 realmente guardam; IT-05 da SPEC-0006 fortalecido; verify PASS com aviso justificado (correções do harness em e2e/ e ArchitectureRules.cs, comentários). Menores: caches do pnpm com o mesmo store (união), UT-05 sem conferir o Id no conteúdo, falha do dotnet sln list dentro de process substitution — ab4775d | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -155,3 +160,5 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-17 | Emenda 2 (Implementer): entra nos `touches` `src/Common/Subsolo.Common.Infrastructure/Outbox/InsertOutboxMessagesInterceptor.cs`; o UT-05 é atendido pelo interceptor, que já tem o `TimeProvider` e serializa o evento: `domainEvent is DomainEvent d ? d with { OccurredOnUtc = <agora do TimeProvider> } : domainEvent`, preservando o `Id`; o valor padrão de `DomainEvent.OccurredOnUtc` fica só como fallback | O conteúdo do evento é serializado no interceptor, fora dos `touches` | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
+| 1 (escopo e testes) | 2026-10-17 | Emenda 1 (relatório do Test-writer): UT-03 vira guarda (o `.github/CODEOWNERS` já cobre `tools/sdd/**`, `sdd-config.yml` e os workflows); item 16 já resolvido; ganham ID os itens que só estavam na Mudança Proposta — UT-04 (Aspire CLI fixada nos jobs, item 20), UT-05 (`OccurredOnUtc` pelo `TimeProvider`, item 19), IT-06 (`OnlyReferences` com `IntegrationEvents`, item 17, que deixa de ir para a SPEC-0007) e IT-07 (falha ao gravar o estado no `ProcessMessagesJob`, item 18); IT-01 confere uma página existente em vez de `/`; CodeQL (item 8) como verificação manual; chaves de cache `web`/`e2e` por lockfile, com dois passos de cache no job que usa os dois | Spec aprovada antes das ondas 4 e 5; itens sem ID no plano | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
