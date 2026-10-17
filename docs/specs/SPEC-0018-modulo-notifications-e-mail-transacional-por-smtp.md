@@ -185,9 +185,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 93aac2d (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 3cac14d | 2026-10-17 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em 59d9d11 — major: SMTP não ligado ao Mailpit no Compose publicado (E2E da SPEC-0016 depende); menores: QUIT falho vira email_unavailable, regex de destinatário mais frouxa que o MimeKit, regra SMTP sem os hosts, TLS só em Production vs §5, comentário do csproj desatualizado | 2026-10-17 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 389e61f | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 085ms) — 389e61f | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 389e61f após CHANGES_REQUESTED em 59d9d11 — os 6 achados corrigidos (Compose ligado ao Mailpit com SMTP_SECURITY padrão StartTls, QUIT falho não vira falha, destinatário alinhado ao MimeKit, regra SMTP com os hosts, TLS fora de Development, comentário do csproj); contrato §6 exato, MailKit com timeout de 10 s, template escapado e acessível, sem dados pessoais na telemetria, MailKit/MimeKit/BouncyCastle MIT; testes só ficaram mais rígidos; 2 menores → SPEC-0003 (Compose de produção ainda aponta para o Mailpit) e aceito (letras Unicode no local-part) — 389e61f | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
