@@ -36,6 +36,16 @@ var api = builder.AddProject<Projects.Subsolo_Api>("api")
     .WaitFor(database)
     .WithHttpHealthCheck("/health", endpointName: "http");
 
+// SPEC-0018 — no local e no CI, o e-mail transacional da API sai pelo Mailpit, sem TLS. Na publicação (Compose), a
+// seção Notifications:Smtp fica para o go-live (SPEC-0003): provedor real, TLS e senha por segredo (ADR-0008).
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    var smtp = mailpit.GetEndpoint("smtp");
+    api.WithEnvironment("Notifications__Smtp__Host", smtp.Property(EndpointProperty.Host))
+        .WithEnvironment("Notifications__Smtp__Port", smtp.Property(EndpointProperty.Port))
+        .WithEnvironment("Notifications__Smtp__Security", "None");
+}
+
 var web = builder.AddJavaScriptApp("web", "../../web", "dev")
     .WithPnpm(installArgs: ["--frozen-lockfile"])
     .WithHttpEndpoint(env: "PORT")
