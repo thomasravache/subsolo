@@ -67,6 +67,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 - "Minha conta" (onda 4+): exportar e excluir os próprios dados, com teste de que a exclusão apaga a conta, as sessões, os tokens, os "vou" e os seguidos.
 - "Apoie, privacidade e termos": política de privacidade com finalidades, bases legais e retenção do ADR-0008; canal de contato do titular (agente de pequeno porte dispensado de encarregado, Resolução CD/ANPD nº 2/2022, mas o canal é obrigatório); aviso de que dados excluídos somem dos backups em até 6 meses (retenção do ADR-0011); plano curto de resposta a incidente (comunicação à ANPD e aos titulares, Resolução CD/ANPD nº 15/2024) em `docs/runbooks/`.
 - Go-live (SPEC-0003): criptografia em repouso do disco do banco e dos flyers (questão aberta lá).
+- Criptografia por coluna: adiada por decisão do Thomas em 2026-10-17 (ADR-0008, atualização da mesma data); volta se entrar dado mais delicado.
 
 **Herança da SPEC-0015 (Emenda 1, 2026-10-17):** a primeira spec que criar uma página interna que responda 200 e seja alcançável por `next/link` (Página do show ou Apoie) leva o E2E do título na navegação no cliente: um `MutationObserver` registra todo `document.title` durante o clique, nenhum valor fica vazio e o axe `document-title` passa logo depois da troca de URL. Achado junto: a página de cidade inexistente carregada direto mostrou o título "Subsolo" em vez de "Cidade não encontrada · Subsolo" — investigar na mesma spec.
 
