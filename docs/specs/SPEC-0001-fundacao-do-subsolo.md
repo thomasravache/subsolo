@@ -3,7 +3,7 @@ id: SPEC-0001
 title: Fundação do Subsolo
 tier: epic
 type: foundation
-status: approved
+status: implemented
 created: 2026-10-13
 depends_on: []
 adrs: []
@@ -62,6 +62,8 @@ Os contratos entre as filhas são: os comandos do sdd-config (SPEC-0004 → SPEC
 | SPEC-0009 | Observabilidade base | full | foundation | M | SPEC-0008 | — |
 | SPEC-0010 | Segurança base | full | foundation | M | SPEC-0008 | — |
 | SPEC-0011 | Design system escuro e shell do app | full | foundation | M | SPEC-0008 | — |
+| SPEC-0012 | Ajustes do tooling apontados na revisão da SPEC-0004 | lite | fix | S | — | — |
+| SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões | lite | fix | S | — | — |
 
 ## 5. Estratégia de Entrega
 - **Ambientes:** apenas local (Aspire `aspire run` + Compose gerado, rodando localmente) e CI no GitHub Actions; staging e produção chegam com o épico SPEC-0003, depois da aprovação de custos.
@@ -78,13 +80,13 @@ Os contratos entre as filhas são: os comandos do sdd-config (SPEC-0004 → SPEC
 - Bibliotecas que mudam de licença — mitigação: a política de licenças no ADR-0009.
 
 ## 7. Critérios de Aceite do Épico
-- [ ] Um fã abre a agenda da cidade no celular, renderizada pelo Next.js a partir da API e do banco — SPEC-0008:E2E-01
-- [ ] A aplicação sobe pelo Docker Compose gerado pelo Aspire e passa no smoke — SPEC-0008:E2E-02
-- [ ] Todo PR roda build, lint, testes, E2E, segurança e o job `sdd`, e um teste quebrado bloqueia o merge — SPEC-0006:IT-02
-- [ ] As regras de arquitetura do ADR-0001 falham no CI diante de uma violação — SPEC-0007:IT-06
-- [ ] O trace de uma navegação aparece de ponta a ponta no Seq, sem dados pessoais — SPEC-0009:E2E-01
-- [ ] Endpoint sem política de autorização não passa no CI — SPEC-0010:IT-01
-- [ ] A agenda usa o design system escuro aprovado no Stitch, sem violações de acessibilidade — SPEC-0011:E2E-01
+- [x] Um fã abre a agenda da cidade no celular, renderizada pelo Next.js a partir da API e do banco — SPEC-0008:E2E-01 — PASS no CI dos PRs #14, #16 e #18 (job e2e)
+- [x] A aplicação sobe pelo Docker Compose gerado pelo Aspire e passa no smoke — SPEC-0008:E2E-02 — PASS no CI dos PRs #14, #16 e #18 (job e2e, smoke na pilha do Compose)
+- [x] Todo PR roda build, lint, testes, E2E, segurança e o job `sdd`, e um teste quebrado bloqueia o merge — SPEC-0006:IT-02 — PASS no GitHub com `SDD_GITHUB_VERIFY=1` (PRs descartáveis #5 a #10, onda 2)
+- [x] As regras de arquitetura do ADR-0001 falham no CI diante de uma violação — SPEC-0007:IT-06 — PASS no CI dos PRs #12 a #18 (job test, arch_test)
+- [x] O trace de uma navegação aparece de ponta a ponta no Seq, sem dados pessoais — SPEC-0009:E2E-01 — PASS no CI do PR #16 (run 39005176528) e do PR #18
+- [x] Endpoint sem política de autorização não passa no CI — SPEC-0010:IT-01 — PASS no CI do PR #16 e do PR #18
+- [x] A agenda usa o design system escuro aprovado no Stitch, sem violações de acessibilidade — SPEC-0011:E2E-01 — PASS no CI do PR #16 e do PR #18
 
 ## 8. Questões em Aberto
 - [x] Quem vai construir e manter e em qual linguagem? — Back-end em .NET no estilo Modular Monolith com Vertical Slices (Milan Jovanovic); front em TypeScript (recomendação aceita). Precisa ser modular para integrar IA e WhatsApp depois. (Thomas, 2026-10-13)
@@ -108,6 +110,36 @@ Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com e
 
 ## 11. Relatório de Entrega
 <!-- Preenchido ao fechar o épico: o que foi entregue, como (ondas e deploys com versão/data), resultado dos critérios de aceite com os testes que os provam, métricas pós-release, pendências como novas specs. `spec_graph.py report SPEC-0001` ajuda a montar. -->
+
+**O que foi entregue:** a fundação do Subsolo, pronta para receber as features do MVP (épico SPEC-0002):
+- Repositório, ferramentas, hooks e proteção da `main` (SPEC-0004, SPEC-0012); harness de testes com xUnit, Testcontainers, ArchUnitNET, Vitest e Playwright com axe (SPEC-0005); CI com build, lint, testes, E2E, segurança, CodeQL e `pr-check` como checks obrigatórios (SPEC-0006, SPEC-0013).
+- Monólito modular .NET 10 com blocos Common, outbox/inbox, ProblemDetails, OpenAPI e Aspire (SPEC-0007); walking skeleton da agenda da cidade, do PostgreSQL ao Next.js, com Compose gerado pelo Aspire atrás do Caddy (SPEC-0008).
+- Observabilidade ponta a ponta no Seq com redator de dados pessoais, health checks e alertas com runbooks (SPEC-0009); segurança base — negação por padrão, anti-forgery, rate limiting, CSP com nonce e HTTPS com HSTS (SPEC-0010); design system escuro e shell do app (SPEC-0011).
+
+**Como (ondas e entregas na `main`):**
+| Onda | Specs | PR de entrega (merge) | Fechamento |
+|---|---|---|---|
+| 1 | SPEC-0004 | #1/#2 | — |
+| 2 | SPEC-0005, SPEC-0006 | #4 (ef5ccfa) | #11 (8f05ed3) |
+| 3 | SPEC-0007, SPEC-0012 | #12 (a373563) | #13 (080db7c) |
+| 4 | SPEC-0008 | #14 (f53fcad) | #15 (858d37a) |
+| 5 | SPEC-0009, SPEC-0010, SPEC-0011 | #16 (ac71d56) | #17 (bb2682e) |
+| 6 | SPEC-0013 | #18 (2fc5efa) | PR de fechamento desta onda |
+
+Sem deploy: ambiente só local e CI (G6 N/A → SPEC-0003). H2 das ondas 3 a 6 delegado pelo Thomas (piloto automático, 2026-10-16); merges pelo Architect com merge commit (ADR-0007).
+
+**Critérios de aceite:** os 7 da seção 7 verificados, cada um pelo teste indicado, todos verdes no CI.
+
+**Métricas da Estratégia de Entrega:**
+- Tempo do CI ≤ 15 min (p50): **não atingido** — com a suíte serial (exigência do Next 16 e da máquina de 8 GB), o job `test` leva ~19 min e o PR inteiro ~20 min. Pendência no épico SPEC-0002.
+- Suíte verde por 5 PRs seguidos sem teste instável: PRs #14 a #18 verdes no merge; dois testes instáveis da SPEC-0009 foram corrigidos antes do merge (esperando o span exportado).
+- `aspire run` numa máquina limpa em ≤ 5 min: **não medido** numa máquina limpa; fica para o go-live (SPEC-0003), que provisiona um ambiente do zero.
+
+**Impedimentos:** IMP-01 (integração da onda 5) resolvido.
+
+**Pendências:**
+- Épico SPEC-0002: tempo do CI (paralelizar os módulos que não sobem o AppHost); achados menores das revisões das SPEC-0009, 0010 e 0011 listados nos relatórios delas; título durante a navegação no cliente (questão em aberto).
+- SPEC-0003: medição do `aspire run` numa máquina limpa; itens de produção apontados nas SPEC-0009 e 0010; Instagram definitivo.
 
 ## 12. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->

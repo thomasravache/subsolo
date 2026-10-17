@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **2 erro(s), 20 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 1, implemented 9
+- Validação (G0): **2 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
+- Specs: implemented 10
 - Impedimentos: **0 aberto(s)**, 12 resolvido(s)
 
 ## Cobertura de Pilares
@@ -38,43 +38,21 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
-**Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0013
-
-| Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
-|---|---|---|---|---|---|---|
-| 1 | SPEC-0013 | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite/S | approved | ✅ pronta |  |
+Nenhuma spec aberta.
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
-| SPEC-0001 | Fundação do Subsolo | approved | 9/10 implementadas |
+| SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | proposed | 0/0 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
-
-## Grafo de Dependências
-
-Seta contínua: depende da implementação. Seta tracejada: consome contrato.
-
-```mermaid
-flowchart LR
-  subgraph E0001["SPEC-0001 · Fundação do Subsolo"]
-    S0013["SPEC-0013<br/>Ajustes menores do harness e do CI apon…"]:::approved
-  end
-  classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
-  classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
-  classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
-  classDef implemented fill:#dcfce7,stroke:#16a34a,color:#111
-  classDef deprecated fill:#f3f4f6,stroke:#9ca3af,color:#6b7280
-```
 
 ## Todas as Specs
 
 | ID | Título | Tier | Tipo | Status | Criada | Épico | Depende de | Consome contrato |
 |---|---|---|---|---|---|---|---|---|
-| [SPEC-0001](SPEC-0001-fundacao-do-subsolo.md) | Fundação do Subsolo | epic | foundation | approved | 2026-10-13 | — | — | — |
+| [SPEC-0001](SPEC-0001-fundacao-do-subsolo.md) | Fundação do Subsolo | epic | foundation | implemented | 2026-10-13 | — | — | — |
 | [SPEC-0002](SPEC-0002-agenda-subsolo-lancamento-mvp.md) | Agenda Subsolo — lançamento (MVP) | epic | feature | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0003](SPEC-0003-go-live-producao-na-vps-e-servicos-pagos.md) | Go-live: produção na VPS e serviços pagos | epic | foundation | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | implemented | 2026-10-13 | SPEC-0001 | — | — |
@@ -86,7 +64,7 @@ flowchart LR
 | [SPEC-0010](SPEC-0010-seguranca-base.md) | Segurança base | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0011](SPEC-0011-design-system-escuro-e-shell-do-app.md) | Design system escuro e shell do app | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0008 | — |
 | [SPEC-0012](SPEC-0012-ajustes-menores-do-tooling-apontados-na-revisao-da-spec-0004.md) | Ajustes menores do tooling apontados na revisão da SPEC-0004 | lite | fix | implemented | 2026-10-13 | SPEC-0001 | — | — |
-| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | approved | 2026-10-14 | SPEC-0001 | — | — |
+| [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | implemented | 2026-10-14 | SPEC-0001 | — | — |
 
 ## ADRs
 

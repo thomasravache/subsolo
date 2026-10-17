@@ -4,7 +4,7 @@ title: Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-14
 parent: SPEC-0001
 depends_on: []
@@ -99,16 +99,16 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Regressão e guardas**
-- [ ] Red: UT-01, UT-03, IT-01..IT-04 falhando pelo motivo certo; UT-02 escrito como guarda (passa hoje), todos com a tag `SPEC-0013:<ID>`; ajustar a asserção do IT-05 da SPEC-0006 (anotação genérica não basta)
-- [ ] Green: `coverage.sh` compatível com bash 3.2 e checagem da base no início; `static-server.mjs` com 400 para URL malformada; lint de `e2e/`; concorrência e chaves de cache no `ci.yml`; CODEOWNERS; README e comentários
-- [ ] Validar: build + suíte + lint + arquitetura (G2/G3)
-- [ ] Rodar o IT-05 fortalecido e confirmar a supressão do CodeQL com `SDD_GITHUB_VERIFY=1` (fase 2, depois do G4)
+- [x] Red: UT-01, UT-03, IT-01..IT-04 falhando pelo motivo certo; UT-02 escrito como guarda (passa hoje), todos com a tag `SPEC-0013:<ID>`; ajustar a asserção do IT-05 da SPEC-0006 (anotação genérica não basta)
+- [x] Green: `coverage.sh` compatível com bash 3.2 e checagem da base no início; `static-server.mjs` com 400 para URL malformada; lint de `e2e/`; concorrência e chaves de cache no `ci.yml`; CODEOWNERS; README e comentários
+- [x] Validar: build + suíte + lint + arquitetura (G2/G3)
+- [x] Rodar o IT-05 fortalecido e confirmar a supressão do CodeQL com `SDD_GITHUB_VERIFY=1` (fase 2, depois do G4)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live (SPEC-0003)
-- [ ] Relatório de Entrega e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI (G5) e aprovação (H2) — CI verde no PR #18 (run 39018496969)
+- [x] Deploy: N/A até o go-live (SPEC-0003)
+- [x] Relatório de Entrega e CHANGELOG (G7) — CHANGELOG atualizado
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -119,10 +119,10 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — ab4775d | 2026-10-17 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 144ms) — ab4775d | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em ab4775d — itens 1–20 atendidos (8 manual pós-G4; 12 e 16 já resolvidos; 9, 13, 15 documentação); guardas UT-02/UT-03/UT-04/IT-07 realmente guardam; IT-05 da SPEC-0006 fortalecido; verify PASS com aviso justificado (correções do harness em e2e/ e ArchitectureRules.cs, comentários). Menores: caches do pnpm com o mesmo store (união), UT-05 sem conferir o Id no conteúdo, falha do dotnet sln list dentro de process substitution — ab4775d | 2026-10-17 |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 04s 342ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 1s 011ms); nota: PR #18, CI run https://github.com/thomasravache/subsolo/actions/runs/39018496969 — 10/10 checks verdes em 42f17a9; IT-05 fortalecido da SPEC-0006 verificado no GitHub (SDD_GITHUB_VERIFY=1, PR descartável #19, 1/1 passed) — 42f17a9 | 2026-10-17 |
+| H2 Integração aprovada | PASS | aprovado por thomas (delegado: piloto automático, 2026-10-16) | 2026-10-17 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live → SPEC-0003 | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 65d1f4b (árvore suja) | 2026-10-17 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -133,29 +133,59 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+Os 20 ajustes apontados nas revisões das SPEC-0005, 0006, 0007, 0008 e 0012:
+- `tools/coverage.sh` compatível com bash 3.2 (sem `mapfile`, arrays vazios protegidos) e conferindo a base `origin/main` antes de rodar a suíte.
+- `e2e/static-server.mjs` responde 400 a URL malformada em vez de cair.
+- `e2e/` com TypeScript (`tsconfig.json`, `tsc --noEmit`) e o passo `e2e-lint` no `tools/lint.sh`.
+- CI: grupo de concorrência por PR ou por commit, um cache do pnpm por lockfile (`web`/`e2e`), job `test` com 35 min (suíte serial + cobertura).
+- IT-05 da SPEC-0006 fortalecido: anotação genérica do workflow não basta.
+- `ArchitectureRules.OnlyReferences` alinhado ao ADR-0001 (`<Outro>.IntegrationEvents`).
+- `DomainEvent.OccurredOnUtc` carimbado pelo `TimeProvider` no interceptor da outbox.
+- Guardas: CODEOWNERS dos arquivos do processo, Aspire CLI fixada nos jobs, nenhum filtro seleciona `Kind=CommandContract`, falha ao gravar o estado da mensagem tratada.
+- Documentação: `tests/README.md` com os comandos literais do sdd-config e a regra de `IntegrationEvents`; comentários atualizados.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (12fc286, 828eecc, 2b3ccf3) → Implementer (3b9987e, 0a7a65d, c85d5f3, 29f8449, ab4775d, b0de83a) → Reviewer APPROVED.
+- Emendas: 1 (plano atualizado depois das ondas 4 e 5 — UT-03 como guarda, novos UT-04, UT-05, IT-06, IT-07, item 16 já resolvido) e 2 (`InsertOutboxMessagesInterceptor.cs` nos `touches`).
+- Item 8 (CodeQL): verificado num PR descartável (#20, fechado sem merge) — o comentário `codeql[cs/sql-injection]` não suprime o alerta neste pipeline; o `ci.yml` passou a documentar o caminho real (`query-filters` num config do CodeQL) no commit 65d1f4b.
+- Item 7: o IT-05 fortalecido rodou no GitHub com `SDD_GITHUB_VERIFY=1` (PR descartável #19, 1/1 passed).
+- Itens 9, 13 e 15: documentação e comentários; itens 12 e 16 já estavam resolvidos (UT-03 e o `.gitignore` como guarda).
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+Red em 2b3ccf3 (`gate G1 --run --at 2b3ccf3`, exit ≠ 0): UT-01 (concorrência sem `github.sha`, cache único), UT-05 (`OccurredOnUtc` com o relógio do sistema), IT-01 (`URIError: URI malformed` derrubando o servidor), IT-02 (suíte rodando sem a base), IT-03 (`mapfile` e array sem proteção), IT-04 (`lint: ok` com erro de tipo em `e2e/`), IT-06 (`Contracts` aceito, `IntegrationEvents` reprovado). Green em ab4775d (`gate G2 --run`) e no CI do PR #18. UT-02, UT-03, UT-04 e IT-07 são guardas: passavam antes e falham se a proteção sumir (provado em rascunho revertido).
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | concorrência por PR/commit e um cache do pnpm por lockfile | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| UT-02 | nenhum filtro seleciona `Kind=CommandContract`; nenhum job roda `test_commands_contract` | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| UT-03 | CODEOWNERS cobre `tools/sdd/**`, `sdd-config.yml` e os workflows | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| UT-04 | jobs `test` e `integration` instalam a Aspire CLI fixada antes dos testes | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| UT-05 | `OccurredOnUtc` vem do `TimeProvider` | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-01 | URL malformada → 400 e o servidor continua de pé | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-02 | sem a base, `coverage.sh` falha rápido com a mensagem da base | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-03 | `coverage.sh` sem recursos do bash 4+ | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-04 | erro de tipo em `e2e/` reprova o `e2e-lint` | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-05 | anotação genérica do workflow não basta (IT-05 da SPEC-0006 fortalecido) | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks); `SDD_GITHUB_VERIFY=1` com PR descartável #19 (1/1 passed) |
+| IT-06 | `OnlyReferences` reprova `Contracts` e aceita `IntegrationEvents` | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
+| IT-07 | falha ao gravar o estado: próxima mensagem processada, a que falhou reprocessada sem repetir o handler | PASS | `gate G2 --run` em ab4775d; `gate G5 --run` na integração (42f17a9); CI do PR #18 (run 39018496969, 10/10 checks) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — merge do PR #18 (2fc5efa); G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003). Entrega na `main` pelo PR #18 (https://github.com/thomasravache/subsolo/pull/18), merge commit 2fc5efa em 2026-10-17, com H2 delegado pelo Thomas (autorização de piloto automático) e merge pelo Architect (ADR-0007).
 
 ### Pendências
-
+- Achados menores da revisão, sem spec própria (entram na próxima mudança da área): os dois caches do pnpm salvam a união dos pacotes (store comum); o UT-05 não confere o `Id` do conteúdo; falha do `dotnet sln list` dentro da substituição de processo do `coverage.sh` cai em "nenhum projeto".
+- Épico SPEC-0002: o tempo do job `test` no CI (~19 min com a suíte serial) passou da meta de 15 min do épico da fundação — rodar em paralelo os módulos que não sobem o AppHost.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
