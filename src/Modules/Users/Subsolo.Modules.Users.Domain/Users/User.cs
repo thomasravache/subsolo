@@ -31,4 +31,38 @@ public sealed class User : Entity
     public IReadOnlyList<string> Roles { get; private set; } = [];
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
+
+    /// <summary>
+    /// Cria a conta na primeira entrada com o e-mail já normalizado: papel <see cref="UserRoles.Fan"/> (e
+    /// <see cref="UserRoles.Admin"/> quando <paramref name="isAdmin"/>) e o evento <see cref="UserRegisteredDomainEvent"/>.
+    /// </summary>
+    public static User Register(string normalizedEmail, bool isAdmin, DateTimeOffset nowUtc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalizedEmail);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(normalizedEmail.Length, EmailMaxLength, nameof(normalizedEmail));
+        var user = new User
+        {
+            Id = Guid.CreateVersion7(),
+            Email = normalizedEmail,
+            CreatedAtUtc = nowUtc,
+            Roles = RolesFor(isAdmin, []),
+        };
+        user.Raise(new UserRegisteredDomainEvent(user.Id));
+        return user;
+    }
+
+    /// <summary>Dá ou tira o papel <see cref="UserRoles.Admin"/> conforme a configuração atual (os outros papéis ficam).</summary>
+    public void SyncAdminRole(bool isAdmin)
+    {
+        if (Roles.Contains(UserRoles.Admin, StringComparer.Ordinal) != isAdmin)
+        {
+            Roles = RolesFor(isAdmin, Roles);
+        }
+    }
+
+    private static string[] RolesFor(bool isAdmin, IEnumerable<string> current)
+    {
+        var others = current.Where(role => role is not UserRoles.Fan and not UserRoles.Admin);
+        return isAdmin ? [UserRoles.Fan, .. others, UserRoles.Admin] : [UserRoles.Fan, .. others];
+    }
 }

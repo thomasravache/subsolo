@@ -4,8 +4,6 @@ using Subsolo.Modules.Users.IntegrationEvents;
 
 namespace Subsolo.Modules.Users.Application.Features.ValidateSession;
 
-#pragma warning disable CS9113 // Scaffold do contrato (SPEC-0014): as dependências são usadas pela implementação.
-
 /// <summary>
 /// SPEC-0014 — implementação de <see cref="ISessionValidator"/>: sessão inexistente, revogada ou expirada (prazo
 /// deslizante ou teto absoluto) → <see langword="null"/>; válida → usuário e papéis atuais, renovando o prazo no máximo
@@ -18,8 +16,31 @@ internal sealed class SessionValidator(
     TimeProvider clock)
     : ISessionValidator
 {
-    public Task<SessionPrincipal?> ValidateAsync(string sessionToken, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0014: ISessionValidator.ValidateAsync ainda não implementado.");
-}
+    public async Task<SessionPrincipal?> ValidateAsync(string sessionToken, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(sessionToken))
+        {
+            return null;
+        }
 
-#pragma warning restore CS9113
+        var now = clock.GetUtcNow();
+        var session = await sessions.GetByIdHashAsync(Session.HashToken(sessionToken), cancellationToken);
+        if (session is null || !session.IsActive(now))
+        {
+            return null;
+        }
+
+        var user = await users.GetByIdAsync(session.UserId, cancellationToken);
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (session.Touch(now))
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        return new SessionPrincipal(user.Id, [.. user.Roles]);
+    }
+}
