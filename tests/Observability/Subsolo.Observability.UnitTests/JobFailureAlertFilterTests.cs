@@ -7,19 +7,22 @@ namespace Subsolo.Observability.UnitTests;
 /// SPEC-0009 UT-05 (contrato v2) — o alerta "Falha de job" de <c>infra/seq/alerts.json</c> seleciona os eventos pelo
 /// nome do evento (<c>EventName</c> = <c>OutboxProcessingFailed</c>), não pelo texto da mensagem.
 /// <para>
-/// Como o nome chega ao Seq: o exportador OTLP do .NET (1.20) grava <c>EventId.Name</c> no campo
-/// <c>LogRecord.event_name</c> do OTLP (campo 12; conferido serializando um log), e só com
-/// <c>OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES=true</c> também no atributo
-/// <c>logrecord.event.name</c>. A propriedade exata em que o Seq expõe esse campo não é fixada aqui (fica com o
-/// IT-06, contra o Seq real); este teste exige só a forma do filtro: uma igualdade com
-/// <c>'OutboxProcessingFailed'</c> sobre uma propriedade que não seja derivada do texto (<c>@Message</c>,
-/// <c>@MessageTemplate</c>, <c>@Exception</c>) nem o hash do modelo (<c>@EventType</c>), e nenhuma busca por texto
-/// (<c>like</c>, <c>Contains</c>, <c>StartsWith</c>...).
+/// Como o nome chega ao Seq: o exportador OTLP do .NET (1.20) grava <c>EventId.Name</c> só no campo
+/// <c>LogRecord.event_name</c> do OTLP (campo 12; conferido serializando um log), que o Seq (2025.2) não expõe para
+/// consulta. Por isso o ServiceDefaults (<c>EventNameLogProcessor</c>) grava também o atributo <c>event.name</c>,
+/// e o filtro precisa ser exatamente <c>event.name = 'OutboxProcessingFailed'</c>. A gravação do atributo é provada
+/// pelo <see cref="EventNameAttributeTests"/>; este teste prova a forma do filtro: igualdade sobre
+/// <c>event.name</c>, nenhuma propriedade derivada do texto (<c>@Message</c>, <c>@MessageTemplate</c>,
+/// <c>@Exception</c>) nem o hash do modelo (<c>@EventType</c>), e nenhuma busca por texto (<c>like</c>,
+/// <c>Contains</c>, <c>StartsWith</c>...).
 /// </para>
 /// </summary>
 public sealed partial class JobFailureAlertFilterTests
 {
     private const string EventName = "OutboxProcessingFailed";
+
+    /// <summary>Atributo em que o ServiceDefaults grava o nome do evento (o que o Seq expõe para o filtro).</summary>
+    private const string EventNameAttribute = "event.name";
 
     /// <summary>Propriedades do Seq derivadas do texto do evento (ou o hash do modelo), que não identificam o nome.</summary>
     private static readonly string[] TextDerivedProperties = ["@Message", "@MessageTemplate", "@Exception", "@EventType"];
@@ -41,6 +44,8 @@ public sealed partial class JobFailureAlertFilterTests
 
         var property = EqualityWithEventName().Match(filter).Groups["property"].Value;
         TextDerivedProperties.ShouldNotContain(property, $"a propriedade comparada ({property}) é derivada do texto");
+        property.ShouldBe(EventNameAttribute,
+            $"o filtro \"{filter}\" não compara o atributo {EventNameAttribute} (gravado pelo ServiceDefaults) com '{EventName}'");
     }
 
     /// <summary>Filtro do alerta "Falha de job" em <c>infra/seq/alerts.json</c>.</summary>
