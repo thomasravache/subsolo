@@ -184,6 +184,7 @@ Telas:
 
 ### 7.6 Outros
 - Segurança: G4 confere a autorização em cada rota de admin e o vazamento do contato.
+- Herança da revisão da SPEC-0020 (login com Google, no módulo `Users`): logar a exceção nas falhas do início do login (sem dados pessoais); falha do `SignInAsync` com e-mail verificado vai para `/entrar?erro=google` com motivo `provider_error`; `RemoteSignOutPath`/`SignedOutCallbackPath` do handler OIDC em caminhos sob `/api/v1/auth/google/` sem uso; teste unitário das `OpenIdConnectOptions` (PKCE, `code`, `SaveTokens=false`, validação do token padrão).
 - Herança da revisão da SPEC-0019 (primeira consumidora do export e do `UserDeleted`): teste unitário de `PublishUserDeleted` (mesmo id, `DeletedAtUtc`, só ids), e nomes de `IPersonalDataSection` repetidos falham na inicialização.
 - Herança da revisão da SPEC-0017: `ModuleOf` nas regras de arquitetura (`tests/Subsolo.ArchitectureTests/ModularMonolithRules.cs`) passa a tolerar dependências que o ArchUnitNET não resolve (`type?.Namespace?.FullName`), para expressões de coleção não derrubarem a regra.
 
