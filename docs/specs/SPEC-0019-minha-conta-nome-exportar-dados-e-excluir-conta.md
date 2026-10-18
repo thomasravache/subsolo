@@ -190,6 +190,28 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 ## 11. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
+**Fase 1: Domínio e regras**
+- [ ] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0019:<ID>`, falhando pelo motivo certo
+- [ ] Green: implementar o mínimo seguindo o padrão de referência
+- [ ] Refactor mantendo tudo verde
+
+**Fase 2: API, persistência e contratos**
+- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, CT-01 falhando pelo motivo certo
+- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [ ] Refactor mantendo tudo verde
+- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+
+**Fase 3: Telas e jornada E2E**
+- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [ ] Validar: build + suíte + E2E (G2/G3)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
