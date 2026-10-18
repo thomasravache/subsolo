@@ -4,7 +4,7 @@ title: "Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicaçã
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0017, SPEC-0019]
@@ -221,26 +221,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio e regras**
-- [ ] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0021:<ID>`, falhando pelo motivo certo
-- [ ] Green: implementar o mínimo seguindo o padrão de referência
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0021:<ID>`, falhando pelo motivo certo
+- [x] Green: implementar o mínimo seguindo o padrão de referência
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, IT-08, CT-01 falhando pelo motivo certo
-- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, IT-08, CT-01 falhando pelo motivo certo
+- [x] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
-- [ ] Validar: build + suíte + E2E (G2/G3)
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [x] Validar: build + suíte + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -252,9 +252,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 583ms) — f95e7e2 | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em f95e7e2 após a Emenda 3 — as seis correções conferidas (concorrência com xmin e 23505 → 409 com os códigos do contrato, índice parcial de pedido pendente, códigos do approve no OpenAPI, IOptions<UsersOptions> obrigatório, foco do grupo de estilos); testes de corrida cobrem aprovações, reivindicações e pedidos simultâneos; migração do xmin sem efeito no banco (coluna de sistema); commit de estilo só com espaços; sem blocker/major; menor opcional: IT de reivindicação aprovada duas vezes ao mesmo tempo — f95e7e2 | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 9m 48s 810ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 4s 447ms) — e77746a | 2026-10-18 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-18 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-18 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 82c822b (árvore suja) | 2026-10-18 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -267,36 +267,59 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Módulo `Profiles`: perfis de banda, casa e produtor. O fã pede o perfil em "Meus perfis" (`/conta/perfis`), o admin aprova ou recusa (com motivo) na aba "Pedidos de perfil" da `/admin/fila`, e aprovar dá ao dono o papel `artist`.
+- Perfis sem dono criados pelo admin (`/admin/perfis/novo`) e reivindicação pelo dono (`/conta/perfis/reivindicar`), que assume o perfil com o histórico.
+- Concorrência resolvida: aprovações, reivindicações e pedidos simultâneos têm um vencedor, e os outros recebem 409 com o código do contrato, nunca 500.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (8017caf, 686068e, b5c3469 scaffold; 69e6a4b, f710b2c, f38a287, ed86367, b961c4a, c52592e, 882fed4, e46d104 testes) → Implementer (6ecfe37, 4e23ff7, b0e00a4, 58d888f, d76e582, 077a97f, 93d631d, d9e1b39, f95e7e2) → Reviewer APPROVED em f95e7e2.
+- Emenda v2 (IMP-01): o ciclo Users ↔ Profiles foi desfeito. O `ArtistRoleGranted` fica no contrato do consumidor (`Users.IntegrationEvents`), e o e-mail de quem pede vem do `IUsersDirectory`.
+- Emenda 3 (revisão G4): token otimista `xmin` em `profiles` e `profile_requests`. Também entraram o índice único parcial de pedido pendente por usuário, a tradução de 23505 e de concorrência em `ProfilesConflictException` → 409, e o `Users:MagicLinkEmailLimit` configurável com `IOptions<UsersOptions>` obrigatório.
+- `IEventsCatalog` público no `Events` para validar cidade e estilos; `ModuleOf` das regras de arquitetura tolera tipos não resolvidos (herança da SPEC-0017).
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | pedido válido grava pendente com slug, cidade e estilos do catálogo | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| UT-02 | validação de nome, cidade, estilos, links e contato | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| UT-03 | aprovar `new` e `claim` dá dono e `ArtistRoleGranted`; decidir de novo dá `request_decided` | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-01 | `POST /profiles/requests` válido, inválido, repetido (`request_pending`) e com nome usado (`name_taken`) | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-02 | aprovar e recusar pela fila, outbox com `ArtistRoleGranted`, motivo na recusa; corridas da Emenda 3 com um vencedor e 409 com o código do contrato | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-03 | perfil sem dono, busca com p95 ≤ 200 ms em 1.000 perfis e reivindicação | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-04 | rotas de admin: anônimo 401, fã 403, admin 200; contato e prova só na fila | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-05 | `ArtistRoleGranted` repetido e inbox retomado → papel `artist` uma vez | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-06 | e-mail e contato fora dos logs e spans | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-07 | seção "profiles" no export e anonimização no `UserDeleted` | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| IT-08 | regras do ADR-0001 para o `Profiles`, contratos em `IntegrationEvents`, sem ciclos | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| CT-01 | OpenAPI com os corpos e códigos do §6 (contrato v3: approve com 404 `not_found` e 409 `name_taken`); cliente TS em dia | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| E2E-01 | jornada perfis (mobile-chrome e mobile-safari): pedir "Podridão", admin aprova, o dono vê o perfil aprovado e vira artista; axe | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
+| E2E-02 | admin cria "Porão do Rock" sem dono, fã reivindica e o admin aprova | PASS | `gate G2 --run` em f95e7e2; `gate G5 --run` na integração (e77746a); CI do PR #28 (run 39144581502, 10/10 checks em 82c822b) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #28 (run 39144581502)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #28 (https://github.com/thomasravache/subsolo/pull/28), merge commit 525cdb9 em 2026-10-18, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Teste de integração para a mesma reivindicação aprovada duas vezes ao mesmo tempo (menor, opcional, revisão G4): fica como item herdado da SPEC-0026 (§7.6).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0021`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
