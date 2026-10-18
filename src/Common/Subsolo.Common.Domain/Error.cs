@@ -24,4 +24,7 @@ public sealed record Error(string Code, string Description, ErrorType Type)
     public static Error Forbidden(string code, string description) => new(code, description, ErrorType.Forbidden);
 
     public static Error Unauthorized(string code, string description) => new(code, description, ErrorType.Unauthorized);
+
+    /// <summary>SPEC-0022 — entrada bem formada que não pôde ser processada (422).</summary>
+    public static Error Unprocessable(string code, string description) => new(code, description, ErrorType.Unprocessable);
 }

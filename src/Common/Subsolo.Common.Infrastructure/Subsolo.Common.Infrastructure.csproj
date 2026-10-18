@@ -3,6 +3,8 @@
   <!--
     SPEC-0007 — infraestrutura comum (ADR-0001, ADR-0002): ModuleDbContext com schema por módulo, outbox/inbox
     por schema com jobs Quartz e registro de módulo (varredura com Scrutor).
+    SPEC-0022 (ADR-0015) — mídia: IFileStorage em disco (Media:Root) e IImageProcessor com o NetVips (só este projeto
+    referencia o NetVips e o sistema de arquivos para mídia).
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -17,6 +19,12 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <!--
+      SPEC-0022: privados a este projeto (não passam para os módulos que o referenciam); o host (Subsolo.Api) referencia
+      os mesmos pacotes para levar o NetVips e o libvips nativo para a publicação.
+    -->
+    <PackageReference Include="NetVips" PrivateAssets="all" />
+    <PackageReference Include="NetVips.Native" PrivateAssets="all" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Quartz" />
     <PackageReference Include="Scrutor" />
