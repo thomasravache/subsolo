@@ -20,6 +20,9 @@ public static class UsersErrors
     /// <summary>SPEC-0019 — o e-mail digitado para confirmar a exclusão não é o da conta.</summary>
     public const string DeleteConfirmationMismatch = "users.delete_confirmation_mismatch";
 
+    /// <summary>SPEC-0020 — <c>GET /api/v1/auth/google</c> com o Google não configurado (404).</summary>
+    public const string ProviderDisabled = "users.provider_disabled";
+
     internal static Error InvalidEmailError() =>
         Error.Validation(
             InvalidEmail,
