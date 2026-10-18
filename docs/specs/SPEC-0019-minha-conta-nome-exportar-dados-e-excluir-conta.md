@@ -11,7 +11,7 @@ depends_on: [SPEC-0014, SPEC-0016]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, e2e/tests/conta/**, docs/design/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, tests/Security/**]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, e2e/tests/conta/**, docs/design/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, tests/Security/**, web/src/app/page.tsx, web/src/app/page.test.tsx]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0011]
 external: []
 size: M
@@ -270,4 +270,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0019`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-18 | `touches` ganha `web/src/app/page.tsx` (e um teste dela): depois de excluir, o fã vai para `/?conta=excluida` e a página inicial mostra "Sua conta foi excluída." em `role="status"`; o resto da página inicial não muda | Relatório do Test-writer: o aviso do §6 fica em `/`, fora dos `touches` | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha `src/Subsolo.Api/Security/**` (o host passa a ler `UsersModule.SessionAbsoluteLifetime`, herança da revisão da SPEC-0016), os lock files, `tests/Common/Subsolo.Api.IntegrationTests/**` (contrato do `/me`) e `tests/Security/**` | Antes do início da onda, pelo que as ondas 1–4 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
