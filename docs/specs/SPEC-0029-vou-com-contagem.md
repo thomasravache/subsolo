@@ -34,7 +34,7 @@ O fã logado marca "Vou" num show (na página do show e nos cards da agenda e do
 - `PUT /api/v1/me/attendances/{showId}` e `DELETE` (idempotentes, 204); `GET /api/v1/me/attendances?period=upcoming` (shows que o fã marcou).
 - A contagem `AttendingCount` do resumo de show (contrato da SPEC-0008, hoje sempre 0) passa a vir do `Engagement` por uma interface pública `IAttendanceApi.CountAsync(showIds)`; a agenda, a página do show e o perfil público mostram "X vão".
 - Show cancelado: o "vou" fica registrado, mas o botão some e a contagem continua visível; show passado: botão some.
-- `IAttendanceApi.GetAttendeesAsync(showId)` (ids) para a spec do lembrete; seção "attendances" no export e remoção no `UserDeleted`.
+- `IAttendanceApi.GetAttendeesAsync(showId)` (ids) para a spec do lembrete, que mora no próprio `Engagement` e entrega pelo `INotificationsApi.EnqueueAsync` (ADR-0014 e ADR-0001 esclarecidos em 2026-10-18); seção "attendances" no export e remoção no `UserDeleted`.
 - Botão "Vou" / "Vou ✓" (`aria-pressed`) com contagem; anônimo → `/entrar?returnTo=…`.
 
 **Não-objetivos (fora do escopo):**

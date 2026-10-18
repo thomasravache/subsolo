@@ -33,7 +33,7 @@ O fã logado segue a cidade (pela agenda), bandas, casas e produtores (pela pág
 - Módulo `Engagement` (ADR-0001, schema `engagement`) com `Follow` (usuário, alvo: cidade por slug ou perfil por id, criado em); único por usuário e alvo.
 - `PUT /api/v1/me/follows/cities/{slug}` e `PUT /api/v1/me/follows/profiles/{profileId}` (seguir, idempotente, 204); `DELETE` nas mesmas rotas (deixar de seguir, idempotente, 204); `GET /api/v1/me/follows` (o que o usuário segue, com nome e endereço).
 - Contagem pública `GET /api/v1/profiles/{profileId}/followers` → `{ count }` e `GET /api/v1/cities/{slug}/followers` → `{ count }`.
-- Interface pública `IEngagementApi.GetFollowersAsync(citySlug, profileIds)` (ids de usuários que seguem a cidade ou algum dos perfis) para a spec de avisos.
+- Interface pública `IEngagementApi.GetFollowersAsync(citySlug, profileIds)` (ids de usuários que seguem a cidade ou algum dos perfis) para a spec de avisos, que mora no próprio `Engagement` e entrega pelo `INotificationsApi.EnqueueAsync` (ADR-0014 e ADR-0001 esclarecidos em 2026-10-18: `Engagement → Notifications`, nunca o contrário).
 - Botão "Seguir {cidade}" / "Seguindo" no cabeçalho da agenda e "Seguir" / "Seguindo" + contagem na página do perfil; anônimo que toca vai para `/entrar?returnTo=…`.
 - Aba "Seguindo" (`/seguindo`) na navegação inferior: lista por tipo (cidades, bandas, casas, produtores) com "Deixar de seguir"; vazio: "Você ainda não segue ninguém. Siga sua cidade na agenda e as bandas e casas nos perfis."
 - Seção "follows" no export (`IPersonalDataSection`) e remoção dos follows no `UserDeleted`.
