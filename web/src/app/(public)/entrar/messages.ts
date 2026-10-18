@@ -19,3 +19,22 @@ export function requestErrorMessage(code: string, status: number): string {
   }
   return genericErrorMessage;
 }
+
+/** SPEC-0020 — o login com Google falhou (cancelou, provedor fora do ar, `state` inválido): `/entrar?erro=google`. */
+export const googleErrorMessage =
+  "Não deu para entrar com o Google. Tente de novo ou use o link por e-mail.";
+
+/** SPEC-0020 — a conta Google não tem e-mail verificado: `/entrar?erro=google_email`. */
+export const googleEmailErrorMessage =
+  "Sua conta Google não tem e-mail verificado. Use o link por e-mail.";
+
+/** SPEC-0020 — mensagem do `?erro=` da volta do Google (outros valores são ignorados). */
+export function signInErrorMessage(error: string | null): string | null {
+  if (error === "google") {
+    return googleErrorMessage;
+  }
+  if (error === "google_email") {
+    return googleEmailErrorMessage;
+  }
+  return null;
+}
