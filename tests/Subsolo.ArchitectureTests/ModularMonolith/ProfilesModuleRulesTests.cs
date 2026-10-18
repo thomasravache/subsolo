@@ -13,7 +13,8 @@ namespace Subsolo.ArchitectureTests.ModularMonolith;
 /// assemblies <c>Subsolo.Modules.Profiles.*</c> estão entre os avaliados, cada regra passa com eles, nenhum outro módulo
 /// referencia <c>Profiles.Domain</c>, <c>Profiles.Application</c> nem <c>Profiles.Infrastructure</c>, o Profiles não
 /// usa nada do Events nem do Users além do IntegrationEvents deles (não lê o banco de outro módulo), e as interfaces
-/// públicas <c>IEventsCatalog</c> e <c>IProfilesApi</c> moram no IntegrationEvents. Guarda (passa antes da mudança para
+/// públicas <c>IEventsCatalog</c>, <c>IProfilesApi</c> e <c>IUsersDirectory</c> e o evento <c>ArtistRoleGranted</c> moram no
+/// IntegrationEvents (Emenda v2: o Users não referencia o Profiles). Guarda (passa antes da mudança para
 /// os módulos existentes): nenhum outro módulo referencia as internas do Profiles. §7.6 (herança da revisão da
 /// SPEC-0017): a regra de ciclos tolera dependências que o ArchUnitNET não resolve (expressões de coleção).
 /// </summary>
@@ -98,6 +99,23 @@ public sealed class ProfilesModuleRulesTests
     [Fact]
     [Trait("Spec", "SPEC-0021:IT-08")]
     [Trait("Kind", "Integration")]
+    public void UsersDoesNotReferenceProfiles()
+    {
+        Assembly[] modules = [.. ModularMonolithRules.ModuleAssemblies()];
+        var architecture = new ArchLoader().LoadAssemblies(modules).Build();
+
+        var rule = Types().That().ResideInNamespaceMatching(@"^Subsolo\.Modules\.Users(?:\..*)?$")
+            .Should().NotDependOnAnyTypesThat()
+            .ResideInNamespaceMatching(@"^Subsolo\.Modules\.Profiles(?:\..*)?$")
+            .Because("ADR-0001 (Emenda v2 da SPEC-0021): a dependência é só Profiles → Users; o evento do papel artist é do contrato do Users")
+            .WithoutRequiringPositiveResults();
+
+        Should.NotThrow(() => rule.Check(architecture));
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0021:IT-08")]
+    [Trait("Kind", "Integration")]
     public void ThePublicInterfacesLiveInTheIntegrationEvents()
     {
         var types = ModularMonolithRules.ModuleAssemblies().SelectMany(assembly => assembly.GetExportedTypes()).ToList();
@@ -110,6 +128,10 @@ public sealed class ProfilesModuleRulesTests
         profiles.IsInterface.ShouldBeTrue();
         profiles.Namespace.ShouldBe("Subsolo.Modules.Profiles.IntegrationEvents");
         profiles.Assembly.GetName().Name.ShouldBe("Subsolo.Modules.Profiles.IntegrationEvents");
+        var directory = types.Where(type => type.Name == "IUsersDirectory").ShouldHaveSingleItem("IUsersDirectory não encontrado (ou duplicado)");
+        directory.Namespace.ShouldBe("Subsolo.Modules.Users.IntegrationEvents");
+        types.Where(type => type.Name == "ArtistRoleGrantedIntegrationEvent").ShouldHaveSingleItem()
+            .Namespace.ShouldBe("Subsolo.Modules.Users.IntegrationEvents");
     }
 
     [Fact]

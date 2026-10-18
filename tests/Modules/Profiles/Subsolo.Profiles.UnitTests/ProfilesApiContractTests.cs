@@ -1,6 +1,7 @@
 using System.Reflection;
 using Subsolo.Common.Application.EventBus;
 using Subsolo.Modules.Profiles.IntegrationEvents;
+using Subsolo.Modules.Users.IntegrationEvents;
 
 namespace Subsolo.Profiles.UnitTests;
 
@@ -9,7 +10,9 @@ namespace Subsolo.Profiles.UnitTests;
 /// <see cref="IProfilesApi"/> com <c>GetOwnedProfilesAsync(Guid, CancellationToken)</c> →
 /// <c>Task&lt;IReadOnlyList&lt;ProfileSummary&gt;&gt;</c> e <c>GetAsync(Guid, CancellationToken)</c> →
 /// <c>Task&lt;ProfileSummary?&gt;</c>; <see cref="ProfileSummary"/>(Id, Type, Name, Slug, City, OwnerUserId) sem contato
-/// nem prova; e <see cref="ProfileOwnerAssignedIntegrationEvent"/>(ProfileId, UserId), só com ids.
+/// nem prova. Emenda v2: <see cref="ArtistRoleGrantedIntegrationEvent"/>(UserId, ProfileId), só com ids, e
+/// <see cref="IUsersDirectory"/>.<c>GetEmailsAsync(IReadOnlyCollection&lt;Guid&gt;, CancellationToken)</c> →
+/// <c>Task&lt;IReadOnlyDictionary&lt;Guid, string&gt;&gt;</c> ficam no contrato do Users (consumidor), não no Profiles.
 /// </summary>
 public sealed class ProfilesApiContractTests
 {
@@ -56,15 +59,32 @@ public sealed class ProfilesApiContractTests
 
     [Fact]
     [Trait("Spec", "SPEC-0021:CT-01")]
-    public void ProfileOwnerAssignedCarriesOnlyIds()
+    public void ArtistRoleGrantedLivesInTheUsersContractAndCarriesOnlyIds()
     {
-        typeof(IIntegrationEvent).IsAssignableFrom(typeof(ProfileOwnerAssignedIntegrationEvent)).ShouldBeTrue();
-        var signatures = typeof(ProfileOwnerAssignedIntegrationEvent).GetConstructors()
+        var type = typeof(ArtistRoleGrantedIntegrationEvent);
+        type.Namespace.ShouldBe("Subsolo.Modules.Users.IntegrationEvents");
+        type.Assembly.GetName().Name.ShouldBe("Subsolo.Modules.Users.IntegrationEvents");
+        typeof(IIntegrationEvent).IsAssignableFrom(type).ShouldBeTrue();
+        type.GetConstructors()
             .Select(constructor => string.Join(", ", constructor.GetParameters().Select(parameter => $"{parameter.ParameterType.Name} {parameter.Name}")))
-            .ToList();
-        signatures.ShouldContain("Guid ProfileId, Guid UserId");
-        typeof(ProfileOwnerAssignedIntegrationEvent).GetProperties()
-            .Where(property => property.PropertyType == typeof(string))
-            .ShouldBeEmpty("o evento leva só ids");
+            .ShouldContain("Guid UserId, Guid ProfileId");
+        type.GetProperties().Where(property => property.PropertyType == typeof(string)).ShouldBeEmpty("o evento leva só ids");
+        typeof(IProfilesApi).Assembly.GetExportedTypes()
+            .ShouldNotContain(exported => typeof(IIntegrationEvent).IsAssignableFrom(exported),
+                "o Profiles.IntegrationEvents não define o evento do papel artist (Emenda v2)");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0021:CT-01")]
+    public void IUsersDirectoryHasTheSignatureOfTheContract()
+    {
+        var directory = typeof(IUsersDirectory);
+        directory.IsInterface.ShouldBeTrue();
+        directory.Namespace.ShouldBe("Subsolo.Modules.Users.IntegrationEvents");
+        directory.GetMethods().Select(method => method.Name).ShouldBe(["GetEmailsAsync"]);
+        var emails = directory.GetMethod("GetEmailsAsync").ShouldNotBeNull();
+        emails.GetParameters().Select(parameter => parameter.ParameterType)
+            .ShouldBe([typeof(IReadOnlyCollection<Guid>), typeof(CancellationToken)]);
+        emails.ReturnType.ShouldBe(typeof(Task<IReadOnlyDictionary<Guid, string>>));
     }
 }

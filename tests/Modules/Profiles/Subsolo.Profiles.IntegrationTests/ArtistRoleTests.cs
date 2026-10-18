@@ -2,13 +2,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using Subsolo.Common.Application.EventBus;
 using Subsolo.IntegrationTests.Common;
-using Subsolo.Modules.Profiles.IntegrationEvents;
+using Subsolo.Modules.Users.IntegrationEvents;
 using Subsolo.Profiles.IntegrationTests.Infrastructure;
 
 namespace Subsolo.Profiles.IntegrationTests;
 
 /// <summary>
-/// SPEC-0021 IT-05 — o papel <c>artist</c> chega ao dono pelo evento: com <c>ProfileOwnerAssigned</c> publicado duas
+/// SPEC-0021 IT-05 — o papel <c>artist</c> chega ao dono pelo evento: com <c>ArtistRoleGranted</c> (contrato do Users, Emenda v2) publicado duas
 /// vezes (o mesmo evento) e o processamento da inbox do Users parado, nada muda; quando o processamento volta, o usuário
 /// tem o papel <c>artist</c> uma vez só e <c>GET /me</c> mostra <c>artist</c>. De ponta a ponta: aprovar o pedido pela
 /// API leva o dono a ter <c>artist</c> em <c>/me</c>.
@@ -38,7 +38,7 @@ public sealed class ArtistRoleTests(PostgresFixture postgres)
         var scheduler = await api.Services.GetRequiredService<ISchedulerFactory>().GetScheduler(ct);
         (await scheduler.GetJobDetail(UsersInbox, ct)).ShouldNotBeNull($"job {UsersInbox} não agendado");
         await scheduler.PauseJob(UsersInbox, ct);
-        var integrationEvent = new ProfileOwnerAssignedIntegrationEvent(Guid.CreateVersion7(), fanId)
+        var integrationEvent = new ArtistRoleGrantedIntegrationEvent(fanId, Guid.CreateVersion7())
         {
             Id = Guid.CreateVersion7(),
             OccurredOnUtc = DateTime.UtcNow,
@@ -51,8 +51,8 @@ public sealed class ArtistRoleTests(PostgresFixture postgres)
             await bus.PublishAsync(integrationEvent, ct);
         }
 
-        var inbox = await ProfilesDatabase.UsersInboxAsync(api.ConnectionString, "ProfileOwnerAssigned", ct);
-        inbox.ShouldHaveSingleItem("o Users não consome ProfileOwnerAssigned (ou guardou o mesmo evento duas vezes)")
+        var inbox = await ProfilesDatabase.UsersInboxAsync(api.ConnectionString, "ArtistRoleGranted", ct);
+        inbox.ShouldHaveSingleItem("o Users não consome ArtistRoleGranted (ou guardou o mesmo evento duas vezes)")
             .Id.ShouldBe(integrationEvent.Id);
         await Task.Delay(TimeSpan.FromSeconds(5), ct);
         (await fan.RolesAsync(ct)).ShouldNotContain("artist", "com a inbox do Users parada, o papel ainda não chegou");
@@ -67,7 +67,7 @@ public sealed class ArtistRoleTests(PostgresFixture postgres)
         var stored = await ProfilesDatabase.UserRolesAsync(api.ConnectionString, fanId, ct);
         stored.ShouldNotBeNull();
         stored.Split(',', '{', '}', '"').Count(role => role == "artist").ShouldBe(1, $"users.roles = {stored}");
-        (await ProfilesDatabase.UsersInboxAsync(api.ConnectionString, "ProfileOwnerAssigned", ct))
+        (await ProfilesDatabase.UsersInboxAsync(api.ConnectionString, "ArtistRoleGranted", ct))
             .ShouldHaveSingleItem().Processed.ShouldBeTrue("a mensagem da inbox foi processada");
     }
 

@@ -7,7 +7,7 @@ namespace Subsolo.Profiles.IntegrationTests;
 
 /// <summary>
 /// SPEC-0021 IT-02 — dado um pedido pendente, o admin aprova: 200 <c>{profileId}</c>, o perfil gravado tem o dono e a
-/// outbox do Profiles tem <c>ProfileOwnerAssigned</c> (só ids), e o perfil aparece em <c>GET /me/profiles</c> do dono;
+/// outbox do Profiles tem o evento da aprovação (<c>ProfileOwnerAssigned</c>, que vira <c>ArtistRoleGranted</c>; só ids), e o perfil aparece em <c>GET /me/profiles</c> do dono;
 /// o admin recusa outro com motivo: <c>GET /me/profiles</c> do autor mostra <c>rejected</c> com o motivo e um novo
 /// pedido é aceito. Aprovar de novo → 409 <c>profiles.request_decided</c>; pedido inexistente → 404
 /// <c>profiles.request_not_found</c>; recusar sem motivo → 400 <c>profiles.invalid_request</c> no campo
@@ -16,6 +16,10 @@ namespace Subsolo.Profiles.IntegrationTests;
 [Collection(nameof(PostgresCollection))]
 public sealed class ApproveRejectApiTests(PostgresFixture postgres)
 {
+    /// <summary>
+    /// O evento de domínio da aprovação na outbox do Profiles (<c>ProfileOwnerAssignedDomainEvent</c>, publicado como
+    /// <c>ArtistRoleGrantedIntegrationEvent</c> do contrato do Users — Emenda v2).
+    /// </summary>
     private const string OwnerAssignedType = "ProfileOwnerAssigned";
     private const string Reason = "Não achamos material da banda; mande o Bandcamp.";
 
