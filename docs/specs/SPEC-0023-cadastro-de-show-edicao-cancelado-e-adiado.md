@@ -234,7 +234,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0189fd3 | 2026-10-18 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 28717fe | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 909ms) — 28717fe | 2026-10-18 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 28717fe — contrato v3 conferido no código e no OpenAPI, autorização por recurso (dono do organizador ou admin) em criar, editar, situação e detalhe, X-CSRF, https no ingresso, textos escapados, sem script inline nem env no navegador; IShowProfiles no contrato do Events implementado pelo Profiles e Events → Users só pelos dados pessoais; H22-01..06 conferidos (JpegHeaderCleaner seguro, matcher de requisição do Caddy aceito); dublê 7d723d0 sem mudar comportamento; telas fiéis ao Stitch com diálogo acessível; sem blocker/major; menores → SPEC-0024 (H23-01..07) e SPEC-0026 (H23-08) — 28717fe | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |

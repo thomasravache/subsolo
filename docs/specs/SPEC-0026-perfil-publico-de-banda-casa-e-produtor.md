@@ -11,7 +11,7 @@ depends_on: [SPEC-0021, SPEC-0024]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/app/(public)/[cidade]/**, web/src/components/profiles/**, web/src/components/shows/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/perfis/**, tests/**/packages.lock.json, docs/design/**]
+touches: [web/src/app/(public)/conta/shows/**, e2e/tests/shows/**, src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/app/(public)/[cidade]/**, web/src/components/profiles/**, web/src/components/shows/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/perfis/**, tests/**/packages.lock.json, docs/design/**]
 adrs: [ADR-0001, ADR-0013, ADR-0016]
 external: []
 size: M
@@ -131,6 +131,7 @@ Página do show: casa e bandas com perfil viram links para /casa/{slug} e /banda
 
 ### 7.6 Outros
 - Acessibilidade: nome acessível dos links externos e axe nas páginas.
+- Herança da revisão da SPEC-0023 (tag `SPEC-0026:H23-NN`): **H23-08** — busca de perfis aprovados por tipo (com ou sem dono) para o cadastro de show: a sugestão de casa oferece qualquer casa aprovada (o id entra em `ShowPublished.ProfileIds`), e o admin escolhe qualquer perfil aprovado como organizador (hoje só os próprios e os sem dono — `web/src/components/shows/ShowForm.tsx`, `web/src/app/(public)/conta/shows/organizers.ts`); IT da busca e E2E do admin escolhendo o perfil de outro dono.
 - Herança da revisão da SPEC-0021: teste de integração com a mesma reivindicação aprovada por dois admins ao mesmo tempo (um 200 e o outro 409 `profiles.request_decided`), em `tests/Modules/Profiles/**`.
 
 **Dublês e dados de teste:** perfis criados e aprovados pela API (admin) e shows cadastrados pela API nos IT e no E2E.
