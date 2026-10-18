@@ -1,6 +1,6 @@
 # Índice de Specs
 
-> Gerado por `spec_graph.py index` em 2026-10-17 — não edite manualmente.
+> Gerado por `spec_graph.py index` em 2026-10-18 — não edite manualmente.
 
 ## Saúde
 

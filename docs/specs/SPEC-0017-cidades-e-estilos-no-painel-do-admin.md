@@ -210,9 +210,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 6fcaceb | 2026-10-18 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — fe0b8cf | 2026-10-18 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 465ms) — fe0b8cf | 2026-10-18 |
-| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em fe0b8cf — major: prévia do endereço com domínio subsolo.app (o domínio decidido é agendasubsolo.com.br, ADR-0004); menores: slug repetido concorrente dá 500, foco após renomear estilo, prévia com endereço apagado, nome de estilo sem índice, regra de arquitetura frágil | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 976ea28 | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 964ms) — 976ea28 | 2026-10-18 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 976ea28 após CHANGES_REQUESTED em fe0b8cf — contrato §6 exato, slugs (geração, reservados, imutáveis), admin em todas as rotas com X-CSRF e no-store, migração dos 5 estilos, proxy do /admin (307/403/no-store, cabeçalho interno sobrescrito), tela com os ajustes do §9 e o domínio agendasubsolo.com.br, criação concorrente → 409, foco acessível; testes não enfraquecidos; menores aceitos (índice do nome de estilo; regra de arquitetura → SPEC-0021) — 976ea28 | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
