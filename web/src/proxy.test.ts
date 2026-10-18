@@ -101,3 +101,116 @@ describe("proxy e as páginas de entrar e da conta", () => {
     expect(response.status).toBe(404);
   });
 });
+
+/**
+ * SPEC-0017 E2E-02 (no nível do proxy, ADR-0016) — `/admin/cidades-e-estilos` tem o status decidido pelo proxy, com a
+ * sessão de `GET /api/v1/me` (cookie da requisição repassado): anônimo → 307 para
+ * `/entrar?returnTo=/admin/cidades-e-estilos`; fã → 403; admin → segue (200). Sempre com `Cache-Control: no-store`
+ * e sem consultar a API de agenda.
+ */
+describe("proxy e o painel do admin", () => {
+  const adminPath = "/admin/cidades-e-estilos";
+  const sessionCookie = "__Host-subsolo=sessao-de-teste";
+
+  function urlOf(input: Parameters<typeof fetch>[0]): string {
+    return typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url;
+  }
+
+  /** `/api/v1/me` responde com `roles` (ou 401 sem sessão); qualquer outra rota da API responde 500. */
+  function stubMe(roles: string[] | null) {
+    vi.stubEnv("API_URL", "http://api.test");
+    return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = urlOf(input);
+      if (!url.includes("/api/v1/me")) {
+        return new Response(null, { status: 500 });
+      }
+      return roles
+        ? Response.json({
+            id: "00000000-0000-0000-0000-000000000001",
+            email: "pessoa@subsolo.test",
+            displayName: null,
+            roles,
+          })
+        : Response.json(
+            { status: 401, code: "auth.required" },
+            {
+              status: 401,
+              headers: { "content-type": "application/problem+json" },
+            },
+          );
+    });
+  }
+
+  function request(cookie?: string) {
+    return new NextRequest(`http://localhost${adminPath}`, {
+      headers: cookie ? { cookie } : {},
+    });
+  }
+
+  function agendaCalls(fetch: ReturnType<typeof stubMe>): string[] {
+    return fetch.mock.calls
+      .map(([input]) => urlOf(input))
+      .filter((url) => url.includes("/agenda"));
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("SPEC-0017:E2E-02 anônimo é redirecionado (307) para /entrar com o returnTo do painel", async () => {
+    const fetch = stubMe(null);
+
+    const response = await proxy(request());
+
+    expect(response.status).toBe(307);
+    const location = new URL(
+      response.headers.get("location") ?? "",
+      "http://localhost",
+    );
+    expect(location.pathname).toBe("/entrar");
+    expect(location.searchParams.get("returnTo")).toBe(adminPath);
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(agendaCalls(fetch)).toEqual([]);
+  });
+
+  it("SPEC-0017:E2E-02 sessão expirada (401 em /me) também vai para /entrar", async () => {
+    stubMe(null);
+
+    const response = await proxy(request(sessionCookie));
+
+    expect(response.status).toBe(307);
+    expect(
+      new URL(response.headers.get("location") ?? "", "http://localhost")
+        .pathname,
+    ).toBe("/entrar");
+  });
+
+  it("SPEC-0017:E2E-02 fã logado recebe 403", async () => {
+    const fetch = stubMe(["fan"]);
+
+    const response = await proxy(request(sessionCookie));
+
+    expect(fetch).toHaveBeenCalled();
+    expect(response.status).toBe(403);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(agendaCalls(fetch)).toEqual([]);
+  });
+
+  it("SPEC-0017:E2E-02 admin segue para a página (200) sem cache", async () => {
+    const fetch = stubMe(["fan", "admin"]);
+
+    const response = await proxy(request(sessionCookie));
+
+    expect(fetch).toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(agendaCalls(fetch)).toEqual([]);
+  });
+});
