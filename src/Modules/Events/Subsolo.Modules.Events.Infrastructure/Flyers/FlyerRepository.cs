@@ -19,6 +19,10 @@ internal sealed class FlyerRepository(EventsDbContext db) : IFlyerRepository
             .OrderBy(flyer => flyer.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
+    public Task<IReadOnlyList<string>> DeleteUnattachedCreatedBeforeAsync(
+        DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
+        throw new NotImplementedException("SPEC-0023 (H22-01): exclusão condicional ainda não implementada.");
+
     public void Add(Flyer flyer) => db.Flyers.Add(flyer);
 
     public void Remove(Flyer flyer) => db.Flyers.Remove(flyer);
