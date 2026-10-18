@@ -585,6 +585,191 @@
         }
       }
     },
+    "/api/v1/me": {
+      "put": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Mudar o nome de exibição",
+        "description": "Troca o nome de exibição (1 a 60 caracteres, sem espaços nas pontas); vazio ou nulo remove o nome. Exige o cabeçalho X-CSRF.",
+        "operationId": "UpdateDisplayName",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisplayNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=users.invalid_display_name) (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Quem sou eu",
+        "description": "Id, e-mail, nome de exibição e papéis do usuário da sessão atual.",
+        "operationId": "GetMe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Excluir minha conta",
+        "description": "Apaga a conta, as sessões e os links de acesso pendentes, depois de o usuário digitar o e-mail da própria conta. Não dá para desfazer. Exige o cabeçalho X-CSRF.",
+        "operationId": "DeleteAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request (code=users.delete_confirmation_mismatch) (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
@@ -702,21 +887,21 @@
         }
       }
     },
-    "/api/v1/me": {
+    "/api/v1/me/export": {
       "get": {
         "tags": [
           "Conta"
         ],
-        "summary": "Quem sou eu",
-        "description": "Id, e-mail, nome de exibição e papéis do usuário da sessão atual.",
-        "operationId": "GetMe",
+        "summary": "Baixar meus dados",
+        "description": "Arquivo JSON com a conta, as sessões (sem token nem hash) e os dados de cada módulo sobre o usuário.",
+        "operationId": "ExportPersonalData",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeResponse"
+                  "$ref": "#/components/schemas/PersonalDataExport"
                 }
               }
             }
@@ -938,6 +1123,17 @@
           }
         }
       },
+      "DeleteAccountRequest": {
+        "required": [
+          "confirmEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "confirmEmail": {
+            "type": "string"
+          }
+        }
+      },
       "MeResponse": {
         "required": [
           "id",
@@ -965,6 +1161,107 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "PersonalDataAccount": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "roles",
+          "createdAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PersonalDataExport": {
+        "required": [
+          "exportedAtUtc",
+          "account",
+          "sessions",
+          "sections"
+        ],
+        "type": "object",
+        "properties": {
+          "exportedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "account": {
+            "$ref": "#/components/schemas/PersonalDataAccount"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonalDataSession"
+            }
+          },
+          "sections": {
+            "type": "object"
+          }
+        }
+      },
+      "PersonalDataSession": {
+        "required": [
+          "createdAtUtc",
+          "method",
+          "lastSeenAtUtc",
+          "expiresAtUtc",
+          "absoluteExpiresAtUtc",
+          "revokedAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "method": {
+            "type": "string"
+          },
+          "lastSeenAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -1138,6 +1435,20 @@
           },
           "timeZone": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateDisplayNameRequest": {
+        "required": [
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }

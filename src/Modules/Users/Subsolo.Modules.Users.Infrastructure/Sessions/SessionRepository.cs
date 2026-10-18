@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Subsolo.Modules.Users.Domain.Sessions;
 
 namespace Subsolo.Modules.Users.Infrastructure.Sessions;
@@ -10,8 +11,11 @@ internal sealed class SessionRepository(UsersDbContext db) : ISessionRepository
 
     public void Add(Session session) => db.Sessions.Add(session);
 
-    public Task<IReadOnlyList<Session>> ListByUserAsync(Guid userId, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public async Task<IReadOnlyList<Session>> ListByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        await db.Sessions
+            .Where(session => session.UserId == userId)
+            .OrderBy(session => session.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
 
-    public void Remove(Session session) => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public void Remove(Session session) => db.Sessions.Remove(session);
 }

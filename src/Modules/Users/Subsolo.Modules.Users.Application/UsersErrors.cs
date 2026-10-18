@@ -38,6 +38,24 @@ public static class UsersErrors
                 ["token"] = ["O link é inexistente, expirou ou já foi usado. Peça outro link."],
             });
 
+    internal static Error InvalidDisplayNameError() =>
+        Error.Validation(
+            InvalidDisplayName,
+            "O nome de exibição é inválido.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["displayName"] = ["Use de 1 a 60 caracteres."],
+            });
+
+    internal static Error DeleteConfirmationMismatchError() =>
+        Error.Validation(
+            DeleteConfirmationMismatch,
+            "O e-mail não confere.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["confirmEmail"] = ["O e-mail não confere."],
+            });
+
     internal static Error UserNotFoundError() =>
         Error.NotFound(UserNotFound, "Usuário não encontrado.");
 }

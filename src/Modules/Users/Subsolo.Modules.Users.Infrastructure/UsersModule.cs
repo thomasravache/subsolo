@@ -31,7 +31,7 @@ public static class UsersModule
     /// SPEC-0019 (§7.6, herança da revisão da SPEC-0016) — teto absoluto da sessão (90 dias desde a entrada), exposto
     /// para o host definir a validade do cookie sem importar <c>Users.Domain</c>.
     /// </summary>
-    public static TimeSpan SessionAbsoluteLifetime => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public static TimeSpan SessionAbsoluteLifetime => Session.AbsoluteLifetime;
 
     /// <summary>
     /// Chama <c>AddModule&lt;UsersDbContext&gt;</c> e <c>AddEndpoints</c> com os assemblies do módulo e registra

@@ -14,5 +14,5 @@ internal sealed class UserRepository(UsersDbContext db) : IUserRepository
 
     public void Add(User user) => db.Users.Add(user);
 
-    public void Remove(User user) => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public void Remove(User user) => db.Users.Remove(user);
 }

@@ -28,8 +28,8 @@ internal sealed class MagicLinkTokenRepository(UsersDbContext db) : IMagicLinkTo
             .Where(token => token.UsedAtUtc < cutoffUtc || token.ExpiresAtUtc < cutoffUtc)
             .ExecuteDeleteAsync(cancellationToken);
 
-    public Task<IReadOnlyList<MagicLinkToken>> ListByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public async Task<IReadOnlyList<MagicLinkToken>> ListByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
+        await db.MagicLinkTokens.Where(token => token.Email == normalizedEmail).ToListAsync(cancellationToken);
 
-    public void Remove(MagicLinkToken token) => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+    public void Remove(MagicLinkToken token) => db.MagicLinkTokens.Remove(token);
 }
