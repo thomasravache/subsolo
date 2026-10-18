@@ -9,6 +9,8 @@
   <ItemGroup>
     <!-- O registro do módulo (Infrastructure) instancia o emissor do cookie de sessão. -->
     <InternalsVisibleTo Include="Subsolo.Modules.Users.Infrastructure" />
+    <!-- SPEC-0021 (§7.6, herança da revisão da SPEC-0020): teste unitário das opções OIDC do Google. -->
+    <InternalsVisibleTo Include="Subsolo.Users.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>
