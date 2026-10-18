@@ -1,4 +1,5 @@
 using Subsolo.Common.Application.Messaging;
+using Subsolo.Modules.Profiles.Application.Features.Shared;
 
 namespace Subsolo.Modules.Profiles.Application.Features.RequestProfile;
 
@@ -14,7 +15,7 @@ public sealed record RequestProfileCommand(
     string? City,
     IReadOnlyList<string>? Styles,
     ProfileLinksInput? Links,
-    string? Contact) : ICommand<ProfileRequestCreated>;
+    string? Contact) : ICommand<ProfileRequestCreated>, IProfileFields;
 
 /// <summary>SPEC-0021 — links como chegaram (Instagram, Bandcamp, Metal Archives); vazios = não informados.</summary>
 public sealed record ProfileLinksInput(string? Instagram, string? Bandcamp, string? MetalArchives);

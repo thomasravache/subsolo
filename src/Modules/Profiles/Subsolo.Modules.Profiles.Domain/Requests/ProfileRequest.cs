@@ -51,10 +51,65 @@ public sealed class ProfileRequest : Entity
     public DateTimeOffset? DecidedAtUtc { get; private set; }
 
     /// <summary>Pedido de perfil novo, pendente.</summary>
-    public static ProfileRequest SubmitNew(Guid requesterUserId, ProfileDraft draft, string contact, DateTimeOffset nowUtc) =>
-        throw new NotImplementedException("SPEC-0021: ProfileRequest.SubmitNew ainda não implementado.");
+    public static ProfileRequest SubmitNew(Guid requesterUserId, ProfileDraft draft, string contact, DateTimeOffset nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentException.ThrowIfNullOrWhiteSpace(contact);
+        return new ProfileRequest
+        {
+            Id = Guid.CreateVersion7(),
+            Kind = ProfileRequestKinds.New,
+            RequesterUserId = requesterUserId,
+            Draft = draft,
+            ContactOrProof = contact,
+            Status = ProfileRequestStatuses.Pending,
+            CreatedAtUtc = nowUtc,
+        };
+    }
 
     /// <summary>Reivindicação do perfil <paramref name="profileId"/>, pendente.</summary>
-    public static ProfileRequest SubmitClaim(Guid requesterUserId, Guid profileId, string proof, DateTimeOffset nowUtc) =>
-        throw new NotImplementedException("SPEC-0021: ProfileRequest.SubmitClaim ainda não implementado.");
+    public static ProfileRequest SubmitClaim(Guid requesterUserId, Guid profileId, string proof, DateTimeOffset nowUtc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(proof);
+        return new ProfileRequest
+        {
+            Id = Guid.CreateVersion7(),
+            Kind = ProfileRequestKinds.Claim,
+            RequesterUserId = requesterUserId,
+            ProfileId = profileId,
+            ContactOrProof = proof,
+            Status = ProfileRequestStatuses.Pending,
+            CreatedAtUtc = nowUtc,
+        };
+    }
+
+    /// <summary>Ainda em análise (nem aprovado nem recusado).</summary>
+    public bool IsPending => Status == ProfileRequestStatuses.Pending;
+
+    /// <summary>Aprovado pelo admin: o pedido passa a apontar para o perfil <paramref name="profileId"/> (criado ou reivindicado).</summary>
+    public void Approve(Guid profileId, DateTimeOffset nowUtc)
+    {
+        EnsurePending();
+        ProfileId = profileId;
+        Status = ProfileRequestStatuses.Approved;
+        DecidedAtUtc = nowUtc;
+    }
+
+    /// <summary>Recusado pelo admin com o motivo já validado (3–200, sem espaços nas pontas).</summary>
+    public void Reject(string reason, DateTimeOffset nowUtc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        EnsurePending();
+        Status = ProfileRequestStatuses.Rejected;
+        Reason = reason;
+        DecidedAtUtc = nowUtc;
+    }
+
+    private void EnsurePending()
+    {
+        if (!IsPending)
+        {
+            throw new InvalidOperationException("O pedido já foi decidido.");
+        }
+    }
 }

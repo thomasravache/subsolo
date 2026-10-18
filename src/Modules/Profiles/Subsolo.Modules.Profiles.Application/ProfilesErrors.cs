@@ -1,3 +1,5 @@
+using Subsolo.Common.Domain;
+
 namespace Subsolo.Modules.Profiles.Application;
 
 /// <summary>SPEC-0021 — códigos de erro do módulo Profiles (vão em <c>extensions.code</c> do ProblemDetails).</summary>
@@ -23,4 +25,18 @@ public static class ProfilesErrors
 
     /// <summary>409: o pedido já foi decidido.</summary>
     public const string RequestDecided = "profiles.request_decided";
+
+    internal static Error RequestPendingError() =>
+        Error.Conflict(RequestPending, "Você já tem um pedido em análise; espere a decisão do admin.");
+
+    internal static Error NameTakenError() =>
+        Error.Conflict(NameTaken, "Já existe um perfil desse tipo com esse nome.");
+
+    internal static Error NotFoundError() => Error.NotFound(NotFound, "Perfil não encontrado.");
+
+    internal static Error AlreadyOwnedError() => Error.Conflict(AlreadyOwned, "Esse perfil já tem dono.");
+
+    internal static Error RequestNotFoundError() => Error.NotFound(RequestNotFound, "Pedido não encontrado.");
+
+    internal static Error RequestDecidedError() => Error.Conflict(RequestDecided, "Esse pedido já foi decidido.");
 }
