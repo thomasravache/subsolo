@@ -95,7 +95,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0020 | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | M | SPEC-0016 | — |
 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
 | SPEC-0021 | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
-| a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
+| SPEC-0022 | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
 | a criar | Agenda da cidade com filtro por data e estilo | full | feature | M | Cadastro de show | — |
 | a criar | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |
