@@ -52,10 +52,11 @@ public sealed class City : Entity
     /// SPEC-0017 — endereços que nunca viram cidade: as páginas e rotas de um segmento do site (<c>/entrar</c>,
     /// <c>/admin</c>, <c>/api</c>…), que a agenda <c>/{cidade}</c> esconderia.
     /// </summary>
-    public static readonly FrozenSet<string> ReservedSlugs = FrozenSet.Create(
-        StringComparer.Ordinal,
+    public static readonly FrozenSet<string> ReservedSlugs = new[]
+    {
         "entrar", "conta", "admin", "apoie", "privacidade", "termos", "api", "health", "_next", "show", "banda", "casa",
-        "produtor", "buscar", "seguindo", "offline");
+        "produtor", "buscar", "seguindo", "offline",
+    }.ToFrozenSet(StringComparer.Ordinal);
 
     /// <summary>SPEC-0017 — <paramref name="slug"/> é um endereço reservado (<see cref="ReservedSlugs"/>)?</summary>
     public static bool IsReservedSlug(string slug) => ReservedSlugs.Contains(slug);

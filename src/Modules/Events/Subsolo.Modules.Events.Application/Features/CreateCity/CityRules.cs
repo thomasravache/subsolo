@@ -15,10 +15,11 @@ internal static class CityRules
     public const int NameMaxLength = 60;
 
     /// <summary>As 27 UFs.</summary>
-    public static readonly FrozenSet<string> States = FrozenSet.Create(
-        StringComparer.Ordinal,
+    public static readonly FrozenSet<string> States = new[]
+    {
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ",
-        "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO");
+        "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+    }.ToFrozenSet(StringComparer.Ordinal);
 
     public static IRuleBuilderOptions<T, string> CityName<T>(this IRuleBuilder<T, string> rule) =>
         rule.Must(name => name?.Trim().Length is >= NameMinLength and <= NameMaxLength)
