@@ -20,9 +20,9 @@ import {
  *   no Subsolo" e volta para `/cidade-exemplo`; "Conta" passa a levar a `/conta`, que mostra o e-mail; "Sair" volta a
  *   `/entrar`, e `/conta` passa a redirecionar para `/entrar?returnTo=/conta`. Sem violações do axe; do envio até
  *   "Confira seu e-mail" ≤ 3 s p95 em 5 repetições.
- * - E2E-02 (mobile-chrome): e-mail inválido ("Digite um e-mail válido." ligado ao campo), link reaproveitado ("Este
- *   link expirou ou já foi usado." com "Pedir outro link"), limite de IP ("Muitas tentativas…") e Mailpit parado
- *   ("Não conseguimos mandar o e-mail agora…"), sem violações do axe.
+ * - E2E-02 (mobile-chrome): e-mail inválido ("Digite um e-mail válido." ligado ao campo, com o foco nele — Emenda 4),
+ *   link reaproveitado ("Este link expirou ou já foi usado." com "Pedir outro link"), limite de IP ("Muitas
+ *   tentativas…") e Mailpit parado ("Não conseguimos mandar o e-mail agora…"), sem violações do axe.
  * - E2E-03 (mobile-chrome e mobile-safari): a sessão vive só no cookie `__Host-subsolo` (HttpOnly), nada dela em
  *   `localStorage`/`sessionStorage`, `/conta` com `Cache-Control: no-store`; apagar cookies e dados do site desloga;
  *   depois de "Sair", voltar no navegador não mostra o e-mail.
@@ -165,6 +165,8 @@ test.describe("entrar por link mágico", () => {
     await expect(field).toHaveAccessibleDescription(
       /Digite um e-mail válido\./,
     );
+    // Emenda 4 (§7.6 l): o foco vai para o campo com o erro.
+    await expect(field).toBeFocused();
     await axe.check(page);
 
     // Link reaproveitado: depois de usado, o mesmo link mostra o estado de link inválido.
