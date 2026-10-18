@@ -148,6 +148,34 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Quem sou eu
+     * @description Id, e-mail, nome de exibição e papéis do usuário da sessão atual.
+     */
+    get: operations["GetMe"];
+    /**
+     * Mudar o nome de exibição
+     * @description Troca o nome de exibição (1 a 60 caracteres, sem espaços nas pontas); vazio ou nulo remove o nome. Exige o cabeçalho X-CSRF.
+     */
+    put: operations["UpdateDisplayName"];
+    post?: never;
+    /**
+     * Excluir minha conta
+     * @description Apaga a conta, as sessões e os links de acesso pendentes, depois de o usuário digitar o e-mail da própria conta. Não dá para desfazer. Exige o cabeçalho X-CSRF.
+     */
+    delete: operations["DeleteAccount"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/auth/logout": {
     parameters: {
       query?: never;
@@ -188,7 +216,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/me": {
+  "/api/v1/me/export": {
     parameters: {
       query?: never;
       header?: never;
@@ -196,10 +224,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Quem sou eu
-     * @description Id, e-mail, nome de exibição e papéis do usuário da sessão atual.
+     * Baixar meus dados
+     * @description Arquivo JSON com a conta, as sessões (sem token nem hash) e os dados de cada módulo sobre o usuário.
      */
-    get: operations["GetMe"];
+    get: operations["ExportPersonalData"];
     put?: never;
     post?: never;
     delete?: never;
@@ -264,12 +292,44 @@ export interface components {
       timeZone: string;
       slug: null | string;
     };
+    DeleteAccountRequest: {
+      confirmEmail: string;
+    };
     MeResponse: {
       /** Format: uuid */
       id: string;
       email: string;
       displayName: null | string;
       roles: string[];
+    };
+    PersonalDataAccount: {
+      /** Format: uuid */
+      id: string;
+      email: string;
+      displayName: null | string;
+      roles: string[];
+      /** Format: date-time */
+      createdAtUtc: string;
+    };
+    PersonalDataExport: {
+      /** Format: date-time */
+      exportedAtUtc: string;
+      account: components["schemas"]["PersonalDataAccount"];
+      sessions: components["schemas"]["PersonalDataSession"][];
+      sections: Record<string, never>;
+    };
+    PersonalDataSession: {
+      /** Format: date-time */
+      createdAtUtc: string;
+      method: string;
+      /** Format: date-time */
+      lastSeenAtUtc: string;
+      /** Format: date-time */
+      expiresAtUtc: string;
+      /** Format: date-time */
+      absoluteExpiresAtUtc: string;
+      /** Format: date-time */
+      revokedAtUtc: null | string;
     };
     ProblemDetails: {
       type?: null | string;
@@ -314,6 +374,9 @@ export interface components {
       name: string;
       state: string;
       timeZone: string;
+    };
+    UpdateDisplayNameRequest: {
+      displayName: null | string;
     };
   };
   responses: never;
@@ -788,6 +851,171 @@ export interface operations {
       };
     };
   };
+  GetMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MeResponse"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UpdateDisplayName: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateDisplayNameRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MeResponse"];
+        };
+      };
+      /** @description Bad Request (code=users.invalid_display_name) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DeleteAccount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DeleteAccountRequest"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=users.delete_confirmation_mismatch) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Logout: {
     parameters: {
       query?: never;
@@ -893,7 +1121,7 @@ export interface operations {
       };
     };
   };
-  GetMe: {
+  ExportPersonalData: {
     parameters: {
       query?: never;
       header?: never;
@@ -908,7 +1136,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["MeResponse"];
+          "application/json": components["schemas"]["PersonalDataExport"];
         };
       };
       /** @description Unauthorized (code=auth.required) */

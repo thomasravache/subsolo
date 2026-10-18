@@ -8,4 +8,10 @@ public interface ISessionRepository
 
     /// <summary>Inclui uma sessão nova (gravada no próximo <c>SaveChangesAsync</c>).</summary>
     void Add(Session session);
+
+    /// <summary>SPEC-0019 — todas as sessões de <paramref name="userId"/> (ativas, expiradas e revogadas), da mais antiga à mais nova.</summary>
+    Task<IReadOnlyList<Session>> ListByUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>SPEC-0019 — apaga a sessão (no próximo <c>SaveChangesAsync</c>).</summary>
+    void Remove(Session session);
 }

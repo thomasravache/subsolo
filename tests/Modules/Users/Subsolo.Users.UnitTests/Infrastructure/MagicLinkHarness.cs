@@ -120,6 +120,11 @@ internal sealed class InMemoryMagicLinkTokens : IMagicLinkTokenRepository
     public Task<int> DeleteStaleAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
         Task.FromResult(_tokens.RemoveAll(token =>
             token.UsedAtUtc is { } used && used < cutoffUtc || token.ExpiresAtUtc < cutoffUtc));
+
+    public Task<IReadOnlyList<MagicLinkToken>> ListByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<MagicLinkToken>>([.. _tokens.Where(token => token.Email == normalizedEmail)]);
+
+    public void Remove(MagicLinkToken token) => _tokens.Remove(token);
 }
 
 /// <summary>Unidade de trabalho que só conta as gravações.</summary>

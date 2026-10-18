@@ -28,14 +28,17 @@ namespace Subsolo.Users.IntegrationTests.Infrastructure;
 /// <item>o IP de origem tirado do cabeçalho <see cref="RemoteIpHeader"/> (o TestServer não tem IP);</item>
 /// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
 /// <item>o <c>ISessionValidator</c> medido (<see cref="Timings"/>) e logs e spans exportados em memória
-/// (<see cref="Logs"/>, <see cref="Spans"/>).</item>
+/// (<see cref="Logs"/>, <see cref="Spans"/>);</item>
+/// <item>SPEC-0019 — serviços extras de <paramref name="configureServices"/> (ex.: uma <c>IPersonalDataSection</c> de
+/// teste).</item>
 /// </list>
 /// </summary>
 internal sealed class UsersApiFactory(
     string connectionString,
     string environment = "Development",
     FakeTimeProvider? clock = null,
-    IReadOnlyDictionary<string, string>? settings = null)
+    IReadOnlyDictionary<string, string>? settings = null,
+    Action<IServiceCollection>? configureServices = null)
     : WebApplicationFactory<Program>
 {
     public const string AdminEmail = "admin@subsolo.test";
@@ -141,6 +144,7 @@ internal sealed class UsersApiFactory(
             }
 
             Timings.Decorate(services);
+            configureServices?.Invoke(services);
         });
     }
 

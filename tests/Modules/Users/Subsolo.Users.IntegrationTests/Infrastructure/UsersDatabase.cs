@@ -67,6 +67,36 @@ internal static class UsersDatabase
         return (long)(await command.ExecuteScalarAsync(ct))!;
     }
 
+    /// <summary>SPEC-0019 — o <c>content</c> (JSON) das mensagens da outbox do módulo Users cujo tipo contém <paramref name="typeFragment"/>.</summary>
+    public static async Task<IReadOnlyList<string>> OutboxContentsAsync(string connectionString, string typeFragment, CancellationToken ct)
+    {
+        var contents = new List<string>();
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+        await using var command = new NpgsqlCommand(
+            "select content::text from users.outbox_messages where type like '%' || @fragment || '%' order by occurred_on_utc",
+            connection);
+        command.Parameters.AddWithValue("fragment", typeFragment);
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            contents.Add(reader.GetString(0));
+        }
+
+        return contents;
+    }
+
+    /// <summary>SPEC-0019 — grava o nome de exibição direto na tabela (preparação de teste, sem passar pela API).</summary>
+    public static async Task SetDisplayNameAsync(string connectionString, Guid userId, string? displayName, CancellationToken ct)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+        await using var command = new NpgsqlCommand("update users.users set display_name = @name where id = @id", connection);
+        command.Parameters.AddWithValue("name", (object?)displayName ?? DBNull.Value);
+        command.Parameters.AddWithValue("id", userId);
+        (await command.ExecuteNonQueryAsync(ct)).ShouldBe(1, $"usuário {userId} não encontrado");
+    }
+
     private static DateTimeOffset Utc(DateTime value) =>
         new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 }
