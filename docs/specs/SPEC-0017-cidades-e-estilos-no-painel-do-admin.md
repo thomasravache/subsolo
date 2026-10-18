@@ -4,7 +4,7 @@ title: Cidades e estilos no painel do admin
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0016]
@@ -183,26 +183,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio e regras**
-- [ ] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0017:<ID>`, falhando pelo motivo certo
-- [ ] Green: implementar o mínimo seguindo o padrão de referência
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0017:<ID>`, falhando pelo motivo certo
+- [x] Green: implementar o mínimo seguindo o padrão de referência
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, CT-01 falhando pelo motivo certo
-- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01, IT-02, IT-03, IT-04, IT-05, CT-01 falhando pelo motivo certo
+- [x] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
-- [ ] Validar: build + suíte + E2E (G2/G3)
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [x] Validar: build + suíte + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -214,9 +214,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 964ms) — 976ea28 | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 976ea28 após CHANGES_REQUESTED em fe0b8cf — contrato §6 exato, slugs (geração, reservados, imutáveis), admin em todas as rotas com X-CSRF e no-store, migração dos 5 estilos, proxy do /admin (307/403/no-store, cabeçalho interno sobrescrito), tela com os ajustes do §9 e o domínio agendasubsolo.com.br, criação concorrente → 409, foco acessível; testes não enfraquecidos; menores aceitos (índice do nome de estilo; regra de arquitetura → SPEC-0021) — 976ea28 | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 19s 276ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 984ms) — 52461ea | 2026-10-18 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-18 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #25 (merge e607629) | 2026-10-18 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 0ff43d8 (árvore suja) | 2026-10-18 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -228,36 +228,57 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Painel `/admin/cidades-e-estilos`: o admin cadastra e edita cidades (nome, UF, fuso, endereço gerado do nome e imutável depois) e estilos (criar e renomear); sem exclusão.
+- Estilos viram dado: tabela `events.styles` com death, black, grind, doom e thrash criados por migração de dados, e `GET /api/v1/styles` público.
+- Proteções: só `admin` nas rotas de admin, `X-CSRF`, slugs reservados, slug repetido → 409 mesmo em pedidos simultâneos; proxy responde 307/403 com `no-store` para a página.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (840042e, debb5f4 scaffold; a74ed93, 6fcaceb, fe0b8cf, f4acd16 testes) → Implementer (f2c8f86, d3b56de, e83eafd, 28c4226, 948ed4b, 976ea28) → Reviewer CHANGES_REQUESTED em fe0b8cf e APPROVED em 976ea28.
+- Emendas: 1 (escopo: admin na pilha da E2E, proxy, shell, locks) e 2 (domínio `agendasubsolo.com.br` na prévia, endereço apagado volta ao gerado, concorrência → 409, foco ao renomear).
+- Validação no endpoint para devolver os códigos específicos (`events.invalid_city` etc.), padrão já usado na agenda; migração escrita à mão (sem a ferramenta dotnet-ef instalada) e conferida contra o snapshot do modelo.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | gerador de slug e `City.Update` (slug imutável) | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| UT-02 | validação de cidade: nome, UF, fuso IANA, padrão e slugs reservados | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| UT-03 | estilos: tamanho do nome, nome já usado, renomear mantém o slug | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| IT-01 | `GET /styles` com os 5 iniciais; criar, repetir (409), renomear; criação concorrente → 409, nunca 500 | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| IT-02 | criar cidade com slug gerado; agenda nova responde; inválida 400; slug repetido 409; concorrência → 409 | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| IT-03 | editar cidade mantém o slug; inexistente 404 | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| IT-04 | anônimo 401 e fã 403 em todas as rotas de admin | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| IT-05 | mutações sem `X-CSRF` → 400 e nada muda | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| CT-01 | OpenAPI das rotas de admin e de estilos; cliente TS em dia | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| E2E-01 | admin cria cidade e estilo pela tela (prévia `agendasubsolo.com.br/{slug}`), slug reservado recusado, axe | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
+| E2E-02 | anônimo vai para `/entrar`; fã vê 403 | PASS | `gate G2 --run` em 976ea28; `gate G5 --run` na integração (52461ea); CI do PR #25 (run 39100560022, 10/10 checks em fd9ca7e) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #25 (run 39100560022)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #25 (https://github.com/thomasravache/subsolo/pull/25), merge commit e607629 em 2026-10-18, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Nome de estilo sem índice único (renomeações simultâneas para o mesmo nome): aceito no MVP, um só admin.
+- Regra de arquitetura frágil com tipos gerados pelo compilador: SPEC-0021.
+- Captura da tela do Stitch em `docs/design/stitch/`: conferir no teste local do Thomas.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0017`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

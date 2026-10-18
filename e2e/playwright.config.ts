@@ -46,7 +46,9 @@ export default defineConfig({
   forbidOnly: isCI,
   // ADR-0005: nunca retry-até-passar; uma falha é uma falha.
   retries: 0,
-  workers: isCI ? 1 : undefined,
+  // SPEC-0019 (Emenda) — sempre 1 worker, também localmente: o passo do SMTP fora do ar pausa o Mailpit compartilhado
+  // (outras jornadas pediriam o link no meio da pausa) e a máquina de desenvolvimento tem pouca memória.
+  workers: 1,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,

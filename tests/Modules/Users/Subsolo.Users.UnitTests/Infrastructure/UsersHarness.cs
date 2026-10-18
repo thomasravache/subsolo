@@ -77,8 +77,12 @@ internal sealed class UsersHarness
 internal sealed class InMemoryUsers : IUserRepository
 {
     private readonly List<User> _users = [];
+    private readonly List<User> _removed = [];
 
     public IReadOnlyList<User> All => _users;
+
+    /// <summary>SPEC-0019 — usuários apagados (o interceptor da outbox ainda vê os eventos deles na gravação).</summary>
+    public IReadOnlyList<User> Removed => _removed;
 
     public Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
         Task.FromResult(_users.FirstOrDefault(user => user.Email == normalizedEmail));
@@ -87,6 +91,14 @@ internal sealed class InMemoryUsers : IUserRepository
         Task.FromResult(_users.FirstOrDefault(user => user.Id == id));
 
     public void Add(User user) => _users.Add(user);
+
+    public void Remove(User user)
+    {
+        if (_users.Remove(user))
+        {
+            _removed.Add(user);
+        }
+    }
 }
 
 internal sealed class InMemorySessions : ISessionRepository
@@ -99,6 +111,11 @@ internal sealed class InMemorySessions : ISessionRepository
         Task.FromResult(_sessions.FirstOrDefault(session => session.IdHash == idHash));
 
     public void Add(Session session) => _sessions.Add(session);
+
+    public Task<IReadOnlyList<Session>> ListByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Session>>([.. _sessions.Where(session => session.UserId == userId).OrderBy(session => session.CreatedAtUtc)]);
+
+    public void Remove(Session session) => _sessions.Remove(session);
 }
 
 /// <summary>Conta as gravações e, como o interceptor da outbox, recolhe (e limpa) os eventos de domínio pendentes.</summary>
@@ -113,7 +130,7 @@ internal sealed class InMemoryUnitOfWork(InMemoryUsers users, InMemorySessions s
     public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         Saves++;
-        foreach (var entity in users.All.Cast<Entity>().Concat(sessions.All))
+        foreach (var entity in users.All.Concat(users.Removed).Cast<Entity>().Concat(sessions.All))
         {
             _events.AddRange(entity.DomainEvents);
             entity.ClearDomainEvents();

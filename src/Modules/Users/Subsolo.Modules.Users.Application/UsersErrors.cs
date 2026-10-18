@@ -14,6 +14,12 @@ public static class UsersErrors
     /// <summary>SPEC-0016 — link mágico inexistente, expirado ou já usado (o mesmo código para os três).</summary>
     public const string MagicLinkInvalid = "users.magic_link_invalid";
 
+    /// <summary>SPEC-0019 — nome de exibição com mais de 60 caracteres ou feito só de caracteres invisíveis.</summary>
+    public const string InvalidDisplayName = "users.invalid_display_name";
+
+    /// <summary>SPEC-0019 — o e-mail digitado para confirmar a exclusão não é o da conta.</summary>
+    public const string DeleteConfirmationMismatch = "users.delete_confirmation_mismatch";
+
     internal static Error InvalidEmailError() =>
         Error.Validation(
             InvalidEmail,
@@ -30,6 +36,24 @@ public static class UsersErrors
             new Dictionary<string, string[]>(StringComparer.Ordinal)
             {
                 ["token"] = ["O link é inexistente, expirou ou já foi usado. Peça outro link."],
+            });
+
+    internal static Error InvalidDisplayNameError() =>
+        Error.Validation(
+            InvalidDisplayName,
+            "O nome de exibição é inválido.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["displayName"] = ["Use de 1 a 60 caracteres."],
+            });
+
+    internal static Error DeleteConfirmationMismatchError() =>
+        Error.Validation(
+            DeleteConfirmationMismatch,
+            "O e-mail não confere.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["confirmEmail"] = ["O e-mail não confere."],
             });
 
     internal static Error UserNotFoundError() =>

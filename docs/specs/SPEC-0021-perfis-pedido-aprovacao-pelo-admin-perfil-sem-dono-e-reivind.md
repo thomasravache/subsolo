@@ -184,6 +184,7 @@ Telas:
 
 ### 7.6 Outros
 - Segurança: G4 confere a autorização em cada rota de admin e o vazamento do contato.
+- Herança da revisão da SPEC-0019 (primeira consumidora do export e do `UserDeleted`): teste unitário de `PublishUserDeleted` (mesmo id, `DeletedAtUtc`, só ids), e nomes de `IPersonalDataSection` repetidos falham na inicialização.
 - Herança da revisão da SPEC-0017: `ModuleOf` nas regras de arquitetura (`tests/Subsolo.ArchitectureTests/ModularMonolithRules.cs`) passa a tolerar dependências que o ArchUnitNET não resolve (`type?.Namespace?.FullName`), para expressões de coleção não derrubarem a regra.
 
 **Dublês e dados de teste:** catálogo de teste no UT; cidades e estilos semeados pelas migrações; e-mails `@subsolo.test`; admin pela configuração `Users:AdminEmails` nos hosts de teste e na pilha do E2E.

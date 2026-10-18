@@ -27,4 +27,9 @@ internal sealed class MagicLinkTokenRepository(UsersDbContext db) : IMagicLinkTo
         db.MagicLinkTokens
             .Where(token => token.UsedAtUtc < cutoffUtc || token.ExpiresAtUtc < cutoffUtc)
             .ExecuteDeleteAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<MagicLinkToken>> ListByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
+        await db.MagicLinkTokens.Where(token => token.Email == normalizedEmail).ToListAsync(cancellationToken);
+
+    public void Remove(MagicLinkToken token) => db.MagicLinkTokens.Remove(token);
 }

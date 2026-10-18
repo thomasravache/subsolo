@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { composeProject, mailpitURL } from "./environment";
 
@@ -81,6 +81,45 @@ export async function messageCount(email: string): Promise<number> {
   return (await magicLinks(email)).length;
 }
 
+/**
+ * SPEC-0019 (Emenda 1) — espera o React hidratar o elemento (a página SSR fica visível antes dos handlers): o React
+ * marca cada nó hidratado com as propriedades internas `__reactFiber$…`/`__reactProps$…`. Antes disso, o texto
+ * digitado se perde e um envio do formulário vira um GET nativo para `/entrar?email=…` (sem pedir o link e sem o
+ * `returnTo`). Não depende de código de produção nem de espera fixa.
+ */
+export async function waitForHydration(
+  element: Locator,
+  timeout = 15_000,
+): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        element.evaluate((node) =>
+          Object.keys(node).some(
+            (key) =>
+              key.startsWith("__reactProps$") ||
+              key.startsWith("__reactFiber$"),
+          ),
+        ),
+      {
+        message:
+          "a página não ficou interativa (React não hidratou o elemento)",
+        timeout,
+      },
+    )
+    .toBe(true);
+}
+
+/** Preenche o campo já hidratado e confere que ele guardou o valor. */
+export async function fillInteractive(
+  field: Locator,
+  value: string,
+): Promise<void> {
+  await waitForHydration(field);
+  await field.fill(value);
+  await expect(field).toHaveValue(value);
+}
+
 /** Pede o link em `/entrar` (opcionalmente com `returnTo`) e espera "Confira seu e-mail". */
 export async function requestLink(
   page: Page,
@@ -92,8 +131,10 @@ export async function requestLink(
     : "/entrar";
   const response = await page.goto(path);
   expect(response?.status(), `GET ${path}`).toBe(200);
-  await page.getByLabel("Seu e-mail").fill(email);
-  await page.getByRole("button", { name: "Mandar link de acesso" }).click();
+  const submit = page.getByRole("button", { name: "Mandar link de acesso" });
+  await waitForHydration(submit);
+  await fillInteractive(page.getByLabel("Seu e-mail"), email);
+  await submit.click();
   await expect(
     page.getByRole("heading", { name: /confira seu e-mail/i }),
   ).toBeVisible();
@@ -106,10 +147,16 @@ export async function confirmLink(page: Page, linkPath: string): Promise<void> {
   await expect(
     page.getByRole("heading", { level: 1, name: /quase lá/i }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Entrar no Subsolo" }).click();
+  const enter = page.getByRole("button", { name: "Entrar no Subsolo" });
+  await waitForHydration(enter);
+  await enter.click();
 }
 
-/** Entrada completa pela interface: pede o link, lê no Mailpit, abre e confirma; devolve o caminho do link usado. */
+/**
+ * Entrada completa pela interface: pede o link, lê no Mailpit, abre e confirma; devolve o caminho do link usado.
+ * SPEC-0019 (Emenda 1) — só volta depois da navegação de pós-entrada (para `returnTo`, ou `/` sem ele), para nenhum
+ * chamador navegar enquanto a entrada ainda grava o cookie.
+ */
 export async function signIn(
   page: Page,
   email: string,
@@ -119,11 +166,12 @@ export async function signIn(
   await requestLink(page, email, returnTo);
   const linkPath = await readMagicLink(email, before + 1);
   await confirmLink(page, linkPath);
-  if (returnTo) {
-    await expect(page).toHaveURL(
-      (url) => url.pathname === new URL(returnTo, url).pathname,
-    );
-  }
+  const destination = returnTo ?? "/";
+  await expect(page).toHaveURL(
+    (url) => url.pathname === new URL(destination, url).pathname,
+    { timeout: 15_000 },
+  );
+  await page.waitForLoadState("load");
   return linkPath;
 }
 

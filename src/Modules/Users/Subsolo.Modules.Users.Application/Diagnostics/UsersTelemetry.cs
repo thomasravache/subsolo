@@ -8,7 +8,8 @@ namespace Subsolo.Modules.Users.Application.Diagnostics;
 /// SPEC-0014 — métricas do módulo Users (Plano de Rollout): <c>subsolo.users.sign_ins</c> (por método) e
 /// <c>subsolo.users.sessions_revoked</c>. SPEC-0016 — <c>subsolo.users.magic_links_requested</c> (resultado:
 /// <c>sent</c>, <c>limited</c>, <c>failed</c>) e <c>subsolo.users.magic_links_consumed</c> (resultado: <c>ok</c>,
-/// <c>invalid</c>). Sem dados pessoais nas tags.
+/// <c>invalid</c>). SPEC-0019 — <c>subsolo.users.exports</c> e <c>subsolo.users.deletions</c>. Sem dados pessoais nas
+/// tags.
 /// </summary>
 public static class UsersTelemetry
 {
@@ -45,6 +46,12 @@ public static class UsersTelemetry
     private static readonly Counter<long> MagicLinksConsumed = Meter.CreateCounter<long>(
         "subsolo.users.magic_links_consumed", unit: "{magic_link}", description: "Consumos de link mágico, por resultado.");
 
+    private static readonly Counter<long> Exports = Meter.CreateCounter<long>(
+        "subsolo.users.exports", unit: "{export}", description: "Exportações dos dados pessoais pelo titular.");
+
+    private static readonly Counter<long> Deletions = Meter.CreateCounter<long>(
+        "subsolo.users.deletions", unit: "{account}", description: "Contas excluídas pelo titular.");
+
     internal static void MagicLinkRequested(string result) =>
         MagicLinksRequested.Add(1, new TagList { { ResultTag, result } });
 
@@ -55,4 +62,8 @@ public static class UsersTelemetry
         SignIns.Add(1, new TagList { { MethodTag, SignInMethods.ToCode(method) } });
 
     internal static void SessionRevoked() => SessionsRevoked.Add(1);
+
+    internal static void PersonalDataExported() => Exports.Add(1);
+
+    internal static void AccountDeleted() => Deletions.Add(1);
 }

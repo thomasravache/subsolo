@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Cidades e estilos no admin (SPEC-0017): painel `/admin/cidades-e-estilos` para cadastrar e editar cidades (endereço gerado e imutável) e estilos; estilos iniciais (death, black, grind, doom, thrash) por migração e `GET /api/v1/styles` público.
 - Entrar por link mágico (SPEC-0016): `/entrar` manda um link de uso único por e-mail (15 min), `/entrar/confirmar` entra com um toque e volta para onde o fã estava, `/conta` com "Sair" e a aba "Conta" conforme a sessão; resposta igual exista a conta ou não, limites por IP e por e-mail, sessão só no cookie HttpOnly, nenhuma variável de ambiente no navegador e alerta no Seq para falhas de envio.
 - E-mail transacional (SPEC-0018): módulo `Notifications`, o único que fala SMTP, com o modelo de e-mail do link de acesso (HTML acessível + texto), envio por MailKit com timeout de 10 s e TLS obrigatório fora de desenvolvimento, Mailpit no `aspire run` e no Compose local.
 - Contas e sessão (SPEC-0014): módulo `Users` com conta (e-mail, nome, papéis; admin pela configuração), sessão no banco por trás do cookie `__Host-subsolo` (token de 256 bits, só o hash guardado, 30 dias sem uso e teto de 90 dias, revogação imediata), `GET /api/v1/me` e `POST /api/v1/auth/logout` com `no-store`, e rate limit em todo endpoint contado por visitante (o web repassa o IP do visitante à API).

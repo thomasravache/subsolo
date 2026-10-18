@@ -65,6 +65,8 @@ E-mail (SPEC-0018): só o módulo `Notifications` envia, por SMTP; no `aspire ru
 
 Login (SPEC-0016): para testar entrar e sair, use a pilha do `./tools/compose-up.sh` (https://localhost:8443) — o link chega no Mailpit em http://127.0.0.1:8025. Pelo `aspire run` o login não funciona (o cookie `__Host-` exige HTTPS e o `/api` passa pelo Caddy).
 
+Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

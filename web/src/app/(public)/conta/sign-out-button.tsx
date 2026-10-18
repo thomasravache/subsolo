@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { accountError } from "../entrar/account-layout";
 
 /**
- * SPEC-0016 — "Sair": revoga a sessão na API e vai para `/entrar` trocando a entrada do histórico (voltar no
- * navegador não reabre a conta). Sessão já inexistente (401) também sai.
+ * SPEC-0016 — "Sair" ("Sair da conta" na seção "Sessão atual" desde a SPEC-0019): revoga a sessão na API e vai para
+ * `/entrar` trocando a entrada do histórico (voltar no navegador não reabre a conta). Sessão já inexistente (401)
+ * também sai.
  */
 export function SignOutButton() {
   const [busy, setBusy] = useState(false);
@@ -30,7 +31,7 @@ export function SignOutButton() {
   return (
     <div className="flex flex-col gap-2">
       <Button variant="secondary" size="lg" onClick={onClick} disabled={busy}>
-        Sair
+        Sair da conta
       </Button>
       {failed && (
         <p role="alert" className={accountError}>

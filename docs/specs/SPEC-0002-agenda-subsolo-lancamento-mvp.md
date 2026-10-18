@@ -98,7 +98,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0022 | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | SPEC-0023 | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
 | a criar | Agenda da cidade com filtro por data e estilo | full | feature | M | Cadastro de show | — |
-| a criar | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |
+| SPEC-0024 | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |
 | a criar | Perfil público de banda, casa e produtor (futuros e passados) | full | feature | M | Perfis | Cadastro de show |
 | a criar | Seguir cidade, banda e casa | full | feature | S | Contas | Perfis |
 | a criar | "Vou" com contagem | full | feature | S | Contas | Cadastro de show |

@@ -13,4 +13,6 @@ internal sealed class UserRepository(UsersDbContext db) : IUserRepository
         await db.Users.FindAsync([id], cancellationToken);
 
     public void Add(User user) => db.Users.Add(user);
+
+    public void Remove(User user) => db.Users.Remove(user);
 }

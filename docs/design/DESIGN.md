@@ -18,6 +18,8 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Página do show (estrutura) | celular | `98cc07285ec5439197d3273da0f7a11d` | [show-mobile.png](stitch/show-mobile.png) |
 | Página do show (estrutura) | desktop | `ddae50bdb35f4cdaa2437a12f23fe257` | [show-desktop.png](stitch/show-desktop.png) |
 | Admin - Cidades e Estilos (SPEC-0017) | desktop | `a14b19f0df03454483d4dd012d44ea8f` | pendente (capturada pelo Architect) |
+| Minha Conta (SPEC-0019) | celular | `3b3765cf36c344f6bb48e52429570e12` | pendente (capturada pelo Architect) |
+| Excluir Conta — confirmação (SPEC-0019) | celular | `aeb47861556747ba9bacc732f8c05ae8` | pendente (capturada pelo Architect) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).
@@ -132,6 +134,17 @@ Painel do admin (`web/src/components/admin/`, SPEC-0017):
 
 Ajustes aprovados sobre a tela do Stitch: sem textos de exclusão nem a caixa "Regra da cena", sem contagens de shows,
 menu só com o que existe, endereço só leitura na edição e o domínio decidido (`agendasubsolo.com.br`, ADR-0004) no lugar de "subsolo.art".
+
+Minha conta (`web/src/components/account/`, SPEC-0019):
+
+| Componente | Props principais | Regras |
+|---|---|---|
+| `DisplayNameForm` | `initialName` | "Nome de exibição" + "Salvar"; sucesso anunciado em `role="status"` ("Nome salvo."); erro ligado ao campo pelo `Field` |
+| `ExportDataButton` | — | "Baixar meus dados": baixa `subsolo-meus-dados.json` pela API; falha num alerta |
+| `DeleteAccountDialog` | — | botão de contorno `--color-danger` "Excluir minha conta" e o `dialog` modal "Excluir conta?": foco preso (Tab/Shift+Tab giram dentro), foco de volta ao botão ao fechar, "Excluir para sempre" no botão primário (vermelho do destaque) |
+
+Ajustes aprovados sobre as telas do Stitch: sem a engrenagem do topo, sem o selo "Entrou com Google" (entra com a spec
+do Google) e "Sessão atual" só com o botão "Sair da conta", sem aparelho nem cidade (a localização não é guardada).
 
 Ícones: SVG de traço inline (`icons.tsx`), decorativos (`aria-hidden`), sempre ao lado de um texto.
 
