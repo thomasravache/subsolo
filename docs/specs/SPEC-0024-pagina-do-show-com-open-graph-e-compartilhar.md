@@ -4,7 +4,7 @@ title: Página do show com Open Graph e compartilhar
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
