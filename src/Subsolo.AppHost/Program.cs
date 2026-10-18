@@ -1,5 +1,6 @@
 // SPEC-0007 — modelo da aplicação no Aspire (ADR-0004): `aspire run` sobe PostgreSQL 18, Seq, Mailpit, a API e o front.
 // SPEC-0008 — `aspire publish -o artifacts/compose` gera o Docker Compose da mesma aplicação, com o Caddy na frente.
+using System.Globalization;
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
 using Microsoft.Extensions.Configuration;
@@ -61,6 +62,30 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
 if (!builder.ExecutionContext.IsPublishMode)
 {
     api.WithEnvironment("App__PublicUrl", web.GetEndpoint("http"));
+}
+
+// SPEC-0020 — no `aspire run`, o provedor OpenID Connect falso (mock-oauth2-server, login interativo) faz o papel do
+// Google. Porta fixa no host e sem proxy do Aspire (`Subsolo:FakeGooglePort`, padrão 8090): o emissor
+// `http://127.0.0.1:<porta>/default` é o mesmo para o navegador e para a API (que roda no host). O segredo do cliente é
+// um parâmetro secreto gerado a cada execução (o provedor falso aceita qualquer um). No Compose publicado não há provedor
+// falso: o operador configura Users__Google__* com o cliente real do Google no go-live (SPEC-0003); sem isso, desligado.
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    var fakeGooglePort = builder.Configuration.GetValue("Subsolo:FakeGooglePort", 8090);
+    var googleClientSecret = builder.AddParameter(
+        "google-client-secret",
+        new GenerateParameterDefault { MinLength = 32, Special = false },
+        secret: true);
+    builder.AddContainer("google", "ghcr.io/navikt/mock-oauth2-server", "6.0.4")
+        .WithHttpEndpoint(port: fakeGooglePort, targetPort: 8080, name: "http", isProxied: false)
+        .WithEnvironment("SERVER_PORT", "8080")
+        .WithEnvironment("JAVA_TOOL_OPTIONS", "-Xmx128m")
+        .WithEnvironment("JSON_CONFIG", """{"interactiveLogin":true,"httpServer":"NettyWrapper"}""")
+        .WithHttpHealthCheck("/isalive");
+    var fakeGoogleIssuer = string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{fakeGooglePort}/default");
+    api.WithEnvironment("Users__Google__Authority", fakeGoogleIssuer)
+        .WithEnvironment("Users__Google__ClientId", "subsolo-local")
+        .WithEnvironment("Users__Google__ClientSecret", googleClientSecret);
 }
 
 // SPEC-0009 — api e web exportam logs e traces para o Seq (ADR-0010); no local, os alertas de infra/seq/alerts.json

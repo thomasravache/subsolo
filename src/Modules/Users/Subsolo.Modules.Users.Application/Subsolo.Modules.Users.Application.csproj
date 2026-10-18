@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- O registro do módulo (Infrastructure) instancia os serviços internos. -->
     <InternalsVisibleTo Include="Subsolo.Modules.Users.Infrastructure" />
+    <!-- SPEC-0020: o handler OIDC (Presentation) entrega o retorno do Google ao GoogleSignInCallback. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Users.Presentation" />
     <InternalsVisibleTo Include="Subsolo.Users.UnitTests" />
     <InternalsVisibleTo Include="Subsolo.Users.IntegrationTests" />
   </ItemGroup>

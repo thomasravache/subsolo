@@ -196,6 +196,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/auth/google": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Entrar com Google
+     * @description Redireciona para o login do Google e, na volta, entra no Subsolo e segue para o returnTo (só caminho relativo do próprio site; qualquer outro vira /). Falhas voltam para /entrar?erro=google ou /entrar?erro=google_email.
+     */
+    get: operations["StartGoogleSignIn"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/auth/magic-link": {
     parameters: {
       query?: never;
@@ -210,6 +230,26 @@ export interface paths {
      * @description Manda por e-mail um link de acesso de uso único, válido por 15 minutos. A resposta é a mesma exista a conta ou não. Exige o cabeçalho X-CSRF.
      */
     post: operations["RequestMagicLink"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/auth/providers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Provedores de login
+     * @description Quais formas de entrar, além do link por e-mail, estão disponíveis.
+     */
+    get: operations["GetAuthProviders"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -265,6 +305,9 @@ export interface components {
       name: string;
       state: string;
       timeZone: string;
+    };
+    AuthProvidersResponse: {
+      google: boolean;
     };
     CityAgendaResponse: {
       city: components["schemas"]["CityResponse"];
@@ -1070,6 +1113,44 @@ export interface operations {
       };
     };
   };
+  StartGoogleSignIn: {
+    parameters: {
+      query?: {
+        returnTo?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Found */
+      302: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not Found (code=users.provider_disabled) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   RequestMagicLink: {
     parameters: {
       query?: never;
@@ -1112,6 +1193,35 @@ export interface operations {
       };
       /** @description Service Unavailable (code=notifications.email_unavailable) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  GetAuthProviders: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AuthProvidersResponse"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
         headers: {
           [name: string]: unknown;
         };

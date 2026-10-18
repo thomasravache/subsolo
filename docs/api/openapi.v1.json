@@ -825,6 +825,50 @@
         }
       }
     },
+    "/api/v1/auth/google": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Entrar com Google",
+        "description": "Redireciona para o login do Google e, na volta, entra no Subsolo e segue para o returnTo (só caminho relativo do próprio site; qualquer outro vira /). Falhas voltam para /entrar?erro=google ou /entrar?erro=google_email.",
+        "operationId": "StartGoogleSignIn",
+        "parameters": [
+          {
+            "name": "returnTo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "404": {
+            "description": "Not Found (code=users.provider_disabled)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/magic-link": {
       "post": {
         "tags": [
@@ -876,6 +920,38 @@
           },
           "503": {
             "description": "Service Unavailable (code=notifications.email_unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/providers": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Provedores de login",
+        "description": "Quais formas de entrar, além do link por e-mail, estão disponíveis.",
+        "operationId": "GetAuthProviders",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProvidersResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1014,6 +1090,17 @@
           },
           "timeZone": {
             "type": "string"
+          }
+        }
+      },
+      "AuthProvidersResponse": {
+        "required": [
+          "google"
+        ],
+        "type": "object",
+        "properties": {
+          "google": {
+            "type": "boolean"
           }
         }
       },

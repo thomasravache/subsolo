@@ -7,4 +7,7 @@ public sealed class UsersOptions
 
     /// <summary><c>Users:AdminEmails</c>: e-mails com o papel <c>admin</c> (não é segredo).</summary>
     public IReadOnlyList<string> AdminEmails { get; set; } = [];
+
+    /// <summary>SPEC-0020 — <c>Users:Google</c>: o login com Google (desligado sem configuração).</summary>
+    public GoogleOptions Google { get; set; } = new();
 }

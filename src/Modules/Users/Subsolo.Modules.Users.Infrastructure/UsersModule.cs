@@ -8,6 +8,7 @@ using Subsolo.Common.Presentation;
 using Subsolo.Modules.Users.Application;
 using Subsolo.Modules.Users.Application.Diagnostics;
 using Subsolo.Modules.Users.Application.Features.SignIn;
+using Subsolo.Modules.Users.Application.Features.SignInWithGoogle;
 using Subsolo.Modules.Users.Application.Features.ValidateSession;
 using Subsolo.Modules.Users.Domain.MagicLinks;
 using Subsolo.Modules.Users.Domain.Sessions;
@@ -18,6 +19,7 @@ using Subsolo.Modules.Users.Infrastructure.Users;
 using Subsolo.Modules.Users.IntegrationEvents;
 using Subsolo.Modules.Users.Presentation;
 using Subsolo.Modules.Users.Presentation.Features.SignIn;
+using Subsolo.Modules.Users.Presentation.Features.SignInWithGoogle;
 
 namespace Subsolo.Modules.Users.Infrastructure;
 
@@ -38,6 +40,7 @@ public static class UsersModule
     /// <c>Users:AdminEmails</c>, os repositórios, a unidade de trabalho, <see cref="ISignInService"/>,
     /// <see cref="ISessionValidator"/> e o emissor do cookie de sessão. SPEC-0016 — <c>App:PublicUrl</c> (base do link
     /// mágico, validado na inicialização), o repositório dos links e a limpeza periódica deles (<see cref="CleanupMagicLinkTokensJob"/>).
+    /// SPEC-0020 — o login com Google (esquema OIDC e cookie externo), registrado só com <c>Users:Google</c> configurado.
     /// </summary>
     public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -56,6 +59,10 @@ public static class UsersModule
         services.AddScoped<ISessionCookieIssuer, HttpSessionCookieIssuer>();
         services.AddScoped<ISignInService, SignInService>();
         services.AddScoped<ISessionValidator, SessionValidator>();
+        services.AddScoped<GoogleSignInCallback>();
+
+        var google = configuration.GetSection(UsersOptions.SectionName).Get<UsersOptions>()?.Google ?? new GoogleOptions();
+        services.AddAuthentication().AddGoogleSignIn(google);
 
         services.AddModule<UsersDbContext>(
             configuration,

@@ -17,6 +17,8 @@
     <PackageVersion Include="Aspire.Hosting.Seq" Version="13.6.1" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
+    <!-- SPEC-0020 (ADR-0003): login com Google por OpenID Connect (handler oficial; mesma versão do ASP.NET Core). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.13" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
