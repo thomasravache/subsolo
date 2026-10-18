@@ -4,14 +4,14 @@ title: "Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicaçã
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0017, SPEC-0019]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**]
+touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, tests/Common/Subsolo.Api.IntegrationTests/**, tools/compose-up.sh, e2e/tests/auth/journey.ts]
 adrs: [ADR-0001, ADR-0003, ADR-0008]
 external: []
 size: M
@@ -293,3 +293,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0021`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-18 | `touches` ganha o proxy e seu teste (status das páginas novas de conta e de admin), o `shell.ts`, os testes de contrato da API, o `compose-up.sh` e o helper de login da E2E | Antes do início da onda, pelo que as ondas 1–6 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
