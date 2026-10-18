@@ -32,6 +32,8 @@
     <ProjectReference Include="../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <ProjectReference Include="../../../src/Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
     <ProjectReference Include="../../../src/Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+    <!-- SPEC-0024 (H23-03): o JpegHeaderCleaner (interno, com InternalsVisibleTo para este projeto). -->
+    <ProjectReference Include="../../../src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Subsolo.Modules.Template/Subsolo.Modules.Template.csproj" />
   </ItemGroup>
 
