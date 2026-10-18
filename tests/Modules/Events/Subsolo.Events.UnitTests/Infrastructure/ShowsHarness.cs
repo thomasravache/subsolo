@@ -8,7 +8,7 @@ using Subsolo.Modules.Events.Application.Features.CreateShow;
 using Subsolo.Modules.Events.Domain.Cities;
 using Subsolo.Modules.Events.Domain.Shows;
 using Subsolo.Modules.Events.Domain.Styles;
-using Subsolo.Modules.Profiles.IntegrationEvents;
+using Subsolo.Modules.Events.IntegrationEvents;
 
 namespace Subsolo.Events.UnitTests.Infrastructure;
 
@@ -41,7 +41,7 @@ internal sealed class ShowsHarness
             .AddSingleton<ICityRepository>(Cities)
             .AddSingleton<IStyleRepository>(Styles)
             .AddSingleton<IFlyerCatalog>(Flyers)
-            .AddSingleton<IProfilesApi>(Profiles)
+            .AddSingleton<IShowProfiles>(Profiles)
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .AddSingleton(typeof(ILogger<>), typeof(NullLogger<>))
@@ -179,11 +179,11 @@ internal sealed class TestFlyerCatalog(params string[] uploaded) : IFlyerCatalog
 }
 
 /// <summary>
-/// Dublê do <see cref="IProfilesApi"/>: o produtor <see cref="ProducerA"/> (dono <see cref="OwnerA"/>), o produtor
-/// <see cref="ProducerB"/> (dono <see cref="OwnerB"/>), o produtor sem dono <see cref="Ownerless"/>, a casa
-/// <see cref="Venue"/> e as bandas <see cref="Band"/> e <see cref="OtherBand"/>, todos em Curitiba.
+/// Dublê do <see cref="IShowProfiles"/> (Emenda v2 da SPEC-0023; antes, do <c>IProfilesApi</c>): o produtor
+/// <see cref="ProducerA"/> (dono <see cref="OwnerA"/>), o produtor <see cref="ProducerB"/> (dono <see cref="OwnerB"/>),
+/// o produtor sem dono <see cref="Ownerless"/>, a casa <see cref="Venue"/> e as bandas <see cref="Band"/> e <see cref="OtherBand"/>, todos em Curitiba.
 /// </summary>
-internal sealed class TestProfiles : IProfilesApi
+internal sealed class TestProfiles : IShowProfiles
 {
     public static readonly Guid OwnerA = new("0199f000-0000-7000-8000-00000000000a");
 
@@ -191,29 +191,30 @@ internal sealed class TestProfiles : IProfilesApi
 
     public static readonly Guid Admin = new("0199f000-0000-7000-8000-0000000000ad");
 
-    public static readonly ProfileSummary ProducerA = new(
+    public static readonly ShowProfile ProducerA = new(
         new Guid("0199f001-0000-7000-8000-00000000000a"), "producer", "Peste Produções", "peste-producoes", "curitiba", OwnerA);
 
-    public static readonly ProfileSummary ProducerB = new(
+    public static readonly ShowProfile ProducerB = new(
         new Guid("0199f001-0000-7000-8000-00000000000b"), "producer", "Caos Produções", "caos-producoes", "curitiba", OwnerB);
 
-    public static readonly ProfileSummary Ownerless = new(
+    public static readonly ShowProfile Ownerless = new(
         new Guid("0199f001-0000-7000-8000-00000000000c"), "producer", "Porão Coletivo", "porao-coletivo", "curitiba", null);
 
-    public static readonly ProfileSummary Venue = new(
+    public static readonly ShowProfile Venue = new(
         new Guid("0199f001-0000-7000-8000-0000000000c1"), "venue", "Porão do Rock", "porao-do-rock", "curitiba", null);
 
-    public static readonly ProfileSummary Band = new(
+    public static readonly ShowProfile Band = new(
         new Guid("0199f001-0000-7000-8000-0000000000b1"), "band", "Podridão", "podridao", "curitiba", null);
 
-    public static readonly ProfileSummary OtherBand = new(
+    public static readonly ShowProfile OtherBand = new(
         new Guid("0199f001-0000-7000-8000-0000000000b2"), "band", "Necrocorpo", "necrocorpo", "curitiba", OwnerB);
 
-    private static readonly ProfileSummary[] All = [ProducerA, ProducerB, Ownerless, Venue, Band, OtherBand];
+    private static readonly ShowProfile[] All = [ProducerA, ProducerB, Ownerless, Venue, Band, OtherBand];
 
-    public Task<IReadOnlyList<ProfileSummary>> GetOwnedProfilesAsync(Guid userId, CancellationToken ct) =>
-        Task.FromResult<IReadOnlyList<ProfileSummary>>([.. All.Where(profile => profile.OwnerUserId == userId)]);
+    public Task<IReadOnlyList<ShowProfile>> GetOwnedProfilesAsync(Guid userId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<ShowProfile>>([.. All.Where(profile => profile.OwnerUserId == userId)]);
 
-    public Task<ProfileSummary?> GetAsync(Guid profileId, CancellationToken ct) =>
-        Task.FromResult(All.FirstOrDefault(profile => profile.Id == profileId));
+    public Task<IReadOnlyDictionary<Guid, ShowProfile>> GetManyAsync(IReadOnlyCollection<Guid> profileIds, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, ShowProfile>>(
+            All.Where(profile => profileIds.Contains(profile.Id)).ToDictionary(profile => profile.Id));
 }
