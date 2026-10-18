@@ -57,7 +57,9 @@ test.describe("cadastro de show", () => {
 
     // /conta → "Meus shows" (vazio).
     await page.goto("/conta");
-    await press(page.getByRole("link", { name: /meus shows/i }).first());
+    const myShowsLink = page.getByRole("link", { name: /meus shows/i }).first();
+    await expect(myShowsLink, '/conta sem o link "Meus shows"').toBeVisible();
+    await press(myShowsLink);
     await expect(page).toHaveURL((url) => url.pathname === myShowsPath);
     await expect(
       page.getByRole("heading", { level: 1, name: /meus shows/i }),
