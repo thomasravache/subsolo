@@ -103,6 +103,7 @@ critical_journeys:
   admin-cidades: "Admin cadastra cidade e estilo"
   conta: "Fã muda o nome, baixa os dados e exclui a conta"
   perfis: "Fã pede perfil ou reivindica, admin aprova e o dono vira artista"
+  moderacao: "Fã denuncia um show e o admin mantém ou oculta"
 
 # --- Pilares de entrega (references/pillars.md) ---
 # profile: minimo | padrao | rigoroso — ativa a checagem de cobertura (`pillars`, validate, INDEX).

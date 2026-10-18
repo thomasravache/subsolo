@@ -105,7 +105,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0030 | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
 | SPEC-0031 | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
 | SPEC-0032 | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
-| a criar | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
+| SPEC-0033 | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
 
 ## 5. Estratégia de Entrega
