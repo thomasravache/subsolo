@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { requestMagicLink } from "@/api/account";
-import { googleSignInHref } from "@/api/providers";
 import { Button, buttonClasses } from "@/components/ui/Button";
 
 import {
@@ -13,6 +12,7 @@ import {
   accountText,
   accountTitle,
 } from "./account-layout";
+import { googleSignInHref } from "./google";
 import { requestErrorMessage, signInErrorMessage } from "./messages";
 
 /** Segundos até o "Reenviar link" voltar a funcionar. */
