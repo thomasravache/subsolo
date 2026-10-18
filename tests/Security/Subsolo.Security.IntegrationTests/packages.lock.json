@@ -973,7 +973,8 @@
         "type": "Project",
         "dependencies": {
           "Subsolo.Common.Application": "[1.0.0, )",
-          "Subsolo.Modules.Events.Domain": "[1.0.0, )"
+          "Subsolo.Modules.Events.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )"
         }
       },
       "subsolo.modules.events.domain": {
@@ -988,7 +989,8 @@
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Events.Application": "[1.0.0, )",
           "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
-          "Subsolo.Modules.Events.Presentation": "[1.0.0, )"
+          "Subsolo.Modules.Events.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
         }
       },
       "subsolo.modules.events.integrationevents": {
