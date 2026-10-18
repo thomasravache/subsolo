@@ -236,9 +236,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 9ac71ce | 2026-10-17 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em 5acc600 — majors: App:PublicUrl sem validação e sem valor no aspire run (pedido do link dá 500), alerta do Seq do §8 ausente; menores: anúncio do contador a cada segundo, foco no erro de formato, constante do cookie duplicada; checklist OWASP de autenticação atendido | 2026-10-17 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 2177470 | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 044ms) — 2177470 | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 2177470 após CHANGES_REQUESTED em 5acc600 — checklist OWASP de autenticação atendido (sem enumeração de contas, token de 256 bits só como hash e consumo atômico só no POST, returnTo saneado, limites por IP e por e-mail, X-CSRF, sessão nova a cada entrada, sessão só no cookie HttpOnly, /conta no-store, nenhuma variável de ambiente no navegador); emendas 4–5 corrigidas (App:PublicUrl validado e no AppHost, alerta do Seq com runbook, anúncio e foco acessíveis, constante do cookie); testes só ficaram mais rígidos; menores → SPEC-0019 e SPEC-0020 — 2177470 | 2026-10-17 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
