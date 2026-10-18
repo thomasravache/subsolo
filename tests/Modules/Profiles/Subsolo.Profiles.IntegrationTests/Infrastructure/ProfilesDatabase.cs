@@ -96,6 +96,16 @@ internal static class ProfilesDatabase
         return rows;
     }
 
+    /// <summary>SPEC-0021 (Emenda 3) — apaga o perfil direto na tabela (o perfil reivindicado "some" antes da aprovação).</summary>
+    public static async Task DeleteProfileAsync(string connectionString, Guid profileId, CancellationToken ct)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+        await using var command = new NpgsqlCommand("delete from profiles.profiles where id = @id", connection);
+        command.Parameters.AddWithValue("id", profileId);
+        (await command.ExecuteNonQueryAsync(ct)).ShouldBe(1, $"perfil {profileId} não encontrado");
+    }
+
     private static async Task<IReadOnlyList<string>> TextsAsync(string connectionString, string sql, string fragment, CancellationToken ct)
     {
         var texts = new List<string>();

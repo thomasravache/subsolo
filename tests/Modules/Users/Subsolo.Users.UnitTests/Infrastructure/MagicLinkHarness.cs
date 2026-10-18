@@ -31,7 +31,8 @@ internal sealed class MagicLinkHarness
 
     public static readonly DateTimeOffset Start = new(2026, 10, 17, 12, 0, 0, TimeSpan.Zero);
 
-    public MagicLinkHarness()
+    /// <summary>SPEC-0021 (Emenda 3) — <paramref name="users"/>: <c>Users</c> com o limite por e-mail (padrão: sem a seção).</summary>
+    public MagicLinkHarness(UsersOptions? users = null)
     {
         Request = new RequestMagicLinkCommandHandler(
             Tokens,
@@ -39,7 +40,8 @@ internal sealed class MagicLinkHarness
             Notifications,
             Microsoft.Extensions.Options.Options.Create(new PublicUrlOptions { PublicUrl = PublicUrl }),
             Clock,
-            NullLogger<RequestMagicLinkCommandHandler>.Instance);
+            NullLogger<RequestMagicLinkCommandHandler>.Instance,
+            users: Microsoft.Extensions.Options.Options.Create(users ?? new UsersOptions()));
         Consume = new ConsumeMagicLinkCommandHandler(
             Tokens,
             SignIn,

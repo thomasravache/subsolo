@@ -302,16 +302,20 @@ describe("OpenAPI de perfis fiel ao contrato §6", () => {
     expectAdminErrors(queuePath, "get");
   });
 
-  it("SPEC-0021:CT-01 POST …/{id}/approve responde 200 {profileId}, 404 e 409", () => {
+  it("SPEC-0021:CT-01 POST …/{id}/approve responde 200 {profileId}, 404 (pedido ou perfil) e 409 (decidido, com dono, nome tomado — Emenda 3)", () => {
     expectStrings(
       jsonResponse(approvePath, "post", "200"),
       ["profileId"],
       `POST ${approvePath} 200`,
     );
-    expectProblem(approvePath, "post", "404", ["profiles.request_not_found"]);
+    expectProblem(approvePath, "post", "404", [
+      "profiles.request_not_found",
+      "profiles.not_found",
+    ]);
     expectProblem(approvePath, "post", "409", [
       "profiles.request_decided",
       "profiles.already_owned",
+      "profiles.name_taken",
     ]);
     expectAdminErrors(approvePath, "post");
   });
