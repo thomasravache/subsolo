@@ -209,6 +209,472 @@
         }
       }
     },
+    "/api/v1/shows/{id}/status": {
+      "post": {
+        "tags": [
+          "Shows"
+        ],
+        "summary": "Mudar a situação do show",
+        "description": "Marca o show como agendado (scheduled), cancelado (cancelled) ou adiado (postponed); cancelado e adiado continuam na agenda com o selo. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.",
+        "operationId": "ChangeShowStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeShowStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=events.invalid_status)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=events.show_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shows": {
+      "post": {
+        "tags": [
+          "Shows"
+        ],
+        "summary": "Cadastrar show",
+        "description": "Cadastra o show de um perfil de que o usuário é dono (o admin, de qualquer perfil): nome (2 a 100), cidade, início na hora local da cidade (aaaa-mm-ddThh:mm, no futuro), casa (perfil de casa ou nome de 2 a 80), line-up de 1 a 15 bandas (perfil de banda ou nome), 1 a 5 estilos, preço (até 40), link do ingresso https (opcional) e o flyer enviado antes. O show entra na hora na agenda da cidade. Exige o cabeçalho X-CSRF.",
+        "operationId": "CreateShow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=events.invalid_show) (code=events.flyer_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=events.show_slug_taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shows/{id}": {
+      "get": {
+        "tags": [
+          "Shows"
+        ],
+        "summary": "Show para editar",
+        "description": "Os dados do show como o cadastro recebe (início na hora local da cidade, casa e line-up com perfil ou nome), a situação e o flyer. Só o dono do perfil organizador ou o admin.",
+        "operationId": "GetShowForEdit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowForEditResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=events.show_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Shows"
+        ],
+        "summary": "Editar show",
+        "description": "Troca os dados do show (as mesmas regras do cadastro); o endereço (slug) não muda. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.",
+        "operationId": "UpdateShow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=events.invalid_show) (code=events.flyer_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=events.show_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=events.show_slug_taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/shows": {
+      "get": {
+        "tags": [
+          "Shows"
+        ],
+        "summary": "Meus shows",
+        "description": "Os shows do artista (organizados por um perfil dele) ou, para o admin, os que ele cadastrou: os próximos (period=upcoming, o padrão, por data) ou os passados (period=past, mais recentes primeiro).",
+        "operationId": "ListMyShows",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyShowResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=events.invalid_period)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/styles/{slug}": {
       "put": {
         "tags": [
@@ -1880,6 +2346,20 @@
           }
         }
       },
+      "ChangeShowStatusRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CityAgendaResponse": {
         "required": [
           "city",
@@ -2224,6 +2704,52 @@
             "items": {
               "$ref": "#/components/schemas/MyProfileRequestResponse"
             }
+          }
+        }
+      },
+      "MyShowResponse": {
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "startsAt",
+          "city",
+          "venueName",
+          "status",
+          "flyerThumbUrl",
+          "organizerProfileId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "city": {
+            "type": "string"
+          },
+          "venueName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShowStatus"
+          },
+          "flyerThumbUrl": {
+            "type": "string"
+          },
+          "organizerProfileId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -2609,6 +3135,226 @@
           }
         }
       },
+      "ShowForEditResponse": {
+        "required": [
+          "id",
+          "slug",
+          "organizerProfileId",
+          "organizerName",
+          "title",
+          "city",
+          "startsLocal",
+          "venue",
+          "lineup",
+          "styles",
+          "price",
+          "ticketUrl",
+          "flyerId",
+          "flyerThumbUrl",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "organizerProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizerName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "startsLocal": {
+            "type": "string"
+          },
+          "venue": {
+            "$ref": "#/components/schemas/ShowPartResponse"
+          },
+          "lineup": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowPartResponse"
+            }
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "price": {
+            "type": "string"
+          },
+          "ticketUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "flyerId": {
+            "type": "string"
+          },
+          "flyerThumbUrl": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShowStatus"
+          }
+        }
+      },
+      "ShowLineupItemRequest": {
+        "required": [
+          "profileId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ShowPartResponse": {
+        "required": [
+          "profileId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ShowRequest": {
+        "required": [
+          "organizerProfileId",
+          "title",
+          "city",
+          "startsLocal",
+          "venue",
+          "lineup",
+          "styles",
+          "price",
+          "ticketUrl",
+          "flyerId"
+        ],
+        "type": "object",
+        "properties": {
+          "organizerProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "city": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startsLocal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "venue": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ShowVenueRequest"
+              }
+            ]
+          },
+          "lineup": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ShowLineupItemRequest"
+            }
+          },
+          "styles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "price": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ticketUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "flyerId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ShowSaved": {
+        "required": [
+          "id",
+          "slug"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "ShowStatus": {
         "enum": [
           "scheduled",
@@ -2672,6 +3418,28 @@
           "attendingCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ShowVenueRequest": {
+        "required": [
+          "profileId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -2753,6 +3521,9 @@
     },
     {
       "name": "Admin"
+    },
+    {
+      "name": "Shows"
     },
     {
       "name": "Estilos"

@@ -11,7 +11,7 @@ depends_on: [SPEC-0023]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**]
+touches: [src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, infra/caddy/**, web/src/app/(public)/conta/shows/**, tests/**/packages.lock.json, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**]
 adrs: [ADR-0013, ADR-0015, ADR-0016, ADR-0017]
 external: []
 size: M
@@ -135,6 +135,14 @@ Agenda: o card do show é um next/link para /{cidade}/{show}
 ### 7.6 Outros
 - Acessibilidade e desempenho: axe nas páginas; LCP e CLS no E2E-03.
 - Achado da SPEC-0015 (épico): investigar e corrigir o título da cidade inexistente carregada direto (CH-01).
+- Herança da revisão da SPEC-0023 (G4 em 28717fe; cada item com teste próprio com a tag `SPEC-0024:H23-NN`):
+  - **H23-01, limpeza × reenvio:** antes de apagar os arquivos de um id, a limpeza confere que a linha não voltou (reenvio do mesmo hash no meio); se voltou, mantém os arquivos. O envio regrava as variantes se os arquivos faltarem.
+  - **H23-02, criar/editar × limpeza:** se a limpeza apagou o flyer entre `ExistsAsync` e o `SaveChanges` (FK ou concorrência), a resposta é 400 `events.flyer_not_found`, nunca 500; o `Renew` do envio com a linha apagada reprocessa em vez de dar 500.
+  - **H23-03, `JpegHeaderCleaner`:** só aloca a cópia ao achar o primeiro byte solto; UT com entrada malformada (comprimento truncado, `FF00` no cabeçalho, sem SOS) devolvendo os bytes originais.
+  - **H23-04, Caddy:** `@served` com `not path */`, para um diretório não ganhar o cache imutável.
+  - **H23-05, sobras:** remover o `unitOfWork` sem uso da limpeza, o segundo construtor de teste da agenda e o `ListUnattachedCreatedBeforeAsync` morto, num `test(...)` que ajusta os dublês antes do `refactor(...)`.
+  - **H23-06, fuso em "Meus shows":** `GET /api/v1/me/shows` ganha `timeZone` (da cidade) em cada item, campo aditivo; o web deixa de consultar a agenda pública só para ler o fuso.
+  - **H23-07, acessibilidade:** cada campo da line-up liga o erro por `aria-describedby`.
 
 **Dublês e dados de teste:** shows e flyers criados pela API nos IT e no E2E; flyer gerado no teste.
 

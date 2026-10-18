@@ -4,7 +4,7 @@ title: Upload e processamento de flyer
 tier: full
 type: feature
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021]
@@ -174,21 +174,21 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio e regras**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0022:<ID>`, falhando pelo motivo certo
-- [ ] Green: implementar o mínimo seguindo o padrão de referência
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0022:<ID>`, falhando pelo motivo certo
+- [x] Green: implementar o mínimo seguindo o padrão de referência
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, IT-08, IT-09, CT-01 falhando pelo motivo certo
-- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, IT-08, IT-09, CT-01 falhando pelo motivo certo
+- [x] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -200,9 +200,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 361ms) — d47d28b | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em d47d28b — contrato e códigos do §6 (422 por ErrorType.Unprocessable), tipo pelo conteúdo, limite antes da leitura, limite de pixels, metadados removidos, artist/admin + X-CSRF + rate limit, caminhos seguros (SHA-256 e Resolve), só Common.Infrastructure com NetVips, gravação atômica e limpeza; desvios aceitos (NetVips privado + pacotes no host; media-init com a imagem do Caddy já fixada); sem blocker/major; menores → SPEC-0023 (corrida da limpeza, 404 com cache imutável no Caddy, teto do corpo sem Content-Length, BlockUntrusted, FailOn.Truncated, espera com timeout, created_at no reenvio, smoke de upload pelo Caddy, /media no next dev) — d47d28b | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 10m 16s 868ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 5s 969ms) — aca2280 | 2026-10-18 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-18 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-18 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 016ecaa (árvore suja) | 2026-10-18 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -214,36 +214,57 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- `POST /api/v1/flyers` (artist ou admin, X-CSRF, limite `report`): recebe JPEG, PNG ou WebP de até 10 MiB e 40 megapixels, remove os metadados (EXIF, GPS, ICC, XMP) e gera três variantes: `thumb` e `full` em WebP, `og` em JPEG 1200×630. O id é o SHA-256 do original, e o original não é guardado.
+- `/media/flyers/*` com cache imutável e `nosniff`: no `aspire run` pela API; no Compose (e na produção) pelo Caddy, com o volume `media`.
+- Job de hora em hora que apaga flyers não ligados a um show depois de 24 h; `IFlyerCatalog` para o cadastro de show ligar o flyer.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (b1f8bf9 scaffold; 4e5254b, 2069e38, 80c108b testes) → Implementer (a1c0d70, d47d28b) → Reviewer APPROVED em d47d28b.
+- `IFileStorage` (disco, gravação em temporário e troca atômica) e `IImageProcessor` (NetVips 3.2.0 / NetVips.Native 8.18.7, ADR-0015) em `Common`; um processamento por vez por instância; slice `UploadFlyer`, entidade `Flyer`, migração `Flyers` e job `Events.CleanupFlyers` no `Events`; `ErrorType.Unprocessable` → 422.
+- Emenda 2: Caddy com `handle_path`, 10 MB = 10 × 1024 × 1024 bytes, linha de `flyer_missing`, método do IT-02 e decodificação estrita.
+- Desvios aceitos na revisão: NetVips privado em `Common.Infrastructure`, com os pacotes também no host para publicar a libvips nativa; serviço `media-init` no Compose, com a imagem do Caddy já fixada, que acerta o dono do volume para o usuário da API.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | tipo pelos primeiros bytes (JPEG, PNG, WebP aceitos; PDF, GIF e texto recusados) e limite de 10 MiB | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| UT-02 | medidas das variantes `thumb`, `full` e `og` para 1080×1920, 4000×6000 e 1200×600 | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-01 | envio por artista: 201 com id = SHA-256 do original, três variantes com as medidas certas e sem EXIF/GPS/XMP/ICC; reenvio devolve 200 sem regravar | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-02 | 10 envios de 10 MB (4000×6000): p95 ≈ 0,4 s (≤ 3 s) e pico de 154 MB acima do repouso (≤ 300 MB) | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-03 | PDF renomeado, 10 MiB + 1, PNG de 8000×8000 e envio sem arquivo → 400 com os códigos do §6, nada gravado | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-04 | anônimo 401, fã 403, artista e admin 201; sem X-CSRF 400; limite `report` → 429 | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-05 | JPEG truncado → 422 `flyer_unprocessable`, sem arquivo, temporário nem linha | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-06 | `/media/flyers/*` no desenvolvimento: 200 `image/webp` com cache imutável; `..` e variantes codificadas → 404 | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-07 | limpeza: flyer não ligado com 25 h apagado do disco e do banco; ligado e recente mantidos | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-08 | só `Common.Infrastructure` usa NetVips e System.IO de mídia; `Events` só pelas interfaces; caso negativo comprova a regra | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| IT-09 | Compose publicado: volume `media` na API (`Media__Root`) e no Caddy; `handle_path /media/*` com `file_server`, cache imutável e nosniff | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
+| CT-01 | `POST /api/v1/flyers` no OpenAPI com multipart, respostas e códigos; `pnpm api:check` passa | PASS | `gate G2 --run` em d47d28b; `gate G5 --run` na integração (aca2280); CI do PR #29 (run 39157392165, 10/10 checks em 016ecaa) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #29 (run 39157392165)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #29 (https://github.com/thomasravache/subsolo/pull/29), merge commit 5c4725e em 2026-10-18, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Itens menores da revisão G4 (corrida da limpeza, 404 com cache imutável, teto do corpo sem Content-Length, carregadores não confiáveis, `FailOn.Truncated`, espera com tempo limite, `created_at` no reenvio, smoke de upload pelo Caddy, `/media` no `next dev`): herdados pela SPEC-0023 (§7.6, H22-01..H22-06).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0022`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Flyers (SPEC-0022): envio de flyer por artista ou admin (`POST /api/v1/flyers`) com tipo detectado pelo conteúdo, limite de 10 MiB e 40 megapixels, metadados removidos e três variantes (WebP e JPEG para Open Graph); servidos em `/media/flyers` com cache imutável pelo Caddy; flyers não usados somem depois de 24 h.
 - Perfis (SPEC-0021): módulo `Profiles` com pedido de perfil de banda, casa ou produtor em "Meus perfis", fila do admin para aprovar ou recusar com motivo (aprovar dá o papel `artist`), perfis sem dono criados pelo admin e reivindicação pelo dono; pedidos e aprovações simultâneos têm um vencedor e 409 para os outros.
 - Entrar com Google (SPEC-0020): "Continuar com Google" em `/entrar` por OpenID Connect, com a conta ligada pelo e-mail verificado; desligado sem configuração, com provedor falso no desenvolvimento e nos testes.
 - Minha conta (SPEC-0019): mudar o nome de exibição, baixar todos os dados em JSON e excluir a conta digitando o próprio e-mail; a exclusão apaga conta, sessões e links pendentes e avisa os outros módulos por evento.

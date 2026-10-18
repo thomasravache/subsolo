@@ -22,6 +22,8 @@
     <ProjectReference Include="../Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <!-- SPEC-0023: a seção "shows" do export de dados pessoais (IPersonalDataSection, contrato do Users). -->
+    <ProjectReference Include="../../Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
   </ItemGroup>
 
 </Project>

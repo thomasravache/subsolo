@@ -5,8 +5,8 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 11, in-progress 1, implemented 18
-- Impedimentos: **0 aberto(s)**, 17 resolvido(s)
+- Specs: approved 10, in-progress 1, implemented 19
+- Impedimentos: **0 aberto(s)**, 18 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -43,31 +43,30 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0022  
+**Em andamento:** SPEC-0023  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0022 | Upload e processamento de flyer | full/M | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0023 | Cadastro de show, edição, cancelado e adiado | full/M | approved | ⛔ aguarda implementação de SPEC-0022 |  |
-| 3 | SPEC-0024 | Página do show com Open Graph e compartilhar | full/M | approved | ⛔ aguarda implementação de SPEC-0023 |  |
-| 4 | SPEC-0025 | Agenda da cidade com filtro por data e estilo | full/M | approved | ⛔ aguarda implementação de SPEC-0023 | saiu da onda 3: arquivos em comum com SPEC-0024 |
-| 5 | SPEC-0026 | Perfil público de banda, casa e produtor | full/M | approved | ⛔ aguarda implementação de SPEC-0024 | saiu da onda 4: arquivos em comum com SPEC-0025 |
-| 6 | SPEC-0027 | Seguir cidade, banda e casa | full/M | approved | ⛔ aguarda implementação de SPEC-0025; aguarda implementação de SPEC-0026 |  |
-| 7 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0022; saiu da onda 2: arquivos em comum com SPEC-0023; saiu da onda 3: arquivos em comum com SPEC-0024; saiu da onda 4: arquivos em comum com SPEC-0025; saiu da onda 5: arquivos em comum com SPEC-0026; saiu da onda 6: arquivos em comum com SPEC-0027 |
-| 8 | SPEC-0029 | Vou com contagem | full/S | approved | ⛔ aguarda implementação de SPEC-0027 | saiu da onda 7: arquivos em comum com SPEC-0028 |
-| 9 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0027 | saiu da onda 7: arquivos em comum com SPEC-0028; saiu da onda 8: arquivos em comum com SPEC-0029 |
-| 10 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0023; aguarda implementação de SPEC-0027; aguarda implementação de SPEC-0030 |  |
-| 11 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0029; aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
-| 12 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0024; aguarda implementação de SPEC-0031 | saiu da onda 11: arquivos em comum com SPEC-0032 |
+| 1 | SPEC-0023 | Cadastro de show, edição, cancelado e adiado | full/M | in-progress | 🔄 em andamento |  |
+| 2 | SPEC-0024 | Página do show com Open Graph e compartilhar | full/M | approved | ⛔ aguarda implementação de SPEC-0023 |  |
+| 3 | SPEC-0025 | Agenda da cidade com filtro por data e estilo | full/M | approved | ⛔ aguarda implementação de SPEC-0023 | saiu da onda 2: arquivos em comum com SPEC-0024 |
+| 4 | SPEC-0026 | Perfil público de banda, casa e produtor | full/M | approved | ⛔ aguarda implementação de SPEC-0024 | saiu da onda 3: arquivos em comum com SPEC-0025 |
+| 5 | SPEC-0027 | Seguir cidade, banda e casa | full/M | approved | ⛔ aguarda implementação de SPEC-0025; aguarda implementação de SPEC-0026 |  |
+| 6 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0023; saiu da onda 2: arquivos em comum com SPEC-0024; saiu da onda 3: arquivos em comum com SPEC-0025; saiu da onda 4: arquivos em comum com SPEC-0026; saiu da onda 5: arquivos em comum com SPEC-0027 |
+| 7 | SPEC-0029 | Vou com contagem | full/S | approved | ⛔ aguarda implementação de SPEC-0027 | saiu da onda 6: arquivos em comum com SPEC-0028 |
+| 8 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0027 | saiu da onda 6: arquivos em comum com SPEC-0028; saiu da onda 7: arquivos em comum com SPEC-0029 |
+| 9 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0023; aguarda implementação de SPEC-0027; aguarda implementação de SPEC-0030 |  |
+| 10 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0029; aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
+| 11 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0024; aguarda implementação de SPEC-0031 | saiu da onda 10: arquivos em comum com SPEC-0032 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 8/20 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 9/20 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -80,8 +79,8 @@ flowchart LR
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::implemented
     S0019["SPEC-0019<br/>Minha conta: nome, exportar dados e exc…"]:::implemented
     S0021["SPEC-0021<br/>Perfis: pedido, aprovação pelo admin, p…"]:::implemented
-    S0022["SPEC-0022<br/>Upload e processamento de flyer"]:::inprogress
-    S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::approved
+    S0022["SPEC-0022<br/>Upload e processamento de flyer"]:::implemented
+    S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::inprogress
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::approved
     S0025["SPEC-0025<br/>Agenda da cidade com filtro por data e …"]:::approved
     S0026["SPEC-0026<br/>Perfil público de banda, casa e produtor"]:::approved
@@ -150,8 +149,8 @@ flowchart LR
 | [SPEC-0019](SPEC-0019-minha-conta-nome-exportar-dados-e-excluir-conta.md) | Minha conta: nome, exportar dados e excluir conta | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0020](SPEC-0020-entrar-com-google.md) | Entrar com Google | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0016 | — |
 | [SPEC-0021](SPEC-0021-perfis-pedido-aprovacao-pelo-admin-perfil-sem-dono-e-reivind.md) | Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0017, SPEC-0019 | — |
-| [SPEC-0022](SPEC-0022-upload-e-processamento-de-flyer.md) | Upload e processamento de flyer | full | feature | in-progress | 2026-10-17 | SPEC-0002 | SPEC-0021 | — |
-| [SPEC-0023](SPEC-0023-cadastro-de-show-edicao-cancelado-e-adiado.md) | Cadastro de show, edição, cancelado e adiado | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021, SPEC-0022 | — |
+| [SPEC-0022](SPEC-0022-upload-e-processamento-de-flyer.md) | Upload e processamento de flyer | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0021 | — |
+| [SPEC-0023](SPEC-0023-cadastro-de-show-edicao-cancelado-e-adiado.md) | Cadastro de show, edição, cancelado e adiado | full | feature | in-progress | 2026-10-17 | SPEC-0002 | SPEC-0021, SPEC-0022 | — |
 | [SPEC-0024](SPEC-0024-pagina-do-show-com-open-graph-e-compartilhar.md) | Página do show com Open Graph e compartilhar | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
 | [SPEC-0025](SPEC-0025-agenda-da-cidade-com-filtro-por-data-e-estilo.md) | Agenda da cidade com filtro por data e estilo | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
 | [SPEC-0026](SPEC-0026-perfil-publico-de-banda-casa-e-produtor.md) | Perfil público de banda, casa e produtor | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0021, SPEC-0024 | — |

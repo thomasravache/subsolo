@@ -3,6 +3,7 @@
   <!--
     SPEC-0008 — testes unitários do módulo Events (UT-01..UT-04): handler e validador de GetCityAgenda, o
     período padrão da agenda no fuso da cidade (FakeTimeProvider) e a metadata do endpoint (AllowAnonymous).
+    SPEC-0023 — cadastro de show (UT-01..UT-04, CT-01 dos eventos) e itens H22-01 e H22-05 da revisão da SPEC-0022.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -30,6 +31,9 @@
     <ProjectReference Include="../../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <ProjectReference Include="../../../../src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
     <ProjectReference Include="../../../../src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
+    <!-- SPEC-0023: o contrato público dos eventos (CT-01) e os perfis de teste do cadastro de show (IProfilesApi). -->
+    <ProjectReference Include="../../../../src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../../../src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
   </ItemGroup>
 
 </Project>
