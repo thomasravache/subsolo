@@ -9,9 +9,9 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, infra/caddy/**, web/src/app/(public)/conta/shows/**, tests/**/packages.lock.json, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**]
+touches: [src/Subsolo.AppHost/**, tools/compose-up.sh, src/Subsolo.Api/packages.lock.json, src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, infra/caddy/**, web/src/app/(public)/conta/shows/**, tests/**/packages.lock.json, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**]
 adrs: [ADR-0013, ADR-0015, ADR-0016, ADR-0017]
 external: []
 size: M
@@ -150,7 +150,7 @@ Agenda: o card do show é um next/link para /{cidade}/{show}
 
 ## 8. Plano de Rollout
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003).
-- **Dados/schema:** nenhum.
+- **Dados/schema:** colunas `width` e `height` da variante `full` em `events.flyers`, nulas e preenchidas no envio (Emenda v2; migração aditiva).
 - **Compatibilidade:** rota nova de dois segmentos; a agenda continua igual, com o card agora clicável.
 - **Observabilidade:** trace da página até a API; contador de 404 de show no Seq (consulta) para achar links quebrados.
 - **Rollback:** reverter o merge commit.
@@ -248,3 +248,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0024`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-18 | (a) O web recebe o endereço público por variável **só do servidor**, `SUBSOLO_PUBLIC_URL` (sem `NEXT_PUBLIC_`, nunca no navegador), definida pelo AppHost e pelo `compose-up.sh` com o mesmo valor do `App:PublicUrl` da API; `tools/compose-up.sh` e `src/Subsolo.AppHost/**` entram em `touches`. (b) `flyer.width`/`height` são as medidas da variante `full`, gravadas no envio em colunas novas de `events.flyers` (migração aditiva; flyers antigos sem medida → `null`, e a página usa a proporção 3:4). (c) `description`: "{ddd dd/MM} {HH'h'mm no fuso da cidade} · {casa} · {line-up separado por ' / '}"; só o cancelado ganha selo no título. (d) API fora → 503 com a página "Show indisponível" e mensagem em `role=alert`, como a da agenda. (e) O tipo `ShowDetail` do web passa a ser o gerado do OpenAPI. (f) H23-04 fica com os dois testes (Caddyfile e E2E de guarda). | Relatório do Test-writer: endereço público ausente no web, origem das medidas, formato da descrição e texto do 503 | — | Architect (piloto automático do Thomas, 2026-10-17) |
