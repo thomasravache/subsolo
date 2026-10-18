@@ -55,12 +55,9 @@ internal sealed partial class ApproveProfileRequestCommandHandler(
         }
         else
         {
+            // O nome tomado no tipo enquanto o pedido esperava aparece na gravação (índice único), e não numa
+            // consulta antes: assim a corrida com outra aprovação do mesmo pedido dá request_decided (Emenda 3).
             var draft = request.Draft ?? throw new InvalidOperationException("Pedido novo sem os dados do perfil.");
-            if (await profiles.ExistsAsync(draft.Type, draft.Slug, cancellationToken))
-            {
-                return Result.Failure<ProfileRequestApproved>(ProfilesErrors.NameTakenError());
-            }
-
             profile = Profile.Create(draft, request.RequesterUserId, now);
             profiles.Add(profile);
         }
