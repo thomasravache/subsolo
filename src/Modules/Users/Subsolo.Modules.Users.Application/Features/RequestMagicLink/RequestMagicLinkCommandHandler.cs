@@ -24,7 +24,7 @@ internal sealed partial class RequestMagicLinkCommandHandler(
     IOptions<PublicUrlOptions> publicUrl,
     TimeProvider clock,
     ILogger<RequestMagicLinkCommandHandler> logger,
-    IOptions<UsersOptions>? users = null)
+    IOptions<UsersOptions> users)
     : ICommandHandler<RequestMagicLinkCommand>
 {
     /// <summary>Links por e-mail dentro de <see cref="EmailWindow"/> (padrão; <c>Users:MagicLinkEmailLimit</c> muda).</summary>
@@ -45,7 +45,7 @@ internal sealed partial class RequestMagicLinkCommandHandler(
         }
 
         var now = clock.GetUtcNow();
-        var limit = Math.Max(1, users?.Value.MagicLinkEmailLimit ?? EmailLimit);
+        var limit = Math.Max(1, users.Value.MagicLinkEmailLimit);
         if (await tokens.CountIssuedSinceAsync(email, now - EmailWindow, cancellationToken) >= limit)
         {
             // Acima do limite por e-mail a resposta é a mesma (não revela nada), só sem envio.

@@ -239,7 +239,9 @@ export function ProfileForm({ mode, cities, styles }: ProfileFormProps) {
 
       {isBand && (
         <div
+          id={fieldId("styles")}
           role="group"
+          tabIndex={-1}
           aria-labelledby={stylesLabelId}
           aria-describedby={
             errors.styles
