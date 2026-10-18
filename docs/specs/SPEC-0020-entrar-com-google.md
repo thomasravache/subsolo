@@ -138,6 +138,7 @@ Configuração: Users:Google:Authority, Users:Google:ClientId, Users:Google:Clie
 
 ### 7.6 Outros
 - Segurança: checklist OWASP de autenticação no G4 (redirecionamento aberto, CSRF do fluxo, fixação de sessão, validação do `id_token`).
+- Herança da SPEC-0017 (instabilidade vista no mobile-safari): o E2E-01 da SPEC-0016 preencheu o e-mail antes de a página ficar pronta para digitação (campo vazio e "Digite um e-mail válido."); o helper e o teste esperam o formulário estar interativo (hidratado) antes de digitar.
 - Herança da SPEC-0017: o helper `signIn` de `e2e/tests/auth/journey.ts` passa a sempre esperar a navegação depois de entrar (com ou sem `returnTo`), para nenhum teste abrir outra página antes do cookie gravar.
 - Herança da revisão da SPEC-0016: a região `aria-live` do reenvio em `/entrar` nasce vazia e é preenchida logo depois de montada, para o início da espera ser anunciado.
 
