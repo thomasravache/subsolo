@@ -4,7 +4,7 @@ title: "Minha conta: nome, exportar dados e excluir conta"
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0016]
@@ -191,26 +191,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio e regras**
-- [ ] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0019:<ID>`, falhando pelo motivo certo
-- [ ] Green: implementar o mínimo seguindo o padrão de referência
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0019:<ID>`, falhando pelo motivo certo
+- [x] Green: implementar o mínimo seguindo o padrão de referência
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, CT-01 falhando pelo motivo certo
-- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, CT-01 falhando pelo motivo certo
+- [x] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
-- [ ] Validar: build + suíte + E2E (G2/G3)
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [x] Validar: build + suíte + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -222,9 +222,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 866ms) — 838200d | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 838200d — export completo e sem hashes nem dados de outros, exclusão numa transação com o UserDeleted só com ids, cookie limpo, confirmação por e-mail, fan + X-CSRF + no-store, e-mail fora dos logs, diálogo acessível, itens herdados da 0016; testes não enfraquecidos; o texto de privacidade foi corrigido depois por emenda em 2583ec5 (só texto; web 75/75 e E2E de conta verdes); o aviso da página inicial é coberto pelo E2E-01; menores → SPEC-0021 — 2583ec5 | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 30s 292ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 3s 101ms) — 7813858 | 2026-10-18 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-18 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #26 | 2026-10-18 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 996f244 (árvore suja) | 2026-10-18 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -236,36 +236,58 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- "Minha conta" completa: mudar o nome de exibição, baixar todos os dados em JSON e excluir a conta digitando o próprio e-mail (direitos de acesso, portabilidade e eliminação, LGPD art. 18).
+- A exclusão apaga conta, sessões e links pendentes numa transação e publica `UserDeleted` (só ids) para os outros módulos; o export é extensível por `IPersonalDataSection`.
+- Texto de privacidade fiel ao que acontece: os dados somem agora e as cópias de segurança em até 6 meses.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (b9f90ae scaffold; 4306dc8, 87546b4, fe91b12, 48ec123, 35f6b0e, f593004, 27ccfb5 testes) → Implementer (4ff0867, d4fdfeb, 838200d, 2583ec5) → Reviewer APPROVED em 838200d.
+- Emendas: escopo (host, locks, contrato), aviso na página inicial (`/?conta=excluida`), texto de privacidade (transparência diante dos backups), helper de login da E2E e Playwright com um worker.
+- G5: dois FAILs por instabilidade da E2E — o helper digitava antes da hidratação e, localmente, dois workers deixavam o passo que congela o Mailpit coincidir com outro login; corrigidos com espera pela hidratação e `workers: 1`.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | nome de exibição: trim, 1 a 60, vazio remove, caracteres invisíveis recusados | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| UT-02 | export com conta, sessões sem hash e seções dos módulos; seção nula omitida | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| UT-03 | excluir com o e-mail certo (caixa e espaços ignorados) gera `UserDeleted` só com o id; e-mail errado não apaga | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-01 | `PUT /me` muda e remove o nome; 61 caracteres → 400 | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-02 | `GET /me/export` em anexo, `no-store`, sem hash nem cookie, seção de teste, p95 ≤ 1 s; `UsersModule.SessionAbsoluteLifetime` igual ao do host | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-03 | `DELETE /me` apaga conta, sessões e links do e-mail numa transação, limpa o cookie, outbox só com ids; entrar de novo cria conta nova | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-04 | confirmação errada e falta de `X-CSRF` → 400 sem mudar nada | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-05 | anônimo 401 e `no-store` em todas as respostas; `App:PublicUrl` com query ou fragmento impede a API de subir | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| IT-06 | e-mail mascarado nos logs e spans dos três fluxos | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| CT-01 | OpenAPI dos três endpoints e cliente TS em dia | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| E2E-01 | jornada: muda o nome, baixa os dados, exclui a conta, aviso na página inicial, entra de novo sem nome; axe | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
+| E2E-02 | erros de nome e de confirmação ligados aos campos; foco preso no diálogo e devolvido ao fechar | PASS | `gate G2 --run` em 838200d; `gate G5 --run` na integração (7813858); CI do PR #26 (run 39112419564, 10/10 checks em 794f227) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #26 (run 39112419564)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #26 (https://github.com/thomasravache/subsolo/pull/26), merge commit c2d34fd em 2026-10-18, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Teste de `PublishUserDeleted` e nomes de `IPersonalDataSection` repetidos: SPEC-0021.
+- E2E-01 da SPEC-0016 ainda digita em `/entrar` sem o helper de hidratação: SPEC-0020.
+- DELETE sem corpo e corrida de exclusão devolvem códigos fora do contrato (400 genérico / 404): aceito.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0019`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

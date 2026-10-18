@@ -29,6 +29,12 @@
 #
 # SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
 # entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
+#
+# SPEC-0020 — também só neste Compose local: o provedor OpenID Connect falso (mock-oauth2-server, login interativo) faz o
+# papel do Google. Ele roda na rede do contêiner da API (`network_mode: service:api`) e escuta em ${OIDC_PORT:-8090},
+# publicado em 127.0.0.1 com o mesmo número: o emissor `http://127.0.0.1:${OIDC_PORT:-8090}/default` é o mesmo para o
+# navegador (porta publicada) e para a API (o próprio loopback do contêiner). A API recebe Users__Google__Authority,
+# Users__Google__ClientId e um segredo de cliente aleatório por subida (Users__Google__ClientSecret, pelo .env local).
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -43,6 +49,15 @@ if ! [[ "$SEQ_PORT" =~ ^[0-9]+$ ]] || ((10#$SEQ_PORT < 1 || 10#$SEQ_PORT > 65535
   echo "compose-up: SEQ_PORT inválido ('$SEQ_PORT'): use um número de porta entre 1 e 65535" >&2
   exit 2
 fi
+readonly OIDC_PORT="${OIDC_PORT:-8090}"
+if ! [[ "$OIDC_PORT" =~ ^[0-9]+$ ]] || ((10#$OIDC_PORT < 1 || 10#$OIDC_PORT > 65535)); then
+  echo "compose-up: OIDC_PORT inválido ('$OIDC_PORT'): use um número de porta entre 1 e 65535" >&2
+  exit 2
+fi
+readonly OIDC_IMAGE="ghcr.io/navikt/mock-oauth2-server:6.0.4"
+# 127.0.0.1, não `localhost`: o WebKit grava o HSTS do Caddy para `localhost` (qualquer porta) e trocaria o http:// do
+# provedor por https://; o HSTS não vale para endereço IP.
+readonly OIDC_ISSUER="http://127.0.0.1:$((10#$OIDC_PORT))/default"
 readonly MAILPIT_PORT="${MAILPIT_PORT:-8025}"
 if ! [[ "$MAILPIT_PORT" =~ ^[0-9]+$ ]] || ((10#$MAILPIT_PORT < 1 || 10#$MAILPIT_PORT > 65535)); then
   echo "compose-up: MAILPIT_PORT inválido ('$MAILPIT_PORT'): use um número de porta entre 1 e 65535" >&2
@@ -117,11 +132,12 @@ WEB_IMAGE=subsolo-web:$tag
 CADDY_BINDMOUNT_0=$root/infra/caddy/Caddyfile
 POSTGRES_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 SMTP_SECURITY=None
+GOOGLE_CLIENT_SECRET=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 ENV
 
 # Override só local: o Seq acessível apenas pelo localhost (SPEC-0009), o rate limit `default` de teste
 # (SPEC-0014, Emenda v3; a janela continua de 1 minuto) e, da SPEC-0016, o limite `auth` de teste, o Mailpit no
-# localhost, o endereço público do link mágico e as sentinelas do web.
+# localhost, o endereço público do link mágico e as sentinelas do web; da SPEC-0020, o provedor OIDC falso.
 override_file="$OUT/docker-compose.local.yaml"
 cat >"$override_file" <<YAML
 services:
@@ -139,6 +155,20 @@ services:
       Security__RateLimiting__auth__Window: "00:01:00"
       App__PublicUrl: "$APP_URL"
       Users__AdminEmails__0: "admin@subsolo.test"
+      Users__Google__Authority: "$OIDC_ISSUER"
+      Users__Google__ClientId: "subsolo-local"
+      Users__Google__ClientSecret: "\${GOOGLE_CLIENT_SECRET}"
+    ports:
+      - "127.0.0.1:$((10#$OIDC_PORT)):$((10#$OIDC_PORT))"
+  oidc:
+    image: "$OIDC_IMAGE"
+    network_mode: "service:api"
+    depends_on:
+      - api
+    environment:
+      SERVER_PORT: "$((10#$OIDC_PORT))"
+      JAVA_TOOL_OPTIONS: "-Xmx128m"
+      JSON_CONFIG: '{"interactiveLogin":true,"httpServer":"NettyWrapper"}'
   web:
     environment:
       SUBSOLO_E2E_SENTINEL: "$E2E_PLAIN_SENTINEL"
@@ -169,13 +199,15 @@ compose down --volumes --remove-orphans --timeout 10 >/dev/null 2>&1 || true
 echo ">>> docker compose up ($PROJECT, imagens :$tag)"
 compose up --detach
 
-# Pronta = a API (/health) e o web pelo Caddy: `/` com 2xx ou 404, não o 502 do web ainda subindo.
+# Pronta = a API (/health) e o web pelo Caddy: `/` com 2xx ou 404, não o 502 do web ainda subindo; e o provedor OIDC
+# falso (SPEC-0020) respondendo /isalive.
 healthy=0
 for _ in $(seq 1 120); do
   # -k: o certificado local (`tls internal`) não é confiável fora do contêiner do Caddy.
   if curl -fsSk -o /dev/null "$APP_URL/health" 2>/dev/null; then
     web_status="$(curl -sSk -o /dev/null -w '%{http_code}' "$APP_URL/" 2>/dev/null || true)"
-    if [[ "$web_status" == 2?? || "$web_status" == 404 ]]; then
+    if [[ "$web_status" == 2?? || "$web_status" == 404 ]] \
+      && curl -fsS -o /dev/null "http://127.0.0.1:$((10#$OIDC_PORT))/isalive" 2>/dev/null; then
       healthy=1
       break
     fi
@@ -183,12 +215,12 @@ for _ in $(seq 1 120); do
   sleep 1
 done
 if ((healthy == 0)); then
-  echo "compose-up: $APP_URL/health ou o web ($APP_URL/) não responderam em 120 s; logs da pilha:" >&2
+  echo "compose-up: $APP_URL/health, o web ($APP_URL/) ou o provedor OIDC falso não responderam em 120 s; logs da pilha:" >&2
   compose ps --all >&2 || true
   compose logs --no-color --tail 200 >&2 || true
   exit 1
 fi
-echo "compose-up: aplicação no ar em $APP_URL; Seq em http://127.0.0.1:$SEQ_PORT; Mailpit em http://127.0.0.1:$MAILPIT_PORT (Ctrl+C para derrubar)"
+echo "compose-up: aplicação no ar em $APP_URL; Seq em http://127.0.0.1:$SEQ_PORT; Mailpit em http://127.0.0.1:$MAILPIT_PORT; provedor OIDC falso em $OIDC_ISSUER (Ctrl+C para derrubar)"
 
 # Primeiro plano: os logs até o sinal de parada (o trap derruba o Compose).
 compose logs --follow --no-color &

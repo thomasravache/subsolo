@@ -12,6 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- SPEC-0020: esquema OIDC `google` (Entrar com Google; ADR-0003). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
   </ItemGroup>

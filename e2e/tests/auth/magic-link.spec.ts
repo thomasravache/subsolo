@@ -3,11 +3,13 @@ import { appURL, externalApp } from "../agenda/environment";
 import {
   accountTab,
   confirmLink,
+  fillInteractive,
   messageCount,
   readMagicLink,
   requestLink,
   signIn,
   uniqueEmail,
+  waitForHydration,
   withMailpitSilent,
 } from "./journey";
 
@@ -19,7 +21,8 @@ import {
  *   "Confira seu e-mail" com o contador de reenvio, abre o link (carregar a página não gasta o token), toca em "Entrar
  *   no Subsolo" e volta para `/cidade-exemplo`; "Conta" passa a levar a `/conta`, que mostra o e-mail; "Sair" volta a
  *   `/entrar`, e `/conta` passa a redirecionar para `/entrar?returnTo=/conta`. Sem violações do axe; do envio até
- *   "Confira seu e-mail" ≤ 3 s p95 em 5 repetições.
+ *   "Confira seu e-mail" ≤ 3 s p95 em 5 repetições. SPEC-0020 (§7.6, herança da SPEC-0019): o e-mail é digitado só
+ *   depois de a página hidratar (`waitForHydration`/`fillInteractive`).
  * - E2E-02 (mobile-chrome): e-mail inválido ("Digite um e-mail válido." ligado ao campo, com o foco nele — Emenda 4),
  *   link reaproveitado ("Este link expirou ou já foi usado." com "Pedir outro link"), limite de IP ("Muitas
  *   tentativas…") e Mailpit parado ("Não conseguimos mandar o e-mail agora…"; o Mailpit fica congelado, num teste
@@ -73,12 +76,14 @@ test.describe("entrar por link mágico", () => {
     ).toBeVisible();
     await axe.check(page);
 
-    // Manda o e-mail e mede até "Confira seu e-mail".
+    // Manda o e-mail (com a página já hidratada) e mede até "Confira seu e-mail".
     const email = uniqueEmail("e2e01");
     const durations: number[] = [];
-    await page.getByLabel("Seu e-mail").fill(email);
+    const send = page.getByRole("button", { name: "Mandar link de acesso" });
+    await waitForHydration(send);
+    await fillInteractive(page.getByLabel("Seu e-mail"), email);
     let start = Date.now();
-    await page.getByRole("button", { name: "Mandar link de acesso" }).click();
+    await send.click();
     await expect(
       page.getByRole("heading", { name: /confira seu e-mail/i }),
     ).toBeVisible();
@@ -112,7 +117,9 @@ test.describe("entrar por link mágico", () => {
     ).toBeVisible();
     await axe.check(page);
     await page.reload();
-    await page.getByRole("button", { name: "Entrar no Subsolo" }).click();
+    const enter = page.getByRole("button", { name: "Entrar no Subsolo" });
+    await waitForHydration(enter);
+    await enter.click();
 
     // Volta logado para a página de onde saiu.
     await expect(page).toHaveURL((url) => url.pathname === "/cidade-exemplo");
@@ -125,7 +132,9 @@ test.describe("entrar por link mágico", () => {
     await axe.check(page);
 
     // Sair revoga a sessão e volta a /entrar; /conta passa a pedir a entrada.
-    await page.getByRole("button", { name: "Sair" }).click();
+    const signOut = page.getByRole("button", { name: "Sair" });
+    await waitForHydration(signOut);
+    await signOut.click();
     await expect(page).toHaveURL((url) => url.pathname === "/entrar");
     await page.goto("/conta");
     await expect(page).toHaveURL(isSignInBackToAccount);
@@ -133,9 +142,14 @@ test.describe("entrar por link mágico", () => {
     // Desempenho: do envio até "Confira seu e-mail", 5 repetições no total.
     for (let i = 1; i < 5; i++) {
       await page.goto("/entrar");
-      await page.getByLabel("Seu e-mail").fill(uniqueEmail(`e2e01-p95-${i}`));
+      const again = page.getByRole("button", { name: "Mandar link de acesso" });
+      await waitForHydration(again);
+      await fillInteractive(
+        page.getByLabel("Seu e-mail"),
+        uniqueEmail(`e2e01-p95-${i}`),
+      );
       start = Date.now();
-      await page.getByRole("button", { name: "Mandar link de acesso" }).click();
+      await again.click();
       await expect(
         page.getByRole("heading", { name: /confira seu e-mail/i }),
       ).toBeVisible();

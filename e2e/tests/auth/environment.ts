@@ -19,3 +19,12 @@ export const secretSentinel =
 
 /** Nome do projeto do Compose local (`tools/compose-up.sh`), para parar e religar o Mailpit no E2E-02. */
 export const composeProject = "subsolo-local";
+
+/**
+ * SPEC-0020 — o provedor OpenID Connect falso (mock-oauth2-server) da pilha local, no papel do Google: o
+ * `tools/compose-up.sh` o publica em 127.0.0.1:${OIDC_PORT:-8090} (endereço IP: o HSTS do Caddy para `localhost` não
+ * vale), com o emissor `/default` igual para o navegador e para a API.
+ */
+export const oidcPort = Number(process.env.OIDC_PORT ?? 8090);
+
+export const oidcIssuer = `http://127.0.0.1:${oidcPort}/default`;
