@@ -163,6 +163,7 @@ record UserDeletedIntegrationEvent(Guid UserId, DateTimeOffset DeletedAtUtc);   
 ### 7.6 Outros
 - Segurança: revisão no G4 de autorização, CSRF e ausência de dados de outro usuário no export.
 - LGPD: o G4 confere que nada do usuário sobra nas tabelas do `Users` depois da exclusão (IT-03).
+- Herança da revisão da SPEC-0016 (pequenos ajustes no `Users`, sem teste novo além dos da própria 0016): expor `UsersModule.SessionAbsoluteLifetime` para o host não importar `Users.Domain`; `PublicUrlOptionsValidator` recusar `App:PublicUrl` com query ou fragmento.
 
 **Dublês e dados de teste:** `IPersonalDataSection` de teste registradas só nos hosts de teste; e-mails `@subsolo.test`; Mailpit real no E2E.
 
