@@ -10,7 +10,8 @@ namespace Subsolo.Events.IntegrationTests;
 /// iniciais da migração de dados em ordem de nome; como admin, <c>POST /api/v1/admin/styles</c> com "Crust" dá 201 e o
 /// estilo aparece na lista; repetir dá 409 <c>events.style_taken</c>; renomear para "Crust Punk" mantém o slug
 /// <c>crust</c>; renomear para "Doom" dá 409; renomear um slug inexistente dá 404 <c>events.style_not_found</c>; nome
-/// com 1 ou 31 caracteres dá 400 <c>events.invalid_style</c>.
+/// com 1 ou 31 caracteres dá 400 <c>events.invalid_style</c>. Emenda 2 — vários POST simultâneos com o mesmo nome: um
+/// 201 e o resto 409 <c>events.style_taken</c>, nunca 500.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class AdminStylesApiTests(PostgresFixture postgres)
@@ -130,6 +131,38 @@ public sealed class AdminStylesApiTests(PostgresFixture postgres)
             var styles = await list.ShouldBeJsonAsync(HttpStatusCode.OK, ct);
             StylesOf(styles).ShouldContain(("crust", "Crust Punk"), "o 409 não pode ter mudado o estilo");
             StylesOf(styles).Count.ShouldBe(6, styles.ToString());
+        }
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0017:IT-01")]
+    [Trait("Kind", "Integration")]
+    public async Task ConcurrentCreatesWithTheSameNameGiveOne201AndThe409sNever500()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = new AdminApiFactory(await AdminApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct));
+        var admins = await ConcurrentCreates.AdminsAsync(api, ct);
+        try
+        {
+            for (var round = 0; round < ConcurrentCreates.Rounds; round++)
+            {
+                await ConcurrentCreates.ShouldCreateOnceAsync(
+                    admins, AdminStyles, new { name = $"Crust {round}" }, "events.style_taken", ct);
+            }
+
+            using var list = await admins[0].Client.GetAsync(Styles, ct);
+            var styles = await list.ShouldBeJsonAsync(HttpStatusCode.OK, ct);
+            for (var round = 0; round < ConcurrentCreates.Rounds; round++)
+            {
+                StylesOf(styles).Count(style => style.Slug == $"crust-{round}").ShouldBe(1, styles.ToString());
+            }
+        }
+        finally
+        {
+            foreach (var (client, _) in admins)
+            {
+                client.Dispose();
+            }
         }
     }
 

@@ -12,7 +12,7 @@ import { signIn, uniqueEmail } from "../auth/journey";
  *
  * - E2E-01 (desktop-chrome): o admin (`admin@subsolo.test`, em `Users:AdminEmails` do ambiente de teste) entra pelo
  *   link mágico com o `returnTo` do painel, abre `/admin/cidades-e-estilos`, cria "São José dos Pinhais …" (vê a prévia
- *   do endereço gerado do nome), vê "Cidade criada." e a cidade na tabela; o endereço `admin` mostra "Esse endereço é
+ *   do endereço `agendasubsolo.com.br/{slug}` gerado do nome — Emenda 2), vê "Cidade criada." e a cidade na tabela; o endereço `admin` mostra "Esse endereço é
  *   reservado."; adiciona um estilo "Crust …" e o vê entre os chips. Depois, `/{slug}` mostra a agenda vazia e a cidade
  *   está no seletor de cidade. Sem violações do axe.
  * - E2E-02 (mobile-chrome): anônimo em `/admin/cidades-e-estilos` vai (307) para
@@ -91,7 +91,9 @@ test.describe("cidades e estilos no painel do admin", () => {
     await choose(form.getByLabel("UF"), "PR");
     await expect(form.getByLabel("Fuso")).toHaveValue("America/Sao_Paulo");
     await expect(form.getByLabel("Endereço")).toHaveValue(citySlug);
-    await expect(form.getByText(`subsolo.app/${citySlug}`)).toBeVisible();
+    await expect(
+      form.getByText(`agendasubsolo.com.br/${citySlug}`),
+    ).toBeVisible();
     await axe.check(page);
     await submitCity(form);
 

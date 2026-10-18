@@ -13,6 +13,7 @@ namespace Subsolo.Events.IntegrationTests;
 /// <c>events.city_slug_reserved</c>; slug repetido, 409 <c>events.city_slug_taken</c>.
 /// IT-03 — PUT com nome, UF e fuso novos dá 200 e o slug continua o mesmo; PUT num slug inexistente dá 404
 /// <c>events.city_not_found</c>; PUT com dados inválidos dá 400 <c>events.invalid_city</c>.
+/// Emenda 2 (IT-02) — vários POST simultâneos com o mesmo endereço: um 201 e o resto 409 <c>events.city_slug_taken</c>, nunca 500.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class AdminCitiesApiTests(PostgresFixture postgres)
@@ -132,6 +133,41 @@ public sealed class AdminCitiesApiTests(PostgresFixture postgres)
         await explicitSlug.ShouldBeProblemAsync(HttpStatusCode.Conflict, "events.city_slug_taken", ct);
 
         (await SlugsAsync(client, ct)).Count(slug => slug == "sao-jose-dos-pinhais").ShouldBe(1);
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0017:IT-02")]
+    [Trait("Kind", "Integration")]
+    public async Task ConcurrentCreatesWithTheSameSlugGiveOne201AndThe409sNever500()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await AdminAsync(ct);
+        var admins = await ConcurrentCreates.AdminsAsync(api, ct);
+        try
+        {
+            for (var round = 0; round < ConcurrentCreates.Rounds; round++)
+            {
+                await ConcurrentCreates.ShouldCreateOnceAsync(
+                    admins,
+                    AdminCities,
+                    new { name = $"Cidade Concorrente {round}", state = "PR", timeZone = "America/Sao_Paulo", slug = (string?)null },
+                    "events.city_slug_taken",
+                    ct);
+            }
+
+            var slugs = await SlugsAsync(admins[0].Client, ct);
+            for (var round = 0; round < ConcurrentCreates.Rounds; round++)
+            {
+                slugs.Count(slug => slug == $"cidade-concorrente-{round}").ShouldBe(1);
+            }
+        }
+        finally
+        {
+            foreach (var (client, _) in admins)
+            {
+                client.Dispose();
+            }
+        }
     }
 
     [Fact]
