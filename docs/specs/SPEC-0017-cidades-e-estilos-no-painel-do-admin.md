@@ -11,7 +11,7 @@ depends_on: [SPEC-0014, SPEC-0016]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/admin/**, docs/design/**]
+touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/admin/**, docs/design/**, tools/compose-up.sh, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0013, ADR-0016]
 external: []
 size: M
@@ -262,3 +262,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0017`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo) | 2026-10-17 | `touches` ganha `tools/compose-up.sh` (admin `admin@subsolo.test` na pilha da E2E por `Users__AdminEmails__0`), `web/src/proxy.ts` e seu teste (status da página do admin: 307 para anônimo, 403 para fã, `no-store` — padrão do ADR-0016), `web/src/components/ui/shell.ts` e seus testes, `src/Subsolo.Api/Program.cs` e os lock files | Relatório do Test-writer: sem admin na pilha da E2E o E2E-01 falharia pelo motivo errado; status de página é responsabilidade do proxy | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
