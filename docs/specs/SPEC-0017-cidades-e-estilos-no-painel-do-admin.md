@@ -213,7 +213,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 976ea28 | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 964ms) — 976ea28 | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 976ea28 após CHANGES_REQUESTED em fe0b8cf — contrato §6 exato, slugs (geração, reservados, imutáveis), admin em todas as rotas com X-CSRF e no-store, migração dos 5 estilos, proxy do /admin (307/403/no-store, cabeçalho interno sobrescrito), tela com os ajustes do §9 e o domínio agendasubsolo.com.br, criação concorrente → 409, foco acessível; testes não enfraquecidos; menores aceitos (índice do nome de estilo; regra de arquitetura → SPEC-0021) — 976ea28 | 2026-10-18 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 19s 276ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 984ms) — 52461ea | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
