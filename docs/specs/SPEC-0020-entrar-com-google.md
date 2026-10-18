@@ -196,7 +196,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — faefbab | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 3s 208ms) — faefbab | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em e373d64 — OIDC code + PKCE, state e nonce mantidos, validação do id_token intacta, email_verified obrigatório, ligação pela conta de e-mail verificado (ADR-0003), returnTo saneado, cookie externo __Host- nunca emitido, cookies de correlação SameSite=None como o padrão do form_post, http só em Development, desligado sem configuração, rate limit, sem token nem e-mail nos logs, provedor falso só no run e na pilha local; dependências MIT com versões fixas; depois da revisão só entrou faefbab (localizador do alerta no E2E-02); menores → SPEC-0021 e SPEC-0003 — faefbab | 2026-10-18 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 33s 444ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 3s 180ms) — 1958eb3 | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
