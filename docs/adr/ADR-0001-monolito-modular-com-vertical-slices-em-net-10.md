@@ -42,6 +42,7 @@ Sem fronteiras explícitas e verificadas, os módulos se acoplam aos poucos e ca
 | `Engagement` | seguir cidade/banda/casa; "vou" e contagem |
 | `Notifications` | inscrições de push, e-mail, aviso de show novo, lembrete na véspera; canais plugáveis (WhatsApp depois) |
 | `Moderation` | denúncias de show falso ou cancelado e a fila de decisão do admin |
+| `Site` | conteúdo institucional mantido pelo admin: apoiadores da página Apoie (esclarecimento de 2026-10-18, SPEC-0028) |
 
 **Estrutura** (padrão Milan Jovanovic, organização por feature):
 

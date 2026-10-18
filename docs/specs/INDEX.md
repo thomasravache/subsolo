@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 6, in-progress 1, implemented 17
+- Specs: approved 7, in-progress 1, implemented 17
 - Impedimentos: **0 aberto(s)**, 17 resolvido(s)
 
 ## Cobertura de Pilares
@@ -55,13 +55,14 @@ Perfil: **padrao**
 | 5 | SPEC-0025 | Agenda da cidade com filtro por data e estilo | full/M | approved | ⛔ aguarda implementação de SPEC-0023 | saiu da onda 4: arquivos em comum com SPEC-0024 |
 | 6 | SPEC-0026 | Perfil público de banda, casa e produtor | full/M | approved | ⛔ aguarda implementação de SPEC-0021; aguarda implementação de SPEC-0024 | saiu da onda 5: arquivos em comum com SPEC-0025 |
 | 7 | SPEC-0027 | Seguir cidade, banda e casa | full/M | approved | ⛔ aguarda implementação de SPEC-0025; aguarda implementação de SPEC-0026 |  |
+| 8 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0021; saiu da onda 2: arquivos em comum com SPEC-0022; saiu da onda 3: arquivos em comum com SPEC-0023; saiu da onda 4: arquivos em comum com SPEC-0024; saiu da onda 5: arquivos em comum com SPEC-0025; saiu da onda 6: arquivos em comum com SPEC-0026; saiu da onda 7: arquivos em comum com SPEC-0027 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 7/14 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 7/15 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -80,6 +81,7 @@ flowchart LR
     S0025["SPEC-0025<br/>Agenda da cidade com filtro por data e …"]:::approved
     S0026["SPEC-0026<br/>Perfil público de banda, casa e produtor"]:::approved
     S0027["SPEC-0027<br/>Seguir cidade, banda e casa"]:::approved
+    S0028["SPEC-0028<br/>Páginas Apoie (Pix), privacidade e term…"]:::approved
   end
   S0017 --> S0021
   S0019 --> S0021
@@ -92,6 +94,7 @@ flowchart LR
   S0024 --> S0026
   S0025 --> S0027
   S0026 --> S0027
+  S0017 --> S0028
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -130,6 +133,7 @@ flowchart LR
 | [SPEC-0025](SPEC-0025-agenda-da-cidade-com-filtro-por-data-e-estilo.md) | Agenda da cidade com filtro por data e estilo | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
 | [SPEC-0026](SPEC-0026-perfil-publico-de-banda-casa-e-produtor.md) | Perfil público de banda, casa e produtor | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0021, SPEC-0024 | — |
 | [SPEC-0027](SPEC-0027-seguir-cidade-banda-e-casa.md) | Seguir cidade, banda e casa | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0025, SPEC-0026 | — |
+| [SPEC-0028](SPEC-0028-paginas-apoie-pix-privacidade-e-termos.md) | Páginas Apoie (Pix), privacidade e termos | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0017 | — |
 
 ## ADRs
 

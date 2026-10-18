@@ -72,7 +72,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | Perfil público | "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a) |
 | Seguir + push e preferências | "Avisos e Seguindo - Subsolo" (35b282364c47425c9e9cfe89e7b1c1e2) |
 | Denúncia e moderação | "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e a "Fila do Admin" |
-| Apoie, privacidade e termos | "Apoie o Subsolo" (gerada; id a confirmar no canvas — a ferramenta estourou o tempo) |
+| Apoie, privacidade e termos — SPEC-0028 | "Apoie o Subsolo v2" (eac502a950a545e481a18f8ea78d4149), "Privacidade" (e5fe5036928f4a29bf3c95fd51132ea3) e "Admin - Apoiadores" (af1b0081f220444c893e1d85e071c1bc) |
 | Minha conta | SPEC-0019 |
 | Entrar com Google | botão já na tela "Entrar - Subsolo" (SPEC-0016) |
 
@@ -106,7 +106,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | a criar | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
 | a criar | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
 | a criar | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
-| a criar | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
+| SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
 
 ## 5. Estratégia de Entrega
 - **Ambientes:** local e CI até o go-live (SPEC-0003); depois, staging automático a cada merge e produção com confirmação por release.
