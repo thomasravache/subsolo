@@ -1,3 +1,5 @@
+import { unstable_rethrow } from "next/navigation";
+
 import { apiClient, apiTimeoutMs, type CitySummary } from "./client";
 
 /**
@@ -13,7 +15,9 @@ export async function listCities(): Promise<CitySummary[]> {
       cache: "no-store",
     });
     return data ?? [];
-  } catch {
+  } catch (error) {
+    // SPEC-0016 (§7.6 g): os sinais internos do Next.js (renderização dinâmica, prerender) seguem adiante.
+    unstable_rethrow(error);
     return [];
   }
 }

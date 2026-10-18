@@ -146,6 +146,9 @@ internal sealed class ObservedApiFactory(string connectionString, Uri? otlpEndpo
     {
         builder.UseEnvironment("Development");
         builder.UseSetting($"ConnectionStrings:{CommonInfrastructureExtensions.ConnectionStringName}", connectionString);
+        // SPEC-0016 (Emenda 5): a API valida App:PublicUrl na inicialização (https; http só em Development) e não tem
+        // valor padrão no código; o host de teste roda em qualquer ambiente com o endereço do cliente de teste.
+        builder.UseSetting("App:PublicUrl", "https://localhost");
         if (otlpEndpoint is not null)
         {
             builder.UseSetting("OTEL_EXPORTER_OTLP_ENDPOINT", otlpEndpoint.ToString());

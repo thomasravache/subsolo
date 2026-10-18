@@ -4,7 +4,7 @@ title: "Módulo Notifications: e-mail transacional por SMTP"
 tier: full
 type: feature
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: []
@@ -163,21 +163,21 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Contrato e validação**
-- [ ] Red: UT-01..UT-03 com a tag `SPEC-0018:<ID>`, falhando pelo motivo certo
-- [ ] Green: módulo `Notifications` (padrão do `Events`), `INotificationsApi` em `IntegrationEvents`, modelo `MagicLink`, validação de destinatário e dados
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01..UT-03 com a tag `SPEC-0018:<ID>`, falhando pelo motivo certo
+- [x] Green: módulo `Notifications` (padrão do `Events`), `INotificationsApi` em `IntegrationEvents`, modelo `MagicLink`, validação de destinatário e dados
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: SMTP real**
-- [ ] Red: IT-01..IT-05 e CT-01 falhando pelo motivo certo
-- [ ] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório fora de Development, timeout de 10 s, Mailpit no AppHost
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-05 e CT-01 falhando pelo motivo certo
+- [x] Green: envio com MailKit (dependência nova; ADR-0009), configuração `Notifications:Smtp` com TLS obrigatório fora de Development, timeout de 10 s, Mailpit no AppHost
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -189,9 +189,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 085ms) — 389e61f | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 389e61f após CHANGES_REQUESTED em 59d9d11 — os 6 achados corrigidos (Compose ligado ao Mailpit com SMTP_SECURITY padrão StartTls, QUIT falho não vira falha, destinatário alinhado ao MimeKit, regra SMTP com os hosts, TLS fora de Development, comentário do csproj); contrato §6 exato, MailKit com timeout de 10 s, template escapado e acessível, sem dados pessoais na telemetria, MailKit/MimeKit/BouncyCastle MIT; testes só ficaram mais rígidos; 2 menores → SPEC-0003 (Compose de produção ainda aponta para o Mailpit) e aceito (letras Unicode no local-part) — 389e61f | 2026-10-17 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 7m 46s 801ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 468ms) — 6f9ee86 | 2026-10-17 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-17 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #23 (merge 63c3ee9) | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — f7b68e2 (árvore suja) | 2026-10-17 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -204,36 +204,56 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Módulo `Notifications` (ADR-0001/0014): único lugar que fala SMTP. `INotificationsApi.SendEmailAsync` com o modelo `MagicLink` (HTML acessível + texto), validação de destinatário, link e minutos, e erros `invalid_recipient`, `invalid_data` e `email_unavailable`.
+- Envio por MailKit com timeout de 10 s, uma conexão por envio, TLS obrigatório fora de Development; Mailpit no `aspire run` e no Compose (`SMTP_SECURITY`, padrão `StartTls`).
+- Telemetria sem dados pessoais (span `notifications.email.send`, contador `subsolo.notifications.emails`); destinatário mascarado nos logs.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (c86d347 scaffold; 6e4e691, 037f91b, 3cac14d, 984109b, f1c6636, 9ce6a60 testes) → Implementer (43db1b7, 59d9d11, 389e61f) → Reviewer CHANGES_REQUESTED em 59d9d11 e APPROVED em 389e61f.
+- Emenda 1: ADR-0001 esclarecido — `Result`, `Result<T>`, `Error` e `ErrorType` permitidos em `IntegrationEvents`; regra de arquitetura por nome de tipo.
+- Emenda 2 (revisão): Compose ligado ao Mailpit, TLS fora de Development, destinatário alinhado ao MimeKit, QUIT falho não vira falha, regra do ADR-0014 cobrindo os hosts.
+- Dependências novas (ADR-0009): MailKit 4.18.1 (MIT) e `System.Security.Cryptography.Pkcs` 10.0.13 fixado por dois alertas da versão que vinha com o MimeKit.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | modelo MagicLink: HTML acessível (botão com cores inline, contraste ≥ 4,5:1, `lang`), parte texto e frases do §6 | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| UT-02 | validação de destinatário (injeção de cabeçalho, formatos que o MimeKit recusa), link e minutos; dados escapados; canal não chamado | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| UT-03 | TLS obrigatório fora de Development (Production e Staging recusam `None`) | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| IT-01 | envio real ao Mailpit: 20 e-mails com o link certo, partes MIME e remetente | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| IT-02 | AppHost liga o SMTP ao Mailpit no `aspire run` e no Compose publicado (`SMTP_SECURITY` padrão `StartTls`) | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| IT-03 | SMTP fora do ar → `notifications.email_unavailable` em ≤ 11 s, sem exceção | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| IT-04 | span `notifications.email.send` sem dados pessoais; destinatário mascarado no log de falha | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| IT-05 | só o Notifications usa MailKit/MimeKit (módulos, Common e hosts) e `IntegrationEvents` só usa os tipos de resultado de Common.Domain | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
+| CT-01 | contrato `INotificationsApi`, `EmailRequest`, `EmailTemplate` e códigos de erro do §6 | PASS | `gate G2 --run` em 389e61f; `gate G5 --run` na integração (6f9ee86); CI do PR #23 (run 39072926456, 10/10 checks em 52c16a4) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #23 (run 39072926456)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #23 (https://github.com/thomasravache/subsolo/pull/23), merge commit 63c3ee9 em 2026-10-17, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- `tools/compose-up.sh` com `SMTP_SECURITY=None` na pilha local: SPEC-0016 (Emenda 2, item i).
+- Provedor de e-mail real, Host e FromAddress obrigatórios fora de Development: SPEC-0003.
+- Letras Unicode no local-part aceitas (servidor sem SMTPUTF8 devolve `email_unavailable`): aceito como está.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0018`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

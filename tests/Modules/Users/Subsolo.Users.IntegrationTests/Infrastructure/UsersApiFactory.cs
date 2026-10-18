@@ -105,10 +105,24 @@ internal sealed class UsersApiFactory(
         return new NpgsqlConnectionStringBuilder(serverConnectionString) { Database = name }.ConnectionString;
     }
 
+    /// <summary>
+    /// Para o host e devolve ao PostgreSQL as conexões ociosas do pool deste banco: cada teste usa um banco próprio, e
+    /// os pools dos hosts já parados (até 5 min ociosos no Npgsql) esgotariam o <c>max_connections</c> do container.
+    /// </summary>
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        using var connection = new NpgsqlConnection(connectionString);
+        NpgsqlConnection.ClearPool(connection);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(environment);
         builder.UseSetting($"ConnectionStrings:{CommonInfrastructureExtensions.ConnectionStringName}", connectionString);
+        // SPEC-0016 (Emenda 5): a API valida App:PublicUrl na inicialização (https; http só em Development) e não tem
+        // valor padrão no código; o host de teste roda em qualquer ambiente com o endereço do cliente de teste.
+        builder.UseSetting("App:PublicUrl", "https://localhost");
         builder.UseSetting("Users:AdminEmails:0", AdminEmail);
         foreach (var (key, value) in settings ?? new Dictionary<string, string>())
         {

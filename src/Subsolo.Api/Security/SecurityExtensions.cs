@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Subsolo.Common.Presentation.Security;
+using Subsolo.Modules.Users.Domain.Sessions;
 
 namespace Subsolo.Api.Security;
 
@@ -25,6 +26,12 @@ internal static class SecurityExtensions
 
     /// <summary>Cookie do anti-forgery: par do token enviado no cabeçalho <see cref="AntiforgeryFilter.HeaderName"/>.</summary>
     public const string AntiforgeryCookieName = "__Host-subsolo-csrf";
+
+    /// <summary>
+    /// SPEC-0016 — validade do cookie de sessão: o teto absoluto da sessão no banco (<see cref="Session.AbsoluteLifetime"/>, 90 dias desde a entrada). Antes
+    /// disso, o cookie só deixa de valer quando a sessão do banco expira ou é revogada.
+    /// </summary>
+    public static readonly TimeSpan SessionCookieLifetime = Session.AbsoluteLifetime;
 
     /// <summary>Endpoint que emite o token anti-forgery (fora do OpenAPI).</summary>
     public const string AntiforgeryRoute = "/api/v1/antiforgery";
@@ -54,8 +61,11 @@ internal static class SecurityExtensions
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Path = "/";
-                options.ExpireTimeSpan = TimeSpan.FromDays(30);
-                options.SlidingExpiration = true;
+                // SPEC-0016 (§7.6 a): quem manda na validade é a sessão do banco (30 dias sem uso, teto de 90 desde a
+                // entrada). O cookie vale até o teto e não tem janela deslizante própria: o sliding do ASP.NET só
+                // renovava depois de metade do prazo e expirava o cookie antes de a sessão expirar.
+                options.ExpireTimeSpan = SessionCookieLifetime;
+                options.SlidingExpiration = false;
 
                 // SPEC-0014: o cookie só vale com a sessão do banco por trás (revogável); os papéis vêm dela.
                 options.Events.OnValidatePrincipal = SessionCookieValidation.ValidatePrincipalAsync;

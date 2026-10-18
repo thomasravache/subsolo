@@ -140,6 +140,78 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Pedir link de acesso",
+        "description": "Manda por e-mail um link de acesso de uso único, válido por 15 minutos. A resposta é a mesma exista a conta ou não. Exige o cabeçalho X-CSRF.",
+        "operationId": "RequestMagicLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestMagicLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestMagicLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=users.invalid_email) (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=notifications.email_unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -165,6 +237,68 @@
           },
           "401": {
             "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link/consume": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Entrar pelo link de acesso",
+        "description": "Troca o token do link de acesso pela sessão (cookie de sessão novo) e devolve o caminho de volta. O link vale uma vez só. Exige o cabeçalho X-CSRF.",
+        "operationId": "ConsumeMagicLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsumeMagicLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumeMagicLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=users.magic_link_invalid) (code=security.csrf_invalid)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -247,6 +381,28 @@
           }
         }
       },
+      "ConsumeMagicLinkRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "ConsumeMagicLinkResponse": {
+        "required": [
+          "returnTo"
+        ],
+        "type": "object",
+        "properties": {
+          "returnTo": {
+            "type": "string"
+          }
+        }
+      },
       "MeResponse": {
         "required": [
           "id",
@@ -316,6 +472,28 @@
             "description": "Código estável do erro (ex.: agenda.invalid_slug, agenda.city_not_found)."
           }
         }
+      },
+      "RequestMagicLinkRequest": {
+        "required": [
+          "email",
+          "returnTo"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "type": "string"
+          },
+          "returnTo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RequestMagicLinkResponse": {
+        "type": "object"
       },
       "ShowStatus": {
         "enum": [

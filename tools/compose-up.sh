@@ -19,6 +19,13 @@
 # SPEC-0014 (Emenda v3) — só neste Compose local (a pilha do E2E), o rate limit `default` da API sobe para
 # ${DEFAULT_RATE_LIMIT:-10000} por minuto: a suíte inteira do Playwright sai de um IP só e estouraria os 100/min de
 # produção. O artefato publicado e os padrões da API não mudam.
+#
+# SPEC-0016 — também só neste Compose local: o limite `auth` sobe para ${AUTH_RATE_LIMIT:-10000} por minuto (as jornadas
+# de entrada pedem vários links do mesmo IP); o Mailpit publica a API HTTP em 127.0.0.1:${MAILPIT_PORT:-8025} (o E2E lê
+# o link mágico por MAILPIT_URL); a API fala com o Mailpit sem TLS (SMTP_SECURITY=None, SPEC-0018 Emenda 2) e monta o
+# link com App__PublicUrl=https://localhost:8443; o contêiner do web recebe duas variáveis sentinela
+# (SUBSOLO_E2E_SENTINEL e SUBSOLO_E2E_SECRET_KEY, valores de E2E_PLAIN_SENTINEL e E2E_SECRET_SENTINEL) para o E2E-04
+# provar que nenhuma variável de ambiente chega ao navegador.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -33,11 +40,32 @@ if ! [[ "$SEQ_PORT" =~ ^[0-9]+$ ]] || ((10#$SEQ_PORT < 1 || 10#$SEQ_PORT > 65535
   echo "compose-up: SEQ_PORT inválido ('$SEQ_PORT'): use um número de porta entre 1 e 65535" >&2
   exit 2
 fi
-readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
-if ! [[ "$DEFAULT_RATE_LIMIT" =~ ^[0-9]+$ ]] || ((10#$DEFAULT_RATE_LIMIT < 1)); then
-  echo "compose-up: DEFAULT_RATE_LIMIT inválido ('$DEFAULT_RATE_LIMIT'): use um número inteiro positivo" >&2
+readonly MAILPIT_PORT="${MAILPIT_PORT:-8025}"
+if ! [[ "$MAILPIT_PORT" =~ ^[0-9]+$ ]] || ((10#$MAILPIT_PORT < 1 || 10#$MAILPIT_PORT > 65535)); then
+  echo "compose-up: MAILPIT_PORT inválido ('$MAILPIT_PORT'): use um número de porta entre 1 e 65535" >&2
   exit 2
 fi
+# Limite de rate limit: inteiro de 1 a 2147483647 (o PermitLimit da API é um int de 32 bits; SPEC-0016, §7.6 h). O
+# tamanho é conferido antes da conta, para um número enorme não estourar a aritmética do bash.
+check_rate_limit() {
+  local name=$1 value=$2
+  if ! [[ "$value" =~ ^[0-9]{1,10}$ ]] || ((10#$value < 1 || 10#$value > 2147483647)); then
+    echo "compose-up: $name inválido ('$value'): use um número inteiro de 1 a 2147483647" >&2
+    exit 2
+  fi
+}
+readonly AUTH_RATE_LIMIT="${AUTH_RATE_LIMIT:-10000}"
+check_rate_limit AUTH_RATE_LIMIT "$AUTH_RATE_LIMIT"
+readonly E2E_PLAIN_SENTINEL="${E2E_PLAIN_SENTINEL:-subsolo-sentinela-comum-e2e04}"
+readonly E2E_SECRET_SENTINEL="${E2E_SECRET_SENTINEL:-subsolo-sentinela-segredo-e2e04}"
+for sentinel in "$E2E_PLAIN_SENTINEL" "$E2E_SECRET_SENTINEL"; do
+  if ! [[ "$sentinel" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "compose-up: sentinela inválida ('$sentinel'): use só letras, números, ponto, hífen e sublinhado" >&2
+    exit 2
+  fi
+done
+readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
+check_rate_limit DEFAULT_RATE_LIMIT "$DEFAULT_RATE_LIMIT"
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -85,20 +113,32 @@ API_PORT=8080
 WEB_IMAGE=subsolo-web:$tag
 CADDY_BINDMOUNT_0=$root/infra/caddy/Caddyfile
 POSTGRES_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+SMTP_SECURITY=None
 ENV
 
-# Override só local: o Seq acessível apenas pelo localhost (SPEC-0009) e o rate limit `default` de teste
-# (SPEC-0014, Emenda v3; a janela continua de 1 minuto).
+# Override só local: o Seq acessível apenas pelo localhost (SPEC-0009), o rate limit `default` de teste
+# (SPEC-0014, Emenda v3; a janela continua de 1 minuto) e, da SPEC-0016, o limite `auth` de teste, o Mailpit no
+# localhost, o endereço público do link mágico e as sentinelas do web.
 override_file="$OUT/docker-compose.local.yaml"
 cat >"$override_file" <<YAML
 services:
   seq:
     ports:
       - "127.0.0.1:$SEQ_PORT:80"
+  mailpit:
+    ports:
+      - "127.0.0.1:$MAILPIT_PORT:8025"
   api:
     environment:
       Security__RateLimiting__default__PermitLimit: "$((10#$DEFAULT_RATE_LIMIT))"
       Security__RateLimiting__default__Window: "00:01:00"
+      Security__RateLimiting__auth__PermitLimit: "$((10#$AUTH_RATE_LIMIT))"
+      Security__RateLimiting__auth__Window: "00:01:00"
+      App__PublicUrl: "$APP_URL"
+  web:
+    environment:
+      SUBSOLO_E2E_SENTINEL: "$E2E_PLAIN_SENTINEL"
+      SUBSOLO_E2E_SECRET_KEY: "$E2E_SECRET_SENTINEL"
 YAML
 
 compose() {
@@ -144,7 +184,7 @@ if ((healthy == 0)); then
   compose logs --no-color --tail 200 >&2 || true
   exit 1
 fi
-echo "compose-up: aplicação no ar em $APP_URL; Seq em http://127.0.0.1:$SEQ_PORT (Ctrl+C para derrubar)"
+echo "compose-up: aplicação no ar em $APP_URL; Seq em http://127.0.0.1:$SEQ_PORT; Mailpit em http://127.0.0.1:$MAILPIT_PORT (Ctrl+C para derrubar)"
 
 # Primeiro plano: os logs até o sinal de parada (o trap derruba o Compose).
 compose logs --follow --no-color &

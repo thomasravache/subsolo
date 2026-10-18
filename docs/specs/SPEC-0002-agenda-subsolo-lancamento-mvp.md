@@ -68,7 +68,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | Agenda com filtros | "Agenda Curitiba - Subsolo" (5d1946463ad9484b83c67cc2e6d78fd3, mobile) e "Agenda Curitiba - Desktop" (a9c7a58a62a5431bb833a132609c0c70) — conferir os filtros no H1 |
 | Página do show | "Página do Show - Noite da Peste II" (98cc07285ec5439197d3273da0f7a11d, mobile) e desktop (ddae50bdb35f4cdaa2437a12f23fe257) |
 | Cadastro de show + flyer | "Cadastrar Show - Subsolo" (0eda9cdf97fa484188933d53f1605783) |
-| Perfis (pedido, aprovação, reivindicar) | "Pedir Perfil - Subsolo" (af62730f71414b6082259d068b025b00) e "Fila do Admin - Subsolo" (600bfe18de6e44a995790033ab0f817e) |
+| Perfis (pedido, aprovação, reivindicar) — SPEC-0021 | "Meus perfis" (90a9b7cb839a4992a9500362c48ec9e1), "Pedir Perfil" (af62730f71414b6082259d068b025b00), "Reivindicar Perfil" (75b72cdf03284a5998d07d0fd8ae6543) e "Fila do Admin" (600bfe18de6e44a995790033ab0f817e) |
 | Perfil público | "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a) |
 | Seguir + push e preferências | "Avisos e Seguindo - Subsolo" (35b282364c47425c9e9cfe89e7b1c1e2) |
 | Denúncia e moderação | "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e a "Fila do Admin" |
@@ -92,10 +92,10 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full | feature | M | fundação | — |
 | SPEC-0016 | Entrar por link mágico no e-mail | full | feature | M | SPEC-0014 | SPEC-0018 |
 | SPEC-0017 | Cidades e estilos no painel do admin | full | feature | M | SPEC-0014, SPEC-0016 | — |
-| a criar | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | S | SPEC-0016 | — |
-| a criar | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
-| a criar | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
-| a criar | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
+| SPEC-0020 | Entrar com Google (provedor OIDC falso no local e no CI; cliente real no go-live) | full | feature | M | SPEC-0016 | — |
+| SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full | feature | M | SPEC-0016 | — |
+| SPEC-0021 | Perfis: pedido de cadastro, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | M | Contas | — |
+| SPEC-0022 | Upload e processamento de flyer (inclui o `IFileStorage` em disco, saído da SPEC-0007 na Emenda v1) | full | feature | S | fundação | — |
 | a criar | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
 | a criar | Agenda da cidade com filtro por data e estilo | full | feature | M | Cadastro de show | — |
 | a criar | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |

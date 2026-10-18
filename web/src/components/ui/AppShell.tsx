@@ -1,13 +1,15 @@
 "use client";
 
 import { useParams, usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { hasSession } from "@/api/account";
 
 import { BottomNav } from "./BottomNav";
 import type { CityOption } from "./CitySwitcher";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
-import { mainContentId } from "./shell";
+import { isAccountPage, mainContentId } from "./shell";
 
 export interface AppShellProps {
   cities: CityOption[];
@@ -25,16 +27,50 @@ function goToCity(slug: string) {
   window.location.assign(`/${encodeURIComponent(slug)}`);
 }
 
+/** SPEC-0016 — destino ativo da navegação inferior pela URL. */
+function currentDestination(
+  pathname: string,
+  city: string,
+): "agenda" | "apoie" | "conta" | undefined {
+  if (pathname === "/apoie") {
+    return "apoie";
+  }
+  if (isAccountPage(pathname)) {
+    return "conta";
+  }
+  return city ? "agenda" : undefined;
+}
+
+/**
+ * SPEC-0016 — há sessão? Pergunta à API pelo navegador (`GET /api/v1/me`, mesmo domínio, cookie HttpOnly) ao montar o
+ * shell. Entrar e sair recarregam o documento, então o shell sempre nasce com o estado certo; nada fica guardado no
+ * navegador.
+ */
+function useSignedIn(): boolean {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void hasSession(controller.signal).then((value) => {
+      if (!controller.signal.aborted) {
+        setSignedIn(value);
+      }
+    });
+    return () => controller.abort();
+  }, []);
+  return signedIn;
+}
+
 /**
  * SPEC-0011 — shell das páginas públicas: link de pular, cabeçalho com o seletor de cidade, o conteúdo (cada página
  * traz o seu `<main id="conteudo">`), rodapé e navegação inferior no celular. A cidade atual vem da URL
- * (`/{cidade}`); escolher outra no seletor navega para `/{outra}`.
+ * (`/{cidade}`); escolher outra no seletor navega para `/{outra}`. SPEC-0016 — "Entrar"/"Conta" conforme a sessão.
  */
 export function AppShell({ cities, children }: AppShellProps) {
   const params = useParams<{ cidade?: string }>();
   const pathname = usePathname();
   const city = typeof params?.cidade === "string" ? params.cidade : "";
-  const current = pathname === "/apoie" ? "apoie" : city ? "agenda" : undefined;
+  const current = currentDestination(pathname, city);
+  const signedIn = useSignedIn();
 
   return (
     <div className="flex flex-1 flex-col pb-16 md:pb-0">
@@ -44,10 +80,21 @@ export function AppShell({ cities, children }: AppShellProps) {
       >
         Pular para o conteúdo
       </a>
-      <Header city={city} cities={cities} onCityChange={goToCity} />
+      <Header
+        city={city}
+        cities={cities}
+        onCityChange={goToCity}
+        signedIn={signedIn}
+        returnTo={pathname}
+      />
       <div className="flex flex-1 flex-col">{children}</div>
       <Footer />
-      <BottomNav city={city} current={current} />
+      <BottomNav
+        city={city}
+        current={current}
+        signedIn={signedIn}
+        returnTo={pathname}
+      />
     </div>
   );
 }

@@ -23,7 +23,14 @@ internal sealed class UsersHarness
     public UsersHarness()
     {
         UnitOfWork = new InMemoryUnitOfWork(Users, Sessions);
-        SignIn = new SignInService(Users, Sessions, UnitOfWork, Cookies, Microsoft.Extensions.Options.Options.Create(Options), Clock);
+        SignIn = new SignInService(
+            Users,
+            Sessions,
+            UnitOfWork,
+            Cookies,
+            Microsoft.Extensions.Options.Options.Create(Options),
+            Clock,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SignInService>.Instance);
         Validator = new SessionValidator(Sessions, Users, UnitOfWork, Clock);
     }
 

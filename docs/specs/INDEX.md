@@ -4,9 +4,9 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 3, in-progress 1, implemented 12
-- Impedimentos: **0 aberto(s)**, 15 resolvido(s)
+- Validação (G0): **1 erro(s), 22 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 5, in-progress 1, implemented 13
+- Impedimentos: **0 aberto(s)**, 16 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -35,29 +35,32 @@ Perfil: **padrao**
 | Produtor ou banda aprovados cadastram um show em menos de 2 minutos | descoberta | — |
 | Fã abre a página do show e compartilha com o flyer na prévia | descoberta | — |
 | Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | descoberta | — |
-| Fã entra pelo link mágico no e-mail e sai | planejada | SPEC-0016, SPEC-0016, SPEC-0016 |
+| Fã entra pelo link mágico no e-mail e sai | planejada | SPEC-0016, SPEC-0016, SPEC-0016, SPEC-0020, SPEC-0020 |
 | Admin cadastra cidade e estilo | planejada | SPEC-0017, SPEC-0017 |
 | Fã muda o nome, baixa os dados e exclui a conta | planejada | SPEC-0019, SPEC-0019 |
+| Fã pede perfil ou reivindica, admin aprova e o dono vira artista | planejada | SPEC-0021, SPEC-0021 |
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0018  
+**Em andamento:** SPEC-0016  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0018 | Módulo Notifications: e-mail transacional por SMTP | full/M | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | approved | ⛔ aguarda implementação de SPEC-0018 |  |
-| 3 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | approved | ⛔ aguarda implementação de SPEC-0016 |  |
-| 4 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 3: arquivos em comum com SPEC-0017 |
+| 1 | SPEC-0016 | Entrar por link mágico no e-mail | full/M | in-progress | 🔄 em andamento |  |
+| 2 | SPEC-0017 | Cidades e estilos no painel do admin | full/M | approved | ⛔ aguarda implementação de SPEC-0016 |  |
+| 3 | SPEC-0019 | Minha conta: nome, exportar dados e excluir conta | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 2: arquivos em comum com SPEC-0017 |
+| 4 | SPEC-0020 | Entrar com Google | full/M | approved | ⛔ aguarda implementação de SPEC-0016 | saiu da onda 2: arquivos em comum com SPEC-0017; saiu da onda 3: arquivos em comum com SPEC-0019 |
+| 5 | SPEC-0021 | Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicação | full/M | approved | ⛔ aguarda implementação de SPEC-0017; aguarda implementação de SPEC-0019 | saiu da onda 4: arquivos em comum com SPEC-0020 |
+| 6 | SPEC-0022 | Upload e processamento de flyer | full/M | approved | ⛔ aguarda implementação de SPEC-0021 |  |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 2/6 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 3/9 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -68,10 +71,13 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 flowchart LR
   subgraph E0002["SPEC-0002 · Agenda Subsolo — lançamento (MVP)"]
     S0014["SPEC-0014<br/>Módulo Users: conta, sessão e papéis"]:::implemented
-    S0016["SPEC-0016<br/>Entrar por link mágico no e-mail"]:::approved
+    S0016["SPEC-0016<br/>Entrar por link mágico no e-mail"]:::inprogress
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::approved
-    S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::inprogress
+    S0018["SPEC-0018<br/>Módulo Notifications: e-mail transacion…"]:::implemented
     S0019["SPEC-0019<br/>Minha conta: nome, exportar dados e exc…"]:::approved
+    S0020["SPEC-0020<br/>Entrar com Google"]:::approved
+    S0021["SPEC-0021<br/>Perfis: pedido, aprovação pelo admin, p…"]:::approved
+    S0022["SPEC-0022<br/>Upload e processamento de flyer"]:::approved
   end
   S0014 --> S0016
   S0018 --> S0016
@@ -80,6 +86,10 @@ flowchart LR
   S0016 --> S0017
   S0014 --> S0019
   S0016 --> S0019
+  S0016 --> S0020
+  S0017 --> S0021
+  S0019 --> S0021
+  S0021 --> S0022
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -106,10 +116,13 @@ flowchart LR
 | [SPEC-0013](SPEC-0013-ajustes-menores-do-harness-e-do-ci-apontados-nas-revisoes-da.md) | Ajustes menores do harness e do CI apontados nas revisões das SPEC-0005 e SPEC-0006 | lite | fix | implemented | 2026-10-14 | SPEC-0001 | — | — |
 | [SPEC-0014](SPEC-0014-modulo-users-conta-sessao-e-papeis.md) | Módulo Users: conta, sessão e papéis | full | feature | implemented | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0015](SPEC-0015-titulo-da-pagina-presente-na-navegacao-no-cliente.md) | Título da página presente na navegação no cliente | lite | fix | implemented | 2026-10-17 | SPEC-0002 | — | — |
-| [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0018 | SPEC-0018@1 |
+| [SPEC-0016](SPEC-0016-entrar-por-link-magico-no-e-mail.md) | Entrar por link mágico no e-mail | full | feature | in-progress | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0018 | SPEC-0018@1 |
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
-| [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | in-progress | 2026-10-17 | SPEC-0002 | — | — |
+| [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | implemented | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0019](SPEC-0019-minha-conta-nome-exportar-dados-e-excluir-conta.md) | Minha conta: nome, exportar dados e excluir conta | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
+| [SPEC-0020](SPEC-0020-entrar-com-google.md) | Entrar com Google | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0016 | — |
+| [SPEC-0021](SPEC-0021-perfis-pedido-aprovacao-pelo-admin-perfil-sem-dono-e-reivind.md) | Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0017, SPEC-0019 | — |
+| [SPEC-0022](SPEC-0022-upload-e-processamento-de-flyer.md) | Upload e processamento de flyer | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021 | — |
 
 ## ADRs
 

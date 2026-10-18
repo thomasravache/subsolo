@@ -4,14 +4,14 @@ title: Entrar por link mágico no e-mail
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0018]
 consumes_contract: [SPEC-0018@1]
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/entrar/**, web/src/app/(public)/conta/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/app/(public)/layout.tsx, e2e/tests/auth/**, e2e/tests/security/**, web/src/security/**, e2e/playwright.config.ts, tools/compose-up.sh, docs/design/**, src/Subsolo.Api/Security/**, tests/Security/**]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/entrar/**, web/src/app/(public)/conta/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/app/(public)/layout.tsx, e2e/tests/auth/**, e2e/tests/security/**, web/src/security/**, e2e/playwright.config.ts, tools/compose-up.sh, docs/design/**, src/Subsolo.Api/Security/**, tests/Security/**, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json, web/src/proxy.ts, web/src/proxy.test.ts, tests/Common/Subsolo.Api.IntegrationTests/**, src/Subsolo.AppHost/**, tests/Common/Subsolo.AppHost.IntegrationTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/**, src/Subsolo.Api/appsettings.Development.json, tests/Modules/Events/**]
 adrs: [ADR-0003, ADR-0008, ADR-0013, ADR-0014, ADR-0016, ADR-0017]
 external: []
 size: M
@@ -136,6 +136,7 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 | Sessão fora do navegador | após entrar | nada da sessão em `localStorage`/`sessionStorage`; cookie HttpOnly; `/conta` com `no-store` | E2E-03 |
 | Variáveis de ambiente | código do navegador e HTML servido | nenhum `NEXT_PUBLIC_*`, nenhum `process.env` em código de cliente, nenhum valor do ambiente do container | UT-05, E2E-04 |
 | Achados da revisão da SPEC-0014 (Emenda 2) | cookie × sessão do banco, primeira entrada simultânea, evento `UserRegistered`, 503 no OpenAPI, 429 com `no-store` | como no §7.6 | UT-06, IT-09, CT-03 |
+| Configuração e alerta (Emenda 4) | `App:PublicUrl` ausente ou inválido; falhas de envio em série | a API não sobe; alerta no Seq com runbook | UT-07, IT-10 |
 | Contratos consumidos | `INotificationsApi` e `/me` | como em SPEC-0018@1 e SPEC-0014 | CT-01, CT-02 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
@@ -149,6 +150,7 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 - **UT-03** — Dados `returnTo` = `/curitiba`, `//evil.com`, `https://evil.com`, `/\\evil.com`, `javascript:alert(1)`, vazio e `null`, quando saneados, então só `/curitiba` é mantido e os outros viram `/`.
 - **UT-04** — Dado o componente de navegação com e sem usuário, quando renderizado (Vitest + Testing Library), então "Conta" aponta para `/conta` ou `/entrar`, e o item ativo tem `aria-current="page"`.
 - **UT-06** — Dado o handler `PublishUserRegistered`, quando recebe o evento de domínio, então publica `UserRegisteredIntegrationEvent` com o mesmo `UserId`, a data e nenhum e-mail; o `SignInService` exige `ILogger` (sem parâmetro opcional).
+- **UT-07** — Dadas as opções `App:PublicUrl` vazia, relativa (`/entrar`), `http://subsolo.test` em Production e `https://subsolo.test`, quando o host inicia, então os três primeiros impedem a inicialização com mensagem que cita `App:PublicUrl` e o último sobe; `http://localhost` em Development sobe (Emenda 4).
 - **UT-05** — Dados os arquivos de `web/src/**` e `web/next.config.ts`, quando o teste (Vitest) os varre, então nenhum usa `NEXT_PUBLIC_`, nenhum arquivo com `"use client"` lê `process.env`, e o `next.config.ts` não declara `env` nem `publicRuntimeConfig`; um arquivo de exemplo com `process.env.X` num componente cliente é reprovado.
 
 ### 7.3 Testes de Integração
@@ -160,6 +162,7 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 - **IT-06** — Dados tokens usados e expirados há 25 h e um válido, quando a tarefa de limpeza roda, então só o válido continua no banco.
 - **IT-07** — Dado o Mailpit parado, quando `POST /magic-link` é chamado, então 503 `notifications.email_unavailable` em ≤ 11 s.
 - **IT-09** — Dado o host real com `FakeTimeProvider`: um usuário que entra, usa até o dia 14 e volta no dia 40 continua logado (a validade do cookie acompanha a sessão do banco) e no dia 44+ não; dois consumos de links diferentes do mesmo e-mail novo ao mesmo tempo dão 200 e um único usuário; o 429 de `/me` tem `Cache-Control: no-store`.
+- **IT-10** — Dado o modelo do AppHost em modo run, quando lido, então a API recebe `App__PublicUrl` com o endereço do `web`; e dado `infra/seq/alerts.json`, então existe o alerta de falha de envio do link com `event.name = 'MagicLinkSendFailed'`, janela de 10 minutos e limite acima de 5, e o runbook citado existe (Emenda 4).
 - **IT-08** — Dados os dois POST sem X-CSRF, quando chamados, então 400 `security.csrf_invalid` e nada é gravado ou enviado.
 
 ### 7.4 Testes de Contrato
@@ -169,13 +172,14 @@ Navegação: aba "Conta" (mobile) e link no cabeçalho (desktop) → /entrar (an
 
 ### 7.5 Testes E2E
 - **E2E-01** — Dada a aplicação completa com o Mailpit, nos projetos mobile-chrome e mobile-safari: o fã em `/cidade-exemplo` toca em "Conta" e cai em `/entrar`; digita o e-mail e manda; vê "Confira seu e-mail" com o contador; o teste lê o link na API do Mailpit e o abre (o token continua válido depois do carregamento); toca em "Entrar no Subsolo" e volta para `/cidade-exemplo`. Agora "Conta" leva a `/conta`, que mostra o e-mail; "Sair" leva de volta a `/entrar`, e `/conta` passa a redirecionar para `/entrar?returnTo=/conta`. Sem violações do axe nas telas visitadas. O tempo do envio até "Confira seu e-mail" é ≤ 3 s p95 em 5 repetições. [jornada: entrar]
-- **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome: e-mail inválido mostra "Digite um e-mail válido." ligado ao campo; o link reaproveitado mostra "Este link expirou ou já foi usado." com "Pedir outro link"; com o limite de IP baixo (configuração de teste), aparece "Muitas tentativas…"; com o Mailpit parado, aparece "Não conseguimos mandar o e-mail agora…". Sem violações do axe. [jornada: entrar]
+- **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome: e-mail inválido mostra "Digite um e-mail válido." ligado ao campo e o foco vai para o campo; o link reaproveitado mostra "Este link expirou ou já foi usado." com "Pedir outro link"; com o limite de IP baixo (configuração de teste), aparece "Muitas tentativas…"; com o Mailpit congelado (o SMTP aceita a conexão e não responde; passo isolado no fim, que espera o Mailpit e o site voltarem), aparece "Não conseguimos mandar o e-mail agora…". Sem violações do axe. [jornada: entrar]
 - **E2E-03** — Dada a aplicação completa, nos projetos mobile-chrome e mobile-safari: o fã entra pelo link do Mailpit; o teste confere que o cookie `__Host-subsolo` é HttpOnly, que `localStorage` e `sessionStorage` não guardam nada da sessão e que a resposta de `/conta` tem `Cache-Control: no-store`; então apaga os cookies e os dados do site (`context.clearCookies()` e limpeza do storage) e recarrega `/conta` → cai em `/entrar?returnTo=/conta`, e "Conta" leva a `/entrar`. Em outro passo, depois de "Sair", o botão voltar do navegador não mostra o e-mail. [jornada: entrar]
 - **E2E-04** — Dada a pilha do Compose com valores sentinela no ambiente do container `web` (injetados pelo `tools/compose-up.sh`: uma variável comum, uma com nome de segredo) e a URL interna da API, quando o teste baixa o HTML de `/`, `/entrar`, `/entrar/confirmar` e `/conta` e todo script `/_next/static/**` que eles referenciam, então nenhum desses valores aparece, nem `Password=` ou `ConnectionStrings`.
 
 ### 7.6 Outros
 - Acessibilidade: axe nas quatro telas (E2E-01 e E2E-02).
 - Sessão e variáveis de ambiente: pedidos do Thomas no H1 (2026-10-17) — E2E-03, E2E-04 e UT-05.
+- Emenda 4 (revisão G4): (j) `App:PublicUrl` validado na inicialização — URL absoluta `https` (`http` só em Development) — e definido pelo AppHost no `aspire run` com o endereço do `web`; (k) alerta do Seq "Falha no envio do link" (`event.name = 'MagicLinkSendFailed'`, janela de 10 min, mais de 5) em `infra/seq/alerts.json` com runbook em `docs/runbooks/`; (l) contador de reenvio anunciado só no início e no fim, e foco vai para o campo no erro de formato; (m) `SessionCookieLifetime` referencia `Session.AbsoluteLifetime`. Testes: UT-07 (validação do `App:PublicUrl`), IT-10 (AppHost define `App__PublicUrl` no run; alerta presente com o filtro e a janela), E2E-02 ampliado (foco no campo). Entrar pelo `aspire run` continua fora do escopo: o cookie `__Host-` exige HTTPS e o `/api` passa pelo Caddy; a pilha local de teste é o `tools/compose-up.sh`.
 - Herança da revisão da SPEC-0014 (Emenda 2): (a) a validade do cookie segue a da sessão no banco — cookie sem janela própria menor que a da sessão (hoje o sliding do ASP.NET renova só depois de 15 dias e pode expirar o cookie antes dos 30 dias de inatividade); (b) duas primeiras entradas simultâneas com o mesmo e-mail não dão 500 (violação do índice único tratada, nova busca); (c) teste unitário de `PublishUserRegistered` (campos, mesmo Id, sem e-mail); (d) 503 `service.unavailable` declarado no OpenAPI de `/me` e `/logout`; (e) `ILogger` obrigatório no `SignInService`; (f) 429 de `/me` também com `no-store`. Da revisão da Emenda v3 da 0014: (g) `unstable_rethrow` também no `catch` de fora de `getCityAgenda` e `listCities` (ou ajustar o comentário); (h) `DEFAULT_RATE_LIMIT` do `tools/compose-up.sh` limitado a 2147483647. Da Emenda 2 da SPEC-0018: (i) o `tools/compose-up.sh` passa `SMTP_SECURITY=None` para a pilha local, que fala com o Mailpit sem TLS. Os testes desses itens entram no Red desta spec com a tag `SPEC-0016:UT-06` (c, e), `SPEC-0016:IT-09` (a, b, f) e `SPEC-0016:CT-03` (d).
 - Segurança: checklist OWASP de autenticação no G4 (enumeração de contas, redirecionamento aberto, força bruta, fixação de sessão).
 
@@ -231,11 +235,11 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 9ac71ce | 2026-10-17 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 2177470 | 2026-10-17 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 044ms) — 2177470 | 2026-10-17 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 2177470 após CHANGES_REQUESTED em 5acc600 — checklist OWASP de autenticação atendido (sem enumeração de contas, token de 256 bits só como hash e consumo atômico só no POST, returnTo saneado, limites por IP e por e-mail, X-CSRF, sessão nova a cada entrada, sessão só no cookie HttpOnly, /conta no-store, nenhuma variável de ambiente no navegador); emendas 4–5 corrigidas (App:PublicUrl validado e no AppHost, alerta do Seq com runbook, anúncio e foco acessíveis, constante do cookie); testes só ficaram mais rígidos; menores → SPEC-0019 e SPEC-0020 — 2177470 | 2026-10-17 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 18s 042ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 493ms) — 312a99a | 2026-10-17 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -244,6 +248,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-17 | G2 | spec | Validar App:PublicUrl na inicialização (Emenda 4, item j) derruba os hosts de teste existentes (WebApplicationFactory) que não definem App:PublicUrl; appsettings e várias factories estão fora dos touches | Implementer: IValidateOptions + ValidateOnStart; Security IT 21/21 e Api IT 2/5 falharam com App:PublicUrl vazio | Architect | Emenda 5 — App:PublicUrl no appsettings.Development.json e nas factories de teste fora de Development | 2026-10-17 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -284,5 +289,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0016`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 5 (escopo e testes) | 2026-10-17 | `App:PublicUrl = https://localhost:8443` no `appsettings.Development.json` da API; o Test-writer define `App:PublicUrl` nas factories de teste que rodam fora de Development (Security, Api, Users, Events, Observability) — sem valor padrão no código, para a validação continuar pegando a configuração esquecida em produção; `touches` ganha `src/Subsolo.Api/appsettings.Development.json` e `tests/Modules/Events/**` | IMP-01: a validação do item (j) derrubava os hosts de teste sem `App:PublicUrl` | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
+| 4 (comportamento, testes e escopo) | 2026-10-17 | Itens (j)–(m) do §7.6; UT-07, IT-10 e E2E-02 ampliado; `touches` ganha AppHost e seu teste, `infra/seq/alerts.json`, `docs/runbooks/**` e `tests/Observability/**` | Revisão G4 (CHANGES_REQUESTED em 5acc600): `App:PublicUrl` sem validação quebrava o pedido do link no `aspire run`; alerta do §8 faltando | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
+| 3 (escopo) | 2026-10-17 | `touches` ganha os lock files (`src/Subsolo.Api/packages.lock.json`, `tests/**/packages.lock.json`), `web/src/proxy.ts` e seu teste (rotas `/entrar`, `/entrar/confirmar` e `/conta` fora do tratamento de slug de cidade, exclusão explícita prevista no ADR-0016) e `tests/Common/Subsolo.Api.IntegrationTests/**` (o CT-01 da SPEC-0014 passa a aceitar o 503 que o CT-03 desta spec exige) | Relatório do Test-writer: o `Users` passa a referenciar o contrato do `Notifications` (regrava locks), o proxy devolvia 404 para as páginas novas, e o CT-01 da 0014 travava os códigos de `/me` e `/logout` | SPEC-0014 (CT-01 ajustado aqui) | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 2 (escopo e testes) | 2026-10-17 | Entram os 6 achados menores da revisão da SPEC-0014 (lista no §7.6) com UT-06, IT-09 e CT-03; `touches` ganha `src/Subsolo.Api/Security/**` e `tests/Security/**` | A 0016 é a primeira consumidora real da entrada e da sessão (corrida na primeira entrada, janela do cookie) e já mexe no módulo `Users` | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
 | 1 (ordem) | 2026-10-17 | `depends_on` ganha SPEC-0018: a 0016 roda depois do módulo Notifications implementado | O IT e o E2E desta spec usam o Notifications real com o Mailpit, e as duas specs regravam os mesmos `packages.lock.json` de teste; sem a ordem, o `waves` punha a 0018 depois da 0016 | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |

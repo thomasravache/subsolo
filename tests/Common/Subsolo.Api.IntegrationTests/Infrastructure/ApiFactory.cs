@@ -19,6 +19,9 @@ internal sealed class ApiFactory(string environment, string connectionString, bo
     {
         builder.UseEnvironment(environment);
         builder.UseSetting($"ConnectionStrings:{CommonInfrastructureExtensions.ConnectionStringName}", connectionString);
+        // SPEC-0016 (Emenda 5): a API valida App:PublicUrl na inicialização (https; http só em Development) e não tem
+        // valor padrão no código; o host de teste roda em qualquer ambiente com o endereço do cliente de teste.
+        builder.UseSetting("App:PublicUrl", "https://localhost");
         if (withTestEndpoints)
         {
             builder.ConfigureTestServices(services => services.AddEndpoints(typeof(ApiFactory).Assembly));
