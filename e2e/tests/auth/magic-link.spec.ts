@@ -8,7 +8,7 @@ import {
   requestLink,
   signIn,
   uniqueEmail,
-  withMailpitStopped,
+  withMailpitSilent,
 } from "./journey";
 
 /**
@@ -22,7 +22,8 @@ import {
  *   "Confira seu e-mail" ≤ 3 s p95 em 5 repetições.
  * - E2E-02 (mobile-chrome): e-mail inválido ("Digite um e-mail válido." ligado ao campo, com o foco nele — Emenda 4),
  *   link reaproveitado ("Este link expirou ou já foi usado." com "Pedir outro link"), limite de IP ("Muitas
- *   tentativas…") e Mailpit parado ("Não conseguimos mandar o e-mail agora…"), sem violações do axe.
+ *   tentativas…") e Mailpit parado ("Não conseguimos mandar o e-mail agora…"; o Mailpit fica congelado, num teste
+ *   serial no fim do arquivo), sem violações do axe.
  * - E2E-03 (mobile-chrome e mobile-safari): a sessão vive só no cookie `__Host-subsolo` (HttpOnly), nada dela em
  *   `localStorage`/`sessionStorage`, `/conta` com `Cache-Control: no-store`; apagar cookies e dados do site desloga;
  *   depois de "Sair", voltar no navegador não mostra o e-mail.
@@ -146,7 +147,7 @@ test.describe("entrar por link mágico", () => {
     ).toBeLessThanOrEqual(sendBudgetMs);
   });
 
-  test("SPEC-0016:E2E-02 e-mail inválido, link reaproveitado, limite e SMTP fora do ar mostram a mensagem certa [jornada: entrar]", async ({
+  test("SPEC-0016:E2E-02 e-mail inválido, link reaproveitado e limite mostram a mensagem certa [jornada: entrar]", async ({
     page,
     axe,
   }, testInfo) => {
@@ -210,22 +211,6 @@ test.describe("entrar por link mágico", () => {
     ).toBeVisible();
     await axe.check(page);
     await page.unroute("**/api/v1/auth/magic-link");
-
-    // SMTP fora do ar: o Mailpit da pilha local parado.
-    test.skip(externalApp, "parar o Mailpit só na pilha local");
-    const offline = uniqueEmail("e2e02-smtp");
-    await withMailpitStopped(async () => {
-      await page.goto("/entrar");
-      await page.getByLabel("Seu e-mail").fill(offline);
-      await page.getByRole("button", { name: "Mandar link de acesso" }).click();
-      await expect(
-        page.getByText(
-          "Não conseguimos mandar o e-mail agora. Tente de novo em alguns minutos.",
-        ),
-      ).toBeVisible({ timeout: 20_000 });
-      await axe.check(page);
-    });
-    expect(await messageCount(offline)).toBe(0);
   });
 
   test("SPEC-0016:E2E-03 a sessão vive só no cookie HttpOnly e apagar os cookies desloga [jornada: entrar]", async ({
@@ -308,5 +293,34 @@ test.describe("entrar por link mágico", () => {
     await page.waitForLoadState("load");
 
     await expect(page.getByText(email)).toHaveCount(0);
+  });
+});
+
+// Por último no arquivo e num bloco serial próprio: congela o Mailpit da pilha local, e nada mais roda enquanto isso.
+test.describe.serial("entrar por link mágico com o SMTP fora do ar", () => {
+  test("SPEC-0016:E2E-02 SMTP fora do ar mostra a mensagem certa [jornada: entrar]", async ({
+    page,
+    axe,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "mobile-chrome",
+      "estados de erro num projeto só (mobile-chrome)",
+    );
+    test.skip(externalApp, "congelar o Mailpit só na pilha local");
+    test.setTimeout(180_000);
+
+    const offline = uniqueEmail("e2e02-smtp");
+    await withMailpitSilent(page, async () => {
+      expect((await page.goto("/entrar"))?.status()).toBe(200);
+      await page.getByLabel("Seu e-mail").fill(offline);
+      await page.getByRole("button", { name: "Mandar link de acesso" }).click();
+      await expect(
+        page.getByText(
+          "Não conseguimos mandar o e-mail agora. Tente de novo em alguns minutos.",
+        ),
+      ).toBeVisible({ timeout: 20_000 });
+      await axe.check(page);
+    });
+    expect(await messageCount(offline)).toBe(0);
   });
 });

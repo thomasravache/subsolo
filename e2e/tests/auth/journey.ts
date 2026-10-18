@@ -151,27 +151,55 @@ function mailpitContainer(): string {
   return id.split("\n")[0] ?? "";
 }
 
-/** Para o Mailpit da pilha local (só o deste projeto do Compose) enquanto `action` roda, e o religa depois. */
-export async function withMailpitStopped(
+/** Espera `probe` responder `true` duas vezes seguidas (falha de rede conta como `false`), até `timeout` ms. */
+async function waitUntilStable(
+  probe: () => Promise<boolean>,
+  message: string,
+  timeout = 60_000,
+): Promise<void> {
+  let streak = 0;
+  await expect
+    .poll(
+      async () => {
+        let ok = false;
+        try {
+          ok = await probe();
+        } catch {
+          ok = false;
+        }
+        streak = ok ? streak + 1 : 0;
+        return streak;
+      },
+      { message, timeout, intervals: [250, 500, 1_000] },
+    )
+    .toBeGreaterThanOrEqual(2);
+}
+
+/**
+ * Deixa o Mailpit da pilha local (só o deste projeto do Compose) mudo enquanto `action` roda: o contêiner fica
+ * congelado (`docker pause`), então a API conecta no SMTP e não recebe resposta, e o envio cai no timeout de 10 s
+ * (`notifications.email_unavailable`). Congelar, em vez de parar e religar, não recria a interface de rede do
+ * contêiner (o Chromium acusaria `ERR_NETWORK_CHANGED` nos testes seguintes) nem muda o IP do Mailpit. No fim, o
+ * contêiner volta e o teste só termina quando a API HTTP do Mailpit (`MAILPIT_URL`) e o site (`/health` pelo navegador)
+ * respondem de novo, com prazo.
+ */
+export async function withMailpitSilent(
+  page: Page,
   action: () => Promise<void>,
 ): Promise<void> {
   const container = mailpitContainer();
-  execFileSync("docker", ["stop", "--time", "1", container]);
+  execFileSync("docker", ["pause", container]);
   try {
     await action();
   } finally {
-    execFileSync("docker", ["start", container]);
-    await expect
-      .poll(
-        async () => {
-          try {
-            return (await fetch(`${mailpitURL}/api/v1/info`)).ok;
-          } catch {
-            return false;
-          }
-        },
-        { message: "o Mailpit não voltou depois do teste", timeout: 30_000 },
-      )
-      .toBe(true);
+    execFileSync("docker", ["unpause", container]);
+    await waitUntilStable(
+      async () => (await fetch(`${mailpitURL}/api/v1/info`)).ok,
+      `a API do Mailpit (${mailpitURL}) não voltou depois do teste`,
+    );
+    await waitUntilStable(
+      async () => (await page.goto("/health"))?.ok() ?? false,
+      "o site não voltou a responder pelo navegador depois do teste",
+    );
   }
 }
