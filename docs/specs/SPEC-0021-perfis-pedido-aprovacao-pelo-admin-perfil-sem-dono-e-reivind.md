@@ -248,8 +248,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — a1ca145 (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 882fed4 | 2026-10-18 |
-| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 077a97f | 2026-10-18 |
-| G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 767ms) — 077a97f | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — f95e7e2 | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 583ms) — f95e7e2 | 2026-10-18 |
 | G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em 077a97f — major: aprovações concorrentes sobrescrevem o dono (sem token de concorrência); menores: violação de slug único vira 500, um pedido pendente por usuário sem garantia no banco, approve devolve not_found/name_taken fora do contrato, limite de link configurável sem teste, foco perdido no erro de estilos | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
