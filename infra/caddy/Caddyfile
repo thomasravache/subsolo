@@ -3,6 +3,8 @@
 # não confiável fora da máquina); http://localhost:8080 responde 308 para o HTTPS. Na VPS (go-live), SITE_ADDRESS =
 # domínio, HTTP_PORT = 80 e TLS_ISSUER = e-mail do ACME (certificado público). API_UPSTREAM e WEB_UPSTREAM (host:porta
 # dos serviços) vêm do AppHost.
+# SPEC-0022 — /media/* (flyers, ADR-0015) sai do volume `media`, montado em /srv/media (o mesmo que a API grava em
+# Media__Root): o nome é o hash do conteúdo, então o cache é imutável; nosniff para o navegador nunca adivinhar o tipo.
 # A porta HTTPS local fica no endereço do site, não em `https_port`: o redirecionamento automático do Caddy omite a
 # porta quando ela é igual ao `https_port` (iria para https://localhost/, a 443) e a inclui quando é outra.
 {
@@ -22,6 +24,14 @@
 	@api path /api/* /health
 	handle @api {
 		reverse_proxy {$API_UPSTREAM}
+	}
+
+	# Mídia: arquivos estáticos do volume (handle_path tira o /media do caminho).
+	handle_path /media/* {
+		root * /srv/media
+		header Cache-Control "public, max-age=31536000, immutable"
+		header X-Content-Type-Options nosniff
+		file_server
 	}
 
 	# Front Next.js: todo o resto.

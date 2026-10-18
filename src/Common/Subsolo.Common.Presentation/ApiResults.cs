@@ -5,7 +5,7 @@ namespace Subsolo.Common.Presentation;
 
 /// <summary>
 /// SPEC-0007 — converte um <see cref="Result"/> com falha em ProblemDetails (RFC 9457): Validation 400 |
-/// NotFound 404 | Conflict 409 | Unauthorized 401 | Forbidden 403 | Failure 500, com o código do erro em
+/// NotFound 404 | Conflict 409 | Unauthorized 401 | Forbidden 403 | Unprocessable 422 (SPEC-0022) | Failure 500, com o código do erro em
 /// <c>extensions.code</c>. Em erros de validação, os campos vão em <c>errors</c> (campo → mensagens).
 /// </summary>
 public static class ApiResults
@@ -46,6 +46,7 @@ public static class ApiResults
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
         ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorType.Unprocessable => StatusCodes.Status422UnprocessableEntity,
         _ => StatusCodes.Status500InternalServerError,
     };
 }

@@ -27,6 +27,8 @@
     <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
     <!-- SPEC-0018 IT-05: dublê que usa o MailKit fora do Notifications (violação proposital da regra do ADR-0014). -->
     <PackageReference Include="MailKit" />
+    <!-- SPEC-0022 IT-08: dublê que usa o NetVips fora do Common.Infrastructure (violação proposital do ADR-0015). -->
+    <PackageReference Include="NetVips" />
   </ItemGroup>
 
   <ItemGroup>

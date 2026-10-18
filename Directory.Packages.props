@@ -30,6 +30,11 @@
     <!-- Transitivo do Aspire.Hosting 13.6.1 (2.5.302): fixado acima de GHSA-qhrr-8q5h-9q3h (corrigido em 2.5.303). -->
     <PackageVersion Include="MessagePack" Version="2.5.307" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <!-- SPEC-0022 (ADR-0015): processamento dos flyers com libvips (NetVips MIT; libvips LGPL ligada dinamicamente).
+         NetVips 3.2.0 e NetVips.Native 8.18.7 (2026-09-28), verificados em nuget.org em 2026-10-18. Os testes de
+         integração também usam o NetVips para gerar as imagens de teste e ler as variantes. -->
+    <PackageVersion Include="NetVips" Version="3.2.0" />
+    <PackageVersion Include="NetVips.Native" Version="8.18.7" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.0" />

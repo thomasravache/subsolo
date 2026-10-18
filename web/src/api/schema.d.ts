@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+  "/api/v1/flyers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Enviar flyer
+     * @description Envia o flyer de um show (artista ou admin) em multipart/form-data, campo file: JPEG, PNG ou WebP pelo conteúdo, até 10 MB e 40 megapixels. Os metadados (EXIF, GPS) são removidos e saem as variantes thumb (400 px, WebP), full (1080 px, WebP) e og (1200×630, JPEG), servidas em /media/flyers/ com cache imutável. O id é o SHA-256 do arquivo: o mesmo arquivo de novo devolve 200 com o mesmo id, sem reprocessar. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["UploadFlyer"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/cities/{slug}": {
     parameters: {
       query?: never;
@@ -516,6 +536,14 @@ export interface components {
     DeleteAccountRequest: {
       confirmEmail: string;
     };
+    FlyerUploadedResponse: {
+      flyerId: string;
+      thumbUrl: string;
+      fullUrl: string;
+      ogUrl: string;
+    };
+    /** Format: binary */
+    IFormFile: string;
     MeResponse: {
       /** Format: uuid */
       id: string;
@@ -672,6 +700,9 @@ export interface components {
     UpdateDisplayNameRequest: {
       displayName: null | string;
     };
+    UploadFlyerForm: {
+      file: components["schemas"]["IFormFile"];
+    };
   };
   responses: never;
   parameters: never;
@@ -681,6 +712,93 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  UploadFlyer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "multipart/form-data": components["schemas"]["UploadFlyerForm"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FlyerUploadedResponse"];
+        };
+      };
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FlyerUploadedResponse"];
+        };
+      };
+      /** @description Bad Request (code=events.flyer_invalid_type) (code=events.flyer_too_large) (code=events.flyer_too_many_pixels) (code=events.flyer_missing) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Forbidden (code=auth.forbidden) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unprocessable Entity (code=events.flyer_unprocessable) */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   UpdateCity: {
     parameters: {
       query?: never;

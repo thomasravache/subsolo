@@ -46,6 +46,18 @@ public static partial class ModularMonolithRules
     public const string SmtpOnlyInNotifications =
         "ADR-0014: só o módulo Notifications usa bibliotecas de SMTP (MailKit, MimeKit)";
 
+    /// <summary>SPEC-0022 — fora do Common.Infrastructure, nenhum tipo do Subsolo usa o NetVips (ADR-0015).</summary>
+    public const string NetVipsOnlyInCommonInfrastructure =
+        "ADR-0015: só o Common.Infrastructure usa o NetVips";
+
+    /// <summary>
+    /// SPEC-0022 — fora do Common.Infrastructure, nenhum tipo do Subsolo avaliado mexe no sistema de arquivos direto
+    /// (<c>System.IO.File</c>, <c>Directory</c>, <c>FileStream</c>, <c>FileInfo</c>, <c>DirectoryInfo</c>): a mídia passa por
+    /// <c>IFileStorage</c> e <c>IImageProcessor</c> (ADR-0015).
+    /// </summary>
+    public const string MediaOnlyThroughFileStorage =
+        "ADR-0015: a mídia passa por IFileStorage e IImageProcessor; só o Common.Infrastructure usa o sistema de arquivos";
+
     /// <summary>
     /// Os únicos tipos de Common.Domain permitidos no IntegrationEvents (nome completo, depois de <c>Subsolo</c>):
     /// <c>Result</c>, <c>Result&lt;T&gt;</c> (<c>Result`1</c>), <c>Error</c> e <c>ErrorType</c>.
@@ -77,6 +89,20 @@ public static partial class ModularMonolithRules
             .Concat(SmtpRuleHosts.Select(host => Path.Combine(AppContext.BaseDirectory, $"{host}.dll")))
             .Order(StringComparer.Ordinal)
             .Select(path => Assembly.Load(AssemblyName.GetAssemblyName(path)))];
+
+    /// <summary>
+    /// SPEC-0022 — os assemblies em que <see cref="NetVipsOnlyInCommonInfrastructure"/> vale: os mesmos da regra de SMTP
+    /// (módulos, blocos Common e hosts).
+    /// </summary>
+    public static IReadOnlyList<Assembly> NetVipsRuleAssemblies() => SmtpRuleAssemblies();
+
+    /// <summary>
+    /// SPEC-0022 — os assemblies em que <see cref="MediaOnlyThroughFileStorage"/> vale: os módulos e os blocos
+    /// <c>Subsolo.Common.*</c> (sem o dublê de violações). Os hosts ficam de fora: o Subsolo.Api serve <c>/media</c> do
+    /// <c>Media:Root</c> no modo de desenvolvimento (arquivos estáticos).
+    /// </summary>
+    public static IReadOnlyList<Assembly> MediaRuleAssemblies() =>
+        [.. SmtpRuleAssemblies().Where(assembly => !SmtpRuleHosts.Contains(assembly.GetName().Name ?? string.Empty))];
 
     /// <summary>SPEC-0018 (Emenda 2) — hosts que a regra <see cref="SmtpOnlyInNotifications"/> também avalia.</summary>
     public static readonly IReadOnlyList<string> SmtpRuleHosts = ["Subsolo.Api", "Subsolo.ServiceDefaults"];
@@ -168,6 +194,20 @@ public static partial class ModularMonolithRules
             ForbidDependencies(
                 "^Subsolo(?!\\.Modules\\.Notifications(?:\\.|$))(?:\\..*)?$",
                 "^(?:MailKit|MimeKit)(?:\\..*)?$",
+                rule),
+        ],
+        NetVipsOnlyInCommonInfrastructure =>
+        [
+            ForbidDependencies(
+                "^Subsolo(?!\\.Common\\.Infrastructure(?:\\.|$))(?:\\..*)?$",
+                "^NetVips(?:\\..*)?$",
+                rule),
+        ],
+        MediaOnlyThroughFileStorage =>
+        [
+            ForbidDependenciesByFullName(
+                "^Subsolo(?!\\.Common\\.Infrastructure(?:\\.|$))(?:\\..*)?$",
+                "^System\\.IO\\.(?:File|Directory|FileStream|FileInfo|DirectoryInfo)$",
                 rule),
         ],
         _ => throw new ArgumentException($"Regra desconhecida: \"{rule}\".", nameof(rule)),

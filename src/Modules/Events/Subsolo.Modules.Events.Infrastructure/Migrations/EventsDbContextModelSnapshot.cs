@@ -188,6 +188,35 @@ namespace Subsolo.Modules.Events.Infrastructure.Migrations
                     b.ToTable("cities", "events");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Events.Domain.Flyers.Flyer", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("id")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset?>("AttachedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("attached_at_utc");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("UploadedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_flyers_unattached")
+                        .HasFilter("attached_at_utc IS NULL");
+
+                    b.ToTable("flyers", "events");
+                });
+
             modelBuilder.Entity("Subsolo.Modules.Events.Domain.Styles.Style", b =>
                 {
                     b.Property<Guid>("Id")

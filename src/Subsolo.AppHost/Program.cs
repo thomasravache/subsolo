@@ -1,5 +1,7 @@
 // SPEC-0007 — modelo da aplicação no Aspire (ADR-0004): `aspire run` sobe PostgreSQL 18, Seq, Mailpit, a API e o front.
 // SPEC-0008 — `aspire publish -o artifacts/compose` gera o Docker Compose da mesma aplicação, com o Caddy na frente.
+// SPEC-0022 — mídia (ADR-0015): no `aspire run`, Media__Root é um diretório local (artifacts/media) servido pela API; no
+// Compose, o volume `media`, montado na API e no Caddy (que serve /media/*).
 using System.Globalization;
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
@@ -46,6 +48,16 @@ api.WithEnvironment("Notifications__Smtp__Host", smtp.Property(EndpointProperty.
 if (!builder.ExecutionContext.IsPublishMode)
 {
     api.WithEnvironment("Notifications__Smtp__Security", "None");
+}
+
+// SPEC-0022 — onde o volume `media` fica montado no Compose (na API e no Caddy, mesmo caminho) e o usuário da imagem
+// da API (o padrão das imagens .NET, APP_UID), dono do volume para poder gravar os flyers.
+const string MediaVolume = "media";
+const string MediaMount = "/srv/media";
+const string ApiContainerUser = "1654";
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    api.WithEnvironment("Media__Root", Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "../../artifacts/media")));
 }
 
 var web = builder.AddJavaScriptApp("web", "../../web", "dev")
@@ -129,9 +141,22 @@ if (builder.ExecutionContext.IsPublishMode)
         // Sem Kerberos: a imagem aspnet não tem a libgssapi_krb5, e o Npgsql tentaria a criptografia GSS (Prefer) a
         // cada conexão, registrando "cannot open shared object file" antes de seguir sem ela.
         service.Environment["PGGSSENCMODE"] = "disable";
+
+        // SPEC-0022: os flyers vão para o volume `media` (o Caddy serve do mesmo volume).
+        service.Environment["Media__Root"] = MediaMount;
+        service.Volumes.Add(new Volume { Name = MediaVolume, Source = MediaVolume, Target = MediaMount, Type = "volume" });
     });
 
-    // Caddy na frente (ADR-0004): /api/* e /health → api; o resto → web. Mesmo Caddyfile do deploy na VPS.
+    // SPEC-0022: um volume novo nasce do root, e a API roda sem privilégios (APP_UID). Antes da API, um passo único
+    // (com a imagem do Caddy, que já está na pilha) passa o volume para o usuário dela.
+    var mediaInit = builder.AddContainer("media-init", "caddy", "2.11.7-alpine")
+        .WithVolume(MediaVolume, MediaMount)
+        .WithEntrypoint("/bin/sh")
+        .WithArgs("-c", $"chown {ApiContainerUser}:{ApiContainerUser} {MediaMount}");
+    api.WaitForCompletion(mediaInit);
+
+    // Caddy na frente (ADR-0004): /api/* e /health → api; /media/* → volume media (SPEC-0022); o resto → web. Mesmo
+    // Caddyfile do deploy na VPS.
     // SPEC-0010: HTTPS em :8443 (certificado local `tls internal`, HSTS); o HTTP em :8080 redireciona com 308.
     // No Compose, o contêiner do web roda `next start` sobre o build de produção (Dockerfile gerado pelo Aspire).
 #pragma warning disable ASPIREJAVASCRIPT001 // API em avaliação no Aspire 13.6; é o modo de publicação do Next.js sem `output: "standalone"`.
@@ -140,6 +165,7 @@ if (builder.ExecutionContext.IsPublishMode)
 
     builder.AddContainer("caddy", "caddy", "2.11.7-alpine")
         .WithBindMount("../../infra/caddy/Caddyfile", "/etc/caddy/Caddyfile", isReadOnly: true)
+        .WithVolume(MediaVolume, MediaMount, isReadOnly: true)
         .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http")
         .WithHttpsEndpoint(port: 8443, targetPort: 8443, name: "https")
         .WithExternalHttpEndpoints()
