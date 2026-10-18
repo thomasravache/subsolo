@@ -9,7 +9,7 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0017, SPEC-0019]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, tests/Common/Subsolo.Api.IntegrationTests/**, tools/compose-up.sh, e2e/tests/auth/journey.ts]
 adrs: [ADR-0001, ADR-0003, ADR-0008]
@@ -35,7 +35,8 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 - Reivindicação de perfil aprovado sem dono (`GET /api/v1/profiles/search`, `POST /api/v1/profiles/{id}/claims`).
 - Fila do admin (`GET /api/v1/admin/profile-requests`, aprovar e recusar com motivo) e criação de perfil sem dono pelo admin (`POST /api/v1/admin/profiles`).
 - "Meus perfis" (`GET /api/v1/me/profiles`) com a situação de cada pedido e o motivo da recusa.
-- Evento `ProfileOwnerAssignedIntegrationEvent(ProfileId, UserId)` pela outbox; o `Users` consome (inbox) e dá o papel `artist`.
+- Evento `ArtistRoleGrantedIntegrationEvent(UserId, ProfileId)` pela outbox: definido no contrato do **consumidor** (`Users.IntegrationEvents`), publicado pelo `Profiles`; o `Users` consome (inbox) e dá o papel `artist`. Assim a dependência é só `Profiles → Users` (Emenda v2).
+- E-mail de quem pediu, na fila do admin: lido pela interface pública `IUsersDirectory.GetEmailsAsync(userIds)` em `Users.IntegrationEvents` (Emenda v2).
 - Interface pública `IProfilesApi` (em `Profiles.IntegrationEvents`) com `GetOwnedProfilesAsync(userId)` e `GetAsync(profileId)` para o cadastro de show; `IPersonalDataSection` "profiles" no export (SPEC-0019); no `UserDeleted`, os perfis do usuário ficam sem dono (o histórico de shows é da cena) e os pedidos dele são apagados.
 - Leitura de cidades e estilos para validar: interface pública `IEventsCatalog` em `Events.IntegrationEvents` (`CityExistsAsync`, `StylesExistAsync`).
 - Telas: "Meus perfis" (`/conta/perfis`, com link a partir de `/conta`), "Pedir perfil" (`/conta/perfis/novo`), "Reivindicar perfil" (`/conta/perfis/reivindicar`), aba "Pedidos de perfil" da "Fila do admin" (`/admin/fila`) e criação de perfil sem dono (`/admin/perfis/novo`, mesmo formulário do pedido sem o contato).
@@ -55,7 +56,7 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 ## 4. Decisão Arquitetural
 **Contexto:** módulos `Users` e `Notifications` (SPEC-0014/0018) como referência de módulo novo; outbox/inbox da SPEC-0009; área `/admin` e páginas que chamam a API pelo navegador com `X-CSRF` (SPEC-0016/0017).
 
-**Decisão:** novo módulo `Profiles` com slices `RequestProfile`, `SearchClaimableProfiles`, `ClaimProfile`, `ListMyProfiles`, `ListProfileRequests`, `ApproveProfileRequest`, `RejectProfileRequest`, `CreateOwnerlessProfile`. Pedido e reivindicação são a mesma entidade `ProfileRequest` (kind `new` | `claim`). Aprovar grava o dono e publica `ProfileOwnerAssigned`; o `Users` ganha um consumidor que adiciona o papel `artist` (idempotente). A validação de cidade e estilo passa pelo `IEventsCatalog`, nunca pelo banco do `Events`.
+**Decisão:** novo módulo `Profiles` com slices `RequestProfile`, `SearchClaimableProfiles`, `ClaimProfile`, `ListMyProfiles`, `ListProfileRequests`, `ApproveProfileRequest`, `RejectProfileRequest`, `CreateOwnerlessProfile`. Pedido e reivindicação são a mesma entidade `ProfileRequest` (kind `new` | `claim`). Aprovar grava o dono e publica `ArtistRoleGranted`; o `Users` ganha um consumidor que adiciona o papel `artist` (idempotente). A validação de cidade e estilo passa pelo `IEventsCatalog`, nunca pelo banco do `Events`.
 
 **Justificativa:** ADR-0001 (módulo por contexto, conversa por evento e por interface pública; o próprio ADR cita `IProfilesApi`), ADR-0003 (papel `artist` concedido quando um perfil é aprovado e vinculado), ADR-0008 (contato do pedido visível só ao admin, apagado com o pedido).
 
@@ -74,7 +75,7 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 - **Custo:** zero.
 
 ## 6. Artefato A — Contrato
-**Interface:** `/api/v1/profiles/*` · `/api/v1/me/profiles` · `/api/v1/admin/profile-requests` · `/api/v1/admin/profiles` · `IProfilesApi` · `IEventsCatalog` · evento `ProfileOwnerAssigned` · telas
+**Interface:** `/api/v1/profiles/*` · `/api/v1/me/profiles` · `/api/v1/admin/profile-requests` · `/api/v1/admin/profiles` · `IProfilesApi` · `IEventsCatalog` · evento `ArtistRoleGranted` · telas
 
 ```yaml
 POST /api/v1/profiles/requests:          # fan + X-CSRF + RequireRateLimiting(report)
@@ -107,7 +108,9 @@ public interface IProfilesApi {
     Task<ProfileSummary?> GetAsync(Guid profileId, CancellationToken ct);
 }
 public sealed record ProfileSummary(Guid Id, string Type, string Name, string Slug, string City, Guid? OwnerUserId);
-public sealed record ProfileOwnerAssignedIntegrationEvent(Guid ProfileId, Guid UserId);
+// Subsolo.Modules.Users.IntegrationEvents (público; contrato do consumidor — Emenda v2)
+public sealed record ArtistRoleGrantedIntegrationEvent(Guid UserId, Guid ProfileId);
+public interface IUsersDirectory { Task<IReadOnlyDictionary<Guid, string>> GetEmailsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken ct); }
 // Subsolo.Modules.Events.IntegrationEvents (público, novo)
 public interface IEventsCatalog {
     Task<bool> CityExistsAsync(string slug, CancellationToken ct);
@@ -163,14 +166,14 @@ Telas:
 ### 7.2 Testes Unitários
 - **UT-01** — Dado o handler de `RequestProfile` com catálogo de teste, quando um fã pede "Podridão" (banda, `curitiba`, `death`), então grava pedido pendente com slug `podridao`; com outro pedido dele em análise, retorna `profiles.request_pending`; com banda `podridao` já existente, `profiles.name_taken`.
 - **UT-02** — Dado o validador do pedido, quando recebe nome de 1 e 81 caracteres, cidade ou estilo que o catálogo nega, estilos em perfil de casa, 0 ou 6 estilos, links `http://instagram.com/x`, `https://evil.com/x` e `https://www.instagram.com/podridao`, então só o último link passa e cada erro vem com o campo em `profiles.invalid_request`.
-- **UT-03** — Dados pedidos `new` e `claim` pendentes, quando aprovados, então o perfil fica aprovado com o dono e é gerado `ProfileOwnerAssigned`; aprovar de novo dá `request_decided`; `claim` de perfil que ganhou dono no meio dá `already_owned`; recusar sem motivo é erro de validação.
+- **UT-03** — Dados pedidos `new` e `claim` pendentes, quando aprovados, então o perfil fica aprovado com o dono e é gerado `ArtistRoleGranted`; aprovar de novo dá `request_decided`; `claim` de perfil que ganhou dono no meio dá `already_owned`; recusar sem motivo é erro de validação.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API e o PostgreSQL reais com as cidades e estilos semeados, quando um fã faz `POST /profiles/requests` válido, inválido, repetido e com nome já usado, então 201, 400 com o campo, 409 `request_pending` e 409 `name_taken`; `GET /me/profiles` mostra o pendente.
-- **IT-02** — Dado um pedido pendente, quando o admin aprova, então 200 com `profileId`, o perfil tem dono e a outbox tem `ProfileOwnerAssigned`; quando o admin recusa outro com motivo, `GET /me/profiles` do autor mostra "rejected" com o motivo e um novo pedido é aceito.
+- **IT-02** — Dado um pedido pendente, quando o admin aprova, então 200 com `profileId`, o perfil tem dono e a outbox tem `ArtistRoleGranted`; quando o admin recusa outro com motivo, `GET /me/profiles` do autor mostra "rejected" com o motivo e um novo pedido é aceito.
 - **IT-03** — Dado um perfil criado pelo admin sem dono e 1.000 perfis semeados, quando um fã busca "pod" e reivindica, então o perfil aparece com p95 ≤ 200 ms; a reivindicação aprovada torna o fã dono; um segundo fã reivindicando recebe 409 `already_owned`, e o perfil some da busca.
 - **IT-04** — Dados anônimo, fã e admin, quando chamam as rotas de admin, então 401, 403 e 200; o contato e a prova aparecem só na resposta da fila do admin (não em `/me/profiles`, na busca nem no `IProfilesApi`); fila com 200 pedidos em p95 ≤ 300 ms.
-- **IT-05** — Dado `ProfileOwnerAssigned` publicado duas vezes e o processamento do `Users` parado e retomado, quando o inbox processa, então o usuário tem o papel `artist` uma vez só e `/me` mostra `artist`.
+- **IT-05** — Dado `ArtistRoleGranted` publicado duas vezes e o processamento do `Users` parado e retomado, quando o inbox processa, então o usuário tem o papel `artist` uma vez só e `/me` mostra `artist`.
 - **IT-06** — Dados os logs e spans capturados em pedido, reivindicação, aprovação e recusa, quando inspecionados, então e-mail e contato não aparecem em claro.
 - **IT-07** — Dado um dono com perfil aprovado e um pedido pendente, quando `GET /me/export` é chamado, então a seção "profiles" traz os dois; quando o `UserDeleted` dele é processado, então o perfil fica sem dono e o pedido é apagado; e pedidos decididos há 91 dias são apagados pela limpeza (`FakeTimeProvider`).
 - **IT-08** — Dados os testes de arquitetura, quando rodam com o módulo `Profiles`, então as regras do ADR-0001 valem para ele, `IEventsCatalog` e `IProfilesApi` estão em `IntegrationEvents` e nenhum módulo referencia `Profiles.Domain`, `.Application` ou `.Infrastructure` (guarda: passa antes da mudança para os módulos existentes).
@@ -253,6 +256,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-18 | G1 | spec | Contrato do §6 cria ciclo Users ↔ Profiles (Users consome ArtistRoleGranted de Profiles.IntegrationEvents; Profiles consome UserDeleted e IPersonalDataSection de Users.IntegrationEvents), proibido pela regra NoModuleCycles do ADR-0001; e o requesterEmail da fila não tem fonte pública | Test-writer: scaffold sem as referências cruzadas; regra e amostra ModuleCycle conferidas | Architect | Emenda v2 — evento ArtistRoleGranted no contrato do consumidor (Users.IntegrationEvents) e IUsersDirectory para o e-mail; ADR-0001 esclarecido | 2026-10-18 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -293,4 +297,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0021`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-18 | O evento que o `Users` consome vira `ArtistRoleGrantedIntegrationEvent` definido em `Users.IntegrationEvents` (contrato do consumidor) e publicado pelo `Profiles`; o e-mail da fila do admin vem de `IUsersDirectory.GetEmailsAsync` (público no `Users`); dependência só `Profiles → Users`; ADR-0001 esclarecido | IMP-01: o contrato v1 criava o ciclo `Users ↔ Profiles` que a regra `NoModuleCycles` do ADR-0001 proíbe | SPEC-0023 (consome só o `IProfilesApi`, que não muda) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha o proxy e seu teste (status das páginas novas de conta e de admin), o `shell.ts`, os testes de contrato da API, o `compose-up.sh` e o helper de login da E2E | Antes do início da onda, pelo que as ondas 1–6 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
