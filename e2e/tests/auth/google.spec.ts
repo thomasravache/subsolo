@@ -157,7 +157,9 @@ test.describe("entrar com Google", () => {
         url.pathname === "/entrar" && url.searchParams.get("erro") === "google",
       { timeout: 15_000 },
     );
-    await expect(page.getByRole("alert")).toHaveText(googleError);
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText(
+      googleError,
+    );
     await axe.check(page);
 
     // O formulário do link segue usável.
@@ -182,7 +184,9 @@ test.describe("entrar com Google", () => {
         url.searchParams.get("erro") === "google_email",
       { timeout: 15_000 },
     );
-    await expect(page.getByRole("alert")).toHaveText(googleEmailError);
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText(
+      googleEmailError,
+    );
     await axe.check(page);
     const cookies = await page.context().cookies(appURL);
     expect(cookies.map((cookie) => cookie.name)).not.toContain(
