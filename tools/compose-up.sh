@@ -32,8 +32,8 @@
 #
 # SPEC-0020 — também só neste Compose local: o provedor OpenID Connect falso (mock-oauth2-server, login interativo) faz o
 # papel do Google. Ele roda na rede do contêiner da API (`network_mode: service:api`) e escuta em ${OIDC_PORT:-8090},
-# publicado em 127.0.0.1 com o mesmo número: o emissor `http://localhost:${OIDC_PORT:-8090}/default` é o mesmo para o
-# navegador (porta publicada) e para a API (o próprio localhost do contêiner). A API recebe Users__Google__Authority,
+# publicado em 127.0.0.1 com o mesmo número: o emissor `http://127.0.0.1:${OIDC_PORT:-8090}/default` é o mesmo para o
+# navegador (porta publicada) e para a API (o próprio loopback do contêiner). A API recebe Users__Google__Authority,
 # Users__Google__ClientId e um segredo de cliente aleatório por subida (Users__Google__ClientSecret, pelo .env local).
 set -euo pipefail
 
@@ -55,7 +55,9 @@ if ! [[ "$OIDC_PORT" =~ ^[0-9]+$ ]] || ((10#$OIDC_PORT < 1 || 10#$OIDC_PORT > 65
   exit 2
 fi
 readonly OIDC_IMAGE="ghcr.io/navikt/mock-oauth2-server:6.0.4"
-readonly OIDC_ISSUER="http://localhost:$((10#$OIDC_PORT))/default"
+# 127.0.0.1, não `localhost`: o WebKit grava o HSTS do Caddy para `localhost` (qualquer porta) e trocaria o http:// do
+# provedor por https://; o HSTS não vale para endereço IP.
+readonly OIDC_ISSUER="http://127.0.0.1:$((10#$OIDC_PORT))/default"
 readonly MAILPIT_PORT="${MAILPIT_PORT:-8025}"
 if ! [[ "$MAILPIT_PORT" =~ ^[0-9]+$ ]] || ((10#$MAILPIT_PORT < 1 || 10#$MAILPIT_PORT > 65535)); then
   echo "compose-up: MAILPIT_PORT inválido ('$MAILPIT_PORT'): use um número de porta entre 1 e 65535" >&2
