@@ -102,7 +102,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0026 | Perfil público de banda, casa e produtor (futuros e passados) | full | feature | M | Perfis | Cadastro de show |
 | SPEC-0027 | Seguir cidade, banda e casa | full | feature | S | Contas | Perfis |
 | SPEC-0029 | "Vou" com contagem | full | feature | S | Contas | Cadastro de show |
-| a criar | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
+| SPEC-0030 | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
 | a criar | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
 | a criar | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
 | a criar | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
