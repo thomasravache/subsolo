@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 5, in-progress 1, implemented 15
+- Specs: approved 6, in-progress 1, implemented 15
 - Impedimentos: **0 aberto(s)**, 16 resolvido(s)
 
 ## Cobertura de Pilares
@@ -54,13 +54,14 @@ Perfil: **padrao**
 | 4 | SPEC-0022 | Upload e processamento de flyer | full/M | approved | ⛔ aguarda implementação de SPEC-0021 |  |
 | 5 | SPEC-0023 | Cadastro de show, edição, cancelado e adiado | full/M | approved | ⛔ aguarda implementação de SPEC-0021; aguarda implementação de SPEC-0022 |  |
 | 6 | SPEC-0024 | Página do show com Open Graph e compartilhar | full/M | approved | ⛔ aguarda implementação de SPEC-0023 |  |
+| 7 | SPEC-0025 | Agenda da cidade com filtro por data e estilo | full/M | approved | ⛔ aguarda implementação de SPEC-0023 | saiu da onda 6: arquivos em comum com SPEC-0024 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 5/11 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 5/12 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -79,6 +80,7 @@ flowchart LR
     S0022["SPEC-0022<br/>Upload e processamento de flyer"]:::approved
     S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::approved
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::approved
+    S0025["SPEC-0025<br/>Agenda da cidade com filtro por data e …"]:::approved
   end
   S0014 --> S0016
   S0014 --> S0017
@@ -92,6 +94,7 @@ flowchart LR
   S0021 --> S0023
   S0022 --> S0023
   S0023 --> S0024
+  S0023 --> S0025
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -127,6 +130,7 @@ flowchart LR
 | [SPEC-0022](SPEC-0022-upload-e-processamento-de-flyer.md) | Upload e processamento de flyer | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021 | — |
 | [SPEC-0023](SPEC-0023-cadastro-de-show-edicao-cancelado-e-adiado.md) | Cadastro de show, edição, cancelado e adiado | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021, SPEC-0022 | — |
 | [SPEC-0024](SPEC-0024-pagina-do-show-com-open-graph-e-compartilhar.md) | Página do show com Open Graph e compartilhar | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
+| [SPEC-0025](SPEC-0025-agenda-da-cidade-com-filtro-por-data-e-estilo.md) | Agenda da cidade com filtro por data e estilo | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
 
 ## ADRs
 
