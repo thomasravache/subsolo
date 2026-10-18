@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Subsolo.Common.Application.Messaging;
-using Subsolo.Common.Domain;
 using Subsolo.Common.Presentation;
 using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
@@ -41,25 +40,12 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
         var query = new GetCityAgendaQuery(slug, from, to);
 
         // O decorator comum valida só comandos: a consulta é validada aqui, com o código específico da falha.
-        var validation = await validator.ValidateAsync(query, cancellationToken);
-        if (!validation.IsValid)
+        if (await EndpointValidation.ValidateAsync(validator, query, "Consulta da agenda inválida.", cancellationToken) is { } invalid)
         {
-            return ApiResults.Problem(Result.Failure(ValidationError(validation)));
+            return invalid;
         }
 
         var result = await handler.Handle(query, cancellationToken);
         return result.IsSuccess ? Results.Ok(result.Value) : ApiResults.Problem(result);
-    }
-
-    /// <summary>Erro de validação com o código da primeira falha (slug antes do período) e os campos inválidos.</summary>
-    private static Error ValidationError(FluentValidation.Results.ValidationResult validation)
-    {
-        var fields = validation.Errors
-            .GroupBy(failure => failure.PropertyName, StringComparer.Ordinal)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(failure => failure.ErrorMessage).Distinct(StringComparer.Ordinal).ToArray(),
-                StringComparer.Ordinal);
-        return Error.Validation(validation.Errors[0].ErrorCode, "Consulta da agenda inválida.", fields);
     }
 }

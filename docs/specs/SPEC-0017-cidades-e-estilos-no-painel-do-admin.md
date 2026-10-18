@@ -4,14 +4,14 @@ title: Cidades e estilos no painel do admin
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0016]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/admin/**, docs/design/**]
+touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/admin/**, docs/design/**, tools/compose-up.sh, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0013, ADR-0016]
 external: []
 size: M
@@ -104,7 +104,7 @@ UF: as 27 siglas. Fuso: qualquer IANA válido; a tela oferece os fusos do Brasil
 /admin/cidades-e-estilos (SSR) — título "Cidades e estilos | Admin | Subsolo"
   anônimo → 307 para /entrar?returnTo=/admin/cidades-e-estilos ; fã → página "Você não tem acesso a esta página." (status 403)
   Coluna CIDADES: tabela (Nome, UF, Fuso, Endereço /{slug}) ; "Nova cidade" → formulário (Nome, UF, Fuso, Endereço com prévia
-    "subsolo.app/{slug}" gerado do nome e editável) ; "Editar" na linha (Endereço só leitura) ; erros no campo
+    "agendasubsolo.com.br/{slug}" gerado do nome e editável; endereço apagado volta ao gerado do nome) ; "Editar" na linha (Endereço só leitura) ; erros no campo
     ("Esse endereço já existe.", "Esse endereço é reservado.")
   Coluna ESTILOS: chips com os estilos ; campo "Novo estilo" + "Adicionar" ; "Renomear" no chip ; erro "Esse estilo já existe."
   Sucesso: mensagem "Cidade criada." / "Estilo adicionado." em região aria-live
@@ -182,16 +182,38 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 ## 11. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
+**Fase 1: Domínio e regras**
+- [ ] Red: UT-01, UT-02, UT-03 com a tag `SPEC-0017:<ID>`, falhando pelo motivo certo
+- [ ] Green: implementar o mínimo seguindo o padrão de referência
+- [ ] Refactor mantendo tudo verde
+
+**Fase 2: API, persistência e contratos**
+- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, CT-01 falhando pelo motivo certo
+- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [ ] Refactor mantendo tudo verde
+- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+
+**Fase 3: Telas e jornada E2E**
+- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [ ] Validar: build + suíte + E2E (G2/G3)
+
+**Fase final: Integração, entrega e documentação**
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 54ab48c (árvore suja) | 2026-10-17 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 6fcaceb | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 976ea28 | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 1s 964ms) — 976ea28 | 2026-10-18 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 976ea28 após CHANGES_REQUESTED em fe0b8cf — contrato §6 exato, slugs (geração, reservados, imutáveis), admin em todas as rotas com X-CSRF e no-store, migração dos 5 estilos, proxy do /admin (307/403/no-store, cabeçalho interno sobrescrito), tela com os ajustes do §9 e o domínio agendasubsolo.com.br, criação concorrente → 409, foco acessível; testes não enfraquecidos; menores aceitos (índice do nome de estilo; regra de arquitetura → SPEC-0021) — 976ea28 | 2026-10-18 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 19s 276ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 984ms) — 52461ea | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -240,3 +262,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0017`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 (tela e comportamento) | 2026-10-18 | Prévia do endereço com o domínio decidido `agendasubsolo.com.br/{slug}` (ADR-0004) e, se o endereço editado for apagado, volta ao gerado do nome; criar cidade ou estilo com slug que outro pedido acabou de gravar → 409 (`city_slug_taken` / `style_taken`) em vez de 500; foco volta ao botão "Renomear" do estilo depois de salvar ou cancelar | Revisão G4 (CHANGES_REQUESTED em fe0b8cf): o §6 citava um domínio que não é do Subsolo | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
+| 1 (escopo) | 2026-10-17 | `touches` ganha `tools/compose-up.sh` (admin `admin@subsolo.test` na pilha da E2E por `Users__AdminEmails__0`), `web/src/proxy.ts` e seu teste (status da página do admin: 307 para anônimo, 403 para fã, `no-store` — padrão do ADR-0016), `web/src/components/ui/shell.ts` e seus testes, `src/Subsolo.Api/Program.cs` e os lock files | Relatório do Test-writer: sem admin na pilha da E2E o E2E-01 falharia pelo motivo errado; status de página é responsabilidade do proxy | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |

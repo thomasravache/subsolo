@@ -26,6 +26,9 @@
 # link com App__PublicUrl=https://localhost:8443; o contêiner do web recebe duas variáveis sentinela
 # (SUBSOLO_E2E_SENTINEL e SUBSOLO_E2E_SECRET_KEY, valores de E2E_PLAIN_SENTINEL e E2E_SECRET_SENTINEL) para o E2E-04
 # provar que nenhuma variável de ambiente chega ao navegador.
+#
+# SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
+# entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -135,6 +138,7 @@ services:
       Security__RateLimiting__auth__PermitLimit: "$((10#$AUTH_RATE_LIMIT))"
       Security__RateLimiting__auth__Window: "00:01:00"
       App__PublicUrl: "$APP_URL"
+      Users__AdminEmails__0: "admin@subsolo.test"
   web:
     environment:
       SUBSOLO_E2E_SENTINEL: "$E2E_PLAIN_SENTINEL"

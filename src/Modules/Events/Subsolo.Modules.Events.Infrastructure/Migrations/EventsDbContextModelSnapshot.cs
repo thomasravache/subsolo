@@ -188,6 +188,32 @@ namespace Subsolo.Modules.Events.Infrastructure.Migrations
                     b.ToTable("cities", "events");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Events.Domain.Styles.Style", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("styles", "events");
+                });
+
             modelBuilder.Entity("Subsolo.Common.Infrastructure.Inbox.InboxMessageConsumer", b =>
                 {
                     b.HasOne("Subsolo.Common.Infrastructure.Inbox.InboxMessage", null)

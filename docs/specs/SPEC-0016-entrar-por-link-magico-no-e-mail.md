@@ -4,7 +4,7 @@ title: Entrar por link mágico no e-mail
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0018]
@@ -208,27 +208,27 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Slices do link mágico**
-- [ ] Red: UT-01..UT-03 com a tag `SPEC-0016:<ID>`, falhando pelo motivo certo
-- [ ] Green: `RequestMagicLink`, `ConsumeMagicLink`, limite por e-mail, saneamento do `returnTo`
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01..UT-03 com a tag `SPEC-0016:<ID>`, falhando pelo motivo certo
+- [x] Green: `RequestMagicLink`, `ConsumeMagicLink`, limite por e-mail, saneamento do `returnTo`
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01..IT-09, CT-01..CT-03 e UT-06 falhando pelo motivo certo
-- [ ] Green: tabela `magic_link_tokens`, endpoints, limpeza periódica, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-09, CT-01..CT-03 e UT-06 falhando pelo motivo certo
+- [x] Green: tabela `magic_link_tokens`, endpoints, limpeza periódica, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: UT-04, UT-05 e E2E-01..E2E-04 falhando pelo motivo certo
-- [ ] Green: `/entrar`, "Confira seu e-mail", `/entrar/confirmar`, link inválido e `/conta` mínima conforme as telas do Stitch e os ajustes do §6; navegação conforme a sessão; sentinelas no `compose-up.sh`
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte + E2E nos projetos mobile (G2/G3)
+- [x] Red: UT-04, UT-05 e E2E-01..E2E-04 falhando pelo motivo certo
+- [x] Green: `/entrar`, "Confira seu e-mail", `/entrar/confirmar`, link inválido e `/conta` mínima conforme as telas do Stitch e os ajustes do §6; navegação conforme a sessão; sentinelas no `compose-up.sh`
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte + E2E nos projetos mobile (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -240,9 +240,9 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 044ms) — 2177470 | 2026-10-17 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 2177470 após CHANGES_REQUESTED em 5acc600 — checklist OWASP de autenticação atendido (sem enumeração de contas, token de 256 bits só como hash e consumo atômico só no POST, returnTo saneado, limites por IP e por e-mail, X-CSRF, sessão nova a cada entrada, sessão só no cookie HttpOnly, /conta no-store, nenhuma variável de ambiente no navegador); emendas 4–5 corrigidas (App:PublicUrl validado e no AppHost, alerta do Seq com runbook, anúncio e foco acessíveis, constante do cookie); testes só ficaram mais rígidos; menores → SPEC-0019 e SPEC-0020 — 2177470 | 2026-10-17 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 18s 042ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 2s 493ms) — 312a99a | 2026-10-17 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-17 |
+| G6 Deploy | N/A | Sem ambiente implantado: deploy fica para o go-live (SPEC-0003), guiado pelo Thomas; entrega na main pelo PR #24 (merge 2570e89) | 2026-10-17 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — cc08f84 (árvore suja) | 2026-10-17 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -255,36 +255,71 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Entrar sem senha: `/entrar` pede o e-mail, o link chega por e-mail (Notifications), `/entrar/confirmar` entra com um toque e volta para onde o fã estava; `/conta` mínima com "Sair"; a aba "Conta" muda conforme a sessão.
+- Segurança: token de 256 bits só como hash, uso único com consumo atômico só no POST, 15 min; resposta igual exista a conta ou não; limites por IP e por e-mail; `returnTo` saneado; sessão só no cookie HttpOnly, `/conta` sem cache; nenhuma variável de ambiente no navegador.
+- Operação: limpeza de tokens de hora em hora, alerta do Seq "Falha no envio do link" com runbook, `App:PublicUrl` validado na inicialização.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (97e9b48, 27944a5, eaea940, 0f53aa1 scaffold e locks; 3545345, 82fc13f, 47a4092, 701289b, 9ac71ce, 67ac4bf, 5ea54f1, 626a96e, c14dc14, 04ce871 testes) → Implementer (f443ddc, e3d441a, dd640af, 5acc600, ddde62b, 85ddc08, 2177470) → Reviewer CHANGES_REQUESTED em 5acc600 e APPROVED em 2177470.
+- Emendas: 1 (ordem depois da SPEC-0018), 2 (achados das revisões das SPEC-0014 e 0018), 3 (escopo: locks, proxy, CT-01 da 0014), 4 (`App:PublicUrl`, alerta do Seq, acessibilidade do reenvio), 5 (`App:PublicUrl` em desenvolvimento e nos hosts de teste).
+- G5: a primeira rodada integrada achou um teste instável (o passo de SMTP fora do ar derrubava a rede do Mailpit); corrigido congelando o Mailpit em vez de pará-lo. O CodeQL apontou `Math.random` e uma regex com risco de ReDoS em testes; corrigidos.
+- Entrar pelo `aspire run` ficou fora do escopo (o cookie `__Host-` exige HTTPS e o `/api` passa pelo Caddy): a pilha local para testar o login é o `tools/compose-up.sh`.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | pedir e consumir o link: hash, 15 min, uso único, códigos de erro | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-02 | limite de 3 links por e-mail a cada 15 min, silencioso | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-03 | `returnTo` saneado contra redirecionamento aberto | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-04 | navegação conforme a sessão; proxy não trata `/entrar` e `/conta` como cidade | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-05 | nenhuma variável de ambiente no código do navegador (scanner linear) | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-06 | evento `UserRegistered` publicado só com id; `ILogger` obrigatório | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| UT-07 | `App:PublicUrl` validado na inicialização | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-01 | resposta igual com e sem conta; e-mail no Mailpit; só hashes no banco | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-02 | consumo com cookie e `returnTo`; segundo uso e expirado → 400; p95 ≤ 300 ms | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-03 | consumo simultâneo: um 200 e um 400 | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-04 | limites por e-mail e por IP (429 com `Retry-After`) | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-05 | e-mail mascarado e token ausente em logs e spans | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-06 | limpeza de tokens após 24 h (job Quartz) | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-07 | SMTP fora do ar → 503 em ≤ 11 s | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-08 | POSTs sem `X-CSRF` → 400 sem efeito | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-09 | cookie acompanha a sessão do banco; primeira entrada simultânea sem 500; 429 com `no-store` | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| IT-10 | AppHost define `App__PublicUrl`; alerta do Seq de falha de envio com runbook | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| CT-01 | dublê do `INotificationsApi` bate com SPEC-0018@1 | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| CT-02 | OpenAPI dos dois endpoints e cliente TS em dia | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| CT-03 | 503 `service.unavailable` declarado em `/me` e `/logout` | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| E2E-01 | jornada completa: Conta → Entrar → Mailpit → Quase lá → volta logado → Sair | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| E2E-02 | mensagens de erro, foco no campo, link reaproveitado, 429 e SMTP fora do ar | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| E2E-03 | sessão só no cookie HttpOnly; apagar cookies desloga; voltar depois de sair não mostra o e-mail | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
+| E2E-04 | valores do ambiente do servidor ausentes do HTML e dos scripts | PASS | `gate G2 --run` em 2177470; `gate G5 --run` na integração (312a99a); CI do PR #24 (run 39089319642, 10/10 checks em f1806a4) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #24 (run 39089319642)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #24 (https://github.com/thomasravache/subsolo/pull/24), merge commit 2570e89 em 2026-10-17, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Achados menores da revisão: `UsersModule.SessionAbsoluteLifetime` e `App:PublicUrl` sem query/fragmento → SPEC-0019; região `aria-live` nascendo vazia → SPEC-0020.
+- Textos que o §6 não fixava (introdução de `/entrar`, link inválido) conferir com as telas do Stitch no teste local do Thomas.
+- Entrar pelo `aspire run` (Caddy no modo run ou reescrita de `/api` no `next dev`): fora do MVP por ora.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0016`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

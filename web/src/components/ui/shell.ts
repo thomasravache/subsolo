@@ -6,6 +6,11 @@ export function isAccountPage(pathname: string): boolean {
   return /^\/(?:entrar|conta)(?:\/|$)/.test(pathname);
 }
 
+/** SPEC-0017 — páginas do painel do admin (`/admin/…`): status decidido pelo `proxy` com a sessão (ADR-0016). */
+export function isAdminPage(pathname: string): boolean {
+  return /^\/admin(?:\/|$)/.test(pathname);
+}
+
 /**
  * SPEC-0016 — destino de "Conta"/"Entrar": `/conta` com sessão; sem sessão, `/entrar`, com `?returnTo=` da página
  * atual (quando há uma página para onde voltar; nunca as próprias páginas de entrar e da conta).
