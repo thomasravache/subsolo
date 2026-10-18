@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import type { Locator, Page } from "@playwright/test";
+import type { Download, Locator, Page } from "@playwright/test";
 
 import { expect, test } from "../fixtures";
 import { appURL } from "../agenda/environment";
@@ -20,13 +20,31 @@ import { accountTab, signIn, uniqueEmail } from "../auth/journey";
  *   "Cancelar" devolve o foco ao botão "Excluir minha conta".
  *
  * Cada teste usa um e-mail próprio (`@subsolo.test`). A entrada sempre leva `returnTo` e espera a página de destino
- * antes de navegar para outro lugar; os campos só são preenchidos com a página interativa (hidratada).
+ * antes de navegar para outro lugar. Antes de a página hidratar (mobile-safari), um toque ou um texto digitado podem se
+ * perder: as ações repetíveis são refeitas até o efeito esperado aparecer (`untilInteractive`).
  */
 // SPEC-0010: o Caddy do Compose serve HTTPS com o certificado local (`tls internal`), não confiável.
 test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
 const accountPath = "/conta";
 const exportFileName = "subsolo-meus-dados.json";
+
+/** Prazo curto de cada tentativa enquanto a página ainda pode estar hidratando. */
+const attempt = { timeout: 2_000 };
+
+/**
+ * Repete `action` até `outcome` passar. Só para ações que podem ser repetidas sem efeito diferente (preencher, salvar o
+ * mesmo nome, abrir o diálogo, baixar, mandar a mesma confirmação errada).
+ */
+async function untilInteractive(
+  action: () => Promise<void>,
+  outcome: () => Promise<void>,
+): Promise<void> {
+  await expect(async () => {
+    await action();
+    await outcome();
+  }).toPass({ intervals: [250, 500, 1_000, 2_000], timeout: 30_000 });
+}
 
 /** Entra pelo link mágico com `returnTo=/conta` e espera "Minha conta" com o e-mail. */
 async function signInToAccount(page: Page, email: string): Promise<void> {
@@ -38,19 +56,16 @@ async function signInToAccount(page: Page, email: string): Promise<void> {
   await expect(page.getByText(email)).toBeVisible();
 }
 
-/**
- * Preenche o campo só com a página interativa: espera a rede parar (scripts carregados e a página hidratada) e
- * confere o valor, preenchendo de novo se a hidratação o descartou (mobile-safari).
- */
+/** Preenche o campo e confere o valor, preenchendo de novo se a hidratação o descartou. */
 async function fillWhenInteractive(
   field: Locator,
   value: string,
 ): Promise<void> {
-  await field.page().waitForLoadState("networkidle");
-  await expect(async () => {
-    await field.fill(value);
-    await expect(field).toHaveValue(value, { timeout: 1_000 });
-  }).toPass({ timeout: 15_000 });
+  await field.page().waitForLoadState("load");
+  await untilInteractive(
+    () => field.fill(value),
+    () => expect(field).toHaveValue(value, attempt),
+  );
 }
 
 /** O campo do nome de exibição em "Seus dados". */
@@ -72,9 +87,15 @@ function deleteDialog(page: Page): Locator {
 
 /** Abre a confirmação da exclusão e espera o diálogo com o aviso. */
 async function openDeleteDialog(page: Page): Promise<Locator> {
-  await page.getByRole("button", { name: "Excluir minha conta" }).click();
   const dialog = deleteDialog(page);
-  await expect(dialog).toBeVisible();
+  await untilInteractive(
+    async () => {
+      if (!(await dialog.isVisible())) {
+        await page.getByRole("button", { name: "Excluir minha conta" }).click();
+      }
+    },
+    () => expect(dialog).toBeVisible(attempt),
+  );
   await expect(
     dialog.getByText(
       "Isso apaga sua conta e tudo o que o Subsolo guarda de você. Não dá para desfazer.",
@@ -121,18 +142,29 @@ test.describe("minha conta", () => {
 
     // Troca o nome: "Nome salvo." e o nome continua depois de recarregar.
     await fillWhenInteractive(displayNameField(page), "Caio Grind");
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(
-      announcements(page).filter({ hasText: "Nome salvo." }),
-    ).toBeVisible();
+    await untilInteractive(
+      () => page.getByRole("button", { name: "Salvar" }).click(),
+      () =>
+        expect(
+          announcements(page).filter({ hasText: "Nome salvo." }),
+        ).toBeVisible(attempt),
+    );
     await page.reload();
     await expect(displayNameField(page)).toHaveValue("Caio Grind");
 
     // Baixa os dados: o arquivo tem o e-mail e o nome.
-    await page.waitForLoadState("networkidle");
-    const downloading = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Baixar meus dados" }).click();
-    const download = await downloading;
+    let download: Download | undefined;
+    await untilInteractive(
+      async () => {
+        const downloading = page.waitForEvent("download", attempt);
+        await page.getByRole("button", { name: "Baixar meus dados" }).click();
+        download = await downloading;
+      },
+      async () => expect(download).toBeDefined(),
+    );
+    if (!download) {
+      throw new Error("o arquivo dos dados não foi baixado");
+    }
     expect(download.suggestedFilename()).toBe(exportFileName);
     const file = JSON.parse(await readFile(await download.path(), "utf8")) as {
       account?: { email?: string; displayName?: string | null };
@@ -177,8 +209,13 @@ test.describe("minha conta", () => {
     // Nome com 61 caracteres: a mensagem fica ligada ao campo.
     const name = displayNameField(page);
     await fillWhenInteractive(name, "a".repeat(61));
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.getByText("Use de 1 a 60 caracteres.")).toBeVisible();
+    await untilInteractive(
+      () => page.getByRole("button", { name: "Salvar" }).click(),
+      () =>
+        expect(page.getByText("Use de 1 a 60 caracteres.")).toBeVisible(
+          attempt,
+        ),
+    );
     await expect(name).toHaveAttribute("aria-invalid", "true");
     await expect(name).toHaveAccessibleDescription(
       /Use de 1 a 60 caracteres\./,
@@ -193,8 +230,11 @@ test.describe("minha conta", () => {
     );
     const confirm = dialog.getByLabel("Digite seu e-mail para confirmar");
     await fillWhenInteractive(confirm, uniqueEmail("outra-pessoa"));
-    await dialog.getByRole("button", { name: "Excluir para sempre" }).click();
-    await expect(dialog.getByText("O e-mail não confere.")).toBeVisible();
+    await untilInteractive(
+      () => dialog.getByRole("button", { name: "Excluir para sempre" }).click(),
+      () =>
+        expect(dialog.getByText("O e-mail não confere.")).toBeVisible(attempt),
+    );
     await expect(confirm).toHaveAttribute("aria-invalid", "true");
     await expect(confirm).toHaveAccessibleDescription(/O e-mail não confere\./);
     await expect(dialog).toBeVisible();
