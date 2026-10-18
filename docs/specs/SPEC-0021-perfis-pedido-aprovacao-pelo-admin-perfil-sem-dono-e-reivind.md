@@ -9,7 +9,7 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0017, SPEC-0019]
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, tests/Common/Subsolo.Api.IntegrationTests/**, tools/compose-up.sh, e2e/tests/auth/journey.ts]
 adrs: [ADR-0001, ADR-0003, ADR-0008]
@@ -93,7 +93,9 @@ GET /api/v1/me/profiles:                 # fan + default ; no-store
 GET /api/v1/admin/profile-requests:      # admin + default ; no-store ; pendentes, mais antigos primeiro
   200: [{ requestId, kind, type, name, city, styles, links, contactOrProof, requesterEmail, createdAtUtc, profileId? }]
 POST /api/v1/admin/profile-requests/{id}/approve:   # admin + X-CSRF
-  200: { profileId } ; 404: profiles.request_not_found ; 409: profiles.request_decided | profiles.already_owned
+  200: { profileId } ; 404: profiles.request_not_found | profiles.not_found (perfil do claim sumiu) ;
+  409: profiles.request_decided | profiles.already_owned | profiles.name_taken (nome tomado enquanto o pedido esperava)
+  # concorrência: duas aprovações ao mesmo tempo → uma 200 e a outra 409 (request_decided ou already_owned); violação de unicidade → 409, nunca 500
 POST /api/v1/admin/profile-requests/{id}/reject:    # admin + X-CSRF ; body { reason: string(3–200) }
   200 ; 404: profiles.request_not_found ; 409: profiles.request_decided
 POST /api/v1/admin/profiles:             # admin + X-CSRF ; body como o pedido, sem contact
@@ -150,6 +152,7 @@ Telas:
 | Reivindicar com dono | perfil já tem dono | 409 `already_owned`; não aparece na busca | IT-03 |
 | Acesso | anônimo / fã nas rotas de admin | 401 / 403 | IT-04 |
 | Contato privado | "Meus perfis", busca, `IProfilesApi` | contato e prova nunca aparecem fora da fila do admin | IT-04 |
+| Concorrência | duas aprovações simultâneas do mesmo pedido ou de dois claims do mesmo perfil; dois pedidos simultâneos do mesmo usuário; mesmo nome ao mesmo tempo | exatamente um sucesso e o resto 409 com o código certo; nunca 500; um só dono e um só pedido pendente | IT-02, IT-03 |
 | Papel artist idempotente | evento entregue duas vezes; `Users` parado e depois volta | papel uma vez só, aplicado quando volta | IT-05 |
 | Exclusão de conta | `UserDeleted` do dono | perfis ficam sem dono; pedidos do usuário apagados | IT-07 |
 | Export | `GET /me/export` | seção "profiles" com perfis e pedidos do usuário | IT-07 |
@@ -187,6 +190,7 @@ Telas:
 
 ### 7.6 Outros
 - Segurança: G4 confere a autorização em cada rota de admin e o vazamento do contato.
+- Emenda 3 (revisão G4): token de concorrência otimista em `profiles` e `profile_requests` (ou atualização condicional) e índice único parcial `profile_requests(requester_user_id) WHERE status = 'pending'`; violação de unicidade (23505) → 409 com o código do §6; o limite de links mágicos por e-mail vira configuração `Users:MagicLinkEmailLimit` (padrão 3; a pilha local da E2E usa 50, porque o admin de teste entra várias vezes) com teste unitário do padrão e do valor configurado; o grupo de estilos recebe o id do campo para o foco no erro.
 - Herança da revisão da SPEC-0020 (login com Google, no módulo `Users`): logar a exceção nas falhas do início do login (sem dados pessoais); falha do `SignInAsync` com e-mail verificado vai para `/entrar?erro=google` com motivo `provider_error`; `RemoteSignOutPath`/`SignedOutCallbackPath` do handler OIDC em caminhos sob `/api/v1/auth/google/` sem uso; teste unitário das `OpenIdConnectOptions` (PKCE, `code`, `SaveTokens=false`, validação do token padrão).
 - Herança da revisão da SPEC-0019 (primeira consumidora do export e do `UserDeleted`): teste unitário de `PublishUserDeleted` (mesmo id, `DeletedAtUtc`, só ids), e nomes de `IPersonalDataSection` repetidos falham na inicialização.
 - Herança da revisão da SPEC-0017: `ModuleOf` nas regras de arquitetura (`tests/Subsolo.ArchitectureTests/ModularMonolithRules.cs`) passa a tolerar dependências que o ArchUnitNET não resolve (`type?.Namespace?.FullName`), para expressões de coleção não derrubarem a regra.
@@ -246,7 +250,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 882fed4 | 2026-10-18 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 077a97f | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 767ms) — 077a97f | 2026-10-18 |
-| G4 Review | PENDING | | |
+| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em 077a97f — major: aprovações concorrentes sobrescrevem o dono (sem token de concorrência); menores: violação de slug único vira 500, um pedido pendente por usuário sem garantia no banco, approve devolve not_found/name_taken fora do contrato, limite de link configurável sem teste, foco perdido no erro de estilos | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -297,5 +301,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0021`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-18 | Approve documenta 404 `profiles.not_found` e 409 `profiles.name_taken`; concorrência e unicidade → 409 nunca 500 (token otimista, índice parcial de pedido pendente, mapeamento do 23505); `Users:MagicLinkEmailLimit` registrado (padrão 3) com teste; foco no erro de estilos. Testes: IT-02 e IT-03 ganham as corridas, UT-01 do `Users` (ou o teste do limite) cobre a configuração | Revisão G4 (CHANGES_REQUESTED em 077a97f): aprovações simultâneas davam dois donos aparentes | nenhuma (`IProfilesApi` não muda) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 2 | 2026-10-18 | O evento que o `Users` consome vira `ArtistRoleGrantedIntegrationEvent` definido em `Users.IntegrationEvents` (contrato do consumidor) e publicado pelo `Profiles`; o e-mail da fila do admin vem de `IUsersDirectory.GetEmailsAsync` (público no `Users`); dependência só `Profiles → Users`; ADR-0001 esclarecido | IMP-01: o contrato v1 criava o ciclo `Users ↔ Profiles` que a regra `NoModuleCycles` do ADR-0001 proíbe | SPEC-0023 (consome só o `IProfilesApi`, que não muda) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha o proxy e seu teste (status das páginas novas de conta e de admin), o `shell.ts`, os testes de contrato da API, o `compose-up.sh` e o helper de login da E2E | Antes do início da onda, pelo que as ondas 1–6 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
