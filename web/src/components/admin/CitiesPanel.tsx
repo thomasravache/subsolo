@@ -331,7 +331,8 @@ function CityForm({ city, onSaved, onCancel }: CityFormProps) {
             readOnly={editing}
             value={address}
             onChange={(event) => {
-              setSlugEdited(true);
+              // Endereço apagado volta ao gerado do nome (e a seguir o nome); a criação manda `slug: null`.
+              setSlugEdited(event.target.value !== "");
               setSlug(event.target.value);
             }}
             className={fieldControl}

@@ -15,6 +15,11 @@ export interface StylesPanelProps {
   onSuccess: (message: string) => void;
 }
 
+/** Id do botão "Renomear" de um estilo (alvo do foco ao fechar a renomeação). */
+function renameButtonId(slug: string): string {
+  return `renomear-botao-${slug}`;
+}
+
 function byName(a: Style, b: Style): number {
   return a.name.localeCompare(b.name, "pt-BR") || a.slug.localeCompare(b.slug);
 }
@@ -43,7 +48,21 @@ export function StylesPanel({ initialStyles, onSuccess }: StylesPanelProps) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  /** Estilo cujo botão "Renomear" recebe o foco depois de salvar ou cancelar a renomeação. */
+  const [focusSlug, setFocusSlug] = useState<string | null>(null);
   const field = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusSlug) {
+      document.getElementById(renameButtonId(focusSlug))?.focus();
+      setFocusSlug(null);
+    }
+  }, [focusSlug]);
+
+  function closeRename(slug: string) {
+    setRenaming(null);
+    setFocusSlug(slug);
+  }
 
   function saved(style: Style, message: string) {
     setStyles((current) =>
@@ -84,10 +103,10 @@ export function StylesPanel({ initialStyles, onSuccess }: StylesPanelProps) {
               <RenameStyleForm
                 style={style}
                 onSaved={(renamed) => {
-                  setRenaming(null);
+                  closeRename(renamed.slug);
                   saved(renamed, styleMessages.renamed);
                 }}
-                onCancel={() => setRenaming(null)}
+                onCancel={() => closeRename(style.slug)}
               />
             ) : (
               <div className="inline-flex min-h-11 items-center gap-1 rounded-md border border-border bg-surface pl-3.5">
@@ -95,6 +114,7 @@ export function StylesPanel({ initialStyles, onSuccess }: StylesPanelProps) {
                   {style.name}
                 </span>
                 <Button
+                  id={renameButtonId(style.slug)}
                   variant="ghost"
                   className="px-2 text-xs normal-case text-text-muted"
                   aria-label={`Renomear ${style.name}`}

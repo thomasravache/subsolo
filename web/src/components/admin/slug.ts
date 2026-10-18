@@ -14,5 +14,5 @@ export function slugFromName(name: string): string {
     .replace(/-+$/, "");
 }
 
-/** Domínio público do Subsolo, na prévia do endereço da cidade. */
-export const publicDomain = "subsolo.app";
+/** Domínio público do Subsolo (ADR-0004), na prévia do endereço da cidade. */
+export const publicDomain = "agendasubsolo.com.br";

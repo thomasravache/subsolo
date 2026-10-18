@@ -126,12 +126,12 @@ Painel do admin (`web/src/components/admin/`, SPEC-0017):
 |---|---|---|
 | `AdminNav` | `current` | menu do painel só com as páginas que existem, `aria-current="page"`; coluna lateral no desktop, linha no celular |
 | `AdminPanel` | `cities styles` | colunas CIDADES e ESTILOS (lado a lado a partir de 1024 px) e a região `role="status"` (`aria-live="polite"`) das mensagens de sucesso |
-| `CitiesPanel` | `initialCities onSuccess` | tabela Nome/UF/Fuso/Endereço; "Nova cidade" com a prévia `subsolo.app/{slug}` gerada do nome; "Editar" com o endereço só leitura |
+| `CitiesPanel` | `initialCities onSuccess` | tabela Nome/UF/Fuso/Endereço; "Nova cidade" com a prévia `agendasubsolo.com.br/{slug}` gerada do nome (endereço apagado volta ao gerado); "Editar" com o endereço só leitura |
 | `StylesPanel` | `initialStyles onSuccess` | estilos em chips com "Renomear"; campo "Novo estilo" + "Adicionar" |
 | `Field` | `id label error? hint?` | rótulo visível; erro e dica ligados ao controle por `aria-describedby`, com `aria-invalid` no erro |
 
 Ajustes aprovados sobre a tela do Stitch: sem textos de exclusão nem a caixa "Regra da cena", sem contagens de shows,
-menu só com o que existe, endereço só leitura na edição e o domínio real (`subsolo.app`) no lugar de "subsolo.art".
+menu só com o que existe, endereço só leitura na edição e o domínio decidido (`agendasubsolo.com.br`, ADR-0004) no lugar de "subsolo.art".
 
 Ícones: SVG de traço inline (`icons.tsx`), decorativos (`aria-hidden`), sempre ao lado de um texto.
 
