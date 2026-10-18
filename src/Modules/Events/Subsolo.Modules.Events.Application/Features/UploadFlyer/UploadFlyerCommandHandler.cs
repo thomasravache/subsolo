@@ -12,7 +12,8 @@ namespace Subsolo.Modules.Events.Application.Features.UploadFlyer;
 /// <summary>
 /// SPEC-0022 — confere o tipo e o tamanho pelo começo do arquivo (<see cref="FlyerUploadRules"/>), calcula o id
 /// (SHA-256 do original) e, se o flyer já existe, devolve o mesmo sem reprocessar. Senão, processa
-/// (<see cref="IImageProcessor"/>: limite de pixels, metadados removidos, variantes), grava as três variantes
+/// (<see cref="IImageProcessor"/>: limite de pixels, metadados removidos, variantes; SPEC-0023: o hash devolvido tem de
+/// ser o do id, e a fila cheia além do tempo limite devolve <see cref="MediaErrors.Busy"/>, o 503), grava as três variantes
 /// (<see cref="IFileStorage"/>) e a linha de <c>events.flyers</c>. Se algo falha depois de gravar uma variante, as
 /// gravadas são apagadas: nada fica pela metade. O original não é guardado.
 /// </summary>
@@ -40,8 +41,11 @@ internal sealed partial class UploadFlyerCommandHandler(
 
         content.Position = 0;
         var id = Convert.ToHexStringLower(await SHA256.HashDataAsync(content, cancellationToken));
-        if (await flyers.ExistsAsync(id, cancellationToken))
+        if (await flyers.GetAsync(id, cancellationToken) is { } existing)
         {
+            // SPEC-0023 (H22-01): reenviar um flyer ainda sem show renova a contagem da limpeza.
+            existing.Renew(clock.GetUtcNow());
+            await unitOfWork.SaveChangesAsync(cancellationToken);
             return Existing(id);
         }
 
@@ -55,6 +59,12 @@ internal sealed partial class UploadFlyerCommandHandler(
         }
 
         var images = processed.Value;
+        if (!string.Equals(images.ContentHash, id, StringComparison.Ordinal))
+        {
+            // SPEC-0023 (H22-05): o processador leu outro conteúdo que não o do id; nada é gravado.
+            return Rejected(EventsErrors.FlyerUnprocessableError());
+        }
+
         var saved = new List<string>();
         try
         {
@@ -114,6 +124,7 @@ internal sealed partial class UploadFlyerCommandHandler(
         MediaErrors.TooLarge => EventsErrors.FlyerTooLargeError(),
         MediaErrors.TooManyPixels => EventsErrors.FlyerTooManyPixelsError(),
         MediaErrors.Unprocessable => EventsErrors.FlyerUnprocessableError(),
+        MediaErrors.Busy => error,
         _ => error,
     };
 

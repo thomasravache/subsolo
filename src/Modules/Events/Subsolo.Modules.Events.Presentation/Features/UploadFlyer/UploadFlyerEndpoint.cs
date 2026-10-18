@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Subsolo.Common.Application.Media;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
 using Subsolo.Common.Presentation;
@@ -18,7 +19,8 @@ namespace Subsolo.Modules.Events.Presentation.Features.UploadFlyer;
 /// SPEC-0022 — <c>POST /api/v1/flyers</c> (artista ou admin, X-CSRF, rate limit <c>report</c>): o flyer em
 /// <c>multipart/form-data</c>, campo <c>file</c>. O corpo é lido aqui, depois da autorização e do anti-forgery, com o
 /// limite de 10 MB por parte: um envio maior para de ser lido no limite (e um <c>Content-Length</c> acima dele nem
-/// começa a ser lido). 201 com o flyer novo; 200 com o mesmo flyer se o arquivo já foi enviado.
+/// começa a ser lido; SPEC-0023: o corpo inteiro tem o teto de 10 MB + a folga do multipart, com ou sem
+/// <c>Content-Length</c>). 201 com o flyer novo; 200 com o mesmo flyer se o arquivo já foi enviado.
 /// </summary>
 internal sealed class UploadFlyerEndpoint : IEndpoint
 {
@@ -90,11 +92,21 @@ internal sealed class UploadFlyerEndpoint : IEndpoint
             return Problem(EventsErrors.FlyerMissingError());
         }
 
+        // SPEC-0023 (H22-03): teto do corpo inteiro antes de ler, também sem Content-Length (corpo chunked).
+        if (request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } bodyLimit)
+        {
+            bodyLimit.MaxRequestBodySize = FlyerUploadRules.MaxBytes + MultipartOverhead;
+        }
+
         IFormCollection form;
         try
         {
             request.HttpContext.Features.Set<IFormFeature>(new FormFeature(request, UploadFormOptions));
             form = await request.ReadFormAsync(cancellationToken);
+        }
+        catch (BadHttpRequestException exception) when (exception.StatusCode == StatusCodes.Status413PayloadTooLarge)
+        {
+            return Problem(EventsErrors.FlyerTooLargeError());
         }
         catch (InvalidDataException)
         {
@@ -113,7 +125,8 @@ internal sealed class UploadFlyerEndpoint : IEndpoint
         var result = await handler.Handle(new UploadFlyerCommand(content, file.Length, userId), cancellationToken);
         if (result.IsFailure)
         {
-            return ApiResults.Problem(result);
+            // SPEC-0023 (H22-05): a fila de processamento não liberou a vez a tempo.
+            return result.Error.Code == MediaErrors.Busy ? SecurityProblems.Unavailable() : ApiResults.Problem(result);
         }
 
         return result.Value.Created

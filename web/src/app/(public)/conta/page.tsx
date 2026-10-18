@@ -14,13 +14,15 @@ import {
   accountText,
   accountTitle,
 } from "../entrar/account-layout";
+import { canManageShows } from "./shows/access";
 import { SignOutButton } from "./sign-out-button";
 
 /**
  * SPEC-0016/SPEC-0019 — `/conta` (tela "Minha Conta - Subsolo" do Stitch, sem a engrenagem do topo, sem o selo
  * "Entrou com Google" e com "Sessão atual" só com "Sair da conta"): "Seus dados" (e-mail só leitura e nome de
  * exibição), "Perfis" (SPEC-0021: link para "Meus perfis"), "Privacidade & dados" (baixar os dados), "Sessão atual" e
- * "Excluir conta". Renderizada por requisição com
+ * "Excluir conta". SPEC-0023: "Shows" (link para "Meus shows") para quem tem `artist` ou `admin`. Renderizada por
+ * requisição com
  * a sessão do cookie e servida com `Cache-Control: no-store` (pelo `proxy`); sem sessão → `/entrar?returnTo=/conta`.
  */
 export const metadata: Metadata = { title: "Minha conta | Subsolo" };
@@ -95,6 +97,19 @@ export default async function AccountPage() {
           Meus perfis
         </Link>
       </AccountSection>
+      {canManageShows(session.me) && (
+        <AccountSection id="shows" title="Shows">
+          <p className="text-sm text-text-muted">
+            Cadastre, edite, adie ou cancele os shows dos seus perfis.
+          </p>
+          <Link
+            href="/conta/shows"
+            className={buttonClasses("secondary", "md", "self-start")}
+          >
+            Meus shows
+          </Link>
+        </AccountSection>
+      )}
       <AccountSection id="privacidade-e-dados" title="Privacidade & dados">
         <p className="text-sm text-text-muted">
           Baixe uma cópia de todos os dados que o Subsolo guarda de você.

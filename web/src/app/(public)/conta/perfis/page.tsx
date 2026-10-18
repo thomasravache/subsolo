@@ -21,11 +21,12 @@ import {
   accountText,
   accountTitle,
 } from "../../entrar/account-layout";
+import { canManageShows } from "../shows/access";
 
 /**
  * SPEC-0021 — `/conta/perfis` (tela "Meus perfis - Subsolo" do Stitch, sem "Editar perfil" e "ver painel"): os perfis
  * do usuário e a situação dos pedidos ("EM ANÁLISE", "APROVADO", "RECUSADO" com o motivo e "Pedir novamente"), com
- * "Pedir novo perfil" e "Reivindicar perfil existente". `?aviso=pedido-enviado` anuncia "Pedido enviado.". Renderizada
+ * "Pedir novo perfil" e "Reivindicar perfil existente" (SPEC-0023: e "Meus shows", para quem tem perfil aprovado). `?aviso=pedido-enviado` anuncia "Pedido enviado.". Renderizada
  * por requisição com a sessão do cookie e servida com `no-store` (pelo `proxy`); sem sessão →
  * `/entrar?returnTo=/conta/perfis`.
  */
@@ -66,6 +67,14 @@ export default async function MyProfilesPage({
               Reivindicar perfil existente
             </Link>
           </div>
+          {session.kind === "signed-in" && canManageShows(session.me) && (
+            <Link
+              href="/conta/shows"
+              className={buttonClasses("secondary", "md", "self-start")}
+            >
+              Meus shows
+            </Link>
+          )}
           <MyProfilesList data={mine} cities={form.cities} />
         </>
       ) : (

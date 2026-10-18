@@ -41,6 +41,24 @@ public static class EventsErrors
     /// <summary>SPEC-0022 — 422: cabeçalho de imagem válido, mas a imagem não pôde ser processada.</summary>
     public const string FlyerUnprocessable = "events.flyer_unprocessable";
 
+    /// <summary>SPEC-0023 — 400: um campo do show é inválido (o campo vai em <c>errors</c>).</summary>
+    public const string InvalidShow = "events.invalid_show";
+
+    /// <summary>SPEC-0023 — 400: o <c>flyerId</c> não é de um flyer enviado.</summary>
+    public const string FlyerNotFound = "events.flyer_not_found";
+
+    /// <summary>SPEC-0023 — 409: já existe show com o mesmo título na mesma data e cidade (mesmo slug).</summary>
+    public const string ShowSlugTaken = "events.show_slug_taken";
+
+    /// <summary>SPEC-0023 — 404: nenhum show com o id.</summary>
+    public const string ShowNotFound = "events.show_not_found";
+
+    /// <summary>SPEC-0023 — 400: situação fora de <c>scheduled</c>, <c>cancelled</c> e <c>postponed</c>.</summary>
+    public const string InvalidStatus = "events.invalid_status";
+
+    /// <summary>SPEC-0023 — 400: <c>period</c> fora de <c>upcoming</c> e <c>past</c> (em <c>GET /me/shows</c>).</summary>
+    public const string InvalidPeriod = "events.invalid_period";
+
     /// <summary>Mensagem do campo para um slug gerado fora do formato.</summary>
     internal const string GeneratedSlugMessage = "O nome precisa ter ao menos duas letras ou dígitos para gerar o endereço.";
 
@@ -73,6 +91,28 @@ public static class EventsErrors
 
     internal static Error FlyerTooManyPixelsError() =>
         FieldError(FlyerTooManyPixels, "O flyer passa de 40 megapixels.", "file", "Imagem acima de 40 megapixels.");
+
+    /// <summary>SPEC-0023 — 400 <see cref="InvalidShow"/> no campo <paramref name="field"/>.</summary>
+    internal static Error InvalidShowError(string field, string message) =>
+        FieldError(InvalidShow, "Dados do show inválidos.", field, message);
+
+    internal static Error FlyerNotFoundError() =>
+        FieldError(FlyerNotFound, "Flyer não encontrado.", "FlyerId", "Envie o flyer de novo.");
+
+    internal static Error ShowSlugTakenError() =>
+        Error.Conflict(ShowSlugTaken, "Já existe um show com esse nome nessa data nessa cidade.");
+
+    /// <summary>SPEC-0023 — 403 <c>auth.forbidden</c> (o mesmo código da política): o usuário não é dono do organizador.</summary>
+    internal static Error ShowForbiddenError() =>
+        Error.Forbidden("auth.forbidden", "Só o dono do perfil organizador (ou o admin) mexe neste show.");
+
+    internal static Error InvalidPeriodError() =>
+        FieldError(InvalidPeriod, "Período inválido.", "period", "Use upcoming ou past.");
+
+    internal static Error ShowNotFoundError() => Error.NotFound(ShowNotFound, "Show não encontrado.");
+
+    internal static Error InvalidStatusError() =>
+        FieldError(InvalidStatus, "Situação do show inválida.", "Status", "Use scheduled, cancelled ou postponed.");
 
     internal static Error FlyerUnprocessableError() =>
         Error.Unprocessable(FlyerUnprocessable, "O flyer não pôde ser processado (arquivo corrompido?).");

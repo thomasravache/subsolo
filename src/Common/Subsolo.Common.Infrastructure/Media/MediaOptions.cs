@@ -13,4 +13,10 @@ public sealed class MediaOptions
 
     /// <summary>Diretório raiz da mídia (<c>Media:Root</c>).</summary>
     public string? Root { get; set; }
+
+    /// <summary>
+    /// SPEC-0023 (H22-05) — quanto um envio espera a vez na fila de processamento (um por vez) antes de desistir com 503
+    /// (<c>Media:QueueTimeout</c>, padrão 30 s).
+    /// </summary>
+    public TimeSpan QueueTimeout { get; set; } = TimeSpan.FromSeconds(30);
 }

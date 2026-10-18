@@ -76,6 +76,20 @@ internal static class TestImages
         return [.. jpeg.AsSpan(0, dataStart), .. garbage];
     }
 
+    /// <summary>
+    /// SPEC-0023 (H22-04) — JPEG íntegro com bytes a mais entre dois segmentos do cabeçalho (depois do primeiro segmento,
+    /// antes do marcador seguinte): o decodificador só avisa ("extraneous bytes before marker") e a imagem sai inteira —
+    /// aviso benigno, não arquivo truncado nem dado corrompido.
+    /// </summary>
+    public static byte[] JpegWithExtraneousBytesBeforeMarker(int width, int height, int seed = 31)
+    {
+        var jpeg = Jpeg(width, height, seed);
+        (jpeg[2] == 0xFF).ShouldBeTrue("o JPEG de teste não tem segmento depois do SOI");
+        var next = 4 + BinaryPrimitives.ReadUInt16BigEndian(jpeg.AsSpan(4));
+        (jpeg[next] == 0xFF).ShouldBeTrue("o segundo segmento do JPEG de teste não começa com um marcador");
+        return [.. jpeg.AsSpan(0, next), 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, .. jpeg.AsSpan(next)];
+    }
+
     /// <summary>Uma cópia de <paramref name="jpeg"/> com um comentário (COM) único: mesmo conteúdo visual, outro hash.</summary>
     public static byte[] WithComment(byte[] jpeg, string comment) =>
         WithSegment(jpeg, 0xFE, Encoding.ASCII.GetBytes(comment));

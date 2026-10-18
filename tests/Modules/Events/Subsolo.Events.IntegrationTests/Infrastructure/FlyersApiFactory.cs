@@ -18,10 +18,17 @@ namespace Subsolo.Events.IntegrationTests.Infrastructure;
 /// <see cref="Sandbox"/> (onde os testes de caminho com <c>..</c> deixam um arquivo que não pode vazar);</item>
 /// <item><c>Users:AdminEmails</c> = [<see cref="AdminEmail"/>] e a entrada de teste <see cref="FlyersTestEndpoints.SignIn"/>;</item>
 /// <item>os limites <c>default</c> e <c>report</c> altos, a menos que <paramref name="productionRateLimits"/>;</item>
-/// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>.</item>
+/// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
+/// <item>SPEC-0023 — opcionalmente, configurações a mais (<paramref name="settings"/>, ex.: <c>Media:QueueTimeout</c>) e
+/// serviços a mais (<paramref name="configureServices"/>, ex.: o dublê do limite de corpo do Kestrel).</item>
 /// </list>
 /// </summary>
-internal sealed class FlyersApiFactory(string connectionString, FakeTimeProvider? clock = null, bool productionRateLimits = false)
+internal sealed class FlyersApiFactory(
+    string connectionString,
+    FakeTimeProvider? clock = null,
+    bool productionRateLimits = false,
+    IReadOnlyDictionary<string, string>? settings = null,
+    Action<IServiceCollection>? configureServices = null)
     : WebApplicationFactory<Program>
 {
     public const string AdminEmail = "admin@subsolo.test";
@@ -126,6 +133,11 @@ internal sealed class FlyersApiFactory(string connectionString, FakeTimeProvider
             builder.UseSetting(key, value);
         }
 
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            builder.UseSetting(key, value);
+        }
+
         builder.ConfigureTestServices(services =>
         {
             services.AddEndpoints(typeof(FlyersApiFactory).Assembly);
@@ -133,6 +145,8 @@ internal sealed class FlyersApiFactory(string connectionString, FakeTimeProvider
             {
                 services.Replace(ServiceDescriptor.Singleton<TimeProvider>(clock));
             }
+
+            configureServices?.Invoke(services);
         });
     }
 
