@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0021 — infraestrutura do módulo Profiles (ADR-0001, ADR-0002): DbContext do schema `profiles`, migrações e o
+    registro do módulo (AddProfilesModule).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Profiles.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.Application/Subsolo.Modules.Profiles.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.Presentation/Subsolo.Modules.Profiles.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

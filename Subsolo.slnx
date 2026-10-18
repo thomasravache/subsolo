@@ -24,6 +24,13 @@
     <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
     <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Presentation/Subsolo.Modules.Notifications.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Profiles/">
+    <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.Application/Subsolo.Modules.Profiles.Application.csproj" />
+    <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.Domain/Subsolo.Modules.Profiles.Domain.csproj" />
+    <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/Subsolo.Modules.Profiles.Infrastructure.csproj" />
+    <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.Presentation/Subsolo.Modules.Profiles.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Users/">
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
@@ -63,6 +70,10 @@
   <Folder Name="/tests/Modules/Notifications/">
     <Project Path="tests/Modules/Notifications/Subsolo.Notifications.IntegrationTests/Subsolo.Notifications.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Notifications/Subsolo.Notifications.UnitTests/Subsolo.Notifications.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Profiles/">
+    <Project Path="tests/Modules/Profiles/Subsolo.Profiles.IntegrationTests/Subsolo.Profiles.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Profiles/Subsolo.Profiles.UnitTests/Subsolo.Profiles.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Users/">
     <Project Path="tests/Modules/Users/Subsolo.Users.IntegrationTests/Subsolo.Users.IntegrationTests.csproj" />

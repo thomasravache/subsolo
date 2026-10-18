@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SPEC-0021 — endpoints Minimal API do módulo Profiles (ADR-0001): /api/v1/profiles/*, /me/profiles e /admin/*. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Profiles.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) usa os tipos internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Profiles.Infrastructure" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.Application/Subsolo.Modules.Profiles.Application.csproj" />
+  </ItemGroup>
+
+</Project>
