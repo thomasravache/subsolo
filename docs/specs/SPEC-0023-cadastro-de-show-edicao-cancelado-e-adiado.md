@@ -4,7 +4,7 @@ title: Cadastro de show, edição, cancelado e adiado
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0022]
