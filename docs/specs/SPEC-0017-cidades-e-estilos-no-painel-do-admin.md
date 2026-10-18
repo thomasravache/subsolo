@@ -9,7 +9,7 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0014, SPEC-0016]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/admin/**, docs/design/**, tools/compose-up.sh, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json]
 adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0013, ADR-0016]
@@ -104,7 +104,7 @@ UF: as 27 siglas. Fuso: qualquer IANA válido; a tela oferece os fusos do Brasil
 /admin/cidades-e-estilos (SSR) — título "Cidades e estilos | Admin | Subsolo"
   anônimo → 307 para /entrar?returnTo=/admin/cidades-e-estilos ; fã → página "Você não tem acesso a esta página." (status 403)
   Coluna CIDADES: tabela (Nome, UF, Fuso, Endereço /{slug}) ; "Nova cidade" → formulário (Nome, UF, Fuso, Endereço com prévia
-    "subsolo.app/{slug}" gerado do nome e editável) ; "Editar" na linha (Endereço só leitura) ; erros no campo
+    "agendasubsolo.com.br/{slug}" gerado do nome e editável; endereço apagado volta ao gerado do nome) ; "Editar" na linha (Endereço só leitura) ; erros no campo
     ("Esse endereço já existe.", "Esse endereço é reservado.")
   Coluna ESTILOS: chips com os estilos ; campo "Novo estilo" + "Adicionar" ; "Renomear" no chip ; erro "Esse estilo já existe."
   Sucesso: mensagem "Cidade criada." / "Estilo adicionado." em região aria-live
@@ -212,7 +212,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 6fcaceb | 2026-10-18 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — fe0b8cf | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 465ms) — fe0b8cf | 2026-10-18 |
-| G4 Review | PENDING | | |
+| G4 Review | FAIL | Reviewer: CHANGES_REQUESTED em fe0b8cf — major: prévia do endereço com domínio subsolo.app (o domínio decidido é agendasubsolo.com.br, ADR-0004); menores: slug repetido concorrente dá 500, foco após renomear estilo, prévia com endereço apagado, nome de estilo sem índice, regra de arquitetura frágil | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -262,4 +262,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0017`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 (tela e comportamento) | 2026-10-18 | Prévia do endereço com o domínio decidido `agendasubsolo.com.br/{slug}` (ADR-0004) e, se o endereço editado for apagado, volta ao gerado do nome; criar cidade ou estilo com slug que outro pedido acabou de gravar → 409 (`city_slug_taken` / `style_taken`) em vez de 500; foco volta ao botão "Renomear" do estilo depois de salvar ou cancelar | Revisão G4 (CHANGES_REQUESTED em fe0b8cf): o §6 citava um domínio que não é do Subsolo | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-17 | `touches` ganha `tools/compose-up.sh` (admin `admin@subsolo.test` na pilha da E2E por `Users__AdminEmails__0`), `web/src/proxy.ts` e seu teste (status da página do admin: 307 para anônimo, 403 para fã, `no-store` — padrão do ADR-0016), `web/src/components/ui/shell.ts` e seus testes, `src/Subsolo.Api/Program.cs` e os lock files | Relatório do Test-writer: sem admin na pilha da E2E o E2E-01 falharia pelo motivo errado; status de página é responsabilidade do proxy | nenhuma | thomas (delegado: piloto automático, 2026-10-17, recomendação do Architect) |
