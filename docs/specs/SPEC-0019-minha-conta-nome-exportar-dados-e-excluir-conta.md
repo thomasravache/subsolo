@@ -105,9 +105,9 @@ record UserDeletedIntegrationEvent(Guid UserId, DateTimeOffset DeletedAtUtc);   
   h1 "MINHA CONTA"
   "SEUS DADOS": e-mail (só leitura) ; "Nome de exibição" + "Salvar" → PUT /me → "Nome salvo." (aria-live)
      erro → "Use de 1 a 60 caracteres." ligado ao campo
-  "PRIVACIDADE & DADOS": texto do Stitch + "Baixar meus dados" → GET /me/export (download do arquivo)
+  "PRIVACIDADE & DADOS": "Baixe uma cópia de todos os dados que o Subsolo guarda de você." + "Baixar meus dados" → GET /me/export (download do arquivo)
   "SESSÃO ATUAL": botão "Sair da conta" (SPEC-0016)
-  "EXCLUIR CONTA": aviso do Stitch + "Excluir minha conta" → dialog "Excluir conta?":
+  "EXCLUIR CONTA": "Atenção: isso não dá para desfazer. Sua conta e tudo o que o Subsolo guarda de você são apagados agora; as cópias de segurança somem em até 6 meses." + "Excluir minha conta" → dialog "Excluir conta?":
      "Isso apaga sua conta e tudo o que o Subsolo guarda de você. Não dá para desfazer."
      campo "Digite seu e-mail para confirmar" + "Excluir para sempre" (vermelho) + "Cancelar"
      e-mail diferente → "O e-mail não confere." ligado ao campo
@@ -270,5 +270,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0019`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (texto) | 2026-10-18 | Textos de "Privacidade & dados" e "Excluir conta" fixados no §6, sem citar dados que ainda não existem e avisando que as cópias de segurança somem em até 6 meses (ADR-0011) | Revisão G4: o texto do Stitch dizia "permanentemente apagados dos servidores", impreciso diante dos backups (transparência, LGPD art. 6º, VI) | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha `web/src/app/page.tsx` (e um teste dela): depois de excluir, o fã vai para `/?conta=excluida` e a página inicial mostra "Sua conta foi excluída." em `role="status"`; o resto da página inicial não muda | Relatório do Test-writer: o aviso do §6 fica em `/`, fora dos `touches` | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha `src/Subsolo.Api/Security/**` (o host passa a ler `UsersModule.SessionAbsoluteLifetime`, herança da revisão da SPEC-0016), os lock files, `tests/Common/Subsolo.Api.IntegrationTests/**` (contrato do `/me`) e `tests/Security/**` | Antes do início da onda, pelo que as ondas 1–4 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
