@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 18 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 6, implemented 16
+- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 5, in-progress 1, implemented 16
 - Impedimentos: **0 aberto(s)**, 16 resolvido(s)
 
 ## Cobertura de Pilares
@@ -42,13 +42,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0020  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0020
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0020 | Entrar com Google | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0020 | Entrar com Google | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0021 | Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicação | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0020 |
 | 3 | SPEC-0022 | Upload e processamento de flyer | full/M | approved | ⛔ aguarda implementação de SPEC-0021 |  |
 | 4 | SPEC-0023 | Cadastro de show, edição, cancelado e adiado | full/M | approved | ⛔ aguarda implementação de SPEC-0021; aguarda implementação de SPEC-0022 |  |
@@ -73,7 +73,7 @@ flowchart LR
     S0016["SPEC-0016<br/>Entrar por link mágico no e-mail"]:::implemented
     S0017["SPEC-0017<br/>Cidades e estilos no painel do admin"]:::implemented
     S0019["SPEC-0019<br/>Minha conta: nome, exportar dados e exc…"]:::implemented
-    S0020["SPEC-0020<br/>Entrar com Google"]:::approved
+    S0020["SPEC-0020<br/>Entrar com Google"]:::inprogress
     S0021["SPEC-0021<br/>Perfis: pedido, aprovação pelo admin, p…"]:::approved
     S0022["SPEC-0022<br/>Upload e processamento de flyer"]:::approved
     S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::approved
@@ -120,7 +120,7 @@ flowchart LR
 | [SPEC-0017](SPEC-0017-cidades-e-estilos-no-painel-do-admin.md) | Cidades e estilos no painel do admin | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
 | [SPEC-0018](SPEC-0018-modulo-notifications-e-mail-transacional-por-smtp.md) | Módulo Notifications: e-mail transacional por SMTP | full | feature | implemented | 2026-10-17 | SPEC-0002 | — | — |
 | [SPEC-0019](SPEC-0019-minha-conta-nome-exportar-dados-e-excluir-conta.md) | Minha conta: nome, exportar dados e excluir conta | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0014, SPEC-0016 | — |
-| [SPEC-0020](SPEC-0020-entrar-com-google.md) | Entrar com Google | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0016 | — |
+| [SPEC-0020](SPEC-0020-entrar-com-google.md) | Entrar com Google | full | feature | in-progress | 2026-10-17 | SPEC-0002 | SPEC-0016 | — |
 | [SPEC-0021](SPEC-0021-perfis-pedido-aprovacao-pelo-admin-perfil-sem-dono-e-reivind.md) | Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicação | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0017, SPEC-0019 | — |
 | [SPEC-0022](SPEC-0022-upload-e-processamento-de-flyer.md) | Upload e processamento de flyer | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021 | — |
 | [SPEC-0023](SPEC-0023-cadastro-de-show-edicao-cancelado-e-adiado.md) | Cadastro de show, edição, cancelado e adiado | full | feature | approved | 2026-10-17 | SPEC-0002 | SPEC-0021, SPEC-0022 | — |
