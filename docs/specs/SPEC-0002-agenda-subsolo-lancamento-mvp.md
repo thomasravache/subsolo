@@ -50,7 +50,7 @@ Profiles ──ProfileApproved/ProfileClaimed──> Users (papel artist)
 Events ──ShowPublished / ShowChanged──> Engagement (aviso de show novo e lembrete: decide quem recebe)
 Engagement ──INotificationsApi.EnqueueAsync──> Notifications (só entrega; ADR-0014 esclarecido em 2026-10-18)
 Moderation ──ReportResolved──> Events (marca cancelado/remove)
-Events <──consulta pública IProfilesApi── Profiles (nomes e links de bandas e casas na line-up)
+Profiles ──implementa IShowProfiles (contrato do Events)──> Events (dono, nomes e links de bandas e casas na line-up)
 ```
 
 **Decisões (ADRs):** ADR-0001, ADR-0002, ADR-0003, ADR-0013, ADR-0014 e ADR-0015 (já propostos na fundação); decisões novas que surgirem nas filhas viram ADRs próprios.
