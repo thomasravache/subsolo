@@ -9,9 +9,9 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0022]
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**, src/Common/Subsolo.Common.Infrastructure/**, src/Common/Subsolo.Common.Application/**, tests/Common/**, infra/caddy/**, src/Subsolo.AppHost/**, web/next.config.ts, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
+touches: [src/Subsolo.Api/packages.lock.json, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**, src/Common/Subsolo.Common.Infrastructure/**, src/Common/Subsolo.Common.Application/**, tests/Common/**, infra/caddy/**, src/Subsolo.AppHost/**, web/next.config.ts, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0013, ADR-0015]
 external: []
 size: M
@@ -84,6 +84,7 @@ PUT /api/v1/shows/{id}:                   # mesmas regras; slug não muda
   200: { id, slug } ; 400 ; 403 ; 404: events.show_not_found
 POST /api/v1/shows/{id}/status:           # body { status: scheduled|cancelled|postponed }
   200 ; 400: events.invalid_status ; 403 ; 404
+GET /api/v1/shows/{id}:                      # Emenda v3 — dono do organizador ou admin + default ; no-store ; 200 com o show completo (para a tela de edição) ; 403 auth.forbidden ; 404 events.show_not_found
 GET /api/v1/me/shows?period=upcoming|past:   # artist ou admin + default ; no-store
   200: [{ id, slug, title, startsAt, city, venueName, status, flyerThumbUrl, organizerProfileId }]
 GET /api/v1/cities/{slug}/agenda:         # contrato da SPEC-0008 inalterado; agora com os shows de -6 h a +90 dias
@@ -230,7 +231,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — f1806a4 | 2026-10-17 |
-| G1 Red | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0189fd3 | 2026-10-18 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -284,4 +285,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0023`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-18 | (a) `GET /api/v1/shows/{id}` (dono ou admin, no-store) para a tela de edição; (b) `period` fora de `upcoming`/`past` → 400 `events.invalid_period`; (c) o `Events` depende do contrato do `Users` só para `UserDeleted` e `IPersonalDataSection` (seção "shows" do export, IT-07) — ADR-0001 esclarecido; (d) `src/Subsolo.Api/packages.lock.json` em `touches` (novas referências entre projetos). | Relatório do Implementer: a tela de edição precisa do show inteiro; export exigido pelo IT-07 | SPEC-0024 (pode reaproveitar o detalhe para o dono) | Architect (piloto automático do Thomas, 2026-10-17) |
 | 2 | 2026-10-18 | (a) O `Events` lê perfis por `IShowProfiles` (contrato do `Events`, implementado pelo `Profiles.Infrastructure`), não pelo `IProfilesApi`. (b) A janela de -6 h a +90 dias é o padrão da agenda quando `from` e `to` não vêm; com eles, valem as regras da SPEC-0008. (c) `/me/shows`: para o artista, os shows cujo organizador é um perfil dele; para o admin, os que ele criou (`created_by`). (d) Um flyer pode ser usado por mais de um show (ligar é idempotente). (e) Hora local que não existe (lacuna do horário de verão) → 400 `invalid_show` em `startsLocal`; hora ambígua aceita qualquer um dos instantes, desde que a volta dê a mesma hora local. (f) 503 com o código `service.unavailable`, o que já existe. (g) Botão "Adicionar outra banda", como no Stitch. | Relatório do Test-writer (IMP-01): ciclo Events ↔ Profiles e pontos em aberto | SPEC-0024, SPEC-0025, SPEC-0026 (leem perfis pelo `IShowProfiles` se precisarem no `Events`) | Architect (piloto automático do Thomas, 2026-10-17) |
