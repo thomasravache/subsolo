@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using Subsolo.Modules.Users.Application.Features.RequestMagicLink;
 using Subsolo.Modules.Users.Application.Features.SignIn;
+using Subsolo.Modules.Users.Domain.Sessions;
 
 namespace Subsolo.Modules.Users.Application.Features.SignInWithGoogle;
 
@@ -18,11 +20,33 @@ internal sealed class GoogleSignInCallback(ISignInService signIn)
     /// <summary>Destino quando o e-mail falta ou não é verificado.</summary>
     public const string EmailNotVerifiedRedirect = "/entrar?erro=google_email";
 
-    public Task<GoogleCallbackOutcome> CompleteAsync(
+    /// <summary>Claim do e-mail (nome do OIDC).</summary>
+    public const string EmailClaim = "email";
+
+    /// <summary>Claim que diz se o provedor verificou o e-mail (nome do OIDC).</summary>
+    public const string EmailVerifiedClaim = "email_verified";
+
+    public async Task<GoogleCallbackOutcome> CompleteAsync(
         ClaimsPrincipal principal,
         string? returnTo,
-        CancellationToken cancellationToken) =>
-        throw new NotImplementedException($"SPEC-0020: implementar o retorno do Google ({signIn.GetType().Name}).");
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+
+        var email = principal.FindFirst(EmailClaim)?.Value;
+        if (string.IsNullOrWhiteSpace(email) || !IsVerified(principal.FindFirst(EmailVerifiedClaim)?.Value))
+        {
+            return new GoogleCallbackOutcome(EmailNotVerifiedRedirect, SignedIn: false);
+        }
+
+        var result = await signIn.SignInAsync(email, SignInMethod.Google, cancellationToken);
+        return result.IsSuccess
+            ? new GoogleCallbackOutcome(ReturnToPath.Sanitize(returnTo), SignedIn: true)
+            : new GoogleCallbackOutcome(EmailNotVerifiedRedirect, SignedIn: false);
+    }
+
+    private static bool IsVerified(string? value) =>
+        bool.TryParse(value, out var verified) && verified;
 }
 
 /// <summary>SPEC-0020 — para onde o navegador volta e se a sessão foi criada.</summary>

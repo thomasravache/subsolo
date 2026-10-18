@@ -59,6 +59,9 @@ public static class UsersErrors
                 ["confirmEmail"] = ["O e-mail não confere."],
             });
 
+    internal static Error ProviderDisabledError() =>
+        Error.NotFound(ProviderDisabled, "O login com Google não está disponível.");
+
     internal static Error UserNotFoundError() =>
         Error.NotFound(UserNotFound, "Usuário não encontrado.");
 }

@@ -14,5 +14,5 @@ public sealed class GoogleOptions
     public string? ClientSecret { get; set; }
 
     /// <summary>Ligado só com <see cref="Authority"/> e <see cref="ClientId"/> preenchidos (<c>providers.google</c>).</summary>
-    public bool IsEnabled => throw new NotImplementedException("SPEC-0020: implementar GoogleOptions.IsEnabled.");
+    public bool IsEnabled => !string.IsNullOrWhiteSpace(Authority) && !string.IsNullOrWhiteSpace(ClientId);
 }
