@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Domain;
+using Subsolo.Events.UnitTests.Infrastructure;
 using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 using Subsolo.Modules.Events.Domain.Cities;
 
@@ -8,6 +9,7 @@ namespace Subsolo.Events.UnitTests;
 /// <summary>
 /// SPEC-0008 UT-01 — cidade sem shows: o handler devolve a cidade e uma lista vazia. UT-02 — só <c>to</c>, antes
 /// de hoje no fuso da cidade: o período resolvido termina antes de começar e vira <c>agenda.invalid_range</c>.
+/// SPEC-0024 (H23-05): construído pelo construtor que fica, com a leitura de shows vazia (<see cref="EmptyShowsReadModel"/>).
 /// </summary>
 public sealed class GetCityAgendaQueryHandlerTests
 {
@@ -17,7 +19,7 @@ public sealed class GetCityAgendaQueryHandlerTests
     {
         var city = City.Create("cidade-exemplo", "Cidade Exemplo", "SP", "America/Sao_Paulo");
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 14, 12, 0, 0, TimeSpan.Zero));
-        var handler = new GetCityAgendaQueryHandler(new InMemoryCities(city), clock);
+        var handler = new GetCityAgendaQueryHandler(new InMemoryCities(city), clock, EmptyShowsReadModel.Create());
 
         var result = await handler.Handle(new GetCityAgendaQuery("cidade-exemplo"), TestContext.Current.CancellationToken);
 
@@ -58,7 +60,8 @@ public sealed class GetCityAgendaQueryHandlerTests
     private static GetCityAgendaQueryHandler SaoPauloHandlerAt(DateTimeOffset now) =>
         new(
             new InMemoryCities(City.Create("cidade-exemplo", "Cidade Exemplo", "SP", "America/Sao_Paulo")),
-            new FakeTimeProvider(now));
+            new FakeTimeProvider(now),
+            EmptyShowsReadModel.Create());
 
     private sealed class InMemoryCities(params City[] cities) : ICityRepository
     {
