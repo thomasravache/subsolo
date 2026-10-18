@@ -1,3 +1,4 @@
+using Subsolo.Common.Application.Media;
 using Subsolo.Common.Domain;
 
 namespace Subsolo.Modules.Events.Application.Features.UploadFlyer;
@@ -16,8 +17,43 @@ public enum FlyerFormat
 /// </summary>
 public static class FlyerUploadRules
 {
+    /// <summary>Quantos bytes do começo do arquivo bastam para reconhecer o tipo.</summary>
+    public const int SignatureLength = 12;
+
+    /// <summary>Tamanho máximo: 10 MB (10 × 1024 × 1024 bytes).</summary>
+    public const long MaxBytes = MediaErrors.MaxBytes;
+
+    private static ReadOnlySpan<byte> JpegSignature => [0xFF, 0xD8, 0xFF];
+
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
     /// <summary>O formato de <paramref name="firstBytes"/> (o começo do arquivo) se for aceito e couber em <paramref name="length"/>.</summary>
-    public static Result<FlyerFormat> Check(ReadOnlySpan<byte> firstBytes, long length) =>
-        throw new NotImplementedException(
-            $"SPEC-0022: validação do upload ainda não implementada ({firstBytes.Length} bytes, {length}).");
+    public static Result<FlyerFormat> Check(ReadOnlySpan<byte> firstBytes, long length)
+    {
+        if (Detect(firstBytes) is not { } format)
+        {
+            return Result.Failure<FlyerFormat>(EventsErrors.FlyerInvalidTypeError());
+        }
+
+        return length > MaxBytes
+            ? Result.Failure<FlyerFormat>(EventsErrors.FlyerTooLargeError())
+            : Result.Success(format);
+    }
+
+    private static FlyerFormat? Detect(ReadOnlySpan<byte> bytes)
+    {
+        if (bytes.StartsWith(JpegSignature))
+        {
+            return FlyerFormat.Jpeg;
+        }
+
+        if (bytes.StartsWith(PngSignature))
+        {
+            return FlyerFormat.Png;
+        }
+
+        return bytes.Length >= SignatureLength && bytes.StartsWith("RIFF"u8) && bytes[8..12].SequenceEqual("WEBP"u8)
+            ? FlyerFormat.WebP
+            : null;
+    }
 }

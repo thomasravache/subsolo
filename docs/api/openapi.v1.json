@@ -5,6 +5,108 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/v1/flyers": {
+      "post": {
+        "tags": [
+          "Flyers"
+        ],
+        "summary": "Enviar flyer",
+        "description": "Envia o flyer de um show (artista ou admin) em multipart/form-data, campo file: JPEG, PNG ou WebP pelo conteúdo, até 10 MB e 40 megapixels. Os metadados (EXIF, GPS) são removidos e saem as variantes thumb (400 px, WebP), full (1080 px, WebP) e og (1200×630, JPEG), servidas em /media/flyers/ com cache imutável. O id é o SHA-256 do arquivo: o mesmo arquivo de novo devolve 200 com o mesmo id, sem reprocessar. Exige o cabeçalho X-CSRF.",
+        "operationId": "UploadFlyer",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadFlyerForm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlyerUploadedResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlyerUploadedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=events.flyer_invalid_type) (code=events.flyer_too_large) (code=events.flyer_too_many_pixels) (code=events.flyer_missing) (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity (code=events.flyer_unprocessable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/cities/{slug}": {
       "put": {
         "tags": [
@@ -1979,6 +2081,33 @@
           }
         }
       },
+      "FlyerUploadedResponse": {
+        "required": [
+          "flyerId",
+          "thumbUrl",
+          "fullUrl",
+          "ogUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "flyerId": {
+            "type": "string"
+          },
+          "thumbUrl": {
+            "type": "string"
+          },
+          "fullUrl": {
+            "type": "string"
+          },
+          "ogUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
       "MeResponse": {
         "required": [
           "id",
@@ -2604,10 +2733,24 @@
             ]
           }
         }
+      },
+      "UploadFlyerForm": {
+        "required": [
+          "file"
+        ],
+        "type": "object",
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/IFormFile"
+          }
+        }
       }
     }
   },
   "tags": [
+    {
+      "name": "Flyers"
+    },
     {
       "name": "Admin"
     },
