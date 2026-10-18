@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -38,7 +37,7 @@ internal sealed class GetMeEndpoint : IEndpoint
         [FromServices] IQueryHandler<GetMeQuery, MeResponse> handler,
         CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(user.FindFirstValue(SessionAuthentication.UserIdClaim), CultureInfo.InvariantCulture, out var userId))
+        if (AccountUser.Id(user) is not { } userId)
         {
             return SecurityProblems.Unauthorized();
         }
