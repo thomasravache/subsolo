@@ -58,7 +58,7 @@ internal sealed class StartGoogleSignInEndpoint : IEndpoint
         }
         catch (Exception exception) when (IsProviderUnavailable(exception, httpContext))
         {
-            GoogleSignIn.LogProviderUnavailable(httpContext);
+            GoogleSignIn.LogProviderUnavailable(httpContext, exception);
             return Results.Redirect(GoogleSignInCallback.ProviderErrorRedirect);
         }
     }

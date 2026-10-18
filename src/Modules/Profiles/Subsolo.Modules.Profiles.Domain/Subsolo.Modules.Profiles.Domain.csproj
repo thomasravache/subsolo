@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0021 — domínio do módulo Profiles (ADR-0001): perfis de banda, casa e produtor (com ou sem dono) e os pedidos de
+    perfil e de reivindicação (ProfileRequest, kind new | claim).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Profiles.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

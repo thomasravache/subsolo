@@ -18,6 +18,7 @@
     <ProjectReference Include="../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
     <ProjectReference Include="../Modules/Events/Subsolo.Modules.Events.Infrastructure/Subsolo.Modules.Events.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Notifications/Subsolo.Modules.Notifications.Infrastructure/Subsolo.Modules.Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="../Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/Subsolo.Modules.Profiles.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Users/Subsolo.Modules.Users.Infrastructure/Subsolo.Modules.Users.Infrastructure.csproj" />
     <ProjectReference Include="../Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
   </ItemGroup>

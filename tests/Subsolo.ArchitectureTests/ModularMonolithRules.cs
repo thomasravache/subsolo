@@ -224,9 +224,19 @@ public static partial class ModularMonolithRules
         return null;
     }
 
-    private static string? ModuleOf(IType type)
+    /// <summary>
+    /// O módulo do tipo, ou <see langword="null"/>; tolera dependências que o ArchUnitNET não resolve (alvo ou namespace
+    /// nulos, como nas expressões de coleção — SPEC-0021, §7.6).
+    /// </summary>
+    private static string? ModuleOf(IType? type)
     {
-        var match = ModuleNamespace().Match(type.Namespace.FullName);
+        var fullName = type?.Namespace?.FullName;
+        if (fullName is null)
+        {
+            return null;
+        }
+
+        var match = ModuleNamespace().Match(fullName);
         return match.Success ? match.Groups[1].Value : null;
     }
 

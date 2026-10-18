@@ -30,6 +30,8 @@
   <ItemGroup>
     <ProjectReference Include="../../../Subsolo.UnitTests.Common/Subsolo.UnitTests.Common.csproj" />
     <ProjectReference Include="../../../../src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
+    <!-- SPEC-0021 (§7.6): as opções OIDC do Google (GoogleSignIn, no Presentation). -->
+    <ProjectReference Include="../../../../src/Modules/Users/Subsolo.Modules.Users.Presentation/Subsolo.Modules.Users.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

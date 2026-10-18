@@ -1,7 +1,9 @@
 import Link from "next/link";
 
-/** SPEC-0017 — páginas do painel do admin que já existem (o menu só mostra o que existe). */
+/** SPEC-0017 — páginas do painel do admin que já existem (o menu só mostra o que existe); SPEC-0021 — fila e perfil sem dono. */
 const pages = [
+  { href: "/admin/fila", label: "Fila" },
+  { href: "/admin/perfis/novo", label: "Novo perfil" },
   { href: "/admin/cidades-e-estilos", label: "Cidades e estilos" },
 ] as const;
 
@@ -14,7 +16,7 @@ export interface AdminNavProps {
 export function AdminNav({ current }: AdminNavProps) {
   return (
     <nav aria-label="Painel do admin">
-      <ul className="flex gap-2 md:flex-col">
+      <ul className="flex flex-wrap gap-2 md:flex-col">
         {pages.map((page) => (
           <li key={page.href}>
             <Link

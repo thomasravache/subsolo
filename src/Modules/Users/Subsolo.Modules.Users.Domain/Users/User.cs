@@ -69,6 +69,22 @@ public sealed class User : Entity
     /// <summary>SPEC-0019 — a conta vai ser apagada: levanta <see cref="UserDeletedDomainEvent"/> (só o id).</summary>
     public void Delete() => Raise(new UserDeletedDomainEvent(Id));
 
+    /// <summary>
+    /// SPEC-0021 — o usuário passou a ser dono de um perfil aprovado: ganha o papel <see cref="UserRoles.Artist"/>
+    /// (uma vez só; repetir não muda nada). Devolve se o papel foi adicionado agora.
+    /// </summary>
+    public bool GrantArtistRole()
+    {
+        if (Roles.Contains(UserRoles.Artist, StringComparer.Ordinal))
+        {
+            return false;
+        }
+
+        var isAdmin = Roles.Contains(UserRoles.Admin, StringComparer.Ordinal);
+        Roles = RolesFor(isAdmin, [.. Roles, UserRoles.Artist]);
+        return true;
+    }
+
     /// <summary>Dá ou tira o papel <see cref="UserRoles.Admin"/> conforme a configuração atual (os outros papéis ficam).</summary>
     public void SyncAdminRole(bool isAdmin)
     {

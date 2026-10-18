@@ -1066,6 +1066,680 @@
           }
         }
       }
+    },
+    "/api/v1/admin/profile-requests/{id}/approve": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Aprovar pedido de perfil",
+        "description": "Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a ter o papel artist. Perfil reivindicado que sumiu dá 404; nome tomado no tipo enquanto o pedido esperava dá 409. Exige o cabeçalho X-CSRF.",
+        "operationId": "ApproveProfileRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRequestApproved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=profiles.request_not_found) (code=profiles.not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=profiles.request_decided) (code=profiles.already_owned) (code=profiles.name_taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/{id}/claims": {
+      "post": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Reivindicar perfil",
+        "description": "Pede para ser o dono de um perfil aprovado e sem dono, com a prova (3 a 300 caracteres, vista só pelo admin). Um pedido em análise por vez. Exige o cabeçalho X-CSRF.",
+        "operationId": "ClaimProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRequestCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=profiles.invalid_request)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=profiles.not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=profiles.already_owned) (code=profiles.request_pending)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profiles": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Criar perfil sem dono",
+        "description": "Cria o perfil (banda, casa ou produtor) já aprovado e sem dono, com os mesmos campos do pedido e sem o contato; o dono pode reivindicá-lo depois. Exige o cabeçalho X-CSRF.",
+        "operationId": "CreateOwnerlessProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOwnerlessProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerlessProfileCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=profiles.invalid_request)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=profiles.name_taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/profiles": {
+      "get": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Meus perfis",
+        "description": "Os perfis de que o usuário é dono e os pedidos dele (novos e reivindicações), mais novos primeiro, com a situação (pending, approved, rejected) e o motivo da recusa.",
+        "operationId": "ListMyProfiles",
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfilesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profile-requests": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Fila de pedidos de perfil",
+        "description": "Pedidos de perfil e reivindicações em análise, mais antigos primeiro, com os dados do perfil, o contato ou a prova e o e-mail de quem pediu (visíveis só aqui).",
+        "operationId": "ListProfileRequests",
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileRequestQueueItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profile-requests/{id}/reject": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Recusar pedido de perfil",
+        "description": "Recusa o pedido com o motivo (3 a 200 caracteres), mostrado ao autor em Meus perfis; ele pode pedir de novo. Exige o cabeçalho X-CSRF.",
+        "operationId": "RejectProfileRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectProfileRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=profiles.invalid_request)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=profiles.request_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=profiles.request_decided)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/requests": {
+      "post": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Pedir perfil",
+        "description": "Pede o perfil (banda, casa ou produtor) para a aprovação do admin: nome de 2 a 80 caracteres, cidade, estilos só de banda (1 a 5), links https do Instagram, do Bandcamp e do Metal Archives e o contato (3 a 200 caracteres, visto só pelo admin). Um pedido em análise por vez. Exige o cabeçalho X-CSRF.",
+        "operationId": "RequestProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRequestCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=profiles.invalid_request)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=profiles.request_pending) (code=profiles.name_taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/search": {
+      "get": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Buscar perfil para reivindicar",
+        "description": "Perfis aprovados e sem dono cujo nome contém q (ao menos 2 caracteres), do tipo informado (band, venue ou producer), até 20, por nome.",
+        "operationId": "SearchClaimableProfiles",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimableProfileResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1162,6 +1836,48 @@
           }
         }
       },
+      "ClaimableProfileResponse": {
+        "required": [
+          "id",
+          "type",
+          "name",
+          "city",
+          "styles"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ClaimProfileRequest": {
+        "required": [
+          "proof"
+        ],
+        "type": "object",
+        "properties": {
+          "proof": {
+            "type": "string"
+          }
+        }
+      },
       "ConsumeMagicLinkRequest": {
         "required": [
           "token"
@@ -1210,6 +1926,48 @@
           }
         }
       },
+      "CreateOwnerlessProfileRequest": {
+        "required": [
+          "type",
+          "name",
+          "city",
+          "styles",
+          "links"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "city": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "styles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/ProfileLinksRequest"
+          }
+        }
+      },
       "DeleteAccountRequest": {
         "required": [
           "confirmEmail"
@@ -1248,6 +2006,107 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "MyProfileRequestResponse": {
+        "required": [
+          "requestId",
+          "kind",
+          "name",
+          "type",
+          "status",
+          "reason",
+          "createdAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MyProfileResponse": {
+        "required": [
+          "id",
+          "type",
+          "name",
+          "slug",
+          "city"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          }
+        }
+      },
+      "MyProfilesResponse": {
+        "required": [
+          "profiles",
+          "requests"
+        ],
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyProfileResponse"
+            }
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyProfileRequestResponse"
+            }
+          }
+        }
+      },
+      "OwnerlessProfileCreated": {
+        "required": [
+          "profileId"
+        ],
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -1392,6 +2251,164 @@
           }
         }
       },
+      "ProfileLinksRequest": {
+        "required": [
+          "instagram",
+          "bandcamp",
+          "metalArchives"
+        ],
+        "type": "object",
+        "properties": {
+          "instagram": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bandcamp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metalArchives": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ProfileLinksResponse": {
+        "required": [
+          "instagram",
+          "bandcamp",
+          "metalArchives"
+        ],
+        "type": "object",
+        "properties": {
+          "instagram": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bandcamp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metalArchives": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ProfileRequestApproved": {
+        "required": [
+          "profileId"
+        ],
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ProfileRequestCreated": {
+        "required": [
+          "requestId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileRequestQueueItem": {
+        "required": [
+          "requestId",
+          "kind",
+          "type",
+          "name",
+          "city",
+          "styles",
+          "links",
+          "contactOrProof",
+          "requesterEmail",
+          "createdAtUtc",
+          "profileId"
+        ],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/ProfileLinksResponse"
+          },
+          "contactOrProof": {
+            "type": "string"
+          },
+          "requesterEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "profileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "RejectProfileRequestRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "RequestMagicLinkRequest": {
         "required": [
           "email",
@@ -1413,6 +2430,55 @@
       },
       "RequestMagicLinkResponse": {
         "type": "object"
+      },
+      "RequestProfileRequest": {
+        "required": [
+          "type",
+          "name",
+          "city",
+          "styles",
+          "links",
+          "contact"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "city": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "styles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/ProfileLinksRequest"
+          },
+          "contact": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "ShowStatus": {
         "enum": [
@@ -1556,6 +2622,9 @@
     },
     {
       "name": "Conta"
+    },
+    {
+      "name": "Perfis"
     }
   ]
 }

@@ -10,7 +10,8 @@ namespace Subsolo.Modules.Users.Application.Features.SignInWithGoogle;
 /// <c>id_token</c>): com o e-mail verificado (claims <c>email</c> e <c>email_verified = true</c>, nomes do OIDC), entra
 /// pelo <see cref="ISignInService"/> com o método Google e volta para o <c>returnTo</c> saneado (o mesmo saneador do
 /// link mágico); sem e-mail ou sem <c>email_verified = true</c>, não entra e volta para
-/// <see cref="EmailNotVerifiedRedirect"/>.
+/// <see cref="EmailNotVerifiedRedirect"/>. SPEC-0021 (§7.6) — com o e-mail verificado e a entrada recusada pelo
+/// <see cref="ISignInService"/>, volta para <see cref="ProviderErrorRedirect"/> (motivo <c>provider_error</c>).
 /// </summary>
 internal sealed class GoogleSignInCallback(ISignInService signIn)
 {
@@ -40,9 +41,10 @@ internal sealed class GoogleSignInCallback(ISignInService signIn)
         }
 
         var result = await signIn.SignInAsync(email, SignInMethod.Google, cancellationToken);
+        // SPEC-0021 (§7.6): com o e-mail verificado, a falha é da entrada (provider_error), não do e-mail.
         return result.IsSuccess
             ? new GoogleCallbackOutcome(ReturnToPath.Sanitize(returnTo), SignedIn: true)
-            : new GoogleCallbackOutcome(EmailNotVerifiedRedirect, SignedIn: false);
+            : new GoogleCallbackOutcome(ProviderErrorRedirect, SignedIn: false);
     }
 
     private static bool IsVerified(string? value) =>
