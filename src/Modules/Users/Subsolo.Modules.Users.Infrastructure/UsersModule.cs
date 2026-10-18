@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Quartz;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
@@ -29,13 +31,16 @@ public static class UsersModule
     /// Chama <c>AddModule&lt;UsersDbContext&gt;</c> e <c>AddEndpoints</c> com os assemblies do módulo e registra
     /// <c>Users:AdminEmails</c>, os repositórios, a unidade de trabalho, <see cref="ISignInService"/>,
     /// <see cref="ISessionValidator"/> e o emissor do cookie de sessão. SPEC-0016 — <c>App:PublicUrl</c> (base do link
-    /// mágico), o repositório dos links e a limpeza periódica deles (<see cref="CleanupMagicLinkTokensJob"/>).
+    /// mágico, validado na inicialização), o repositório dos links e a limpeza periódica deles (<see cref="CleanupMagicLinkTokensJob"/>).
     /// </summary>
     public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         services.AddOptions<UsersOptions>().Bind(configuration.GetSection(UsersOptions.SectionName));
-        services.AddOptions<PublicUrlOptions>().Bind(configuration.GetSection(PublicUrlOptions.SectionName));
+        services.AddOptions<PublicUrlOptions>()
+            .Bind(configuration.GetSection(PublicUrlOptions.SectionName))
+            .ValidateOnStart();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PublicUrlOptions>, PublicUrlOptionsValidator>());
         services.AddHttpContextAccessor();
 
         services.AddScoped<IUserRepository, UserRepository>();
