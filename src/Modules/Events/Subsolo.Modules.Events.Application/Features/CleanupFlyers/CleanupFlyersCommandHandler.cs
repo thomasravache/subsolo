@@ -23,6 +23,19 @@ internal sealed partial class CleanupFlyersCommandHandler(
     /// <summary>Por quanto tempo um flyer sem show fica guardado.</summary>
     public static readonly TimeSpan Retention = TimeSpan.FromHours(24);
 
+    /// <summary>
+    /// SPEC-0024 (H23-05, andaime) — o construtor que fica depois da remoção do <see cref="IEventsUnitOfWork"/> sem uso;
+    /// os dublês dos testes já constroem por ele.
+    /// </summary>
+    public CleanupFlyersCommandHandler(
+        IFlyerRepository flyers,
+        IFileStorage storage,
+        TimeProvider clock,
+        ILogger<CleanupFlyersCommandHandler> logger)
+        : this(flyers, storage, UnusedUnitOfWork.Instance, clock, logger)
+    {
+    }
+
     public async Task<Result> Handle(CleanupFlyersCommand command, CancellationToken cancellationToken)
     {
         // A exclusão condicional grava sozinha (comando direto no banco): nada fica para a unidade de trabalho.
@@ -47,4 +60,12 @@ internal sealed partial class CleanupFlyersCommandHandler(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Limpeza dos flyers sem show: {Deleted} apagados")]
     private static partial void LogDeleted(ILogger logger, int deleted);
+
+    /// <summary>SPEC-0024 (H23-05, andaime) — a unidade de trabalho que a limpeza nunca usa.</summary>
+    private sealed class UnusedUnitOfWork : IEventsUnitOfWork
+    {
+        public static readonly UnusedUnitOfWork Instance = new();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
 }
