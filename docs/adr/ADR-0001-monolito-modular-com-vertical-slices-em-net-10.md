@@ -44,7 +44,7 @@ Sem fronteiras explícitas e verificadas, os módulos se acoplam aos poucos e ca
 | `Moderation` | denúncias de show falso ou cancelado e a fila de decisão do admin |
 | `Site` | conteúdo institucional mantido pelo admin: apoiadores da página Apoie (esclarecimento de 2026-10-18, SPEC-0028) |
 
-**Direção das dependências entre módulos (esclarecimento de 2026-10-18):** `Notifications` não depende de nenhum módulo; `Users → Notifications`; `Events` não depende de módulos de domínio; `Profiles → Users, Events`; `Engagement → Users, Events, Profiles, Notifications`; `Moderation → Users, Events`; `Site` não depende de módulos. Quem precisa reagir a algo de um módulo que já depende dele define o evento ou a interface no próprio contrato (consumidor dono do contrato).
+**Direção das dependências entre módulos (esclarecimento de 2026-10-18):** `Notifications` não depende de nenhum módulo; `Users → Notifications`; `Events → Users` só pelo contrato de dados pessoais (`UserDeleted`, `IPersonalDataSection`; esclarecido em 2026-10-18 pela SPEC-0023) — logo o `Users` nunca depende do `Events`; `Profiles → Users, Events`; `Engagement → Users, Events, Profiles, Notifications`; `Moderation → Users, Events`; `Site` não depende de módulos. Quem precisa reagir a algo de um módulo que já depende dele define o evento ou a interface no próprio contrato (consumidor dono do contrato).
 
 **Estrutura** (padrão Milan Jovanovic, organização por feature):
 
