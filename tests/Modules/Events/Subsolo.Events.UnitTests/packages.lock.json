@@ -211,11 +211,23 @@
           "Subsolo.Common.Domain": "[1.0.0, )"
         }
       },
+      "subsolo.modules.events.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.events.presentation": {
         "type": "Project",
         "dependencies": {
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Events.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
         }
       },
       "subsolo.unittests.common": {
