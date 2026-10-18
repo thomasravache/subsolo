@@ -34,6 +34,7 @@ O fã segue cidades, bandas e casas e precisa ser avisado quando sai um show nov
 
 - **Contrato interno:** `INotificationChannel { Channel; SendAsync(Notification) }`. Os canais `WebPush` e `Email` entram no lançamento; `WhatsApp` entra depois, implementando a mesma interface.
 - **Disparo:** os módulos `Events` e `Engagement` publicam eventos de integração (`ShowPublished`, `ShowStatusChanged`, `AttendanceMarked`); o `Notifications` resolve quem deve receber (seguidores da cidade, da banda ou da casa) e enfileira os avisos (outbox).
+- **Esclarecimento de 2026-10-18 (direção das dependências, ADR-0001):** quem decide **quem** recebe é o `Engagement` (consome `ShowPublished`/`ShowChanged` do `Events`, cruza com seguidores e "vou", e roda o job do lembrete de véspera); o `Notifications` só **entrega** pelos canais, a partir de `INotificationsApi.EnqueueAsync(destinatários, aviso)`. O `Notifications` não depende de nenhum módulo de domínio: o e-mail do destinatário vem de `IRecipientDirectory`, definido no contrato do `Notifications` e implementado pelo `Users`; exclusão de conta e export chegam pelo `INotificationsApi` chamado pelo `Users`. Assim não há o ciclo `Users → Notifications → Engagement → Profiles → Users`.
 - **Show novo:** push imediato; por e-mail, resumo diário (no máximo um por dia).
 - **Lembrete de véspera:** job diário do Quartz às 10h, no fuso da cidade, para quem marcou "vou"; shows cancelados ou adiados ficam de fora.
 - **Idempotência:** chave única (usuário + show + tipo); um aviso nunca sai duas vezes (ADR-0011).
