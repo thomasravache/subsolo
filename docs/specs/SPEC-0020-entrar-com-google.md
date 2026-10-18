@@ -138,6 +138,7 @@ Configuração: Users:Google:Authority, Users:Google:ClientId, Users:Google:Clie
 
 ### 7.6 Outros
 - Segurança: checklist OWASP de autenticação no G4 (redirecionamento aberto, CSRF do fluxo, fixação de sessão, validação do `id_token`).
+- Herança da SPEC-0019: o E2E-01 da SPEC-0016 (`e2e/tests/auth/magic-link.spec.ts`) digita em `/entrar` sem passar por `fillInteractive`/`waitForHydration`; trocar para os helpers.
 - Herança da revisão da SPEC-0016: a região `aria-live` do reenvio em `/entrar` nasce vazia e é preenchida logo depois de montada, para o início da espera ser anunciado.
 
 **Dublês e dados de teste:** provedor OIDC falso (Testcontainers no IT; contêiner na pilha do Compose no E2E); e-mails `@subsolo.test`; `ClaimsPrincipal` de teste no UT.
