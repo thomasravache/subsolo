@@ -35,4 +35,8 @@ public sealed class City : Entity
         ArgumentException.ThrowIfNullOrWhiteSpace(timeZone);
         return new City(Guid.NewGuid(), slug, name, state, timeZone);
     }
+
+    /// <summary>SPEC-0017 — troca nome, UF e fuso; o slug não muda (links compartilhados não quebram).</summary>
+    public void Update(string name, string state, string timeZone) =>
+        throw new NotImplementedException("SPEC-0017: City.Update ainda não implementado.");
 }
