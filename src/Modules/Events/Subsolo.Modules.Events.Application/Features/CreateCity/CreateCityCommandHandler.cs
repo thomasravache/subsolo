@@ -37,13 +37,21 @@ internal sealed partial class CreateCityCommandHandler(
 
         if (await cities.ExistsAsync(slug, cancellationToken))
         {
-            return Result.Failure<AdminCityResponse>(
-                Error.Conflict(EventsErrors.CitySlugTaken, "Esse endereço já existe."));
+            return Result.Failure<AdminCityResponse>(EventsErrors.CitySlugTakenError());
         }
 
         var city = City.Create(slug, name, command.State, command.TimeZone);
         cities.Add(city);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DuplicateSlugException)
+        {
+            // Outro pedido gravou o mesmo slug entre a conferência e a gravação (Emenda 2).
+            return Result.Failure<AdminCityResponse>(EventsErrors.CitySlugTakenError());
+        }
+
         LogCityCreated(logger, command.AdminId, city.Slug);
         return Result.Success(new AdminCityResponse(city.Slug, city.Name, city.State, city.TimeZone));
     }

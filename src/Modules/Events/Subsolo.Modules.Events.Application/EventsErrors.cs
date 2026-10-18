@@ -41,5 +41,7 @@ public static class EventsErrors
     internal static Error StyleNotFoundError(string slug) =>
         Error.NotFound(StyleNotFound, $"Nenhum estilo com o slug \"{slug}\".");
 
+    internal static Error CitySlugTakenError() => Error.Conflict(CitySlugTaken, "Esse endereço já existe.");
+
     internal static Error StyleTakenError() => Error.Conflict(StyleTaken, "Esse estilo já existe.");
 }

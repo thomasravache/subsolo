@@ -36,7 +36,16 @@ internal sealed partial class CreateStyleCommandHandler(
 
         var style = Style.Create(slug, name);
         styles.Add(style);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DuplicateSlugException)
+        {
+            // Outro pedido gravou o mesmo slug entre a conferência e a gravação (Emenda 2).
+            return Result.Failure<StyleResponse>(EventsErrors.StyleTakenError());
+        }
+
         LogStyleCreated(logger, command.AdminId, style.Slug);
         return Result.Success(new StyleResponse(style.Slug, style.Name));
     }
