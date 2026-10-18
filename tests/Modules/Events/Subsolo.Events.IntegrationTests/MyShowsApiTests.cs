@@ -83,6 +83,45 @@ public sealed class MyShowsApiTests(PostgresFixture postgres)
         }
     }
 
+    /// <summary>
+    /// SPEC-0024 H23-06 (revisão da SPEC-0023) — cada item de <c>GET /me/shows</c> traz o <c>timeZone</c> (IANA) da cidade
+    /// do show, campo aditivo: a tela "Meus shows" deixa de consultar a agenda pública só para ler o fuso. Um show numa
+    /// cidade de Manaus e outro na cidade de exemplo (São Paulo).
+    /// </summary>
+    [Fact]
+    [Trait("Spec", "SPEC-0024:H23-06")]
+    [Trait("Kind", "Integration")]
+    public async Task EachItemCarriesTheTimeZoneOfItsCity()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = new FlyersApiFactory(await FlyersApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct));
+        var (admin, _) = await api.SignedInAsync(FlyersApiFactory.AdminEmail, ct);
+        using var _ = admin;
+        string manaus;
+        using (var city = await admin.PostJsonAsync(
+                   ShowsApi.AdminCities, new { name = "Manaus", state = "AM", timeZone = "America/Manaus", slug = (string?)null }, ct))
+        {
+            manaus = (await city.ShouldBeJsonAsync(HttpStatusCode.Created, ct)).GetProperty("slug").GetString().ShouldNotBeNull();
+        }
+
+        var (owner, _, producer) = await api.ProducerAsync(admin, "dono.h2306@subsolo.test", "Peste Produções", ct);
+        using var __ = owner;
+        var flyerId = await owner.FlyerAsync(ct, seed: 63);
+        var now = DateTimeOffset.UtcNow;
+        var inManaus = (await owner.CreateShowAsync(ShowsApi.ShowBody(producer, flyerId, ShowsApi.LocalAt(now, days: 10), title: "Show em Manaus", city: manaus), ct)).Id;
+        var inSaoPaulo = (await owner.CreateShowAsync(ShowsApi.ShowBody(producer, flyerId, ShowsApi.LocalAt(now, days: 11), title: "Show em São Paulo"), ct)).Id;
+
+        using var response = await owner.GetAsync(ShowsApi.MyShowsFor("upcoming"), ct);
+        var list = await response.ShouldBeJsonAsync(HttpStatusCode.OK, ct);
+
+        foreach (var (id, timeZone) in new[] { (inManaus, "America/Manaus"), (inSaoPaulo, "America/Sao_Paulo") })
+        {
+            var item = list.ById(id).ShouldNotBeNull($"o show {id} não está em /me/shows: {list}");
+            item.TryGetProperty("timeZone", out var zone).ShouldBeTrue($"item de /me/shows sem timeZone: {item}");
+            zone.GetString().ShouldBe(timeZone, $"timeZone do item {item}");
+        }
+    }
+
     /// <summary><c>GET /me/shows?period=</c> com 200 e <c>no-store</c>; devolve os ids na ordem.</summary>
     private static async Task<IReadOnlyList<Guid>> MineAsync(FlyersApiClient client, string period, CancellationToken ct)
     {
