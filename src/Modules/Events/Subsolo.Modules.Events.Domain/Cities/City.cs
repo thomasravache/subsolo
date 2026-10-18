@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Subsolo.Common.Domain;
 
 namespace Subsolo.Modules.Events.Domain.Cities;
@@ -37,6 +38,25 @@ public sealed class City : Entity
     }
 
     /// <summary>SPEC-0017 — troca nome, UF e fuso; o slug não muda (links compartilhados não quebram).</summary>
-    public void Update(string name, string state, string timeZone) =>
-        throw new NotImplementedException("SPEC-0017: City.Update ainda não implementado.");
+    public void Update(string name, string state, string timeZone)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(state);
+        ArgumentException.ThrowIfNullOrWhiteSpace(timeZone);
+        Name = name;
+        State = state;
+        TimeZone = timeZone;
+    }
+
+    /// <summary>
+    /// SPEC-0017 — endereços que nunca viram cidade: as páginas e rotas de um segmento do site (<c>/entrar</c>,
+    /// <c>/admin</c>, <c>/api</c>…), que a agenda <c>/{cidade}</c> esconderia.
+    /// </summary>
+    public static readonly FrozenSet<string> ReservedSlugs = FrozenSet.Create(
+        StringComparer.Ordinal,
+        "entrar", "conta", "admin", "apoie", "privacidade", "termos", "api", "health", "_next", "show", "banda", "casa",
+        "produtor", "buscar", "seguindo", "offline");
+
+    /// <summary>SPEC-0017 — <paramref name="slug"/> é um endereço reservado (<see cref="ReservedSlugs"/>)?</summary>
+    public static bool IsReservedSlug(string slug) => ReservedSlugs.Contains(slug);
 }

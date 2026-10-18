@@ -9,5 +9,11 @@ namespace Subsolo.Modules.Events.Application.Features.CreateCity;
 /// </summary>
 internal sealed class CreateCityCommandValidator : AbstractValidator<CreateCityCommand>
 {
-    // SPEC-0017: regras ainda não implementadas.
+    public CreateCityCommandValidator()
+    {
+        RuleFor(command => command.Name).CityName();
+        RuleFor(command => command.State).State();
+        RuleFor(command => command.TimeZone).TimeZone();
+        RuleFor(command => command.Slug).CitySlug().When(command => command.Slug is not null);
+    }
 }

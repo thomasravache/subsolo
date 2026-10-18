@@ -1,18 +1,20 @@
+using Microsoft.EntityFrameworkCore;
 using Subsolo.Modules.Events.Domain.Styles;
 
 namespace Subsolo.Modules.Events.Infrastructure.Styles;
 
 /// <summary>SPEC-0017 — estilos no schema <c>events</c>.</summary>
-#pragma warning disable CS9113 // SPEC-0017: andaime do contrato; o DbContext é usado na implementação.
 internal sealed class StyleRepository(EventsDbContext db) : IStyleRepository
-#pragma warning restore CS9113
 {
+    /// <summary>Rastreado pelo DbContext: um <c>Rename</c> é gravado no próximo <c>SaveChangesAsync</c>.</summary>
     public Task<Style?> GetBySlugAsync(string slug, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0017: StyleRepository ainda não implementado.");
+        db.Styles.SingleOrDefaultAsync(style => style.Slug == slug, cancellationToken);
 
-    public Task<IReadOnlyList<Style>> ListAsync(CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0017: StyleRepository ainda não implementado.");
+    public async Task<IReadOnlyList<Style>> ListAsync(CancellationToken cancellationToken) =>
+        await db.Styles.AsNoTracking()
+            .OrderBy(style => style.Name)
+            .ThenBy(style => style.Slug)
+            .ToListAsync(cancellationToken);
 
-    public void Add(Style style) =>
-        throw new NotImplementedException("SPEC-0017: StyleRepository ainda não implementado.");
+    public void Add(Style style) => db.Styles.Add(style);
 }

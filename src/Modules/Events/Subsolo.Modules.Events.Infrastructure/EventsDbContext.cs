@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Domain.Cities;
+using Subsolo.Modules.Events.Domain.Styles;
 
 namespace Subsolo.Modules.Events.Infrastructure;
 
@@ -13,9 +14,11 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
 
     public DbSet<City> Cities => Set<City>();
 
-    /// <summary>SPEC-0017 — unidade de trabalho do módulo (andaime do contrato).</summary>
-    Task IEventsUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0017: IEventsUnitOfWork ainda não implementado.");
+    /// <summary>SPEC-0017 — estilos de metal (os iniciais vêm da migração de dados).</summary>
+    public DbSet<Style> Styles => Set<Style>();
+
+    /// <summary>SPEC-0017 — unidade de trabalho do módulo: grava as mudanças rastreadas numa transação.</summary>
+    Task IEventsUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

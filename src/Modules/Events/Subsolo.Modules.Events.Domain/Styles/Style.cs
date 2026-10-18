@@ -22,10 +22,17 @@ public sealed class Style : Entity
 
     public string Name { get; private set; }
 
-    public static Style Create(string slug, string name) =>
-        throw new NotImplementedException("SPEC-0017: Style.Create ainda não implementado.");
+    public static Style Create(string slug, string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return new Style(Guid.NewGuid(), slug, name);
+    }
 
     /// <summary>Troca o nome exibido; o slug continua o mesmo.</summary>
-    public void Rename(string name) =>
-        throw new NotImplementedException("SPEC-0017: Style.Rename ainda não implementado.");
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Name = name;
+    }
 }
