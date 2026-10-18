@@ -7,12 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- SPEC-0023: a leitura interna dos shows (IShowsReadModel) é implementada no Infrastructure. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Events.Infrastructure" />
     <InternalsVisibleTo Include="Subsolo.Events.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Events.Domain/Subsolo.Modules.Events.Domain.csproj" />
+    <!-- SPEC-0023: os eventos públicos dos shows e a leitura dos perfis (IShowProfiles, Emenda v2). -->
+    <ProjectReference Include="../Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
   </ItemGroup>
 
 </Project>

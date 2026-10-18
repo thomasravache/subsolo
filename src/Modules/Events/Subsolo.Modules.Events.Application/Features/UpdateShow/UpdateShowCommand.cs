@@ -19,4 +19,4 @@ public sealed record UpdateShowCommand(
     IReadOnlyList<string>? Styles,
     string? Price,
     string? TicketUrl,
-    string? FlyerId) : ICommand<ShowSaved>;
+    string? FlyerId) : ICommand<ShowSaved>, IShowFields;

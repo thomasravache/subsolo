@@ -79,4 +79,93 @@ public sealed class Show : Entity
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public DateTimeOffset UpdatedAtUtc { get; private set; }
+
+    /// <summary>
+    /// Os perfis envolvidos no show: o organizador, a casa (se tiver perfil) e as bandas do line-up com perfil, sem
+    /// repetir.
+    /// </summary>
+    public IReadOnlyList<Guid> ProfileIds =>
+    [
+        .. new[] { OrganizerProfileId }
+            .Concat(Venue.ProfileId is { } venue ? [venue] : [])
+            .Concat(Lineup.Where(item => item.ProfileId is not null).Select(item => item.ProfileId!.Value))
+            .Distinct(),
+    ];
+
+    /// <summary>
+    /// Show novo, <see cref="ShowStatuses.Scheduled"/>, cadastrado por <paramref name="createdBy"/>; levanta
+    /// <see cref="ShowPublishedDomainEvent"/>. Quem chama já validou os dados (tamanhos, cidade, estilos e o flyer).
+    /// </summary>
+    public static Show Create(string slug, ShowData data, Guid createdBy, DateTimeOffset nowUtc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+        ArgumentNullException.ThrowIfNull(data);
+        var show = new Show
+        {
+            Id = Guid.CreateVersion7(),
+            Slug = slug,
+            CreatedBy = createdBy,
+            CreatedAtUtc = nowUtc,
+        };
+        show.Apply(data, nowUtc);
+        show.Raise(new ShowPublishedDomainEvent(show.Id, show.City, show.ProfileIds, show.StartsAtUtc));
+        return show;
+    }
+
+    /// <summary>Troca os dados do show (o slug não muda) e levanta <see cref="ShowChangedDomainEvent"/>.</summary>
+    public void Update(ShowData data, DateTimeOffset nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        Apply(data, nowUtc);
+        Raise(new ShowChangedDomainEvent(Id, Status, StartsAtUtc));
+    }
+
+    /// <summary>
+    /// Muda a situação (<see cref="ShowStatuses"/>) e levanta <see cref="ShowChangedDomainEvent"/>; a mesma situação de
+    /// antes não muda nada.
+    /// </summary>
+    public void ChangeStatus(string status, DateTimeOffset nowUtc)
+    {
+        if (!ShowStatuses.All.Contains(status, StringComparer.Ordinal))
+        {
+            throw new ArgumentException($"Situação de show desconhecida: {status}.", nameof(status));
+        }
+
+        if (status == Status)
+        {
+            return;
+        }
+
+        Status = status;
+        UpdatedAtUtc = nowUtc;
+        Raise(new ShowChangedDomainEvent(Id, Status, StartsAtUtc));
+    }
+
+    private void Apply(ShowData data, DateTimeOffset nowUtc)
+    {
+        City = data.City;
+        Title = data.Title;
+        StartsAtUtc = data.StartsAtUtc.ToUniversalTime();
+        OrganizerProfileId = data.OrganizerProfileId;
+        Venue = data.Venue;
+        Lineup = [.. data.Lineup];
+        Styles = [.. data.Styles];
+        Price = data.Price;
+        TicketUrl = data.TicketUrl;
+        FlyerId = data.FlyerId;
+        UpdatedAtUtc = nowUtc;
+    }
 }
+
+/// <summary>SPEC-0023 — os dados editáveis de um show (tudo menos o slug, a situação e quem cadastrou).</summary>
+public sealed record ShowData(
+    Guid OrganizerProfileId,
+    string Title,
+    string City,
+    DateTimeOffset StartsAtUtc,
+    ShowVenue Venue,
+    IReadOnlyList<ShowLineupItem> Lineup,
+    IReadOnlyList<string> Styles,
+    string Price,
+    string? TicketUrl,
+    string FlyerId);

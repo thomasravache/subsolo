@@ -4,7 +4,9 @@ using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Domain.Cities;
 using Subsolo.Modules.Events.Domain.Flyers;
+using Subsolo.Modules.Events.Domain.Shows;
 using Subsolo.Modules.Events.Domain.Styles;
+using Subsolo.Modules.Events.Infrastructure.Shows;
 
 namespace Subsolo.Modules.Events.Infrastructure;
 
@@ -30,9 +32,12 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
     /// <summary>SPEC-0022 — flyers enviados (as variantes ficam no <c>Media:Root</c>).</summary>
     public DbSet<Flyer> Flyers => Set<Flyer>();
 
+    /// <summary>SPEC-0023 — shows da agenda.</summary>
+    public DbSet<Show> Shows => Set<Show>();
+
     /// <summary>
     /// SPEC-0017 — unidade de trabalho do módulo: grava as mudanças rastreadas numa transação. Emenda 2: violação de
-    /// unicidade (23505) num slug de cidade ou estilo vira <see cref="DuplicateSlugException"/>. SPEC-0022: no id de um
+    /// unicidade (23505) num slug de cidade ou estilo (SPEC-0023: ou de show na cidade) vira <see cref="DuplicateSlugException"/>. SPEC-0022: no id de um
     /// flyer, <see cref="DuplicateFlyerException"/>.
     /// </summary>
     async Task IEventsUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
@@ -44,7 +49,7 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
         {
             SqlState: PostgresErrorCodes.UniqueViolation,
-            ConstraintName: CitySlugIndex or StyleSlugIndex,
+            ConstraintName: CitySlugIndex or StyleSlugIndex or ShowConfiguration.CitySlugIndex,
         })
         {
             ChangeTracker.Clear();

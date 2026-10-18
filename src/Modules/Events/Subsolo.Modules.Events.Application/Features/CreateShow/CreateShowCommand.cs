@@ -20,7 +20,7 @@ public sealed record CreateShowCommand(
     IReadOnlyList<string>? Styles,
     string? Price,
     string? TicketUrl,
-    string? FlyerId) : ICommand<ShowSaved>;
+    string? FlyerId) : ICommand<ShowSaved>, IShowFields;
 
 /// <summary>SPEC-0023 — a casa como chegou: <c>{ profileId }</c> ou <c>{ name }</c>.</summary>
 public sealed record ShowVenueInput(Guid? ProfileId, string? Name);

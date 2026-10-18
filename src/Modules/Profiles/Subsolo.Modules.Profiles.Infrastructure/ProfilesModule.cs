@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
+using Subsolo.Modules.Events.IntegrationEvents;
 using Subsolo.Modules.Profiles.Application;
 using Subsolo.Modules.Profiles.Application.Diagnostics;
 using Subsolo.Modules.Profiles.Domain.Profiles;
@@ -35,6 +36,8 @@ public static class ProfilesModule
         services.AddScoped<IProfilesReadModel, ProfilesReadModel>();
         services.AddScoped<IProfilesMaintenance, ProfilesMaintenance>();
         services.AddScoped<IProfilesApi, ProfilesApi>();
+        // SPEC-0023 (Emenda v2): a leitura dos perfis que o cadastro de show (Events) declara no próprio contrato.
+        services.AddScoped<IShowProfiles, ShowProfiles>();
         services.AddScoped<IPersonalDataSection, ProfilesPersonalDataSection>();
 
         services.AddModule<ProfilesDbContext>(

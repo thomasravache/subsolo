@@ -15,13 +15,13 @@ public sealed record CityResponse(
 
 /// <summary>
 /// SPEC-0008 — resumo de um show na agenda (contrato já definido para o épico de shows; vazio nesta spec).
-/// <see cref="StartsAt"/> em UTC.
+/// <see cref="StartsAt"/> em UTC (SPEC-0023: <see cref="DateTimeKind.Utc"/>, serializado com <c>Z</c>).
 /// </summary>
 public sealed record ShowSummaryResponse(
     Guid Id,
     string Slug,
     string Title,
-    DateTimeOffset StartsAt,
+    DateTime StartsAt,
     string VenueName,
     IReadOnlyList<string> Lineup,
     IReadOnlyList<string> Styles,
