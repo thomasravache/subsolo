@@ -218,8 +218,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 88cc681 (árvore suja) | 2026-10-17 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 35f6b0e | 2026-10-18 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 838200d | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 866ms) — 838200d | 2026-10-18 |
 | G4 Review | PENDING | | |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
