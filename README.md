@@ -67,6 +67,8 @@ Login (SPEC-0016): para testar entrar e sair, use a pilha do `./tools/compose-up
 
 Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos.
 
+Google (SPEC-0020): na pilha do `compose-up.sh` e no `aspire run` o "Continuar com Google" usa um provedor falso em http://127.0.0.1:8090 (digite o e-mail e, nas claims, `{"email": "...", "email_verified": true}`).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções
