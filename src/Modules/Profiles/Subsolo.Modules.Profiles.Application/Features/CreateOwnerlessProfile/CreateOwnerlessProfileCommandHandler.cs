@@ -28,7 +28,15 @@ internal sealed partial class CreateOwnerlessProfileCommandHandler(
 
         var profile = Profile.Create(draft, ownerUserId: null, clock.GetUtcNow());
         profiles.Add(profile);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ProfilesConflictException conflict) when (conflict.Conflict == ProfilesConflict.NameTaken)
+        {
+            // Emenda 3: outro perfil com o mesmo tipo e nome foi gravado no meio (índice único).
+            return Result.Failure<OwnerlessProfileCreated>(ProfilesErrors.NameTakenError());
+        }
         LogCreated(logger, profile.Id);
         return Result.Success(new OwnerlessProfileCreated(profile.Id));
     }

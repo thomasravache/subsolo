@@ -307,7 +307,7 @@ export interface paths {
     put?: never;
     /**
      * Aprovar pedido de perfil
-     * @description Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a ter o papel artist. Exige o cabeçalho X-CSRF.
+     * @description Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a ter o papel artist. Perfil reivindicado que sumiu dá 404; nome tomado no tipo enquanto o pedido esperava dá 409. Exige o cabeçalho X-CSRF.
      */
     post: operations["ApproveProfileRequest"];
     delete?: never;
@@ -1618,7 +1618,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
-      /** @description Not Found (code=profiles.request_not_found) */
+      /** @description Not Found (code=profiles.request_not_found) (code=profiles.not_found) */
       404: {
         headers: {
           [name: string]: unknown;
@@ -1627,7 +1627,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
-      /** @description Conflict (code=profiles.request_decided) (code=profiles.already_owned) */
+      /** @description Conflict (code=profiles.request_decided) (code=profiles.already_owned) (code=profiles.name_taken) */
       409: {
         headers: {
           [name: string]: unknown;

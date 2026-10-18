@@ -37,7 +37,15 @@ internal sealed partial class RequestProfileCommandHandler(
 
         var request = ProfileRequest.SubmitNew(command.UserId, draft, command.Contact!.Trim(), clock.GetUtcNow());
         requests.Add(request);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ProfilesConflictException conflict) when (conflict.Conflict == ProfilesConflict.RequestPending)
+        {
+            // Emenda 3: outro pedido do mesmo usuário foi gravado no meio (índice único parcial dos pendentes).
+            return Result.Failure<ProfileRequestCreated>(ProfilesErrors.RequestPendingError());
+        }
         ProfilesTelemetry.Requested(draft.Type, ProfileRequestKinds.New);
         LogRequested(logger, request.Id, command.UserId);
         return Result.Success(new ProfileRequestCreated(request.Id, request.Status));

@@ -21,6 +21,8 @@ internal sealed class ProfileConfiguration : IEntityTypeConfiguration<Profile>
         builder.ToTable("profiles");
         builder.HasKey(profile => profile.Id);
         builder.Property(profile => profile.Id).HasColumnName("id").ValueGeneratedNever();
+        // Emenda 3: token de concorrência otimista (a coluna de sistema xmin do PostgreSQL).
+        builder.Property<uint>(ProfilesDbContextVersion.Name).IsRowVersion();
         builder.Property(profile => profile.Type).HasColumnName("type").HasMaxLength(TypeMaxLength);
         builder.Property(profile => profile.Name).HasColumnName("name").HasMaxLength(Profile.NameMaxLength);
         builder.Property(profile => profile.Slug).HasColumnName("slug").HasMaxLength(ProfileSlug.MaxLength);

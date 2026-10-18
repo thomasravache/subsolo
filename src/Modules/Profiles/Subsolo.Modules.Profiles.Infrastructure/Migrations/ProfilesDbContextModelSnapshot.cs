@@ -197,6 +197,12 @@ namespace Subsolo.Modules.Profiles.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("type");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerUserId");
@@ -256,6 +262,12 @@ namespace Subsolo.Modules.Profiles.Infrastructure.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("status");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DecidedAtUtc");
@@ -263,6 +275,10 @@ namespace Subsolo.Modules.Profiles.Infrastructure.Migrations
                     b.HasIndex("RequesterUserId");
 
                     b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.HasIndex(new[] { "RequesterUserId" }, "IX_profile_requests_pending_requester")
+                        .IsUnique()
+                        .HasFilter("status = 'pending'");
 
                     b.ToTable("profile_requests", "profiles");
                 });

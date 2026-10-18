@@ -1073,7 +1073,7 @@
           "Admin"
         ],
         "summary": "Aprovar pedido de perfil",
-        "description": "Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a ter o papel artist. Exige o cabeçalho X-CSRF.",
+        "description": "Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a ter o papel artist. Perfil reivindicado que sumiu dá 404; nome tomado no tipo enquanto o pedido esperava dá 409. Exige o cabeçalho X-CSRF.",
         "operationId": "ApproveProfileRequest",
         "parameters": [
           {
@@ -1148,7 +1148,7 @@
             }
           },
           "404": {
-            "description": "Not Found (code=profiles.request_not_found)",
+            "description": "Not Found (code=profiles.request_not_found) (code=profiles.not_found)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1158,7 +1158,7 @@
             }
           },
           "409": {
-            "description": "Conflict (code=profiles.request_decided) (code=profiles.already_owned)",
+            "description": "Conflict (code=profiles.request_decided) (code=profiles.already_owned) (code=profiles.name_taken)",
             "content": {
               "application/problem+json": {
                 "schema": {

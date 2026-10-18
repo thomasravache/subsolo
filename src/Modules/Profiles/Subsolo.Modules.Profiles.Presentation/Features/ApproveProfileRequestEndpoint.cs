@@ -25,13 +25,16 @@ internal sealed class ApproveProfileRequestEndpoint : IEndpoint
             .WithSummary("Aprovar pedido de perfil")
             .WithDescription(
                 "Aprova o pedido: o perfil novo é criado com o dono, ou o perfil reivindicado ganha o dono, que passa a " +
-                "ter o papel artist. Exige o cabeçalho X-CSRF.")
+                "ter o papel artist. Perfil reivindicado que sumiu dá 404; nome tomado no tipo enquanto o pedido esperava dá " +
+                "409. Exige o cabeçalho X-CSRF.")
             .Produces<ProfileRequestApproved>(StatusCodes.Status200OK)
             // O 400 é só o do anti-forgery (o código vem das convenções de admin).
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblemCode(StatusCodes.Status404NotFound, ProfilesErrors.RequestNotFound)
+            .WithMetadata(new ProblemCodeMetadata(StatusCodes.Status404NotFound, ProfilesErrors.NotFound))
             .ProducesProblemCode(StatusCodes.Status409Conflict, ProfilesErrors.RequestDecided)
-            .WithMetadata(new ProblemCodeMetadata(StatusCodes.Status409Conflict, ProfilesErrors.AlreadyOwned));
+            .WithMetadata(new ProblemCodeMetadata(StatusCodes.Status409Conflict, ProfilesErrors.AlreadyOwned))
+            .WithMetadata(new ProblemCodeMetadata(StatusCodes.Status409Conflict, ProfilesErrors.NameTaken));
 
     private static async Task<IResult> HandleAsync(
         Guid id,

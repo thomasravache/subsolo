@@ -32,7 +32,15 @@ internal sealed partial class RejectProfileRequestCommandHandler(
         }
 
         request.Reject(command.Reason!.Trim(), clock.GetUtcNow());
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ProfilesConflictException)
+        {
+            // Emenda 3: outra decisão chegou antes (token otimista).
+            return Result.Failure(ProfilesErrors.RequestDecidedError());
+        }
         ProfilesTelemetry.Decided(ProfileRequestStatuses.Rejected);
         LogRejected(logger, request.Id);
         return Result.Success();
