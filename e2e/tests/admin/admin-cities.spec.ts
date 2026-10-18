@@ -180,8 +180,13 @@ test.describe("cidades e estilos no painel do admin", () => {
         url.searchParams.get("returnTo") === adminPath,
     );
 
-    // Fã logado: página 403.
-    await signIn(page, uniqueEmail("e2e02-fa-admin"));
+    // Fã logado: página 403. A entrada volta para /conta e só segue quando a conta aparece, para o cookie de sessão
+    // já estar gravado (sem returnTo, o helper não espera a navegação depois de "Entrar no Subsolo", e o goto
+    // seguinte cancelaria a troca do link pela sessão).
+    await signIn(page, uniqueEmail("e2e02-fa-admin"), "/conta");
+    await expect(
+      page.getByRole("heading", { level: 1, name: /minha conta/i }),
+    ).toBeVisible();
     const forbidden = await page.goto(adminPath);
     expect(forbidden?.status(), `GET ${adminPath} como fã`).toBe(403);
     await expect(page).toHaveURL((url) => url.pathname === adminPath);
