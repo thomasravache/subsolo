@@ -79,13 +79,27 @@ public sealed class ProfileRequestApiTests(PostgresFixture postgres)
         var body = ProfilesRequests.Band("Podridão");
         switch (scenario)
         {
-            case "nome curto": body["name"] = "P"; break;
-            case "cidade inexistente": body["city"] = "atlantida"; break;
-            case "estilo inexistente": body["styles"] = new[] { "sertanejo" }; break;
-            case "instagram http": body["links"] = new Dictionary<string, string?> { ["instagram"] = "http://instagram.com/x" }; break;
-            case "instagram de outro domínio": body["links"] = new Dictionary<string, string?> { ["instagram"] = "https://evil.com/x" }; break;
-            case "contato curto": body["contact"] = "ab"; break;
-            default: body["type"] = "tribute"; break;
+            case "nome curto":
+                body["name"] = "P";
+                break;
+            case "cidade inexistente":
+                body["city"] = "atlantida";
+                break;
+            case "estilo inexistente":
+                body["styles"] = new[] { "sertanejo" };
+                break;
+            case "instagram http":
+                body["links"] = new Dictionary<string, string?> { ["instagram"] = "http://instagram.com/x" };
+                break;
+            case "instagram de outro domínio":
+                body["links"] = new Dictionary<string, string?> { ["instagram"] = "https://evil.com/x" };
+                break;
+            case "contato curto":
+                body["contact"] = "ab";
+                break;
+            default:
+                body["type"] = "tribute";
+                break;
         }
 
         using var response = await fan.PostAsync(ProfilesRequests.Requests, body, ct);
