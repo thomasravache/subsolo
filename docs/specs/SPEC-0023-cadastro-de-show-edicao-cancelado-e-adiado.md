@@ -9,9 +9,9 @@ created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0022]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Common/Subsolo.Common.Infrastructure/**, src/Common/Subsolo.Common.Application/**, tests/Common/**, infra/caddy/**, src/Subsolo.AppHost/**, web/next.config.ts, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
+touches: [src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**, src/Common/Subsolo.Common.Infrastructure/**, src/Common/Subsolo.Common.Application/**, tests/Common/**, infra/caddy/**, src/Subsolo.AppHost/**, web/next.config.ts, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0013, ADR-0015]
 external: []
 size: M
@@ -43,14 +43,14 @@ O produtor, a casa ou a banda aprovados (papel `artist`) cadastram um show em me
 - Vários organizadores por show e show em várias cidades.
 
 ## 3. Dependências
-- **Implementações necessárias:** SPEC-0021 (perfis aprovados, papel `artist`, `IProfilesApi`) e SPEC-0022 (flyer, `IFlyerCatalog`).
+- **Implementações necessárias:** SPEC-0021 (perfis aprovados e papel `artist`; o `Profiles` implementa o `IShowProfiles` do Emenda v2) e SPEC-0022 (flyer, `IFlyerCatalog`).
 - **Contratos consumidos:** N/A — as duas já estarão implementadas.
 - **Pré-requisitos externos:** N/A.
 
 ## 4. Decisão Arquitetural
 **Contexto:** módulo `Events` (agenda da SPEC-0008, cidades e estilos da SPEC-0017, `IEventsCatalog` da SPEC-0021, flyers da SPEC-0022); telas de conta com chamadas do navegador à API (SPEC-0016/0019/0021).
 
-**Decisão:** slices `CreateShow`, `UpdateShow`, `ChangeShowStatus`, `ListMyShows` e a evolução de `GetCityAgenda`; a autorização por recurso fica no handler (ADR-0003): o usuário precisa ser dono do perfil organizador (via `IProfilesApi`), salvo o admin. Perfis de casa e de banda no line-up são validados pelo `IProfilesApi`; nomes livres são aceitos para quem ainda não está no Subsolo.
+**Decisão:** slices `CreateShow`, `UpdateShow`, `ChangeShowStatus`, `ListMyShows` e a evolução de `GetCityAgenda`; a autorização por recurso fica no handler (ADR-0003): o usuário precisa ser dono do perfil organizador (via `IShowProfiles`, interface do contrato do `Events` implementada pelo `Profiles` — Emenda v2), salvo o admin. Perfis de casa e de banda no line-up são validados pelo `IProfilesApi`; nomes livres são aceitos para quem ainda não está no Subsolo.
 
 **Justificativa:** ADR-0001 (`Events` é dono de shows; perfis lidos pela interface pública), ADR-0003 (autorização por recurso no caso de uso), ADR-0013 (agenda SSR já pronta para receber os shows).
 
@@ -65,7 +65,7 @@ O produtor, a casa ou a banda aprovados (papel `artist`) cadastram um show em me
 - **Segurança:** criar/editar/mudar situação exigem `artist` dono do perfil ou `admin` (anônimo 401, fã 403, artista de outro perfil 403); `X-CSRF`; rate limit `default`; link do ingresso só `https`; textos com tamanho limitado e exibidos escapados (IT-03, UT-02).
 - **Privacidade e dados pessoais:** o show não guarda dado pessoal além do perfil organizador (público); export da SPEC-0019 ganha a seção "shows" com os shows criados pelo usuário (IT-07).
 - **Disponibilidade e resiliência:** os eventos vão pela outbox na mesma transação (SPEC-0009); falha ao ligar o flyer desfaz a criação.
-- **Acessibilidade (UI):** WCAG 2.2 AA nas três telas com axe; data e hora com campos nativos rotulados; line-up com botão "Adicionar banda" acessível por teclado; selos com texto; confirmação de cancelar em `dialog` com foco preso.
+- **Acessibilidade (UI):** WCAG 2.2 AA nas três telas com axe; data e hora com campos nativos rotulados; line-up com botão "Adicionar outra banda" acessível por teclado; selos com texto; confirmação de cancelar em `dialog` com foco preso.
 - **Custo:** zero.
 
 ## 6. Artefato A — Contrato
@@ -92,6 +92,12 @@ GET /api/v1/cities/{slug}/agenda:         # contrato da SPEC-0008 inalterado; ag
 
 ```csharp
 // Subsolo.Modules.Events.IntegrationEvents (público)
+// Emenda v2 — leitura de perfis no contrato do consumidor (Events.IntegrationEvents), implementada por Profiles.Infrastructure (ADR-0001: Profiles → Events, nunca o contrário)
+public interface IShowProfiles {
+    Task<IReadOnlyList<ShowProfile>> GetOwnedProfilesAsync(Guid userId, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, ShowProfile>> GetManyAsync(IReadOnlyCollection<Guid> profileIds, CancellationToken ct);  // só perfis aprovados
+}
+public sealed record ShowProfile(Guid Id, string Type, string Name, string Slug, string City, Guid? OwnerUserId);
 public sealed record ShowPublishedIntegrationEvent(Guid ShowId, string City, IReadOnlyList<Guid> ProfileIds, DateTimeOffset StartsAtUtc);
 public sealed record ShowChangedIntegrationEvent(Guid ShowId, string Status, DateTimeOffset StartsAtUtc);
 // ProfileIds = organizador + casa (se perfil) + bandas do line-up com perfil
@@ -105,7 +111,7 @@ Telas:
   ações "Editar", "Adiar" (status postponed), "Cancelar show" → dialog "Cancelar este show? Ele continua na agenda com o selo CANCELADO." + "Cancelar show" / "Voltar"
   vazio → "Nenhum show cadastrado ainda."
 /conta/shows/novo e /conta/shows/{id}: "CADASTRAR SHOW" / "EDITAR SHOW"; organizador (se tiver mais de um perfil, ou admin); flyer (upload com prévia, SPEC-0022);
-  nome; data; hora; casa (busca entre perfis de casa ou nome livre); cidade; line-up ("Adicionar banda"); estilos (chips); preço; link do ingresso;
+  nome; data; hora; casa (busca entre perfis de casa ou nome livre); cidade; line-up ("Adicionar outra banda", como no Stitch); estilos (chips); preço; link do ingresso;
   "Publicar show" / "Salvar" → volta para /conta/shows com "Show publicado." / "Alterações salvas."; erros ligados aos campos
 ```
 
@@ -166,7 +172,7 @@ Telas:
   - **H22-02, Caddy:** o `Cache-Control` imutável vale só para respostas 200; 404 e erros não ficam em cache. `file_server` com `hide .*`, para não servir os temporários.
   - **H22-03, teto do corpo:** `MaxRequestBodySize` = 10 MiB + folga do multipart antes de `ReadFormAsync`, também sem `Content-Length` (corpo chunked) → 400 `events.flyer_too_large`.
   - **H22-04, libvips:** carregadores não confiáveis bloqueados (`BlockUntrusted`; só jpeg, png e webp liberados); JPEG com `FailOn.Truncated` se o IT-05 da SPEC-0022 seguir verde, com teste de um JPEG que só gera aviso benigno (bytes extras antes de um marcador) aceito.
-  - **H22-05, fila:** a fila de 1 espera com tempo limite (30 s) e responde 503 `security.service_unavailable`. `FlyerImages.ContentHash` é conferido com o hash do handler.
+  - **H22-05, fila:** a fila de 1 espera com tempo limite (30 s) e responde 503 `service.unavailable`. `FlyerImages.ContentHash` é conferido com o hash do handler.
   - **H22-06, Compose:** o E2E do cadastro envia o flyer pela pilha do Compose e o lê pelo Caddy, provando o `media-init`, a libvips nativa na imagem e o `/media`. No `next dev`, o `/media` chega à API por rewrite.
 
 **Dublês e dados de teste:** perfis e catálogo de teste no UT; perfis aprovados e flyers criados pela API nos IT e no E2E; `FakeTimeProvider`.
@@ -237,6 +243,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-18 | G1 | spec | §4 faz o Events ler perfis pelo IProfilesApi, mas o Profiles já depende do Events (IEventsCatalog): ciclo proibido pelo ADR-0001 e pelo teste NoModuleCycles | Test-writer isolou o dublê TestProfiles em ShowsHarness.cs | Architect | Emenda v2 — IShowProfiles no contrato do Events, implementado pelo Profiles.Infrastructure | 2026-10-18 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -277,3 +284,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0023`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-18 | (a) O `Events` lê perfis por `IShowProfiles` (contrato do `Events`, implementado pelo `Profiles.Infrastructure`), não pelo `IProfilesApi`. (b) A janela de -6 h a +90 dias é o padrão da agenda quando `from` e `to` não vêm; com eles, valem as regras da SPEC-0008. (c) `/me/shows`: para o artista, os shows cujo organizador é um perfil dele; para o admin, os que ele criou (`created_by`). (d) Um flyer pode ser usado por mais de um show (ligar é idempotente). (e) Hora local que não existe (lacuna do horário de verão) → 400 `invalid_show` em `startsLocal`; hora ambígua aceita qualquer um dos instantes, desde que a volta dê a mesma hora local. (f) 503 com o código `service.unavailable`, o que já existe. (g) Botão "Adicionar outra banda", como no Stitch. | Relatório do Test-writer (IMP-01): ciclo Events ↔ Profiles e pontos em aberto | SPEC-0024, SPEC-0025, SPEC-0026 (leem perfis pelo `IShowProfiles` se precisarem no `Events`) | Architect (piloto automático do Thomas, 2026-10-17) |
