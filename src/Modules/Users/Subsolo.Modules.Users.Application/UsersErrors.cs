@@ -11,6 +11,9 @@ public static class UsersErrors
     /// <summary>Usuário da sessão não encontrado.</summary>
     public const string UserNotFound = "users.not_found";
 
+    /// <summary>SPEC-0016 — link mágico inexistente, expirado ou já usado (o mesmo código para os três).</summary>
+    public const string MagicLinkInvalid = "users.magic_link_invalid";
+
     internal static Error InvalidEmailError() =>
         Error.Validation(
             InvalidEmail,
@@ -18,6 +21,15 @@ public static class UsersErrors
             new Dictionary<string, string[]>(StringComparer.Ordinal)
             {
                 ["email"] = ["Informe um e-mail válido com até 254 caracteres."],
+            });
+
+    internal static Error MagicLinkInvalidError() =>
+        Error.Validation(
+            MagicLinkInvalid,
+            "Este link expirou ou já foi usado.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["token"] = ["O link é inexistente, expirou ou já foi usado. Peça outro link."],
             });
 
     internal static Error UserNotFoundError() =>

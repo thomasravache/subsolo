@@ -12,6 +12,12 @@
       "subsolo.common.domain": {
         "type": "Project"
       },
+      "subsolo.modules.notifications.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.users.domain": {
         "type": "Project",
         "dependencies": {

@@ -31,7 +31,8 @@ internal sealed class SignOutEndpoint : IEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblemCode(StatusCodes.Status400BadRequest, SecurityProblems.CsrfInvalid)
             .ProducesProblemCode(StatusCodes.Status401Unauthorized, SecurityProblems.AuthRequired)
-            .ProducesProblemCode(StatusCodes.Status429TooManyRequests, SecurityProblems.RateLimited);
+            .ProducesProblemCode(StatusCodes.Status429TooManyRequests, SecurityProblems.RateLimited)
+            .ProducesProblemCode(StatusCodes.Status503ServiceUnavailable, SecurityProblems.ServiceUnavailable);
 
     private static async Task<IResult> HandleAsync(
         HttpContext httpContext,

@@ -1,3 +1,5 @@
+import { unstable_rethrow } from "next/navigation";
+
 import { apiClient, apiTimeoutMs, type CityAgenda } from "./client";
 
 /**
@@ -29,7 +31,9 @@ export async function getCityAgenda(slug: string): Promise<CityAgendaResult> {
     return response.status === 404 || response.status === 400
       ? { kind: "not-found" }
       : { kind: "unavailable" };
-  } catch {
+  } catch (error) {
+    // SPEC-0016 (§7.6 g): os sinais internos do Next.js (renderização dinâmica, prerender) seguem adiante.
+    unstable_rethrow(error);
     return { kind: "unavailable" };
   }
 }

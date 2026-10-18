@@ -20,6 +20,13 @@
       "window": "00:10:00",
       "having": "count >= 3",
       "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
+    },
+    {
+      "title": "Falha no envio do link",
+      "filter": "event.name = 'MagicLinkSendFailed'",
+      "window": "00:10:00",
+      "having": "count > 5",
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/link-magico-sem-envio.md"
     }
   ]
 }
