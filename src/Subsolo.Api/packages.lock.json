@@ -311,7 +311,8 @@
           "Subsolo.Common.Application": "[1.0.0, )",
           "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
           "Subsolo.Modules.Profiles.Domain": "[1.0.0, )",
-          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )"
+          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
         }
       },
       "subsolo.modules.profiles.domain": {

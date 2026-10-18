@@ -2,7 +2,7 @@
 
   <!--
     SPEC-0021 — contrato público do módulo Profiles (ADR-0001: só depende de Common.Application): IProfilesApi (lido pelo
-    cadastro de show) e o evento ProfileOwnerAssignedIntegrationEvent (o Users dá o papel artist).
+    cadastro de show). O evento que dá o papel artist (ArtistRoleGranted) é do contrato do Users (Emenda v2).
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

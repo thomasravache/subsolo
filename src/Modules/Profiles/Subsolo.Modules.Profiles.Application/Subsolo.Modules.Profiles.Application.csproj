@@ -24,6 +24,11 @@
     <ProjectReference Include="../Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
     <!-- SPEC-0021: cidades e estilos pela interface pública do Events (IEventsCatalog). -->
     <ProjectReference Include="../../Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <!--
+      SPEC-0021 (Emenda v2): o contrato público do Users — ArtistRoleGranted (publicado aqui, consumido lá), UserDeleted,
+      IPersonalDataSection e IUsersDirectory. A dependência entre os módulos é só Profiles → Users (ADR-0001).
+    -->
+    <ProjectReference Include="../../Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
   </ItemGroup>
 
 </Project>

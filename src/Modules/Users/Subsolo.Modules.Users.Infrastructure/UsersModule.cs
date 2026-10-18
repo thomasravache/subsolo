@@ -60,6 +60,9 @@ public static class UsersModule
         services.AddScoped<ISignInService, SignInService>();
         services.AddScoped<ISessionValidator, SessionValidator>();
         services.AddScoped<GoogleSignInCallback>();
+        // SPEC-0021 (Emenda v2): scaffold do contrato — os e-mails para a fila do admin do Profiles.
+        services.AddScoped<IUsersDirectory>(_ =>
+            throw new NotImplementedException("SPEC-0021: IUsersDirectory ainda não implementado."));
 
         var google = configuration.GetSection(UsersOptions.SectionName).Get<UsersOptions>()?.Google ?? new GoogleOptions();
         services.AddAuthentication().AddGoogleSignIn(google);
