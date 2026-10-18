@@ -19,8 +19,36 @@ const nextConfigPath = join(webDir, "next.config.ts");
 const sourceExtensions = /\.(?:ts|tsx|js|jsx|mjs|cjs)$/;
 const testFile = /\.test\.(?:ts|tsx|js|jsx)$/;
 
-/** Diretiva `"use client"` no topo do arquivo (depois só de comentários). */
-const useClient = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(["'])use client\1/;
+/** A diretiva em si, logo no ponto em que o código começa. */
+const useClientDirective = /^(["'])use client\1/;
+
+/**
+ * Diretiva `"use client"` no topo do arquivo (depois só de espaços e comentários). Varredura linear: pula espaços,
+ * comentários de linha e de bloco com `indexOf`, sem regex com quantificadores aninhados (sem backtracking).
+ */
+function startsWithUseClient(text: string): boolean {
+  let at = 0;
+  while (at < text.length) {
+    if (/\s/.test(text[at] ?? "")) {
+      at += 1;
+    } else if (text.startsWith("//", at)) {
+      const end = text.indexOf("\n", at);
+      if (end < 0) {
+        return false;
+      }
+      at = end + 1;
+    } else if (text.startsWith("/*", at)) {
+      const end = text.indexOf("*/", at + 2);
+      if (end < 0) {
+        return false;
+      }
+      at = end + 2;
+    } else {
+      return useClientDirective.test(text.slice(at));
+    }
+  }
+  return false;
+}
 
 /** Leitura do ambiente: `process.env`, `process["env"]` ou `process['env']`. */
 const processEnv = /\bprocess\s*(?:\.\s*env\b|\[\s*(["'])env\1\s*\])/;
@@ -41,7 +69,7 @@ function scanSource(file: string, text: string): Finding[] {
   if (nextPublic.test(text)) {
     findings.push({ file, rule: "usa NEXT_PUBLIC_" });
   }
-  if (useClient.test(text) && processEnv.test(text)) {
+  if (startsWithUseClient(text) && processEnv.test(text)) {
     findings.push({ file, rule: '"use client" lendo process.env' });
   }
   return findings;
@@ -122,6 +150,14 @@ describe("variáveis de ambiente fora do navegador", () => {
         "const c = { publicRuntimeConfig: {} };",
       ),
     ).toHaveLength(1);
+  });
+
+  it("SPEC-0016:UT-05 a varredura do topo é linear (comentários aninhados em série não travam)", () => {
+    const sample = `/*${"*//*".repeat(50_000)}\nconst url = process.env.API_URL;\n`;
+
+    const started = performance.now();
+    expect(scanSource("exemplo/longo.ts", sample)).toEqual([]);
+    expect(performance.now() - started).toBeLessThan(1_000);
   });
 
   it("SPEC-0016:UT-05 código de servidor pode ler process.env", () => {

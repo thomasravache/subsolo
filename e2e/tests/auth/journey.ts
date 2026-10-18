@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 
 import { expect, type Page } from "@playwright/test";
 
@@ -11,7 +12,7 @@ import { composeProject, mailpitURL } from "./environment";
 
 /** Um e-mail novo e só deste teste (`@subsolo.test`). */
 export function uniqueEmail(prefix: string): string {
-  const random = Math.random().toString(36).slice(2, 10);
+  const random = randomUUID().replaceAll("-", "").slice(0, 12);
   return `${prefix}-${Date.now().toString(36)}-${random}@subsolo.test`;
 }
 
