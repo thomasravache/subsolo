@@ -28,3 +28,19 @@ test.describe("cidade inexistente carregada direto", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("título da cidade inexistente", () => {
+  test("SPEC-0024:CH-01 o título da página carregada direto é Cidade não encontrada · Subsolo [jornada: agenda]", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "mobile-chrome",
+      "verificação da página carregada direto: basta um projeto",
+    );
+
+    const response = await page.goto(missingCity);
+
+    expect(response?.status()).toBe(404);
+    await expect(page).toHaveTitle("Cidade não encontrada · Subsolo");
+  });
+});
