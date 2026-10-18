@@ -17,6 +17,7 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Agenda da cidade (com o shell) | desktop | `a9c7a58a62a5431bb833a132609c0c70` | [agenda-desktop.png](stitch/agenda-desktop.png) |
 | Página do show (estrutura) | celular | `98cc07285ec5439197d3273da0f7a11d` | [show-mobile.png](stitch/show-mobile.png) |
 | Página do show (estrutura) | desktop | `ddae50bdb35f4cdaa2437a12f23fe257` | [show-desktop.png](stitch/show-desktop.png) |
+| Admin - Cidades e Estilos (SPEC-0017) | desktop | `a14b19f0df03454483d4dd012d44ea8f` | pendente (capturada pelo Architect) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).
@@ -118,6 +119,19 @@ Regras que saem da tabela:
 | `Footer` | `links={apoie, instagram, privacidade}` | "Apoie" em destaque; Instagram abre em nova aba (avisado ao leitor de tela) |
 | `BottomNav` | `city current?` | navegação inferior fixa, só no celular (< 768 px), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque |
 | `AppShell` | `cities` | link "Pular para o conteúdo", `Header`, conteúdo, `Footer`, `BottomNav`; a cidade atual vem da URL |
+
+Painel do admin (`web/src/components/admin/`, SPEC-0017):
+
+| Componente | Props principais | Regras |
+|---|---|---|
+| `AdminNav` | `current` | menu do painel só com as páginas que existem, `aria-current="page"`; coluna lateral no desktop, linha no celular |
+| `AdminPanel` | `cities styles` | colunas CIDADES e ESTILOS (lado a lado a partir de 1024 px) e a região `role="status"` (`aria-live="polite"`) das mensagens de sucesso |
+| `CitiesPanel` | `initialCities onSuccess` | tabela Nome/UF/Fuso/Endereço; "Nova cidade" com a prévia `subsolo.app/{slug}` gerada do nome; "Editar" com o endereço só leitura |
+| `StylesPanel` | `initialStyles onSuccess` | estilos em chips com "Renomear"; campo "Novo estilo" + "Adicionar" |
+| `Field` | `id label error? hint?` | rótulo visível; erro e dica ligados ao controle por `aria-describedby`, com `aria-invalid` no erro |
+
+Ajustes aprovados sobre a tela do Stitch: sem textos de exclusão nem a caixa "Regra da cena", sem contagens de shows,
+menu só com o que existe, endereço só leitura na edição e o domínio real (`subsolo.app`) no lugar de "subsolo.art".
 
 Ícones: SVG de traço inline (`icons.tsx`), decorativos (`aria-hidden`), sempre ao lado de um texto.
 

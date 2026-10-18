@@ -20,7 +20,14 @@ export type SessionResult =
 export const sessionCookieName = "__Host-subsolo";
 
 export async function getSession(): Promise<SessionResult> {
-  const cookie = (await headers()).get("cookie") ?? "";
+  return sessionForCookie((await headers()).get("cookie") ?? "");
+}
+
+/**
+ * SPEC-0017 — a sessão do cabeçalho `cookie` recebido (`GET /api/v1/me` com ele repassado); usado também pelo `proxy`,
+ * que decide o status das páginas do admin antes da renderização (ADR-0016).
+ */
+export async function sessionForCookie(cookie: string): Promise<SessionResult> {
   if (!cookie.includes(`${sessionCookieName}=`)) {
     return { kind: "anonymous" };
   }

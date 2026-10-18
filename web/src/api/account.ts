@@ -1,54 +1,20 @@
-import createClient from "openapi-fetch";
+import {
+  browserApi as api,
+  csrfHeaders,
+  failure,
+  guarded,
+  type ApiResult,
+} from "./browser";
 
-import type { paths } from "./schema";
+export { unavailableCode } from "./browser";
 
 /**
- * SPEC-0016 — chamadas do navegador à API da conta (entrar por link mágico, sair, quem sou eu). O navegador fala com
- * a API pelo mesmo domínio (`/api/...`, o Caddy encaminha), com o cookie de sessão `__Host-subsolo` (HttpOnly) indo e
- * voltando sozinho: nenhum endereço vem do ambiente e nada da sessão fica no JavaScript. Toda mutação leva o token
- * anti-forgery no cabeçalho `X-CSRF` (SPEC-0010), pedido logo antes.
+ * SPEC-0016 — chamadas do navegador à API da conta (entrar por link mágico, sair, quem sou eu), pela base comum de
+ * `./browser` (mesmo domínio, cookie de sessão HttpOnly, `X-CSRF` em toda mutação).
  */
-const api = createClient<paths>({ baseUrl: "", credentials: "same-origin" });
-
-const antiforgeryPath = "/api/v1/antiforgery";
 
 /** Resultado de uma chamada: sucesso ou o código de erro estável do ProblemDetails (`extensions.code`). */
-export type AccountResult<T = undefined> =
-  { ok: true; value: T } | { ok: false; code: string; status: number };
-
-/** Código usado quando a API não responde (rede fora, tempo esgotado) ou responde sem ProblemDetails. */
-export const unavailableCode = "network.unavailable";
-
-/** Cabeçalhos com o token anti-forgery novo, para a mutação seguinte. */
-async function csrfHeaders(): Promise<Record<string, string>> {
-  const response = await fetch(antiforgeryPath, {
-    credentials: "same-origin",
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`antiforgery: ${response.status}`);
-  }
-  const { token } = (await response.json()) as { token: string };
-  return { "X-CSRF": token };
-}
-
-function failure(status: number, error: unknown): AccountResult<never> {
-  const code =
-    typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code: unknown }).code)
-      : unavailableCode;
-  return { ok: false, code, status };
-}
-
-async function guarded<T>(
-  call: () => Promise<AccountResult<T>>,
-): Promise<AccountResult<T>> {
-  try {
-    return await call();
-  } catch {
-    return { ok: false, code: unavailableCode, status: 0 };
-  }
-}
+export type AccountResult<T = undefined> = ApiResult<T>;
 
 /** `POST /api/v1/auth/magic-link`: pede o link de acesso para o e-mail (202 igual exista a conta ou não). */
 export function requestMagicLink(

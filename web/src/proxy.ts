@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
+import { sessionForCookie } from "@/api/session";
 import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
-import { isAccountPage } from "@/components/ui/shell";
+import { adminAccessHeader, type AdminAccess } from "@/app/admin/admin-access";
+import { isAccountPage, isAdminPage } from "@/components/ui/shell";
 
 /**
  * SPEC-0010 — toda página passa por aqui: o proxy gera um nonce novo por requisição, monta a Content-Security-Policy
@@ -18,6 +20,11 @@ import { isAccountPage } from "@/components/ui/shell";
  * SPEC-0016 — as páginas de entrar e da conta (`/entrar`, `/entrar/confirmar`, `/conta`) são exceções explícitas
  * (ADR-0016): não são cidades e seguem direto para o Next.js, com `Cache-Control: no-store` (dados de quem está
  * logado, nunca guardados pelo navegador nem por intermediários).
+ *
+ * SPEC-0017 — as páginas do admin (`/admin/…`) também têm o status decidido aqui, com a sessão de `GET /api/v1/me`
+ * (cookie da requisição repassado): anônimo → 307 para `/entrar?returnTo=…`; logado sem o papel admin → 403; API fora
+ * do ar → 503; admin → segue. Sempre com `Cache-Control: no-store` e sem consultar a agenda. A página é avisada pelo
+ * cabeçalho interno {@link adminAccessHeader}, que o proxy sempre sobrescreve.
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -68,6 +75,47 @@ function contentSecurityPolicy(nonce: string): string {
   ].join("; ");
 }
 
+const statusByAdminAccess: Record<AdminAccess, number> = {
+  ok: 200,
+  forbidden: 403,
+  unavailable: 503,
+};
+
+/** Acesso ao painel do admin pela sessão do cookie recebido; `anonymous` = sem sessão válida (vai para `/entrar`). */
+async function adminAccessOf(
+  request: NextRequest,
+): Promise<AdminAccess | "anonymous"> {
+  const session = await sessionForCookie(request.headers.get("cookie") ?? "");
+  switch (session.kind) {
+    case "signed-in":
+      return session.me.roles.includes("admin") ? "ok" : "forbidden";
+    case "anonymous":
+      return "anonymous";
+    default:
+      return "unavailable";
+  }
+}
+
+/** A resposta de uma página do admin, conforme o acesso (o 403 e o 503 renderizam a própria página, com a mensagem). */
+async function adminResponse(
+  request: NextRequest,
+  headers: Headers,
+): Promise<NextResponse> {
+  const access = await adminAccessOf(request);
+  if (access === "anonymous") {
+    const signIn = new URL("/entrar", request.nextUrl);
+    signIn.searchParams.set("returnTo", request.nextUrl.pathname);
+    return NextResponse.redirect(signIn, 307);
+  }
+  headers.set(adminAccessHeader, access);
+  return access === "ok"
+    ? NextResponse.next({ request: { headers } })
+    : NextResponse.rewrite(request.nextUrl, {
+        status: statusByAdminAccess[access],
+        request: { headers },
+      });
+}
+
 async function agendaKind(pathname: string): Promise<CityAgendaResult["kind"]> {
   const slug = pathname.slice(1);
   return citySlug.test(slug) ? (await getCityAgenda(slug)).kind : "not-found";
@@ -78,10 +126,13 @@ export async function proxy(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.set("Content-Security-Policy", csp);
 
+  headers.delete(adminAccessHeader);
+
   const { pathname } = request.nextUrl;
   const accountPage = isAccountPage(pathname);
+  const adminPage = isAdminPage(pathname);
   const kind =
-    !accountPage && agendaPath.test(pathname)
+    !accountPage && !adminPage && agendaPath.test(pathname)
       ? await agendaKind(pathname)
       : undefined;
   if (kind) {
@@ -90,8 +141,9 @@ export async function proxy(request: NextRequest) {
     headers.delete(agendaStatusHeader);
   }
 
-  const response =
-    kind === undefined || kind === "ok"
+  const response = adminPage
+    ? await adminResponse(request, headers)
+    : kind === undefined || kind === "ok"
       ? NextResponse.next({ request: { headers } })
       : NextResponse.rewrite(request.nextUrl, {
           status: statusByKind[kind],
@@ -102,7 +154,7 @@ export async function proxy(request: NextRequest) {
   for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
   }
-  if (accountPage) {
+  if (accountPage || adminPage) {
     response.headers.set("Cache-Control", "no-store");
   }
   return response;
