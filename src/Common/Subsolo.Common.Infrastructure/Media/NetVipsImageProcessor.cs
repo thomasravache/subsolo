@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.Extensions.Options;
 using NetVips;
 using Subsolo.Common.Application.Media;
 using Subsolo.Common.Domain;
@@ -12,6 +13,10 @@ namespace Subsolo.Common.Infrastructure.Media;
 /// vira erro → <see cref="MediaErrors.Unprocessable"/>), e gera <c>thumb</c> e <c>full</c> (WebP) e <c>og</c> (JPEG
 /// 1200×630: o flyer inteiro sobre um fundo escuro desfocado dele mesmo), todos sem metadados (EXIF, GPS, XMP, ICC).
 /// Um processamento por vez por instância (fila de 1, §5 da SPEC-0022): os outros pedidos esperam a vez.
+/// SPEC-0023 (H22-04/H22-05): ao subir, bloqueia no libvips as operações não confiáveis e todos os carregadores fora
+/// JPEG, PNG e WebP; os bytes soltos do cabeçalho do JPEG (aviso benigno) saem antes da decodificação estrita
+/// (<see cref="JpegHeaderCleaner"/>), e dado corrompido ou arquivo truncado continuam erro; a espera
+/// pela vez tem o tempo limite <see cref="MediaOptions.QueueTimeout"/> e, passado, devolve <see cref="MediaErrors.Busy"/>.
 /// </summary>
 internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
 {
@@ -32,18 +37,44 @@ internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
     /// <summary>Tela pequena do fundo do <c>og</c>: desfocada e ampliada 5× para 1200×630.</summary>
     private const int BackgroundScale = 5;
 
+    /// <summary>Classes do libvips dos carregadores aceitos (liberados depois de bloquear todos os outros).</summary>
+    private static readonly string[] AllowedLoaderClasses = ["VipsForeignLoadJpeg", "VipsForeignLoadPng", "VipsForeignLoadWebp"];
+
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public NetVipsImageProcessor()
+    private readonly TimeSpan _queueTimeout;
+
+    public NetVipsImageProcessor(IOptions<MediaOptions> options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        _queueTimeout = options.Value.QueueTimeout;
         // Sem cache de operações do libvips: cada flyer é processado uma vez, e o cache só seguraria memória.
         Cache.Max = 0;
+        BlockUnusedLoaders();
+    }
+
+    /// <summary>
+    /// Bloqueia as operações marcadas como não confiáveis e todos os carregadores, e libera só JPEG, PNG e WebP (vale
+    /// para o processo inteiro: o libvips só é usado aqui).
+    /// </summary>
+    internal static void BlockUnusedLoaders()
+    {
+        global::NetVips.NetVips.BlockUntrusted = true;
+        Operation.Block("VipsForeignLoad", true);
+        foreach (var loader in AllowedLoaderClasses)
+        {
+            Operation.Block(loader, false);
+        }
     }
 
     public async Task<Result<FlyerImages>> ProcessFlyerAsync(Stream original, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(original);
-        await _gate.WaitAsync(ct);
+        if (!await _gate.WaitAsync(_queueTimeout, ct))
+        {
+            return Result.Failure<FlyerImages>(MediaErrors.BusyError());
+        }
+
         try
         {
             var buffer = await ReadUpToLimitAsync(original, ct);
@@ -123,7 +154,8 @@ internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
     /// <summary>
     /// Decodifica o original com <paramref name="masterWidth"/> de largura (na orientação de exibição), em sRGB 8 bits, na
     /// memória. Decodificação estrita: no JPEG, qualquer aviso do decodificador (dados corrompidos, arquivo truncado) é
-    /// erro; no PNG e no WebP, os erros. Redução já na leitura quando o formato permite (JPEG <c>shrink</c>, WebP
+    /// erro, depois de tirar os bytes soltos do cabeçalho (SPEC-0023, H22-04: aviso benigno; com <c>FailOn.Truncated</c>
+    /// o JPEG corrompido do IT-05 da SPEC-0022 passaria); no PNG e no WebP, os erros. Redução já na leitura quando o formato permite (JPEG <c>shrink</c>, WebP
     /// <c>scale</c>); o resto, depois, por blocos.
     /// </summary>
     private static Image LoadMaster(byte[] buffer, Header header, int masterWidth)
@@ -134,6 +166,7 @@ internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
         if (header.Loader == JpegLoader)
         {
             failOn = Enums.FailOn.Warning;
+            buffer = JpegHeaderCleaner.WithoutExtraneousHeaderBytes(buffer);
             var shrink = 1;
             while (shrink < MaxJpegShrink && shrink * 2 <= ratio)
             {

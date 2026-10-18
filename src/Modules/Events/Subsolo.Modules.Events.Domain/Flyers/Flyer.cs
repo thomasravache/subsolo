@@ -56,6 +56,18 @@ public sealed class Flyer : Entity
     /// <summary>Os caminhos das três variantes (relativos ao <c>Media:Root</c>).</summary>
     public static IReadOnlyList<string> VariantPaths(string id) => [VariantPath(id, Thumb), VariantPath(id, Full), VariantPath(id, Og)];
 
+    /// <summary>
+    /// SPEC-0023 (H22-01) — o mesmo arquivo foi enviado de novo: se o flyer ainda não está ligado a um show, a contagem
+    /// das 24 h da limpeza recomeça em <paramref name="nowUtc"/>.
+    /// </summary>
+    public void Renew(DateTimeOffset nowUtc)
+    {
+        if (AttachedAtUtc is null && nowUtc > CreatedAtUtc)
+        {
+            CreatedAtUtc = nowUtc;
+        }
+    }
+
     /// <summary>Liga o flyer a um show (a primeira ligação vale; ligar de novo não muda a data).</summary>
     public void Attach(DateTimeOffset attachedAtUtc) => AttachedAtUtc ??= attachedAtUtc;
 }

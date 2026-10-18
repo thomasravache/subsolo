@@ -26,6 +26,12 @@ public static class MediaErrors
     /// <summary>422: cabeçalho legível, mas a imagem não pôde ser decodificada.</summary>
     public const string Unprocessable = "media.unprocessable";
 
+    /// <summary>
+    /// SPEC-0023 (H22-05) — 503: a fila de processamento (um por vez) não liberou a vez dentro do tempo limite; quem
+    /// recebe responde com o código <c>service.unavailable</c>.
+    /// </summary>
+    public const string Busy = "media.busy";
+
     private static readonly IReadOnlyDictionary<string, string[]> NoFields = new Dictionary<string, string[]>(StringComparer.Ordinal);
 
     public static Error InvalidTypeError() =>
@@ -36,6 +42,9 @@ public static class MediaErrors
 
     public static Error TooManyPixelsError() =>
         Error.Validation(TooManyPixels, "A imagem passa de 40 megapixels.", NoFields);
+
+    public static Error BusyError() =>
+        Error.Failure(Busy, "O processamento de imagens está ocupado. Tente de novo em instantes.");
 
     public static Error UnprocessableError() =>
         Error.Unprocessable(Unprocessable, "A imagem não pôde ser processada (arquivo corrompido?).");
