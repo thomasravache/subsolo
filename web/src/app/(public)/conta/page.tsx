@@ -82,8 +82,7 @@ export default async function AccountPage() {
       </AccountSection>
       <AccountSection id="privacidade-e-dados" title="Privacidade & dados">
         <p className="text-sm text-text-muted">
-          Baixe uma cópia dos seus dados salvos na plataforma, incluindo
-          histórico de presença em shows e bandas seguidas.
+          Baixe uma cópia de todos os dados que o Subsolo guarda de você.
         </p>
         <ExportDataButton />
       </AccountSection>
@@ -92,9 +91,9 @@ export default async function AccountPage() {
       </AccountSection>
       <AccountSection id="excluir-conta" title="Excluir conta" danger>
         <p className="text-sm text-text-muted">
-          Atenção: esta ação é irreversível. Todos os seus dados, histórico de
-          confirmações de presença e preferências serão permanentemente apagados
-          dos servidores do Subsolo.
+          Atenção: isso não dá para desfazer. Sua conta e tudo o que o Subsolo
+          guarda de você são apagados agora; as cópias de segurança somem em até
+          6 meses.
         </p>
         <DeleteAccountDialog />
       </AccountSection>
