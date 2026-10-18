@@ -71,6 +71,8 @@ Google (SPEC-0020): na pilha do `compose-up.sh` e no `aspire run` o "Continuar c
 
 Perfis (SPEC-0021): o fã pede o perfil em https://localhost:8443/conta/perfis; com `admin@subsolo.test`, a fila fica em https://localhost:8443/admin/fila e o perfil sem dono em https://localhost:8443/admin/perfis/novo.
 
+Flyers (SPEC-0022): no `aspire run` os flyers ficam em `artifacts/media` e são servidos pela API em `/media/flyers/*`; na pilha do `compose-up.sh` ficam no volume `media` e o Caddy os serve em https://localhost:8443/media/flyers/.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções
