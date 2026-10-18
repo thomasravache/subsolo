@@ -51,6 +51,17 @@ public sealed class User : Entity
         return user;
     }
 
+    /// <summary>
+    /// SPEC-0019 — troca o nome de exibição pelo valor já validado (sem espaços nas pontas, 1 a
+    /// <see cref="DisplayNameMaxLength"/> caracteres) ou o remove (<see langword="null"/>).
+    /// </summary>
+    public void ChangeDisplayName(string? displayName) =>
+        throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+
+    /// <summary>SPEC-0019 — a conta vai ser apagada: levanta <see cref="UserDeletedDomainEvent"/> (só o id).</summary>
+    public void Delete() =>
+        throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+
     /// <summary>Dá ou tira o papel <see cref="UserRoles.Admin"/> conforme a configuração atual (os outros papéis ficam).</summary>
     public void SyncAdminRole(bool isAdmin)
     {

@@ -28,6 +28,12 @@ public static class UsersModule
     public const string MeterName = UsersTelemetry.MeterName;
 
     /// <summary>
+    /// SPEC-0019 (§7.6, herança da revisão da SPEC-0016) — teto absoluto da sessão (90 dias desde a entrada), exposto
+    /// para o host definir a validade do cookie sem importar <c>Users.Domain</c>.
+    /// </summary>
+    public static TimeSpan SessionAbsoluteLifetime => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+
+    /// <summary>
     /// Chama <c>AddModule&lt;UsersDbContext&gt;</c> e <c>AddEndpoints</c> com os assemblies do módulo e registra
     /// <c>Users:AdminEmails</c>, os repositórios, a unidade de trabalho, <see cref="ISignInService"/>,
     /// <see cref="ISessionValidator"/> e o emissor do cookie de sessão. SPEC-0016 — <c>App:PublicUrl</c> (base do link

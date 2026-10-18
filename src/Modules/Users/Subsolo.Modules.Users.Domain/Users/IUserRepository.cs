@@ -11,4 +11,7 @@ public interface IUserRepository
 
     /// <summary>Inclui um usuário novo (gravado no próximo <c>SaveChangesAsync</c>).</summary>
     void Add(User user);
+
+    /// <summary>SPEC-0019 — apaga o usuário (no próximo <c>SaveChangesAsync</c>; as sessões caem junto pela FK).</summary>
+    void Remove(User user);
 }

@@ -9,4 +9,9 @@ internal sealed class SessionRepository(UsersDbContext db) : ISessionRepository
         await db.Sessions.FindAsync([idHash], cancellationToken);
 
     public void Add(Session session) => db.Sessions.Add(session);
+
+    public Task<IReadOnlyList<Session>> ListByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
+
+    public void Remove(Session session) => throw new NotImplementedException("SPEC-0019: scaffold — implementar no Green.");
 }

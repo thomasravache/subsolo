@@ -20,4 +20,10 @@ public interface IMagicLinkTokenRepository
 
     /// <summary>Apaga os links usados ou expirados antes de <paramref name="cutoffUtc"/>; devolve quantos.</summary>
     Task<int> DeleteStaleAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken);
+
+    /// <summary>SPEC-0019 — os links (usados ou não) emitidos para <paramref name="normalizedEmail"/>.</summary>
+    Task<IReadOnlyList<MagicLinkToken>> ListByEmailAsync(string normalizedEmail, CancellationToken cancellationToken);
+
+    /// <summary>SPEC-0019 — apaga o link (no próximo <c>SaveChangesAsync</c>).</summary>
+    void Remove(MagicLinkToken token);
 }
