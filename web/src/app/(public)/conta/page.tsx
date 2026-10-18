@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -6,6 +7,7 @@ import { getSession } from "@/api/session";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
 import { DisplayNameForm } from "@/components/account/DisplayNameForm";
 import { ExportDataButton } from "@/components/account/ExportDataButton";
+import { buttonClasses } from "@/components/ui/Button";
 
 import {
   AccountMain,
@@ -17,7 +19,8 @@ import { SignOutButton } from "./sign-out-button";
 /**
  * SPEC-0016/SPEC-0019 — `/conta` (tela "Minha Conta - Subsolo" do Stitch, sem a engrenagem do topo, sem o selo
  * "Entrou com Google" e com "Sessão atual" só com "Sair da conta"): "Seus dados" (e-mail só leitura e nome de
- * exibição), "Privacidade & dados" (baixar os dados), "Sessão atual" e "Excluir conta". Renderizada por requisição com
+ * exibição), "Perfis" (SPEC-0021: link para "Meus perfis"), "Privacidade & dados" (baixar os dados), "Sessão atual" e
+ * "Excluir conta". Renderizada por requisição com
  * a sessão do cookie e servida com `Cache-Control: no-store` (pelo `proxy`); sem sessão → `/entrar?returnTo=/conta`.
  */
 export const metadata: Metadata = { title: "Minha conta | Subsolo" };
@@ -79,6 +82,18 @@ export default async function AccountPage() {
           <dd className="break-all text-base text-text">{session.me.email}</dd>
         </dl>
         <DisplayNameForm initialName={session.me.displayName ?? null} />
+      </AccountSection>
+      <AccountSection id="perfis" title="Perfis">
+        <p className="text-sm text-text-muted">
+          Toca uma banda, tem uma casa ou produz shows? Peça o seu perfil ou
+          acompanhe os pedidos.
+        </p>
+        <Link
+          href="/conta/perfis"
+          className={buttonClasses("secondary", "md", "self-start")}
+        >
+          Meus perfis
+        </Link>
       </AccountSection>
       <AccountSection id="privacidade-e-dados" title="Privacidade & dados">
         <p className="text-sm text-text-muted">

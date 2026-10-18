@@ -42,6 +42,9 @@ Sem fronteiras explícitas e verificadas, os módulos se acoplam aos poucos e ca
 | `Engagement` | seguir cidade/banda/casa; "vou" e contagem |
 | `Notifications` | inscrições de push, e-mail, aviso de show novo, lembrete na véspera; canais plugáveis (WhatsApp depois) |
 | `Moderation` | denúncias de show falso ou cancelado e a fila de decisão do admin |
+| `Site` | conteúdo institucional mantido pelo admin: apoiadores da página Apoie (esclarecimento de 2026-10-18, SPEC-0028) |
+
+**Direção das dependências entre módulos (esclarecimento de 2026-10-18):** `Notifications` não depende de nenhum módulo; `Users → Notifications`; `Events` não depende de módulos de domínio; `Profiles → Users, Events`; `Engagement → Users, Events, Profiles, Notifications`; `Moderation → Users, Events`; `Site` não depende de módulos. Quem precisa reagir a algo de um módulo que já depende dele define o evento ou a interface no próprio contrato (consumidor dono do contrato).
 
 **Estrutura** (padrão Milan Jovanovic, organização por feature):
 
@@ -75,6 +78,7 @@ web/                                ← Next.js (ADR-0013)
   - `<M>.Application` não depende de Infrastructure nem de Presentation.
   - Um módulo não referencia projetos de outro módulo, exceto `<Outro>.IntegrationEvents`.
   - `IntegrationEvents` não depende de nada além de `Common.Application` e dos tipos de resultado `Result`, `Result<T>`, `Error` e `ErrorType` de `Common.Domain` (esclarecimento de 2026-10-17, SPEC-0018: interfaces públicas como `INotificationsApi` devolvem `Result`, como os slices; entidades e eventos de domínio continuam proibidos).
+  - Sem ciclos entre módulos, contando as dependências de `IntegrationEvents`. Quando um módulo A já depende de B e B precisa reagir a algo de A, o evento é definido no contrato de **B** (o consumidor) e publicado por A (esclarecimento de 2026-10-18, SPEC-0021: `ArtistRoleGranted` fica em `Users.IntegrationEvents` e é publicado pelo `Profiles`).
   - Tipos de Domain/Application/Infrastructure de um módulo são `internal` sempre que possível (`sealed` por padrão).
 - Cada `DbContext` acessa apenas o schema do seu módulo.
 - Não há ciclos de dependência entre módulos.

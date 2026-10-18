@@ -11,6 +11,7 @@ using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Events.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure.Cities;
 using Subsolo.Modules.Notifications.Infrastructure;
+using Subsolo.Modules.Profiles.Infrastructure;
 using Subsolo.Modules.Users.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,10 +31,12 @@ builder.Services.AddApiSecurity(builder.Configuration);
 builder.Services.AddEventsModule(builder.Configuration);
 builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddNotificationsModule(builder.Configuration);
+builder.Services.AddProfilesModule(builder.Configuration);
 
-// Métricas dos módulos: SPEC-0014 (subsolo.users.sign_ins e subsolo.users.sessions_revoked) e SPEC-0018
-// (subsolo.notifications.emails).
-builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(UsersModule.MeterName, NotificationsModule.MeterName));
+// Métricas dos módulos: SPEC-0014 (subsolo.users.sign_ins e subsolo.users.sessions_revoked), SPEC-0018
+// (subsolo.notifications.emails) e SPEC-0021 (subsolo.profiles.requests e subsolo.profiles.decisions).
+builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(
+    UsersModule.MeterName, NotificationsModule.MeterName, ProfilesModule.MeterName));
 
 var app = builder.Build();
 

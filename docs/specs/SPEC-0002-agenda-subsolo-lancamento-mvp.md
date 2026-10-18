@@ -47,8 +47,8 @@ Cada feature é um vertical slice num dos módulos do ADR-0001. Os módulos conv
 
 ```
 Profiles ──ProfileApproved/ProfileClaimed──> Users (papel artist)
-Events ──ShowPublished / ShowStatusChanged──> Notifications (aviso de show novo; tira dos lembretes)
-Engagement ──AttendanceMarked / FollowAdded──> Notifications (lembrete de véspera; destinatários)
+Events ──ShowPublished / ShowChanged──> Engagement (aviso de show novo e lembrete: decide quem recebe)
+Engagement ──INotificationsApi.EnqueueAsync──> Notifications (só entrega; ADR-0014 esclarecido em 2026-10-18)
 Moderation ──ReportResolved──> Events (marca cancelado/remove)
 Events <──consulta pública IProfilesApi── Profiles (nomes e links de bandas e casas na line-up)
 ```
@@ -72,7 +72,7 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | Perfil público | "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a) |
 | Seguir + push e preferências | "Avisos e Seguindo - Subsolo" (35b282364c47425c9e9cfe89e7b1c1e2) |
 | Denúncia e moderação | "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e a "Fila do Admin" |
-| Apoie, privacidade e termos | "Apoie o Subsolo" (gerada; id a confirmar no canvas — a ferramenta estourou o tempo) |
+| Apoie, privacidade e termos — SPEC-0028 | "Apoie o Subsolo v2" (eac502a950a545e481a18f8ea78d4149), "Privacidade" (e5fe5036928f4a29bf3c95fd51132ea3) e "Admin - Apoiadores" (af1b0081f220444c893e1d85e071c1bc) |
 | Minha conta | SPEC-0019 |
 | Entrar com Google | botão já na tela "Entrar - Subsolo" (SPEC-0016) |
 
@@ -99,14 +99,14 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0023 | Cadastro de show (< 2 min), edição, cancelado/adiado | full | feature | M | Perfis, Cidades | Flyer |
 | SPEC-0025 | Agenda da cidade com filtro por data e estilo | full | feature | M | Cadastro de show | — |
 | SPEC-0024 | Página do show com Open Graph e compartilhar | full | feature | M | Cadastro de show | Flyer |
-| a criar | Perfil público de banda, casa e produtor (futuros e passados) | full | feature | M | Perfis | Cadastro de show |
-| a criar | Seguir cidade, banda e casa | full | feature | S | Contas | Perfis |
-| a criar | "Vou" com contagem | full | feature | S | Contas | Cadastro de show |
-| a criar | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
-| a criar | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
-| a criar | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
-| a criar | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
-| a criar | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
+| SPEC-0026 | Perfil público de banda, casa e produtor (futuros e passados) | full | feature | M | Perfis | Cadastro de show |
+| SPEC-0027 | Seguir cidade, banda e casa | full | feature | S | Contas | Perfis |
+| SPEC-0029 | "Vou" com contagem | full | feature | S | Contas | Cadastro de show |
+| SPEC-0030 | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
+| SPEC-0031 | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
+| SPEC-0032 | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
+| SPEC-0033 | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
+| SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
 
 ## 5. Estratégia de Entrega
 - **Ambientes:** local e CI até o go-live (SPEC-0003); depois, staging automático a cada merge e produção com confirmação por release.

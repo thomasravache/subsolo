@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0021 — casos de uso do módulo Profiles (ADR-0001), um por pasta em Features/: pedir, reivindicar, listar os meus,
+    a fila do admin, aprovar, recusar e criar perfil sem dono. Cidade e estilo são validados pelo IEventsCatalog
+    (Events.IntegrationEvents), nunca pelo banco do Events.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Profiles.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) e os endpoints (Presentation) usam os tipos internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Profiles.Infrastructure" />
+    <InternalsVisibleTo Include="Subsolo.Modules.Profiles.Presentation" />
+    <InternalsVisibleTo Include="Subsolo.Profiles.UnitTests" />
+    <InternalsVisibleTo Include="Subsolo.Profiles.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.Domain/Subsolo.Modules.Profiles.Domain.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
+    <!-- SPEC-0021: cidades e estilos pela interface pública do Events (IEventsCatalog). -->
+    <ProjectReference Include="../../Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <!--
+      SPEC-0021 (Emenda v2): o contrato público do Users — ArtistRoleGranted (publicado aqui, consumido lá), UserDeleted,
+      IPersonalDataSection e IUsersDirectory. A dependência entre os módulos é só Profiles → Users (ADR-0001).
+    -->
+    <ProjectReference Include="../../Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

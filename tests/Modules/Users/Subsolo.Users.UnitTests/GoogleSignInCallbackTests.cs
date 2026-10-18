@@ -87,10 +87,42 @@ public sealed class GoogleSignInCallbackTests
         outcome.RedirectTo.ShouldBe(EmailNotVerified, scenario);
     }
 
+    [Fact]
+    [Trait("Spec", "SPEC-0021:IT-06")]
+    public async Task AFailedSignInWithAVerifiedEmailGoesToTheProviderErrorNotToTheEmailError()
+    {
+        var signIn = new FailingSignInService();
+        var callback = new GoogleSignInCallback(signIn);
+
+        var outcome = await callback.CompleteAsync(
+            Principal(("email", Email, ClaimValueTypes.String), ("email_verified", "true", ClaimValueTypes.Boolean)),
+            "/curitiba",
+            TestContext.Current.CancellationToken);
+
+        signIn.Calls.ShouldBe(1, "o e-mail verificado chega ao ISignInService");
+        outcome.SignedIn.ShouldBeFalse();
+        outcome.RedirectTo.ShouldBe(
+            "/entrar?erro=google",
+            "a falha da entrada com e-mail verificado é do provedor/entrada (provider_error), não de e-mail não verificado");
+    }
+
     private static ClaimsPrincipal Principal(params (string Type, string Value, string ValueType)[] claims) =>
         new(new ClaimsIdentity(
             claims.Select(claim => new Claim(claim.Type, claim.Value, claim.ValueType, "https://accounts.google.test")),
             "google"));
+
+    /// <summary>SPEC-0021 — dublê do <see cref="ISignInService"/> que conta as chamadas e responde falha.</summary>
+    private sealed class FailingSignInService : ISignInService
+    {
+        public int Calls { get; private set; }
+
+        public Task<Result<SignInResult>> SignInAsync(string email, SignInMethod method, CancellationToken cancellationToken)
+        {
+            Calls++;
+            return Task.FromResult(Result.Failure<SignInResult>(Error.Validation(
+                "users.invalid_email", "E-mail inválido.", new Dictionary<string, string[]>(StringComparer.Ordinal))));
+        }
+    }
 
     /// <summary>Dublê do <see cref="ISignInService"/>: guarda cada chamada e responde sucesso.</summary>
     private sealed class RecordingSignInService : ISignInService

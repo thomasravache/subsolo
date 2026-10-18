@@ -20,6 +20,10 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Admin - Cidades e Estilos (SPEC-0017) | desktop | `a14b19f0df03454483d4dd012d44ea8f` | pendente (capturada pelo Architect) |
 | Minha Conta (SPEC-0019) | celular | `3b3765cf36c344f6bb48e52429570e12` | pendente (capturada pelo Architect) |
 | Excluir Conta — confirmação (SPEC-0019) | celular | `aeb47861556747ba9bacc732f8c05ae8` | pendente (capturada pelo Architect) |
+| Meus perfis (SPEC-0021) | celular | `90a9b7cb839a4992a9500362c48ec9e1` | pendente (capturada pelo Architect) |
+| Pedir Perfil (SPEC-0021; também `/admin/perfis/novo`, sem o contato) | celular | `af62730f71414b6082259d068b025b00` | pendente (capturada pelo Architect) |
+| Reivindicar Perfil (SPEC-0021) | celular | `75b72cdf03284a5998d07d0fd8ae6543` | pendente (capturada pelo Architect) |
+| Fila do Admin (SPEC-0021, só a aba "Pedidos de perfil") | desktop | `600bfe18de6e44a995790033ab0f817e` | pendente (capturada pelo Architect) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).

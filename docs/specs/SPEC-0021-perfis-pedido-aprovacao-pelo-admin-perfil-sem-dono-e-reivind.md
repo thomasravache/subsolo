@@ -4,14 +4,14 @@ title: "Perfis: pedido, aprovação pelo admin, perfil sem dono e reivindicaçã
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0017, SPEC-0019]
 consumes_contract: []
-contract_version: 1
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**]
+touches: [src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Subsolo.slnx, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, web/src/components/profiles/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/perfis/**, docs/design/**, web/src/proxy.ts, web/src/proxy.test.ts, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, tests/Common/Subsolo.Api.IntegrationTests/**, tools/compose-up.sh, e2e/tests/auth/journey.ts]
 adrs: [ADR-0001, ADR-0003, ADR-0008]
 external: []
 size: M
@@ -35,7 +35,8 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 - Reivindicação de perfil aprovado sem dono (`GET /api/v1/profiles/search`, `POST /api/v1/profiles/{id}/claims`).
 - Fila do admin (`GET /api/v1/admin/profile-requests`, aprovar e recusar com motivo) e criação de perfil sem dono pelo admin (`POST /api/v1/admin/profiles`).
 - "Meus perfis" (`GET /api/v1/me/profiles`) com a situação de cada pedido e o motivo da recusa.
-- Evento `ProfileOwnerAssignedIntegrationEvent(ProfileId, UserId)` pela outbox; o `Users` consome (inbox) e dá o papel `artist`.
+- Evento `ArtistRoleGrantedIntegrationEvent(UserId, ProfileId)` pela outbox: definido no contrato do **consumidor** (`Users.IntegrationEvents`), publicado pelo `Profiles`; o `Users` consome (inbox) e dá o papel `artist`. Assim a dependência é só `Profiles → Users` (Emenda v2).
+- E-mail de quem pediu, na fila do admin: lido pela interface pública `IUsersDirectory.GetEmailsAsync(userIds)` em `Users.IntegrationEvents` (Emenda v2).
 - Interface pública `IProfilesApi` (em `Profiles.IntegrationEvents`) com `GetOwnedProfilesAsync(userId)` e `GetAsync(profileId)` para o cadastro de show; `IPersonalDataSection` "profiles" no export (SPEC-0019); no `UserDeleted`, os perfis do usuário ficam sem dono (o histórico de shows é da cena) e os pedidos dele são apagados.
 - Leitura de cidades e estilos para validar: interface pública `IEventsCatalog` em `Events.IntegrationEvents` (`CityExistsAsync`, `StylesExistAsync`).
 - Telas: "Meus perfis" (`/conta/perfis`, com link a partir de `/conta`), "Pedir perfil" (`/conta/perfis/novo`), "Reivindicar perfil" (`/conta/perfis/reivindicar`), aba "Pedidos de perfil" da "Fila do admin" (`/admin/fila`) e criação de perfil sem dono (`/admin/perfis/novo`, mesmo formulário do pedido sem o contato).
@@ -55,7 +56,7 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 ## 4. Decisão Arquitetural
 **Contexto:** módulos `Users` e `Notifications` (SPEC-0014/0018) como referência de módulo novo; outbox/inbox da SPEC-0009; área `/admin` e páginas que chamam a API pelo navegador com `X-CSRF` (SPEC-0016/0017).
 
-**Decisão:** novo módulo `Profiles` com slices `RequestProfile`, `SearchClaimableProfiles`, `ClaimProfile`, `ListMyProfiles`, `ListProfileRequests`, `ApproveProfileRequest`, `RejectProfileRequest`, `CreateOwnerlessProfile`. Pedido e reivindicação são a mesma entidade `ProfileRequest` (kind `new` | `claim`). Aprovar grava o dono e publica `ProfileOwnerAssigned`; o `Users` ganha um consumidor que adiciona o papel `artist` (idempotente). A validação de cidade e estilo passa pelo `IEventsCatalog`, nunca pelo banco do `Events`.
+**Decisão:** novo módulo `Profiles` com slices `RequestProfile`, `SearchClaimableProfiles`, `ClaimProfile`, `ListMyProfiles`, `ListProfileRequests`, `ApproveProfileRequest`, `RejectProfileRequest`, `CreateOwnerlessProfile`. Pedido e reivindicação são a mesma entidade `ProfileRequest` (kind `new` | `claim`). Aprovar grava o dono e publica `ArtistRoleGranted`; o `Users` ganha um consumidor que adiciona o papel `artist` (idempotente). A validação de cidade e estilo passa pelo `IEventsCatalog`, nunca pelo banco do `Events`.
 
 **Justificativa:** ADR-0001 (módulo por contexto, conversa por evento e por interface pública; o próprio ADR cita `IProfilesApi`), ADR-0003 (papel `artist` concedido quando um perfil é aprovado e vinculado), ADR-0008 (contato do pedido visível só ao admin, apagado com o pedido).
 
@@ -74,7 +75,7 @@ Cria o módulo `Profiles`: perfis de banda, casa e produtor. Quem toca, tem uma 
 - **Custo:** zero.
 
 ## 6. Artefato A — Contrato
-**Interface:** `/api/v1/profiles/*` · `/api/v1/me/profiles` · `/api/v1/admin/profile-requests` · `/api/v1/admin/profiles` · `IProfilesApi` · `IEventsCatalog` · evento `ProfileOwnerAssigned` · telas
+**Interface:** `/api/v1/profiles/*` · `/api/v1/me/profiles` · `/api/v1/admin/profile-requests` · `/api/v1/admin/profiles` · `IProfilesApi` · `IEventsCatalog` · evento `ArtistRoleGranted` · telas
 
 ```yaml
 POST /api/v1/profiles/requests:          # fan + X-CSRF + RequireRateLimiting(report)
@@ -92,7 +93,9 @@ GET /api/v1/me/profiles:                 # fan + default ; no-store
 GET /api/v1/admin/profile-requests:      # admin + default ; no-store ; pendentes, mais antigos primeiro
   200: [{ requestId, kind, type, name, city, styles, links, contactOrProof, requesterEmail, createdAtUtc, profileId? }]
 POST /api/v1/admin/profile-requests/{id}/approve:   # admin + X-CSRF
-  200: { profileId } ; 404: profiles.request_not_found ; 409: profiles.request_decided | profiles.already_owned
+  200: { profileId } ; 404: profiles.request_not_found | profiles.not_found (perfil do claim sumiu) ;
+  409: profiles.request_decided | profiles.already_owned | profiles.name_taken (nome tomado enquanto o pedido esperava)
+  # concorrência: duas aprovações ao mesmo tempo → uma 200 e a outra 409 (request_decided ou already_owned); violação de unicidade → 409, nunca 500
 POST /api/v1/admin/profile-requests/{id}/reject:    # admin + X-CSRF ; body { reason: string(3–200) }
   200 ; 404: profiles.request_not_found ; 409: profiles.request_decided
 POST /api/v1/admin/profiles:             # admin + X-CSRF ; body como o pedido, sem contact
@@ -107,7 +110,9 @@ public interface IProfilesApi {
     Task<ProfileSummary?> GetAsync(Guid profileId, CancellationToken ct);
 }
 public sealed record ProfileSummary(Guid Id, string Type, string Name, string Slug, string City, Guid? OwnerUserId);
-public sealed record ProfileOwnerAssignedIntegrationEvent(Guid ProfileId, Guid UserId);
+// Subsolo.Modules.Users.IntegrationEvents (público; contrato do consumidor — Emenda v2)
+public sealed record ArtistRoleGrantedIntegrationEvent(Guid UserId, Guid ProfileId);
+public interface IUsersDirectory { Task<IReadOnlyDictionary<Guid, string>> GetEmailsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken ct); }
 // Subsolo.Modules.Events.IntegrationEvents (público, novo)
 public interface IEventsCatalog {
     Task<bool> CityExistsAsync(string slug, CancellationToken ct);
@@ -147,6 +152,7 @@ Telas:
 | Reivindicar com dono | perfil já tem dono | 409 `already_owned`; não aparece na busca | IT-03 |
 | Acesso | anônimo / fã nas rotas de admin | 401 / 403 | IT-04 |
 | Contato privado | "Meus perfis", busca, `IProfilesApi` | contato e prova nunca aparecem fora da fila do admin | IT-04 |
+| Concorrência | duas aprovações simultâneas do mesmo pedido ou de dois claims do mesmo perfil; dois pedidos simultâneos do mesmo usuário; mesmo nome ao mesmo tempo | exatamente um sucesso e o resto 409 com o código certo; nunca 500; um só dono e um só pedido pendente | IT-02, IT-03 |
 | Papel artist idempotente | evento entregue duas vezes; `Users` parado e depois volta | papel uma vez só, aplicado quando volta | IT-05 |
 | Exclusão de conta | `UserDeleted` do dono | perfis ficam sem dono; pedidos do usuário apagados | IT-07 |
 | Export | `GET /me/export` | seção "profiles" com perfis e pedidos do usuário | IT-07 |
@@ -163,14 +169,14 @@ Telas:
 ### 7.2 Testes Unitários
 - **UT-01** — Dado o handler de `RequestProfile` com catálogo de teste, quando um fã pede "Podridão" (banda, `curitiba`, `death`), então grava pedido pendente com slug `podridao`; com outro pedido dele em análise, retorna `profiles.request_pending`; com banda `podridao` já existente, `profiles.name_taken`.
 - **UT-02** — Dado o validador do pedido, quando recebe nome de 1 e 81 caracteres, cidade ou estilo que o catálogo nega, estilos em perfil de casa, 0 ou 6 estilos, links `http://instagram.com/x`, `https://evil.com/x` e `https://www.instagram.com/podridao`, então só o último link passa e cada erro vem com o campo em `profiles.invalid_request`.
-- **UT-03** — Dados pedidos `new` e `claim` pendentes, quando aprovados, então o perfil fica aprovado com o dono e é gerado `ProfileOwnerAssigned`; aprovar de novo dá `request_decided`; `claim` de perfil que ganhou dono no meio dá `already_owned`; recusar sem motivo é erro de validação.
+- **UT-03** — Dados pedidos `new` e `claim` pendentes, quando aprovados, então o perfil fica aprovado com o dono e é gerado `ArtistRoleGranted`; aprovar de novo dá `request_decided`; `claim` de perfil que ganhou dono no meio dá `already_owned`; recusar sem motivo é erro de validação.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API e o PostgreSQL reais com as cidades e estilos semeados, quando um fã faz `POST /profiles/requests` válido, inválido, repetido e com nome já usado, então 201, 400 com o campo, 409 `request_pending` e 409 `name_taken`; `GET /me/profiles` mostra o pendente.
-- **IT-02** — Dado um pedido pendente, quando o admin aprova, então 200 com `profileId`, o perfil tem dono e a outbox tem `ProfileOwnerAssigned`; quando o admin recusa outro com motivo, `GET /me/profiles` do autor mostra "rejected" com o motivo e um novo pedido é aceito.
+- **IT-02** — Dado um pedido pendente, quando o admin aprova, então 200 com `profileId`, o perfil tem dono e a outbox tem `ArtistRoleGranted`; quando o admin recusa outro com motivo, `GET /me/profiles` do autor mostra "rejected" com o motivo e um novo pedido é aceito.
 - **IT-03** — Dado um perfil criado pelo admin sem dono e 1.000 perfis semeados, quando um fã busca "pod" e reivindica, então o perfil aparece com p95 ≤ 200 ms; a reivindicação aprovada torna o fã dono; um segundo fã reivindicando recebe 409 `already_owned`, e o perfil some da busca.
 - **IT-04** — Dados anônimo, fã e admin, quando chamam as rotas de admin, então 401, 403 e 200; o contato e a prova aparecem só na resposta da fila do admin (não em `/me/profiles`, na busca nem no `IProfilesApi`); fila com 200 pedidos em p95 ≤ 300 ms.
-- **IT-05** — Dado `ProfileOwnerAssigned` publicado duas vezes e o processamento do `Users` parado e retomado, quando o inbox processa, então o usuário tem o papel `artist` uma vez só e `/me` mostra `artist`.
+- **IT-05** — Dado `ArtistRoleGranted` publicado duas vezes e o processamento do `Users` parado e retomado, quando o inbox processa, então o usuário tem o papel `artist` uma vez só e `/me` mostra `artist`.
 - **IT-06** — Dados os logs e spans capturados em pedido, reivindicação, aprovação e recusa, quando inspecionados, então e-mail e contato não aparecem em claro.
 - **IT-07** — Dado um dono com perfil aprovado e um pedido pendente, quando `GET /me/export` é chamado, então a seção "profiles" traz os dois; quando o `UserDeleted` dele é processado, então o perfil fica sem dono e o pedido é apagado; e pedidos decididos há 91 dias são apagados pela limpeza (`FakeTimeProvider`).
 - **IT-08** — Dados os testes de arquitetura, quando rodam com o módulo `Profiles`, então as regras do ADR-0001 valem para ele, `IEventsCatalog` e `IProfilesApi` estão em `IntegrationEvents` e nenhum módulo referencia `Profiles.Domain`, `.Application` ou `.Infrastructure` (guarda: passa antes da mudança para os módulos existentes).
@@ -184,6 +190,7 @@ Telas:
 
 ### 7.6 Outros
 - Segurança: G4 confere a autorização em cada rota de admin e o vazamento do contato.
+- Emenda 3 (revisão G4): token de concorrência otimista em `profiles` e `profile_requests` (ou atualização condicional) e índice único parcial `profile_requests(requester_user_id) WHERE status = 'pending'`; violação de unicidade (23505) → 409 com o código do §6; o limite de links mágicos por e-mail vira configuração `Users:MagicLinkEmailLimit` (padrão 3; a pilha local da E2E usa 50, porque o admin de teste entra várias vezes) com teste unitário do padrão e do valor configurado; o grupo de estilos recebe o id do campo para o foco no erro.
 - Herança da revisão da SPEC-0020 (login com Google, no módulo `Users`): logar a exceção nas falhas do início do login (sem dados pessoais); falha do `SignInAsync` com e-mail verificado vai para `/entrar?erro=google` com motivo `provider_error`; `RemoteSignOutPath`/`SignedOutCallbackPath` do handler OIDC em caminhos sob `/api/v1/auth/google/` sem uso; teste unitário das `OpenIdConnectOptions` (PKCE, `code`, `SaveTokens=false`, validação do token padrão).
 - Herança da revisão da SPEC-0019 (primeira consumidora do export e do `UserDeleted`): teste unitário de `PublishUserDeleted` (mesmo id, `DeletedAtUtc`, só ids), e nomes de `IPersonalDataSection` repetidos falham na inicialização.
 - Herança da revisão da SPEC-0017: `ModuleOf` nas regras de arquitetura (`tests/Subsolo.ArchitectureTests/ModularMonolithRules.cs`) passa a tolerar dependências que o ArchUnitNET não resolve (`type?.Namespace?.FullName`), para expressões de coleção não derrubarem a regra.
@@ -240,11 +247,11 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — a1ca145 (árvore suja) | 2026-10-17 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 882fed4 | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — f95e7e2 | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 583ms) — f95e7e2 | 2026-10-18 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em f95e7e2 após a Emenda 3 — as seis correções conferidas (concorrência com xmin e 23505 → 409 com os códigos do contrato, índice parcial de pedido pendente, códigos do approve no OpenAPI, IOptions<UsersOptions> obrigatório, foco do grupo de estilos); testes de corrida cobrem aprovações, reivindicações e pedidos simultâneos; migração do xmin sem efeito no banco (coluna de sistema); commit de estilo só com espaços; sem blocker/major; menor opcional: IT de reivindicação aprovada duas vezes ao mesmo tempo — f95e7e2 | 2026-10-18 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 9m 48s 810ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 4s 447ms) — e77746a | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -253,6 +260,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-18 | G1 | spec | Contrato do §6 cria ciclo Users ↔ Profiles (Users consome ArtistRoleGranted de Profiles.IntegrationEvents; Profiles consome UserDeleted e IPersonalDataSection de Users.IntegrationEvents), proibido pela regra NoModuleCycles do ADR-0001; e o requesterEmail da fila não tem fonte pública | Test-writer: scaffold sem as referências cruzadas; regra e amostra ModuleCycle conferidas | Architect | Emenda v2 — evento ArtistRoleGranted no contrato do consumidor (Users.IntegrationEvents) e IUsersDirectory para o e-mail; ADR-0001 esclarecido | 2026-10-18 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -293,3 +301,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0021`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 3 | 2026-10-18 | Approve documenta 404 `profiles.not_found` e 409 `profiles.name_taken`; concorrência e unicidade → 409 nunca 500 (token otimista, índice parcial de pedido pendente, mapeamento do 23505); `Users:MagicLinkEmailLimit` registrado (padrão 3) com teste; foco no erro de estilos. Testes: IT-02 e IT-03 ganham as corridas, UT-01 do `Users` (ou o teste do limite) cobre a configuração | Revisão G4 (CHANGES_REQUESTED em 077a97f): aprovações simultâneas davam dois donos aparentes | nenhuma (`IProfilesApi` não muda) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
+| 2 | 2026-10-18 | O evento que o `Users` consome vira `ArtistRoleGrantedIntegrationEvent` definido em `Users.IntegrationEvents` (contrato do consumidor) e publicado pelo `Profiles`; o e-mail da fila do admin vem de `IUsersDirectory.GetEmailsAsync` (público no `Users`); dependência só `Profiles → Users`; ADR-0001 esclarecido | IMP-01: o contrato v1 criava o ciclo `Users ↔ Profiles` que a regra `NoModuleCycles` do ADR-0001 proíbe | SPEC-0023 (consome só o `IProfilesApi`, que não muda) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
+| 1 (escopo) | 2026-10-18 | `touches` ganha o proxy e seu teste (status das páginas novas de conta e de admin), o `shell.ts`, os testes de contrato da API, o `compose-up.sh` e o helper de login da E2E | Antes do início da onda, pelo que as ondas 1–6 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |

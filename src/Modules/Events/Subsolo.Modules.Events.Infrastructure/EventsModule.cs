@@ -6,8 +6,10 @@ using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 using Subsolo.Modules.Events.Domain.Cities;
 using Subsolo.Modules.Events.Domain.Styles;
+using Subsolo.Modules.Events.Infrastructure.Catalog;
 using Subsolo.Modules.Events.Infrastructure.Cities;
 using Subsolo.Modules.Events.Infrastructure.Styles;
+using Subsolo.Modules.Events.IntegrationEvents;
 using Subsolo.Modules.Events.Presentation;
 
 namespace Subsolo.Modules.Events.Infrastructure;
@@ -22,6 +24,8 @@ public static class EventsModule
         services.AddScoped<ICityRepository>(provider => provider.GetRequiredService<CityRepository>());
         services.AddScoped<ICityAdminRepository>(provider => provider.GetRequiredService<CityRepository>());
         services.AddScoped<IStyleRepository, StyleRepository>();
+        // SPEC-0021: cidades e estilos para os outros módulos (Profiles).
+        services.AddScoped<IEventsCatalog, EventsCatalog>();
         services.AddScoped<IEventsUnitOfWork>(provider => provider.GetRequiredService<EventsDbContext>());
         services.AddModule<EventsDbContext>(
             configuration,
