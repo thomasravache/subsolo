@@ -17,6 +17,9 @@ import { requestErrorMessage } from "./messages";
 /** Segundos até o "Reenviar link" voltar a funcionar. */
 const resendSeconds = 60;
 
+/** Contador no começo da espera (de 0:59 a 0:00, 60 s no total). */
+const startCountdown = `0:${resendSeconds - 1}`;
+
 /** Formato do e-mail conferido antes de chamar a API (a API valida de novo). */
 const emailFormat = /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/;
 
@@ -33,9 +36,9 @@ export interface SignInFormProps {
 }
 
 /**
- * SPEC-0016 — formulário de `/entrar` e o estado "Confira seu e-mail" (tela do Stitch): reenviar depois de 60 s (o
- * contador é anunciado por `aria-live="polite"`) ou usar outro e-mail. O erro do campo fica ligado a ele por
- * `aria-describedby`; os erros da API (limite, SMTP fora do ar) aparecem num alerta.
+ * SPEC-0016 — formulário de `/entrar` e o estado "Confira seu e-mail" (tela do Stitch): reenviar depois de 60 s (a
+ * espera é anunciada por `aria-live="polite"` só no começo e no fim) ou usar outro e-mail. O erro do campo fica ligado
+ * a ele por `aria-describedby` e leva o foco até o campo; os erros da API (limite, SMTP fora do ar) aparecem num alerta.
  */
 export function SignInForm({ returnTo }: SignInFormProps) {
   const [state, setState] = useState<State>({ step: "form" });
@@ -43,6 +46,13 @@ export function SignInForm({ returnTo }: SignInFormProps) {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const field = useRef<HTMLInputElement>(null);
+
+  /** Mostra o erro de formato no campo e leva o foco até ele (§7.6 l). */
+  function rejectEmail() {
+    setFieldError(invalidEmail);
+    field.current?.focus();
+  }
 
   async function send(address: string): Promise<boolean> {
     setSending(true);
@@ -53,7 +63,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       return true;
     }
     if (result.code === "users.invalid_email") {
-      setFieldError(invalidEmail);
+      rejectEmail();
     } else {
       setFormError(requestErrorMessage(result.code, result.status));
     }
@@ -64,7 +74,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
     event.preventDefault();
     const address = email.trim();
     if (!emailFormat.test(address) || address.length > 254) {
-      setFieldError(invalidEmail);
+      rejectEmail();
       return;
     }
     setFieldError(null);
@@ -105,6 +115,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
             Seu e-mail
           </label>
           <input
+            ref={field}
             id={fieldId}
             name="email"
             type="email"
@@ -212,10 +223,14 @@ function CheckYourEmail({
           disabled={waiting}
           onClick={resend}
         >
-          <span aria-live="polite">
-            {waiting ? `Reenviar em ${countdown}` : "Reenviar link"}
-          </span>
+          {waiting ? `Reenviar em ${countdown}` : "Reenviar link"}
         </Button>
+        {/* Anunciado só no começo e no fim da espera, não a cada segundo (§7.6 l). */}
+        <p aria-live="polite" className="sr-only">
+          {waiting
+            ? `Você poderá reenviar o link em ${startCountdown}.`
+            : "Você já pode reenviar o link."}
+        </p>
         <Button variant="ghost" size="lg" onClick={onOtherEmail}>
           Usar outro e-mail
         </Button>
