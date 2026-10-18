@@ -11,7 +11,7 @@ depends_on: [SPEC-0014, SPEC-0016]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, e2e/tests/conta/**, docs/design/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, tests/Security/**, web/src/app/page.tsx, web/src/app/page.test.tsx]
+touches: [src/Modules/Users/**, tests/Modules/Users/**, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/account/**, e2e/tests/conta/**, docs/design/**, src/Subsolo.Api/Security/**, src/Subsolo.Api/packages.lock.json, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, tests/Security/**, web/src/app/page.tsx, web/src/app/page.test.tsx, e2e/tests/auth/journey.ts]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0011]
 external: []
 size: M
@@ -221,7 +221,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 838200d | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 2s 866ms) — 838200d | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 838200d — export completo e sem hashes nem dados de outros, exclusão numa transação com o UserDeleted só com ids, cookie limpo, confirmação por e-mail, fan + X-CSRF + no-store, e-mail fora dos logs, diálogo acessível, itens herdados da 0016; testes não enfraquecidos; o texto de privacidade foi corrigido depois por emenda em 2583ec5 (só texto; web 75/75 e E2E de conta verdes); o aviso da página inicial é coberto pelo E2E-01; menores → SPEC-0021 — 2583ec5 | 2026-10-18 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 8m 30s 141ms); test_e2e exit 1 ([ELIFECYCLE] Test failed. See above for more details.); arch_test exit 0 (duration: 2s 903ms) — 717b5d2 | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -270,6 +270,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0019`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (escopo e testes) | 2026-10-18 | `touches` ganha `e2e/tests/auth/journey.ts`: o helper de login espera o formulário estar interativo antes de digitar e sempre espera a navegação depois de entrar (itens que estavam herdados pela SPEC-0020) | G5 da onda 5 falhou no E2E-03 da SPEC-0016 (mobile-chrome) com a mesma instabilidade já vista no mobile-safari: o e-mail foi digitado antes da hidratação | SPEC-0020 (os dois itens saem da herança dela) | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (texto) | 2026-10-18 | Textos de "Privacidade & dados" e "Excluir conta" fixados no §6, sem citar dados que ainda não existem e avisando que as cópias de segurança somem em até 6 meses (ADR-0011) | Revisão G4: o texto do Stitch dizia "permanentemente apagados dos servidores", impreciso diante dos backups (transparência, LGPD art. 6º, VI) | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha `web/src/app/page.tsx` (e um teste dela): depois de excluir, o fã vai para `/?conta=excluida` e a página inicial mostra "Sua conta foi excluída." em `role="status"`; o resto da página inicial não muda | Relatório do Test-writer: o aviso do §6 fica em `/`, fora dos `touches` | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
 | 1 (escopo) | 2026-10-18 | `touches` ganha `src/Subsolo.Api/Security/**` (o host passa a ler `UsersModule.SessionAbsoluteLifetime`, herança da revisão da SPEC-0016), os lock files, `tests/Common/Subsolo.Api.IntegrationTests/**` (contrato do `/me`) e `tests/Security/**` | Antes do início da onda, pelo que as ondas 1–4 mostraram | nenhuma | thomas (delegado: piloto automático, 2026-10-18, recomendação do Architect) |
