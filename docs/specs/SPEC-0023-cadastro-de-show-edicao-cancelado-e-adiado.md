@@ -11,7 +11,7 @@ depends_on: [SPEC-0021, SPEC-0022]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
+touches: [src/Common/Subsolo.Common.Infrastructure/**, src/Common/Subsolo.Common.Application/**, tests/Common/**, infra/caddy/**, src/Subsolo.AppHost/**, web/next.config.ts, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/conta/**, web/src/components/shows/**, web/src/components/account/**, web/src/components/agenda/**, e2e/tests/shows/**, docs/design/**]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0013, ADR-0015]
 external: []
 size: M
@@ -161,6 +161,13 @@ Telas:
 ### 7.6 Outros
 - Segurança: G4 confere a autorização por recurso em criar, editar e mudar situação, e o escape dos textos livres.
 - Herança da SPEC-0015 (épico, Emenda 1): se esta spec criar a primeira página interna 200 alcançável por `next/link` (ex.: "Meus shows" a partir de `/conta`), ela leva o E2E do título na navegação no cliente.
+- Herança da revisão da SPEC-0022 (G4 em d47d28b; cada item com teste próprio com a tag `SPEC-0023:H22-NN`):
+  - **H22-01, limpeza × ligar:** a limpeza de flyers apaga primeiro as linhas, com condição (`attached_at_utc IS NULL AND created_at_utc < corte`), e só depois apaga os arquivos dessas linhas. Um `AttachAsync` ou um reenvio no meio não perde o flyer. Reenviar um flyer não ligado renova o `created_at_utc`.
+  - **H22-02, Caddy:** o `Cache-Control` imutável vale só para respostas 200; 404 e erros não ficam em cache. `file_server` com `hide .*`, para não servir os temporários.
+  - **H22-03, teto do corpo:** `MaxRequestBodySize` = 10 MiB + folga do multipart antes de `ReadFormAsync`, também sem `Content-Length` (corpo chunked) → 400 `events.flyer_too_large`.
+  - **H22-04, libvips:** carregadores não confiáveis bloqueados (`BlockUntrusted`; só jpeg, png e webp liberados); JPEG com `FailOn.Truncated` se o IT-05 da SPEC-0022 seguir verde, com teste de um JPEG que só gera aviso benigno (bytes extras antes de um marcador) aceito.
+  - **H22-05, fila:** a fila de 1 espera com tempo limite (30 s) e responde 503 `security.service_unavailable`. `FlyerImages.ContentHash` é conferido com o hash do handler.
+  - **H22-06, Compose:** o E2E do cadastro envia o flyer pela pilha do Compose e o lê pelo Caddy, provando o `media-init`, a libvips nativa na imagem e o `/media`. No `next dev`, o `/media` chega à API por rewrite.
 
 **Dublês e dados de teste:** perfis e catálogo de teste no UT; perfis aprovados e flyers criados pela API nos IT e no E2E; `FakeTimeProvider`.
 

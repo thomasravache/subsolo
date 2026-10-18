@@ -198,7 +198,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — c34b1e8 | 2026-10-18 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — d47d28b | 2026-10-18 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 361ms) — d47d28b | 2026-10-18 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em d47d28b — contrato e códigos do §6 (422 por ErrorType.Unprocessable), tipo pelo conteúdo, limite antes da leitura, limite de pixels, metadados removidos, artist/admin + X-CSRF + rate limit, caminhos seguros (SHA-256 e Resolve), só Common.Infrastructure com NetVips, gravação atômica e limpeza; desvios aceitos (NetVips privado + pacotes no host; media-init com a imagem do Caddy já fixada); sem blocker/major; menores → SPEC-0023 (corrida da limpeza, 404 com cache imutável no Caddy, teto do corpo sem Content-Length, BlockUntrusted, FailOn.Truncated, espera com timeout, created_at no reenvio, smoke de upload pelo Caddy, /media no next dev) — d47d28b | 2026-10-18 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
