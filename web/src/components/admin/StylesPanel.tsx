@@ -49,19 +49,22 @@ export function StylesPanel({ initialStyles, onSuccess }: StylesPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   /** Estilo cujo botão "Renomear" recebe o foco depois de salvar ou cancelar a renomeação. */
-  const [focusSlug, setFocusSlug] = useState<string | null>(null);
+  const focusAfterRename = useRef<string | null>(null);
   const field = useRef<HTMLInputElement>(null);
 
+  // Depois do render que fecha a renomeação, o botão "Renomear" do estilo já existe e recebe o foco.
   useEffect(() => {
-    if (focusSlug) {
-      document.getElementById(renameButtonId(focusSlug))?.focus();
-      setFocusSlug(null);
+    if (focusAfterRename.current) {
+      document
+        .getElementById(renameButtonId(focusAfterRename.current))
+        ?.focus();
+      focusAfterRename.current = null;
     }
-  }, [focusSlug]);
+  });
 
   function closeRename(slug: string) {
+    focusAfterRename.current = slug;
     setRenaming(null);
-    setFocusSlug(slug);
   }
 
   function saved(style: Style, message: string) {
