@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Subsolo.Common.Presentation.Security;
+using Subsolo.Modules.Users.Domain.Sessions;
 
 namespace Subsolo.Api.Security;
 
@@ -27,10 +28,10 @@ internal static class SecurityExtensions
     public const string AntiforgeryCookieName = "__Host-subsolo-csrf";
 
     /// <summary>
-    /// SPEC-0016 — validade do cookie de sessão: o teto absoluto da sessão no banco (90 dias desde a entrada). Antes
+    /// SPEC-0016 — validade do cookie de sessão: o teto absoluto da sessão no banco (<see cref="Session.AbsoluteLifetime"/>, 90 dias desde a entrada). Antes
     /// disso, o cookie só deixa de valer quando a sessão do banco expira ou é revogada.
     /// </summary>
-    public static readonly TimeSpan SessionCookieLifetime = TimeSpan.FromDays(90);
+    public static readonly TimeSpan SessionCookieLifetime = Session.AbsoluteLifetime;
 
     /// <summary>Endpoint que emite o token anti-forgery (fora do OpenAPI).</summary>
     public const string AntiforgeryRoute = "/api/v1/antiforgery";

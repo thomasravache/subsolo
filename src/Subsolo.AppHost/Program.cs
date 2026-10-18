@@ -55,6 +55,14 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
     .WaitFor(api)
     .WithHttpHealthCheck("/");
 
+// SPEC-0016 (Emenda 4, §7.6 j) — no `aspire run`, o link mágico do e-mail aponta para o web (a API valida
+// App:PublicUrl na inicialização). No Compose publicado, o operador define App__PublicUrl (a pilha local, pelo
+// tools/compose-up.sh).
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    api.WithEnvironment("App__PublicUrl", web.GetEndpoint("http"));
+}
+
 // SPEC-0009 — api e web exportam logs e traces para o Seq (ADR-0010); no local, os alertas de infra/seq/alerts.json
 // são aplicados ao Seq e mandam e-mail pelo Mailpit.
 api.WithTelemetryTo(seq);
