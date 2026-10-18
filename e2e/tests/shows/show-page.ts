@@ -1,5 +1,6 @@
 import type { Browser } from "@playwright/test";
 
+import { expect } from "../fixtures";
 import { appURL } from "../agenda/environment";
 import {
   approvedProducer,
@@ -79,12 +80,17 @@ export async function publishShows(
         flyerId: flyer.flyerId,
       })) as { id: string; slug: string };
       if (spec.cancelled) {
-        await mutate(
-          page.request,
-          "post",
+        // 200 sem corpo: fora do `mutate`, que lê o JSON da resposta.
+        const antiforgery = await page.request.get("/api/v1/antiforgery");
+        const { token } = (await antiforgery.json()) as { token: string };
+        const cancel = await page.request.post(
           `/api/v1/shows/${created.id}/status`,
-          { status: "cancelled" },
+          { data: { status: "cancelled" }, headers: { "X-CSRF": token } },
         );
+        expect(
+          cancel.ok(),
+          `POST /api/v1/shows/${created.id}/status: ${cancel.status()} ${await cancel.text()}`,
+        ).toBe(true);
       }
       shows.push({
         id: created.id,

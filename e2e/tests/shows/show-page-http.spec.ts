@@ -78,9 +78,10 @@ test.describe("página do show sem JavaScript", () => {
     ]) {
       const response = await request.get(path);
       expect(response.status(), `GET ${path}`).toBe(404);
-      expect(await response.text(), `GET ${path}`).toContain(
-        "Show não encontrado",
-      );
+      expect(
+        (await response.text()).includes("Show não encontrado"),
+        `GET ${path} sem "Show não encontrado"`,
+      ).toBe(true);
     }
   });
 
@@ -107,12 +108,13 @@ test.describe("página do show sem JavaScript", () => {
     const html = await response.text();
 
     expect(
-      html,
+      html.includes(injected),
       "o <script> do título foi para o HTML sem escape",
-    ).not.toContain(injected);
-    expect(html, "o título escapado não está na página").toContain(
-      "&lt;script&gt;",
-    );
+    ).toBe(false);
+    expect(
+      html.includes("&lt;script&gt;"),
+      "o título escapado não está na página",
+    ).toBe(true);
     const nonce = scriptNonce(
       parseCsp(response.headers()["content-security-policy"]),
     );
@@ -146,10 +148,10 @@ test.describe("página do show sem JavaScript", () => {
 
     expect(response.status()).toBe(503);
     const html = await response.text();
-    expect(html).toMatch(/<h1\b/i);
+    expect(/<h1\b/i.test(html), "a página de erro sem <h1>").toBe(true);
     expect(
-      html,
+      html.includes("Show não encontrado"),
       "o 503 não pode ser a página de show inexistente",
-    ).not.toContain("Show não encontrado");
+    ).toBe(false);
   });
 });
