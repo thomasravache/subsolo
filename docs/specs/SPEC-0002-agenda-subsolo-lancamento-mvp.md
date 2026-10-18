@@ -47,8 +47,8 @@ Cada feature é um vertical slice num dos módulos do ADR-0001. Os módulos conv
 
 ```
 Profiles ──ProfileApproved/ProfileClaimed──> Users (papel artist)
-Events ──ShowPublished / ShowStatusChanged──> Notifications (aviso de show novo; tira dos lembretes)
-Engagement ──AttendanceMarked / FollowAdded──> Notifications (lembrete de véspera; destinatários)
+Events ──ShowPublished / ShowChanged──> Engagement (aviso de show novo e lembrete: decide quem recebe)
+Engagement ──INotificationsApi.EnqueueAsync──> Notifications (só entrega; ADR-0014 esclarecido em 2026-10-18)
 Moderation ──ReportResolved──> Events (marca cancelado/remove)
 Events <──consulta pública IProfilesApi── Profiles (nomes e links de bandas e casas na line-up)
 ```
@@ -103,8 +103,8 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0027 | Seguir cidade, banda e casa | full | feature | S | Contas | Perfis |
 | SPEC-0029 | "Vou" com contagem | full | feature | S | Contas | Cadastro de show |
 | SPEC-0030 | Inscrição de push, preferências e canal de e-mail | full | feature | M | Contas | — |
-| a criar | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
-| a criar | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
+| SPEC-0031 | Aviso de show novo (push imediato + resumo diário por e-mail) | full | feature | M | Inscrição de push | Seguir, Cadastro de show |
+| SPEC-0032 | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
 | a criar | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
 
