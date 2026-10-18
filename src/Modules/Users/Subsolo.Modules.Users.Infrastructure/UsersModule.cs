@@ -41,6 +41,9 @@ public static class UsersModule
     /// <see cref="ISessionValidator"/> e o emissor do cookie de sessão. SPEC-0016 — <c>App:PublicUrl</c> (base do link
     /// mágico, validado na inicialização), o repositório dos links e a limpeza periódica deles (<see cref="CleanupMagicLinkTokensJob"/>).
     /// SPEC-0020 — o login com Google (esquema OIDC e cookie externo), registrado só com <c>Users:Google</c> configurado.
+    /// SPEC-0021 — <see cref="IUsersDirectory"/> (e-mails para a fila do admin do Profiles), o consumidor de
+    /// <see cref="ArtistRoleGrantedIntegrationEvent"/> (papel <c>artist</c>), a conferência dos nomes das seções do export
+    /// e os eventos de domínio do <c>Users.Domain</c> entre os tipos conhecidos da outbox.
     /// </summary>
     public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -60,9 +63,10 @@ public static class UsersModule
         services.AddScoped<ISignInService, SignInService>();
         services.AddScoped<ISessionValidator, SessionValidator>();
         services.AddScoped<GoogleSignInCallback>();
-        // SPEC-0021 (Emenda v2): scaffold do contrato — os e-mails para a fila do admin do Profiles.
-        services.AddScoped<IUsersDirectory>(_ =>
-            throw new NotImplementedException("SPEC-0021: IUsersDirectory ainda não implementado."));
+        // SPEC-0021 (Emenda v2): os e-mails para a fila do admin do Profiles.
+        services.AddScoped<IUsersDirectory, UsersDirectory>();
+        // SPEC-0021 (§7.6): nomes repetidos de seções do export derrubam a inicialização.
+        services.AddHostedService<PersonalDataSectionsGuard>();
 
         var google = configuration.GetSection(UsersOptions.SectionName).Get<UsersOptions>()?.Google ?? new GoogleOptions();
         services.AddAuthentication().AddGoogleSignIn(google);
@@ -70,7 +74,8 @@ public static class UsersModule
         services.AddModule<UsersDbContext>(
             configuration,
             typeof(UsersModule).Assembly,
-            typeof(ISignInService).Assembly);
+            typeof(ISignInService).Assembly,
+            typeof(User).Assembly);
         services.ConfigureAllQuartzSchedulers(CleanupMagicLinkTokensJob.Schedule);
         return services.AddEndpoints(AssemblyReference.Assembly);
     }

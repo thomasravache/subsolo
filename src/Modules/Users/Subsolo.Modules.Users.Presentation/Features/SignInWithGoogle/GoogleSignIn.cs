@@ -35,6 +35,15 @@ internal static partial class GoogleSignIn
     /// <summary>Retorno do provedor, tratado pelo handler OIDC (fora do contrato publicado).</summary>
     public const string CallbackPath = "/api/v1/auth/google/callback";
 
+    /// <summary>
+    /// SPEC-0021 (§7.6) — caminhos de sign-out remoto do handler OIDC, sob o prefixo do Google e sem uso (o Subsolo não
+    /// faz logout no provedor): o padrão do handler (<c>/signout-oidc</c>) ficaria fora de <c>/api/v1/auth/google/</c>.
+    /// </summary>
+    public const string RemoteSignOutPath = "/api/v1/auth/google/remote-signout";
+
+    /// <summary>SPEC-0021 (§7.6) — retorno do sign-out no provedor (sem uso), sob o prefixo do Google.</summary>
+    public const string SignedOutCallbackPath = "/api/v1/auth/google/signed-out";
+
     /// <summary>Chave do <c>returnTo</c> nas <see cref="AuthenticationProperties"/> (protegidas no <c>state</c>).</summary>
     public const string ReturnToItem = "subsolo.returnTo";
 
@@ -100,6 +109,8 @@ internal static partial class GoogleSignIn
         options.Scope.Add(OpenIdConnectScope.OpenId);
         options.Scope.Add(OpenIdConnectScope.Email);
         options.CallbackPath = CallbackPath;
+        options.RemoteSignOutPath = RemoteSignOutPath;
+        options.SignedOutCallbackPath = SignedOutCallbackPath;
         options.SignInScheme = ExternalScheme;
         options.SaveTokens = false;
         options.GetClaimsFromUserInfoEndpoint = false;
@@ -132,7 +143,9 @@ internal static partial class GoogleSignIn
         var outcome = await callback.CompleteAsync(principal, returnTo, httpContext.RequestAborted);
         if (!outcome.SignedIn)
         {
-            LogRejected(Logger(httpContext), ReasonEmailNotVerified);
+            LogRejected(
+                Logger(httpContext),
+                outcome.RedirectTo == GoogleSignInCallback.EmailNotVerifiedRedirect ? ReasonEmailNotVerified : ReasonProviderError);
         }
 
         DeleteExternalCookie(httpContext);
@@ -150,9 +163,12 @@ internal static partial class GoogleSignIn
         return Task.CompletedTask;
     }
 
-    /// <summary>O provedor ficou fora do ar no início do login (descoberta ou chaves inacessíveis).</summary>
-    internal static void LogProviderUnavailable(HttpContext httpContext) =>
-        LogRejected(Logger(httpContext), ReasonProviderError);
+    /// <summary>
+    /// O provedor ficou fora do ar no início do login (descoberta ou chaves inacessíveis). SPEC-0021 (§7.6): o log leva a
+    /// exceção, para o diagnóstico (o início do login ainda não tem dado pessoal).
+    /// </summary>
+    internal static void LogProviderUnavailable(HttpContext httpContext, Exception exception) =>
+        LogStartFailed(Logger(httpContext), ReasonProviderError, exception);
 
     /// <summary><c>state</c> ausente, adulterado ou sem a correlação (as mensagens do handler OIDC).</summary>
     private static bool IsStateFailure(Exception? failure) =>
@@ -174,4 +190,7 @@ internal static partial class GoogleSignIn
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Entrada com Google recusada: {GoogleFailureReason}")]
     private static partial void LogRejected(ILogger logger, string googleFailureReason);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Entrada com Google recusada: {GoogleFailureReason}")]
+    private static partial void LogStartFailed(ILogger logger, string googleFailureReason, Exception exception);
 }
