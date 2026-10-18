@@ -30,6 +30,41 @@ internal static class MagicLinkDatabase
         return rows;
     }
 
+    /// <summary>
+    /// SPEC-0019 — grava direto na tabela um link pendente (não usado, válido por 15 minutos) para
+    /// <paramref name="normalizedEmail"/>, com um hash aleatório; preparação de teste, sem e-mail.
+    /// </summary>
+    public static async Task InsertPendingAsync(string connectionString, string normalizedEmail, CancellationToken ct)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+        await using var command = new NpgsqlCommand(
+            $"""
+            insert into {Table} (token_hash, email, return_to, created_at_utc, expires_at_utc, used_at_utc)
+            values (@hash, @email, '/conta', now(), now() + interval '15 minutes', null)
+            """,
+            connection);
+        command.Parameters.AddWithValue("hash", Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32)));
+        command.Parameters.AddWithValue("email", normalizedEmail);
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    /// <summary>SPEC-0019 — os e-mails dos links gravados na tabela (um por linha).</summary>
+    public static async Task<IReadOnlyList<string>> EmailsAsync(string connectionString, CancellationToken ct)
+    {
+        var emails = new List<string>();
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+        await using var command = new NpgsqlCommand($"select email from {Table}", connection);
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            emails.Add(reader.GetString(0));
+        }
+
+        return emails;
+    }
+
     /// <summary>A linha cujo valor de alguma coluna é o hash SHA-256 de <paramref name="token"/>, ou nulo.</summary>
     public static string? RowOf(IEnumerable<string> rows, string token) =>
         rows.FirstOrDefault(row => Values(row).Any(value => IsHashOf(value, token)));
