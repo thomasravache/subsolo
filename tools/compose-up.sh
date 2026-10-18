@@ -28,7 +28,9 @@
 # provar que nenhuma variável de ambiente chega ao navegador.
 #
 # SPEC-0021 — também só neste Compose local: o limite `report` (pedido e reivindicação de perfil) sobe para
-# ${REPORT_RATE_LIMIT:-10000} por hora (a jornada de perfis repete os pedidos do mesmo IP a cada execução).
+# ${REPORT_RATE_LIMIT:-10000} por hora (a jornada de perfis repete os pedidos do mesmo IP a cada execução), e o limite de
+# links mágicos por e-mail sobe para ${MAGIC_LINK_EMAIL_LIMIT:-50} a cada 15 min (as jornadas de perfis e do admin entram
+# várias vezes com `admin@subsolo.test` na mesma subida).
 #
 # SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
 # entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
@@ -89,6 +91,8 @@ readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
 check_rate_limit DEFAULT_RATE_LIMIT "$DEFAULT_RATE_LIMIT"
 readonly REPORT_RATE_LIMIT="${REPORT_RATE_LIMIT:-10000}"
 check_rate_limit REPORT_RATE_LIMIT "$REPORT_RATE_LIMIT"
+readonly MAGIC_LINK_EMAIL_LIMIT="${MAGIC_LINK_EMAIL_LIMIT:-50}"
+check_rate_limit MAGIC_LINK_EMAIL_LIMIT "$MAGIC_LINK_EMAIL_LIMIT"
 
 for tool in docker dotnet aspire curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -162,6 +166,7 @@ services:
       Security__RateLimiting__report__Window: "01:00:00"
       App__PublicUrl: "$APP_URL"
       Users__AdminEmails__0: "admin@subsolo.test"
+      Users__MagicLinkEmailLimit: "$((10#$MAGIC_LINK_EMAIL_LIMIT))"
       Users__Google__Authority: "$OIDC_ISSUER"
       Users__Google__ClientId: "subsolo-local"
       Users__Google__ClientSecret: "\${GOOGLE_CLIENT_SECRET}"

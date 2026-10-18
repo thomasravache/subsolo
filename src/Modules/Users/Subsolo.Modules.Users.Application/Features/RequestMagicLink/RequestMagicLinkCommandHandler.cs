@@ -11,7 +11,8 @@ using Subsolo.Modules.Users.Domain.MagicLinks;
 namespace Subsolo.Modules.Users.Application.Features.RequestMagicLink;
 
 /// <summary>
-/// SPEC-0016 — valida e normaliza o e-mail, aplica o limite por e-mail (3 links a cada 15 min; acima dele, sucesso
+/// SPEC-0016 — valida e normaliza o e-mail, aplica o limite por e-mail (3 links a cada 15 min, ou
+/// <c>Users:MagicLinkEmailLimit</c> — SPEC-0021; acima dele, sucesso
 /// sem envio), grava o link (só o hash do token) e manda o e-mail <see cref="EmailTemplate.MagicLink"/> pela
 /// <see cref="INotificationsApi"/> com <c>link = {App:PublicUrl}/entrar/confirmar?token=…</c> e <c>minutes = 15</c>.
 /// </summary>
@@ -22,11 +23,12 @@ internal sealed partial class RequestMagicLinkCommandHandler(
     INotificationsApi notifications,
     IOptions<PublicUrlOptions> publicUrl,
     TimeProvider clock,
-    ILogger<RequestMagicLinkCommandHandler> logger)
+    ILogger<RequestMagicLinkCommandHandler> logger,
+    IOptions<UsersOptions>? users = null)
     : ICommandHandler<RequestMagicLinkCommand>
 {
-    /// <summary>Links por e-mail dentro de <see cref="EmailWindow"/>.</summary>
-    public const int EmailLimit = 3;
+    /// <summary>Links por e-mail dentro de <see cref="EmailWindow"/> (padrão; <c>Users:MagicLinkEmailLimit</c> muda).</summary>
+    public const int EmailLimit = UsersOptions.DefaultMagicLinkEmailLimit;
 
     /// <summary>Janela do limite por e-mail.</summary>
     public static readonly TimeSpan EmailWindow = TimeSpan.FromMinutes(15);
@@ -43,11 +45,12 @@ internal sealed partial class RequestMagicLinkCommandHandler(
         }
 
         var now = clock.GetUtcNow();
-        if (await tokens.CountIssuedSinceAsync(email, now - EmailWindow, cancellationToken) >= EmailLimit)
+        var limit = Math.Max(1, users?.Value.MagicLinkEmailLimit ?? EmailLimit);
+        if (await tokens.CountIssuedSinceAsync(email, now - EmailWindow, cancellationToken) >= limit)
         {
             // Acima do limite por e-mail a resposta é a mesma (não revela nada), só sem envio.
             UsersTelemetry.MagicLinkRequested(UsersTelemetry.RequestLimited);
-            LogEmailLimited(logger, EmailLimit, EmailWindow.TotalMinutes);
+            LogEmailLimited(logger, limit, EmailWindow.TotalMinutes);
             return Result.Success();
         }
 
