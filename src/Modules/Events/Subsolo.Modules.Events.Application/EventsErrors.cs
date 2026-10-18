@@ -26,6 +26,21 @@ public static class EventsErrors
     /// <summary>404: nenhum estilo com o slug.</summary>
     public const string StyleNotFound = "events.style_not_found";
 
+    /// <summary>SPEC-0022 — 400: o conteúdo do arquivo não é JPEG, PNG nem WebP (a extensão não conta).</summary>
+    public const string FlyerInvalidType = "events.flyer_invalid_type";
+
+    /// <summary>SPEC-0022 — 400: o arquivo passa de 10 MB (10 × 1024 × 1024 bytes).</summary>
+    public const string FlyerTooLarge = "events.flyer_too_large";
+
+    /// <summary>SPEC-0022 — 400: a imagem passa de 40 megapixels.</summary>
+    public const string FlyerTooManyPixels = "events.flyer_too_many_pixels";
+
+    /// <summary>SPEC-0022 — 400: o envio não tem a parte <c>file</c> (ou ela está vazia).</summary>
+    public const string FlyerMissing = "events.flyer_missing";
+
+    /// <summary>SPEC-0022 — 422: cabeçalho de imagem válido, mas a imagem não pôde ser processada.</summary>
+    public const string FlyerUnprocessable = "events.flyer_unprocessable";
+
     /// <summary>Mensagem do campo para um slug gerado fora do formato.</summary>
     internal const string GeneratedSlugMessage = "O nome precisa ter ao menos duas letras ou dígitos para gerar o endereço.";
 
@@ -44,4 +59,21 @@ public static class EventsErrors
     internal static Error CitySlugTakenError() => Error.Conflict(CitySlugTaken, "Esse endereço já existe.");
 
     internal static Error StyleTakenError() => Error.Conflict(StyleTaken, "Esse estilo já existe.");
+
+    /// <summary>SPEC-0022 — 400 <see cref="FlyerMissing"/>, no campo <c>file</c>.</summary>
+    public static Error FlyerMissingError() =>
+        FieldError(FlyerMissing, "Envie o flyer no campo file.", "file", "Arquivo ausente ou vazio.");
+
+    internal static Error FlyerInvalidTypeError() =>
+        FieldError(FlyerInvalidType, "O flyer precisa ser JPEG, PNG ou WebP.", "file", "Tipo de arquivo não aceito.");
+
+    /// <summary>SPEC-0022 — 400 <see cref="FlyerTooLarge"/>, no campo <c>file</c>.</summary>
+    public static Error FlyerTooLargeError() =>
+        FieldError(FlyerTooLarge, "O flyer passa de 10 MB.", "file", "Arquivo acima de 10 MB.");
+
+    internal static Error FlyerTooManyPixelsError() =>
+        FieldError(FlyerTooManyPixels, "O flyer passa de 40 megapixels.", "file", "Imagem acima de 40 megapixels.");
+
+    internal static Error FlyerUnprocessableError() =>
+        Error.Unprocessable(FlyerUnprocessable, "O flyer não pôde ser processado (arquivo corrompido?).");
 }

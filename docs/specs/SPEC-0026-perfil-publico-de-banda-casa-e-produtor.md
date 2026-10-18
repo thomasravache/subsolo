@@ -131,6 +131,7 @@ Página do show: casa e bandas com perfil viram links para /casa/{slug} e /banda
 
 ### 7.6 Outros
 - Acessibilidade: nome acessível dos links externos e axe nas páginas.
+- Herança da revisão da SPEC-0021: teste de integração com a mesma reivindicação aprovada por dois admins ao mesmo tempo (um 200 e o outro 409 `profiles.request_decided`), em `tests/Modules/Profiles/**`.
 
 **Dublês e dados de teste:** perfis criados e aprovados pela API (admin) e shows cadastrados pela API nos IT e no E2E.
 

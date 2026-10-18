@@ -4,14 +4,14 @@ title: Upload e processamento de flyer
 tier: full
 type: feature
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Common/Subsolo.Common.Application/**, src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.AppHost/**, infra/caddy/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Directory.Packages.props, docs/api/**, web/src/api/**]
+touches: [src/Common/Subsolo.Common.Domain/**, src/Common/Subsolo.Common.Presentation/**, src/Common/Subsolo.Common.Application/**, src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.AppHost/**, infra/caddy/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, Directory.Packages.props, docs/api/**, web/src/api/**]
 adrs: [ADR-0001, ADR-0004, ADR-0009, ADR-0011, ADR-0015]
 external: []
 size: M
@@ -96,7 +96,7 @@ public interface IFlyerCatalog { Task<bool> ExistsAsync(string flyerId, Cancella
 Configuração: Media:Root (local: volume do Aspire; Compose/produção: volume media montado na API e no Caddy)
 Banco: events.flyers(id char(64) PK, uploaded_by uuid, created_at_utc, attached_at_utc null)
 Limpeza: flyers com attached_at nulo e criados há > 24 h → arquivos e linha apagados (tarefa periódica de hora em hora)
-Caddy: handle /media/* { root * /srv/media ; file_server ; header Cache-Control "public, max-age=31536000, immutable" }
+Caddy: handle_path /media/* { root * /srv/media ; file_server ; header X-Content-Type-Options nosniff ; header Cache-Control "public, max-age=31536000, immutable" }
 ```
 
 **Design:** N/A — sem interface; o campo de upload está na tela "Cadastrar Show - Subsolo" (0eda9cdf97fa484188933d53f1605783), implementado pela spec de cadastro de show.
@@ -110,6 +110,7 @@ Caddy: handle /media/* { root * /srv/media ; file_server ; header Cache-Control 
 | Mesmo arquivo de novo | mesmo hash | 200 com o mesmo id, sem reprocessar | IT-01 |
 | Tipo falso | `.jpg` que é PDF ou texto | 400 `flyer_invalid_type` | UT-01, IT-03 |
 | Grande demais | > 10 MB; > 40 megapixels | 400 `flyer_too_large` / `flyer_too_many_pixels`, sem ler o arquivo todo | UT-01, IT-03 |
+| Sem arquivo | multipart sem a parte `file` ou vazio | 400 `flyer_missing` | IT-03 |
 | Arquivo corrompido | cabeçalho válido, dados quebrados | 422 `flyer_unprocessable`, nenhum arquivo deixado | IT-05 |
 | Acesso | anônimo, fã, artista, admin | 401, 403, 201, 201 | IT-04 |
 | Servir | variante existente; inexistente | 200 com cache imutável e `nosniff`; 404 | IT-06 |
@@ -194,11 +195,11 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 9b9e13b | 2026-10-17 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — c34b1e8 | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — d47d28b | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 361ms) — d47d28b | 2026-10-18 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em d47d28b — contrato e códigos do §6 (422 por ErrorType.Unprocessable), tipo pelo conteúdo, limite antes da leitura, limite de pixels, metadados removidos, artist/admin + X-CSRF + rate limit, caminhos seguros (SHA-256 e Resolve), só Common.Infrastructure com NetVips, gravação atômica e limpeza; desvios aceitos (NetVips privado + pacotes no host; media-init com a imagem do Caddy já fixada); sem blocker/major; menores → SPEC-0023 (corrida da limpeza, 404 com cache imutável no Caddy, teto do corpo sem Content-Length, BlockUntrusted, FailOn.Truncated, espera com timeout, created_at no reenvio, smoke de upload pelo Caddy, /media no next dev) — d47d28b | 2026-10-18 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 10m 16s 868ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 5s 969ms) — aca2280 | 2026-10-18 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
@@ -247,3 +248,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0022`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-18 | (a) Caddy com `handle_path /media/*` (tira o prefixo) e `root * /srv/media`; o volume `media` é a raiz de `Media:Root` na API e fica montado em `/srv/media` no Caddy, que também envia `X-Content-Type-Options: nosniff`. (b) 10 MB = 10 × 1024 × 1024 bytes. (c) Linha do mapa para `flyer_missing` (IT-03). (d) `ErrorType.Unprocessable` → 422 em `Common.Domain`/`Common.Presentation` (entram em `touches`). (e) IT-02: dez arquivos diferentes (mesma imagem com comentário JPEG distinto, já que hash repetido devolve 200), repouso medido depois de a API subir, de um envio de aquecimento e de um GC completo, pico pelo working set amostrado a cada 10 ms, p95 por posto mais próximo. (f) IT-05: decodificação estrita (`FailOn` de aviso ou erro) para JPEG truncado dar 422. | Relatório do Test-writer: o trecho do Caddy lia `/srv/media/media/...`, unidade de tamanho e método de medição ambíguos, 422 sem `ErrorType` e `flyer_missing` sem linha no mapa | — | Architect (piloto automático do Thomas, 2026-10-17) |

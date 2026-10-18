@@ -1,11 +1,13 @@
 // SPEC-0007 — composição do host da API (ADR-0001): infraestrutura comum, módulos e endpoints.
 // SPEC-0010 — segurança base (ADR-0003): autorização negada por padrão, anti-forgery e rate limiting.
+// SPEC-0022 — mídia (ADR-0015): em desenvolvimento a API serve /media/flyers/* do Media:Root (no Compose, o Caddy).
 using System.Text.Json.Serialization;
 using OpenTelemetry.Metrics;
 using Subsolo.Api.OpenApi;
 using Subsolo.Api.Security;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Infrastructure.Database;
+using Subsolo.Common.Infrastructure.Media;
 using Subsolo.Common.Presentation;
 using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Events.Infrastructure;
@@ -34,15 +36,23 @@ builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddProfilesModule(builder.Configuration);
 
 // Métricas dos módulos: SPEC-0014 (subsolo.users.sign_ins e subsolo.users.sessions_revoked), SPEC-0018
-// (subsolo.notifications.emails) e SPEC-0021 (subsolo.profiles.requests e subsolo.profiles.decisions).
+// (subsolo.notifications.emails), SPEC-0021 (subsolo.profiles.requests e subsolo.profiles.decisions) e SPEC-0022
+// (subsolo.flyers.uploads e subsolo.flyers.processing_duration).
 builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(
-    UsersModule.MeterName, NotificationsModule.MeterName, ProfilesModule.MeterName));
+    UsersModule.MeterName, NotificationsModule.MeterName, ProfilesModule.MeterName, EventsModule.MeterName));
 
 var app = builder.Build();
 
 // Exceção não tratada → 500 em ProblemDetails (RFC 9457); fora de Development, sem detalhes da exceção.
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+// Antes da segurança: /media/flyers/* é público (o 404 sai ali mesmo, sem passar pela autorização).
+if (app.Environment.IsDevelopment())
+{
+    app.UseMediaFiles();
+}
+
 app.UseApiSecurity();
 
 if (app.Environment.IsDevelopment())

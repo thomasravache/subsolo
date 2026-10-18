@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Quartz;
 using Subsolo.Common.Application.EventBus;
 using Subsolo.Common.Infrastructure.EventBus;
+using Subsolo.Common.Infrastructure.Media;
 using Subsolo.Common.Infrastructure.Observability;
 using Subsolo.Common.Infrastructure.Outbox;
 
@@ -22,6 +23,7 @@ public static class CommonInfrastructureExtensions
     /// DbContext de um módulo é criado.
     /// SPEC-0009 — health checks <c>postgres</c> e <c>outbox</c> do <c>/health</c>, com o heartbeat da outbox
     /// alimentado por um listener dos jobs <c>ProcessOutbox</c> (que também registra a falha dos jobs <c>ProcessInbox</c>).
+    /// SPEC-0022 — a mídia (<see cref="MediaExtensions.AddMedia"/>): disco em <c>Media:Root</c> e o NetVips.
     /// </summary>
     public static IServiceCollection AddCommonInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -29,6 +31,7 @@ public static class CommonInfrastructureExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<InsertOutboxMessagesInterceptor>();
         services.TryAddSingleton<IEventBus, InProcessEventBus>();
+        services.AddMedia(configuration);
 
         services.TryAddSingleton<OutboxHeartbeat>();
         services.AddHealthChecks()

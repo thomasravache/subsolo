@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Perfis (SPEC-0021): módulo `Profiles` com pedido de perfil de banda, casa ou produtor em "Meus perfis", fila do admin para aprovar ou recusar com motivo (aprovar dá o papel `artist`), perfis sem dono criados pelo admin e reivindicação pelo dono; pedidos e aprovações simultâneos têm um vencedor e 409 para os outros.
 - Entrar com Google (SPEC-0020): "Continuar com Google" em `/entrar` por OpenID Connect, com a conta ligada pelo e-mail verificado; desligado sem configuração, com provedor falso no desenvolvimento e nos testes.
 - Minha conta (SPEC-0019): mudar o nome de exibição, baixar todos os dados em JSON e excluir a conta digitando o próprio e-mail; a exclusão apaga conta, sessões e links pendentes e avisa os outros módulos por evento.
 - Cidades e estilos no admin (SPEC-0017): painel `/admin/cidades-e-estilos` para cadastrar e editar cidades (endereço gerado e imutável) e estilos; estilos iniciais (death, black, grind, doom, thrash) por migração e `GET /api/v1/styles` público.

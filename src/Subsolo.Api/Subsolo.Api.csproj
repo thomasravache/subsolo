@@ -11,6 +11,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!--
+      SPEC-0022 (ADR-0015): só para a publicação levar o NetVips e o libvips nativo, que o Common.Infrastructure usa
+      (lá a referência é privada). Nenhum tipo do host usa o NetVips (teste de arquitetura).
+    -->
+    <PackageReference Include="NetVips" />
+    <PackageReference Include="NetVips.Native" />
   </ItemGroup>
 
   <ItemGroup>
