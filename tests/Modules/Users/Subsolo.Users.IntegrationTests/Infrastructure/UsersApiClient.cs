@@ -29,6 +29,9 @@ internal sealed class UsersApiClient(HttpClient http) : IDisposable
     /// <summary>Valor atual do cookie de sessão no pote, ou nulo.</summary>
     public string? SessionCookie => _cookies.GetValueOrDefault(SessionCookieName);
 
+    /// <summary>SPEC-0020 — valor atual do cookie <paramref name="name"/> no pote, ou nulo (apagado ou nunca recebido).</summary>
+    public string? Cookie(string name) => _cookies.GetValueOrDefault(name);
+
     /// <summary>
     /// Envia a requisição com os cookies do pote (o de sessão trocado por <paramref name="sessionCookie"/>, se informado)
     /// e o <c>X-CSRF</c> <paramref name="csrfToken"/>; os <c>Set-Cookie</c> da resposta atualizam o pote.
