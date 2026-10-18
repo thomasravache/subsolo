@@ -120,6 +120,9 @@ internal sealed class UsersApiFactory(
     {
         builder.UseEnvironment(environment);
         builder.UseSetting($"ConnectionStrings:{CommonInfrastructureExtensions.ConnectionStringName}", connectionString);
+        // SPEC-0016 (Emenda 5): a API valida App:PublicUrl na inicialização (https; http só em Development) e não tem
+        // valor padrão no código; o host de teste roda em qualquer ambiente com o endereço do cliente de teste.
+        builder.UseSetting("App:PublicUrl", "https://localhost");
         builder.UseSetting("Users:AdminEmails:0", AdminEmail);
         foreach (var (key, value) in settings ?? new Dictionary<string, string>())
         {
