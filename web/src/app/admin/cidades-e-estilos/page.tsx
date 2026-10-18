@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 import { getAdminPanelData } from "@/api/admin-data";
-import { AdminNav } from "@/components/admin/AdminNav";
+import {
+  AdminForbidden,
+  AdminPage,
+  AdminUnavailable,
+} from "@/components/admin/AdminPage";
 import { AdminPanel } from "@/components/admin/AdminPanel";
-import { mainContentId } from "@/components/ui/shell";
 
 import { adminAccess } from "../admin-access";
 
@@ -18,9 +21,6 @@ export const instant = false;
 
 const path = "/admin/cidades-e-estilos";
 
-const pageTitle =
-  "font-display text-4xl uppercase leading-none tracking-wide text-text md:text-5xl";
-
 export async function generateMetadata(): Promise<Metadata> {
   switch (await adminAccess()) {
     case "ok":
@@ -32,53 +32,19 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-function Message({ title, text }: { title: string; text: string }) {
-  return (
-    <main
-      id={mainContentId}
-      className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-10"
-    >
-      <h1 className={pageTitle}>{title}</h1>
-      <p role="alert" className="text-lg text-text-muted">
-        {text}
-      </p>
-    </main>
-  );
-}
-
-function Unavailable() {
-  return (
-    <Message
-      title="Painel indisponível"
-      text="O painel está fora do ar por alguns instantes. Tente de novo."
-    />
-  );
-}
-
 export default async function CitiesAndStylesPage() {
   const access = await adminAccess();
   if (access === "forbidden") {
-    return (
-      <Message
-        title="Acesso negado"
-        text="Você não tem acesso a esta página."
-      />
-    );
+    return <AdminForbidden />;
   }
   const data = access === "ok" ? await getAdminPanelData() : undefined;
   if (!data) {
-    return <Unavailable />;
+    return <AdminUnavailable />;
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 md:flex-row md:gap-10">
-      <aside className="md:w-56 md:shrink-0">
-        <AdminNav current={path} />
-      </aside>
-      <main id={mainContentId} className="flex min-w-0 flex-1 flex-col gap-6">
-        <h1 className={pageTitle}>Cidades e estilos</h1>
-        <AdminPanel cities={data.cities} styles={data.styles} />
-      </main>
-    </div>
+    <AdminPage current={path} title="Cidades e estilos">
+      <AdminPanel cities={data.cities} styles={data.styles} />
+    </AdminPage>
   );
 }
