@@ -212,6 +212,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/cities/{city}/shows/{slug}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Página do show
+     * @description O show público da cidade pelo slug: cidade (com o fuso), início em UTC, casa e line-up (com o slug do perfil quando houver), estilos, preço, link do ingresso, situação (cancelado e adiado continuam aqui) e as variantes do flyer com as medidas da full.
+     */
+    get: operations["GetShowDetail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/cities/{slug}/agenda": {
     parameters: {
       query?: never;
@@ -669,6 +689,7 @@ export interface components {
       /** Format: date-time */
       startsAt: string;
       city: string;
+      timeZone: string;
       venueName: string;
       status: components["schemas"]["ShowStatus"];
       flyerThumbUrl: string;
@@ -768,6 +789,44 @@ export interface components {
       styles: null | string[];
       links: components["schemas"]["ProfileLinksRequest"];
       contact: null | string;
+    };
+    ShowDetailCityResponse: {
+      slug: string;
+      name: string;
+      timeZone: string;
+    };
+    ShowDetailFlyerResponse: {
+      thumbUrl: string;
+      fullUrl: string;
+      ogUrl: string;
+      /** Format: int32 */
+      width: null | number;
+      /** Format: int32 */
+      height: null | number;
+    };
+    ShowDetailPartResponse: {
+      name: string;
+      profileSlug: null | string;
+    };
+    ShowDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      title: string;
+      city: components["schemas"]["ShowDetailCityResponse"];
+      /** Format: date-time */
+      startsAt: string;
+      venue: components["schemas"]["ShowDetailPartResponse"];
+      lineup: components["schemas"]["ShowDetailPartResponse"][];
+      styles: components["schemas"]["ShowDetailStyleResponse"][];
+      price: string;
+      ticketUrl: null | string;
+      status: components["schemas"]["ShowStatus"];
+      flyer: components["schemas"]["ShowDetailFlyerResponse"];
+    };
+    ShowDetailStyleResponse: {
+      slug: string;
+      name: string;
     };
     ShowForEditResponse: {
       /** Format: uuid */
@@ -1670,6 +1729,56 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CitySummaryResponse"][];
+        };
+      };
+    };
+  };
+  GetShowDetail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        city: string;
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ShowDetailResponse"];
+        };
+      };
+      /** @description Not Found (code=events.show_not_found) (code=events.city_not_found) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
     };

@@ -992,6 +992,76 @@
         }
       }
     },
+    "/api/v1/cities/{city}/shows/{slug}": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Página do show",
+        "description": "O show público da cidade pelo slug: cidade (com o fuso), início em UTC, casa e line-up (com o slug do perfil quando houver), estilos, preço, link do ingresso, situação (cancelado e adiado continuam aqui) e as variantes do flyer com as medidas da full.",
+        "operationId": "GetShowDetail",
+        "parameters": [
+          {
+            "name": "city",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=events.show_not_found) (code=events.city_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cities/{slug}/agenda": {
       "get": {
         "tags": [
@@ -2714,6 +2784,7 @@
           "title",
           "startsAt",
           "city",
+          "timeZone",
           "venueName",
           "status",
           "flyerThumbUrl",
@@ -2736,6 +2807,9 @@
             "format": "date-time"
           },
           "city": {
+            "type": "string"
+          },
+          "timeZone": {
             "type": "string"
           },
           "venueName": {
@@ -3132,6 +3206,159 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ShowDetailCityResponse": {
+        "required": [
+          "slug",
+          "name",
+          "timeZone"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        }
+      },
+      "ShowDetailFlyerResponse": {
+        "required": [
+          "thumbUrl",
+          "fullUrl",
+          "ogUrl",
+          "width",
+          "height"
+        ],
+        "type": "object",
+        "properties": {
+          "thumbUrl": {
+            "type": "string"
+          },
+          "fullUrl": {
+            "type": "string"
+          },
+          "ogUrl": {
+            "type": "string"
+          },
+          "width": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "height": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ShowDetailPartResponse": {
+        "required": [
+          "name",
+          "profileSlug"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "profileSlug": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ShowDetailResponse": {
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "city",
+          "startsAt",
+          "venue",
+          "lineup",
+          "styles",
+          "price",
+          "ticketUrl",
+          "status",
+          "flyer"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "$ref": "#/components/schemas/ShowDetailCityResponse"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venue": {
+            "$ref": "#/components/schemas/ShowDetailPartResponse"
+          },
+          "lineup": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowDetailPartResponse"
+            }
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowDetailStyleResponse"
+            }
+          },
+          "price": {
+            "type": "string"
+          },
+          "ticketUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShowStatus"
+          },
+          "flyer": {
+            "$ref": "#/components/schemas/ShowDetailFlyerResponse"
+          }
+        }
+      },
+      "ShowDetailStyleResponse": {
+        "required": [
+          "slug",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
