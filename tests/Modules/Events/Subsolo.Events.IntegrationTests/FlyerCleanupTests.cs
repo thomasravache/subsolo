@@ -49,10 +49,12 @@ public sealed class FlyerCleanupTests(PostgresFixture postgres)
                 CleanupTimeout,
                 ct))
             .ShouldBeTrue("o flyer sem show criado há 25 h não foi apagado do banco");
-        foreach (var (variant, _, relativePath) in orphan.Variants)
-        {
-            File.Exists(Path.Combine(api.MediaRoot, relativePath)).ShouldBeFalse($"o {variant} do flyer apagado ficou no disco");
-        }
+        // A tarefa apaga a linha antes dos arquivos: espera os arquivos também sumirem (e só então confere os mantidos).
+        (await Timing.EventuallyAsync(
+                () => Task.FromResult(orphan.Variants.All(v => !File.Exists(Path.Combine(api.MediaRoot, v.RelativePath)))),
+                CleanupTimeout,
+                ct))
+            .ShouldBeTrue("um arquivo do flyer apagado ficou no disco");
 
         var rows = await FlyersDatabase.FlyersAsync(api.ConnectionString, ct);
         rows.Select(row => row.Id).ShouldBe([attached.FlyerId, recent.FlyerId], ignoreOrder: true);
