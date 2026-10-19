@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
  * agenda como no §6:
  * - `GET /api/v1/cities/{slug}/agenda` com os parâmetros de consulta `from` e `to` (`date`) e `styles` (texto);
  * - 200 com `period: {from, to}` (datas) e `total` (inteiro), além de `city` e `shows` (contrato da SPEC-0008);
- * - 400 em ProblemDetails com `agenda.invalid_period` e `agenda.invalid_styles`; 404 com `agenda.city_not_found`;
+ * - 400 em ProblemDetails com `agenda.invalid_range` e `agenda.invalid_styles`; 404 com `agenda.city_not_found`;
  * - o cliente `src/api/schema.d.ts` foi regenerado e `(cd web && pnpm api:check)` passa.
  */
 
@@ -130,11 +130,11 @@ describe("OpenAPI dos filtros da agenda fiel ao contrato §6", () => {
     expect(types(property(body, "total"))).toContain("integer");
   });
 
-  it("SPEC-0025:CT-01 declara 400 com agenda.invalid_period e agenda.invalid_styles e 404 com agenda.city_not_found, em ProblemDetails", () => {
+  it("SPEC-0025:CT-01 declara 400 com agenda.invalid_range e agenda.invalid_styles e 404 com agenda.city_not_found, em ProblemDetails", () => {
     const badRequest = agenda().responses["400"];
     expect(badRequest, "400 não declarado").toBeDefined();
     expect(badRequest?.content?.["application/problem+json"]).toBeDefined();
-    for (const code of ["agenda.invalid_period", "agenda.invalid_styles"]) {
+    for (const code of ["agenda.invalid_range", "agenda.invalid_styles"]) {
       expect(badRequest?.description ?? "").toContain(`code=${code}`);
     }
     const notFound = agenda().responses["404"];

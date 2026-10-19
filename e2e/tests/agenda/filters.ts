@@ -87,3 +87,9 @@ export function daysUntilSunday(): number {
   const weekday = new Date(`${localDate(0)}T12:00:00Z`).getUTCDay();
   return (7 - weekday) % 7;
 }
+
+/** A data local (São Paulo) daqui a `days` dias no formato do cabeçalho da agenda (`dd/MM`). */
+export function dayMonth(days: number): string {
+  const [, month, day] = localDate(days).split("-");
+  return `${day}/${month}`;
+}

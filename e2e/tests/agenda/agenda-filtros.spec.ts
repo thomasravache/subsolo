@@ -1,6 +1,6 @@
 import { expect, test } from "../fixtures";
 import { appURL } from "./environment";
-import { daysUntilSunday, publishAgenda } from "./filters";
+import { dayMonth, daysUntilSunday, publishAgenda } from "./filters";
 import { announcements, card, localDate, press } from "../shows/journey";
 
 /**
@@ -11,10 +11,10 @@ import { announcements, card, localDate, press } from "../shows/journey";
  *
  * - E2E-01 (mobile-chrome e mobile-safari): o fã abre a agenda, toca em "Esta semana" e depois em "DEATH"; a URL muda,
  *   só os shows certos aparecem e o total do cabeçalho bate (anunciado em `aria-live`); os chips selecionados têm
- *   `aria-current="page"`; a mesma URL aberta numa aba nova já vem filtrada do servidor, com os chips marcados. Sem
+ *   `aria-current="page"`; cabeçalho "{de} A {ate} · N SHOWS" em dd/MM, singular "1 SHOW"; a mesma URL aberta numa aba nova já vem filtrada do servidor, com os chips marcados. Sem
  *   violações do axe.
  * - E2E-02 (mobile-chrome): parâmetros inválidos (`ate < de`, 181 dias) mostram a agenda padrão sem erro; "Escolher
- *   data" com um intervalo sem shows mostra "Nenhum show com esses filtros." e "Limpar filtros" volta à agenda padrão;
+ *   data" (formulário GET com "De", "Até" e "Aplicar") com um intervalo sem shows mostra "Nenhum show com esses filtros." e "Limpar filtros" volta à agenda padrão;
  *   o bloco "PRODUZINDO SHOW EM {CIDADE}?" leva o anônimo a `/entrar?returnTo=/conta/shows/novo` e o artista a
  *   `/conta/shows/novo`.
  */
@@ -62,7 +62,7 @@ test.describe("filtros da agenda", () => {
 
       const opened = await page.goto(`/${citySlug}`);
       expect(opened?.status()).toBe(200);
-      await expect(main).toContainText(/próximos 90 dias\s*·\s*3 shows/i);
+      await expect(main).toContainText(/PRÓXIMOS 90 DIAS\s*·\s*3 SHOWS/i);
       for (const show of setup.shows) {
         await expect(card(main, show.title)).toBeVisible();
       }
@@ -75,7 +75,10 @@ test.describe("filtros da agenda", () => {
       await expect(card(main, inWeek.title)).toBeVisible();
       await expect(card(main, grindInWeek.title)).toBeVisible();
       await expect(card(main, afterWeek.title)).toHaveCount(0);
-      await expect(main).toContainText(/·\s*2 shows/i);
+      const weekHeader = `${dayMonth(0)} A ${dayMonth(sunday)}`;
+      await expect(main).toContainText(
+        new RegExp(`${weekHeader}\\s*·\\s*2 SHOWS`, "i"),
+      );
       await expect(
         page.getByRole("link", { name: /^esta semana$/i }),
       ).toHaveAttribute("aria-current", "page");
@@ -90,10 +93,12 @@ test.describe("filtros da agenda", () => {
       await expect(card(main, inWeek.title)).toBeVisible();
       await expect(card(main, grindInWeek.title)).toHaveCount(0);
       await expect(card(main, afterWeek.title)).toHaveCount(0);
-      await expect(main).toContainText(/·\s*1 shows?\b/i);
+      await expect(main).toContainText(
+        new RegExp(`${weekHeader}\\s*·\\s*1 SHOW\\b`, "i"),
+      );
       await expect(
         announcements(page)
-          .filter({ hasText: /\b1 shows?\b/i })
+          .filter({ hasText: /\b1 SHOW\b/i })
           .first(),
         "o total não é anunciado em aria-live",
       ).toBeAttached();
@@ -126,7 +131,9 @@ test.describe("filtros da agenda", () => {
         await expect(card(otherMain, inWeek.title)).toBeVisible();
         await expect(card(otherMain, grindInWeek.title)).toHaveCount(0);
         await expect(card(otherMain, afterWeek.title)).toHaveCount(0);
-        await expect(otherMain).toContainText(/·\s*1 shows?\b/i);
+        await expect(otherMain).toContainText(
+          new RegExp(`${weekHeader}\\s*·\\s*1 SHOW\\b`, "i"),
+        );
         await expect(
           other.getByRole("link", { name: /^death$/i }),
         ).toHaveAttribute("aria-current", "page");
@@ -192,7 +199,7 @@ test.describe("filtros da agenda", () => {
       await page.getByLabel(/^de$/i).fill(from);
       const until = page.getByLabel(/^até$/i);
       await until.fill(to);
-      await until.press("Enter");
+      await press(page.getByRole("button", { name: "Aplicar" }));
       await expect(page).toHaveURL(
         (url) =>
           url.searchParams.get("de") === from &&
@@ -208,7 +215,7 @@ test.describe("filtros da agenda", () => {
         (url) => url.pathname === `/${citySlug}` && url.search === "",
       );
       await expect(card(main, show.title)).toBeVisible();
-      await expect(main).toContainText(/próximos 90 dias\s*·\s*1 shows?\b/i);
+      await expect(main).toContainText(/PRÓXIMOS 90 DIAS\s*·\s*1 SHOW\b/i);
 
       // CTA do produtor: anônimo vai para a entrada, com a volta para o cadastro.
       await expect(page.getByRole("main")).toContainText(

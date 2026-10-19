@@ -17,7 +17,7 @@ namespace Subsolo.Events.IntegrationTests;
 /// cada resposta traz só os do período, com <c>period</c> e <c>total</c> certos;</item>
 /// <item>IT-02 — 300 shows com estilos variados: <c>styles=death,grind</c> com um período traz só os com algum desses
 /// estilos no período, em p95 ≤ 300 ms; <c>styles=xpto</c> não quebra (estilo inexistente ignorado);</item>
-/// <item>IT-03 — <c>from</c> depois de <c>to</c>, 181 dias e data mal formada → 400 <c>agenda.invalid_period</c>;
+/// <item>IT-03 — <c>from</c> depois de <c>to</c>, 181 dias e data mal formada → 400 <c>agenda.invalid_range</c>;
 /// slug de estilo fora do padrão → 400 <c>agenda.invalid_styles</c>.</item>
 /// </list>
 /// "Hoje" é fixado com <see cref="FakeTimeProvider"/> ao meio-dia local (São Paulo) do dia corrente: assim os shows de
@@ -168,11 +168,11 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
 
         (string Query, string Code)[] cases =
         [
-            ($"from={Iso(today.AddDays(10))}&to={Iso(today.AddDays(5))}", "agenda.invalid_period"),
-            ($"from={Iso(today)}&to={Iso(today.AddDays(181))}", "agenda.invalid_period"),
-            ($"from=2026-13-01&to={Iso(today)}", "agenda.invalid_period"),
-            ($"from=12/11/2026&to={Iso(today)}", "agenda.invalid_period"),
-            ($"from={Iso(today)}&to=amanha", "agenda.invalid_period"),
+            ($"from={Iso(today.AddDays(10))}&to={Iso(today.AddDays(5))}", "agenda.invalid_range"),
+            ($"from={Iso(today)}&to={Iso(today.AddDays(181))}", "agenda.invalid_range"),
+            ($"from=2026-13-01&to={Iso(today)}", "agenda.invalid_range"),
+            ($"from=12/11/2026&to={Iso(today)}", "agenda.invalid_range"),
+            ($"from={Iso(today)}&to=amanha", "agenda.invalid_range"),
             ("styles=death,Grind_X", "agenda.invalid_styles"),
             ("styles=%3Cscript%3E", "agenda.invalid_styles"),
             ($"from={Iso(today)}&to={Iso(today.AddDays(7))}&styles=death%20metal", "agenda.invalid_styles"),
