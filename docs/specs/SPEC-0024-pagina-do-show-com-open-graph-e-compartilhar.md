@@ -4,14 +4,14 @@ title: Página do show com Open Graph e compartilhar
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, infra/caddy/**, web/src/app/(public)/conta/shows/**, tests/**/packages.lock.json, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**]
+touches: [src/Subsolo.AppHost/**, tools/compose-up.sh, src/Subsolo.Api/packages.lock.json, src/Common/Subsolo.Common.Infrastructure/**, tests/Common/**, infra/caddy/**, web/src/app/(public)/conta/shows/**, tests/**/packages.lock.json, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/agenda/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/shows/**, e2e/tests/agenda/**, docs/design/**, .github/workflows/ci.yml]
 adrs: [ADR-0013, ADR-0015, ADR-0016, ADR-0017]
 external: []
 size: M
@@ -150,7 +150,7 @@ Agenda: o card do show é um next/link para /{cidade}/{show}
 
 ## 8. Plano de Rollout
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003).
-- **Dados/schema:** nenhum.
+- **Dados/schema:** colunas `width` e `height` da variante `full` em `events.flyers`, nulas e preenchidas no envio (Emenda v2; migração aditiva).
 - **Compatibilidade:** rota nova de dois segmentos; a agenda continua igual, com o card agora clicável.
 - **Observabilidade:** trace da página até a API; contador de 404 de show no Seq (consulta) para achar links quebrados.
 - **Rollback:** reverter o merge commit.
@@ -195,12 +195,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — fd9ca7e | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 65845bb | 2026-10-18 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 154e458 | 2026-10-18 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 075ms) — 154e458 | 2026-10-18 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (0 blocker, 0 major, 7 minor → herdados H24-02..08) — 154e458 | 2026-10-18 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 11m 45s 275ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 432ms) — 25a8682 | 2026-10-19 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -248,3 +248,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0024`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-18 | (a) O web recebe o endereço público por variável **só do servidor**, `SUBSOLO_PUBLIC_URL` (sem `NEXT_PUBLIC_`, nunca no navegador), definida pelo AppHost e pelo `compose-up.sh` com o mesmo valor do `App:PublicUrl` da API; `tools/compose-up.sh` e `src/Subsolo.AppHost/**` entram em `touches`. (b) `flyer.width`/`height` são as medidas da variante `full`, gravadas no envio em colunas novas de `events.flyers` (migração aditiva; flyers antigos sem medida → `null`, e a página usa a proporção 3:4). (c) `description`: "{ddd dd/MM} {HH'h'mm no fuso da cidade} · {casa} · {line-up separado por ' / '}"; só o cancelado ganha selo no título. (d) API fora → 503 com a página "Show indisponível" e mensagem em `role=alert`, como a da agenda. (e) O tipo `ShowDetail` do web passa a ser o gerado do OpenAPI. (f) H23-04 fica com os dois testes (Caddyfile e E2E de guarda). | Relatório do Test-writer: endereço público ausente no web, origem das medidas, formato da descrição e texto do 503 | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-18 | Sem mudança de contrato. Aceitos os desvios do Implementer: (1) E2E-01 passa a localizar o `main` visível (`getByRole("main")`), porque com `cacheComponents` a agenda continua no DOM, oculta (Activity), após a navegação pelo card — correção do teste feita pelo Test-writer, sem mudar asserções; (2) a remoção do método morto `ListUnattachedCreatedBeforeAsync` no dublê de `UploadFlyerContentHashTests` (consequência mecânica de H23-05, nenhuma asserção alterada); (3) medidas do flyer lidas do cabeçalho WebP da variante `full` (`WebPSize`), `null` em cabeçalho desconhecido — mover a medida para `FlyerImages`/`NetVipsImageProcessor` fica como herdado H24-01 da próxima spec que tocar `Common.Application/Media`; (4) o 503 `service.unavailable` é tratado no próprio `GetShowDetailEndpoint` (não há tratador global de banco fora em `src/Subsolo.Api`); (5) títulos 404 vêm do `not-found` mais próximo (comportamento do Next 16.4, coberto por E2E); (6) line-up como lista " / " e ícones de compartilhar locais em `components/shows/show-icons.tsx`. | Relatório do Implementer | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. `.github/workflows/ci.yml` entra em `touches`: o job `integration` passa de `timeout-minutes: 20` para 30 (a suíte de integração cresceu para ~17–20 min no runner e o PR #31 foi cancelado no último módulo, com tudo passando). | CI do PR #31 cancelado por tempo | — | Architect (piloto automático do Thomas, 2026-10-17) |

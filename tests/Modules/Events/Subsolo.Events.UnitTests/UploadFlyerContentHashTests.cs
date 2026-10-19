@@ -110,9 +110,6 @@ public sealed class UploadFlyerContentHashTests
         public Task<bool> ExistsAsync(string id, CancellationToken cancellationToken) =>
             Task.FromResult(Added.Any(flyer => flyer.Id == id));
 
-        public Task<IReadOnlyList<Flyer>> ListUnattachedCreatedBeforeAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<Flyer>>([]);
-
         public Task<IReadOnlyList<string>> DeleteUnattachedCreatedBeforeAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<string>>([]);
 

@@ -24,6 +24,9 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
     /// <summary>SPEC-0022 — chave primária dos flyers (o id é o hash do arquivo).</summary>
     private const string FlyerKey = "PK_flyers";
 
+    /// <summary>SPEC-0024 — FK do show para o flyer (nome gerado pelo EF na migração dos shows).</summary>
+    private const string ShowFlyerForeignKey = "FK_shows_flyers_flyer_id";
+
     public DbSet<City> Cities => Set<City>();
 
     /// <summary>SPEC-0017 — estilos de metal (os iniciais vêm da migração de dados).</summary>
@@ -38,13 +41,29 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options)
     /// <summary>
     /// SPEC-0017 — unidade de trabalho do módulo: grava as mudanças rastreadas numa transação. Emenda 2: violação de
     /// unicidade (23505) num slug de cidade ou estilo (SPEC-0023: ou de show na cidade) vira <see cref="DuplicateSlugException"/>. SPEC-0022: no id de um
-    /// flyer, <see cref="DuplicateFlyerException"/>.
+    /// flyer, <see cref="DuplicateFlyerException"/>. SPEC-0024 (H23-02): o flyer apagado pela limpeza depois da
+    /// conferência — a FK do show (23503) ou a linha do flyer que não existe mais (concorrência) — vira
+    /// <see cref="MissingFlyerException"/>.
     /// </summary>
     async Task IEventsUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         try
         {
             await SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception) when (exception.Entries.Any(entry => entry.Entity is Flyer))
+        {
+            ChangeTracker.Clear();
+            throw new MissingFlyerException("O flyer foi apagado durante a gravação.", exception);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.ForeignKeyViolation,
+            ConstraintName: ShowFlyerForeignKey,
+        })
+        {
+            ChangeTracker.Clear();
+            throw new MissingFlyerException("O flyer do show foi apagado durante a gravação.", exception);
         }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
         {

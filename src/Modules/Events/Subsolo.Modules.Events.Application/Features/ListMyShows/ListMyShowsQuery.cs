@@ -14,13 +14,17 @@ public sealed record ListMyShowsQuery(Guid UserId, bool IsAdmin, string? Period)
     public const string Past = "past";
 }
 
-/// <summary>SPEC-0023 — um show em "Meus shows" (§6); <see cref="StartsAt"/> em UTC (serializado com <c>Z</c>).</summary>
+/// <summary>
+/// SPEC-0023 — um show em "Meus shows" (§6); <see cref="StartsAt"/> em UTC (serializado com <c>Z</c>). SPEC-0024 (H23-06):
+/// <see cref="TimeZone"/> é o fuso (IANA) da cidade, para a tela mostrar a hora local.
+/// </summary>
 public sealed record MyShowResponse(
     Guid Id,
     string Slug,
     string Title,
     DateTime StartsAt,
     string City,
+    string TimeZone,
     string VenueName,
     ShowStatus Status,
     string FlyerThumbUrl,

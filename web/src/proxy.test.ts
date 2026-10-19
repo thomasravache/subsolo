@@ -214,3 +214,115 @@ describe("proxy e o painel do admin", () => {
     expect(agendaCalls(fetch)).toEqual([]);
   });
 });
+
+/**
+ * SPEC-0024 IT-03 e IT-04 (no nível do proxy, ADR-0016) — a página do show `/{cidade}/{show}` tem o status decidido
+ * pelo proxy, com `GET /api/v1/cities/{city}/shows/{slug}`, como a agenda da cidade: show encontrado → segue (200);
+ * show ou cidade inexistente (404 da API) → 404 real; API fora do ar (conexão recusada ou 5xx) → 503. As páginas de
+ * dois segmentos que não são show (`/conta/shows`, `/entrar/confirmar`) não consultam a API do show.
+ */
+describe("proxy e a página do show", () => {
+  const city = "cidade-exemplo";
+  const slug = "noite-da-peste-ii-2026-11-14";
+  const showPagePath = `/${city}/${slug}`;
+  const detailRoute = `/api/v1/cities/${city}/shows/${slug}`;
+
+  function urlOf(input: Parameters<typeof fetch>[0]): string {
+    return typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url;
+  }
+
+  function problem(status: number, code: string): Response {
+    return Response.json(
+      { status, code },
+      { status, headers: { "content-type": "application/problem+json" } },
+    );
+  }
+
+  /** O detalhe do show responde com `answer`; o resto da API, 500 (o proxy não deveria precisar dela). */
+  function stubDetail(answer: () => Response | Promise<Response>) {
+    vi.stubEnv("API_URL", "http://api.test");
+    return vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) =>
+        urlOf(input).includes("/shows/")
+          ? answer()
+          : new Response(null, { status: 500 }),
+      );
+  }
+
+  function detailCalls(fetch: ReturnType<typeof stubDetail>): string[] {
+    return fetch.mock.calls
+      .map(([input]) => urlOf(input))
+      .filter((url) => url.includes("/shows/"));
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("SPEC-0024:IT-03 show encontrado segue para a página (200), pela rota do detalhe", async () => {
+    const fetch = stubDetail(() =>
+      Response.json({ id: "3f1c2b8e-6a4d-4e7f-9b21-8d5c0e9a1f42", slug }),
+    );
+
+    const response = await proxy(
+      new NextRequest(`http://localhost${showPagePath}`),
+    );
+
+    expect(detailCalls(fetch).map((url) => new URL(url).pathname)).toContain(
+      detailRoute,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
+  it.each(["events.show_not_found", "events.city_not_found"])(
+    "SPEC-0024:IT-03 %s da API vira 404 real",
+    async (code) => {
+      stubDetail(() => problem(404, code));
+
+      const response = await proxy(
+        new NextRequest(`http://localhost${showPagePath}`),
+      );
+
+      expect(response.status).toBe(404);
+    },
+  );
+
+  it("SPEC-0024:IT-04 API fora do ar (conexão recusada) vira 503", async () => {
+    stubDetail(() => Promise.reject(new TypeError("fetch failed")));
+
+    const response = await proxy(
+      new NextRequest(`http://localhost${showPagePath}`),
+    );
+
+    expect(response.status).toBe(503);
+  });
+
+  it("SPEC-0024:IT-04 API com erro 5xx vira 503", async () => {
+    stubDetail(() => problem(503, "service.unavailable"));
+
+    const response = await proxy(
+      new NextRequest(`http://localhost${showPagePath}`),
+    );
+
+    expect(response.status).toBe(503);
+  });
+
+  it.each(["/conta/shows", "/entrar/confirmar"])(
+    "SPEC-0024:IT-03 %s não é tratado como show",
+    async (path) => {
+      const fetch = stubDetail(() => problem(404, "events.show_not_found"));
+
+      const response = await proxy(new NextRequest(`http://localhost${path}`));
+
+      expect(detailCalls(fetch), `${path} consultou a API do show`).toEqual([]);
+      expect(response.status).not.toBe(404);
+    },
+  );
+});

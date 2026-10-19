@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
  * - `POST /api/v1/shows/{id}/status`: corpo `{status}` (`scheduled | cancelled | postponed`); 200; 400
  *   `events.invalid_status`; 403; 404 `events.show_not_found`;
  * - `GET /api/v1/me/shows?period=upcoming|past`: 200 com a lista `[{id, slug, title, startsAt, city, venueName, status,
- *   flyerThumbUrl, organizerProfileId}]`; 401; 403; 429.
+ *   flyerThumbUrl, organizerProfileId}]`; 401; 403; 429. SPEC-0024 (H23-06): cada item ganha `timeZone` (aditivo).
  * O cliente `src/api/schema.d.ts` foi regenerado com as rotas e `(cd web && pnpm api:check)` passa. Os eventos públicos
  * (`ShowPublishedIntegrationEvent`, `ShowChangedIntegrationEvent`) são conferidos no
  * `Subsolo.Events.UnitTests/ShowIntegrationEventsContractTests.cs`.
@@ -227,10 +227,23 @@ describe("OpenAPI do cadastro de show fiel ao contrato §6", () => {
     expect(period?.in).toBe("query");
     const list = jsonResponse(myShowsPath, "get", "200");
     expect(list.type).toBe("array");
-    expect(properties(list.items ?? {}).sort()).toEqual([...myShow].sort());
+    // SPEC-0024 (H23-06): o item ganhou campo aditivo (timeZone); aqui ficam os campos da SPEC-0023.
+    expect(properties(list.items ?? {})).toEqual(
+      expect.arrayContaining(myShow),
+    );
     expectProblem(myShowsPath, "get", "401", ["auth.required"]);
     expectProblem(myShowsPath, "get", "403", ["auth.forbidden"]);
     expectProblem(myShowsPath, "get", "429", ["security.rate_limited"]);
+  });
+
+  it("SPEC-0024:H23-06 cada item de GET /api/v1/me/shows traz o timeZone da cidade (campo aditivo)", () => {
+    const list = jsonResponse(myShowsPath, "get", "200");
+    const item = resolve(list.items ?? {});
+    expect(properties(item).sort()).toEqual([...myShow, "timeZone"].sort());
+    expect(item.required ?? [], "timeZone opcional no item").toContain(
+      "timeZone",
+    );
+    expect(resolve(item.properties?.["timeZone"]).type).toBe("string");
   });
 
   it("SPEC-0023:CT-01 o cliente src/api/schema.d.ts foi regenerado com as rotas de show", () => {

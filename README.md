@@ -73,6 +73,8 @@ Perfis (SPEC-0021): o fã pede o perfil em https://localhost:8443/conta/perfis; 
 
 Flyers (SPEC-0022): no `aspire run` os flyers ficam em `artifacts/media` e são servidos pela API em `/media/flyers/*`; na pilha do `compose-up.sh` ficam no volume `media` e o Caddy os serve em https://localhost:8443/media/flyers/.
 
+Shows (SPEC-0023): quem tem perfil aprovado cadastra shows em https://localhost:8443/conta/shows (o admin também, em qualquer perfil).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

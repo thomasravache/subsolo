@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Application.Media;
-using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Application.Features.CleanupFlyers;
 using Subsolo.Modules.Events.Domain.Flyers;
 
@@ -12,7 +11,7 @@ namespace Subsolo.Events.UnitTests;
 /// (<c>attached_at_utc IS NULL AND created_at_utc &lt; corte</c>), e só depois os arquivos das linhas apagadas. Dublê do
 /// repositório que reproduz a corrida: o flyer B estava sem show quando a limpeza começou e é ligado a um show logo
 /// depois da leitura; a limpeza não pode apagar nem a linha nem os arquivos dele. O antigo sem show (A) é apagado e o
-/// recente (C) fica.
+/// recente (C) fica. SPEC-0024 (H23-05): construído sem a unidade de trabalho, que a limpeza nunca usou.
 /// </summary>
 public sealed class CleanupFlyersRaceTests
 {
@@ -31,7 +30,6 @@ public sealed class CleanupFlyersRaceTests
         var handler = new CleanupFlyersCommandHandler(
             flyers,
             storage,
-            new RecordingUnitOfWork(log),
             new FakeTimeProvider(Now),
             NullLogger<CleanupFlyersCommandHandler>.Instance);
 
@@ -103,15 +101,6 @@ public sealed class CleanupFlyersRaceTests
         {
             log.Add($"file:{path}");
             Deleted.Add(path);
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class RecordingUnitOfWork(List<string> log) : IEventsUnitOfWork
-    {
-        public Task SaveChangesAsync(CancellationToken cancellationToken)
-        {
-            log.Add("save");
             return Task.CompletedTask;
         }
     }

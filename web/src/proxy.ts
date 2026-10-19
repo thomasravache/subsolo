@@ -2,7 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
 import { sessionForCookie } from "@/api/session";
+import { getShowDetail } from "@/api/show-detail";
 import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
+import { showStatusHeader } from "@/app/(public)/[cidade]/[show]/show-status";
 import { adminAccessHeader, type AdminAccess } from "@/app/admin/admin-access";
 import { isAccountPage, isAdminPage } from "@/components/ui/shell";
 
@@ -25,6 +27,11 @@ import { isAccountPage, isAdminPage } from "@/components/ui/shell";
  * (cookie da requisição repassado): anônimo → 307 para `/entrar?returnTo=…`; logado sem o papel admin → 403; API fora
  * do ar → 503; admin → segue. Sempre com `Cache-Control: no-store` e sem consultar a agenda. A página é avisada pelo
  * cabeçalho interno {@link adminAccessHeader}, que o proxy sempre sobrescreve.
+ *
+ * SPEC-0024 — a página do show `/{cidade}/{show}` também tem o status decidido aqui, com
+ * `GET /api/v1/cities/{city}/shows/{slug}`: show ou cidade inexistente (ou endereço fora do padrão) → 404; API fora do
+ * ar → 503; encontrado → segue. A página é avisada pelo cabeçalho interno {@link showStatusHeader}, que o proxy sempre
+ * sobrescreve. As páginas de dois segmentos de entrar, da conta e do admin não são shows.
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -36,6 +43,12 @@ const citySlug = /^[a-z0-9-]{2,60}$/;
  * nova de um segmento (ex.: `/sobre`) precisa entrar na exceção, como as de entrar e da conta ({@link isAccountPage}).
  */
 const agendaPath = /^\/(?!_)[^/.]+$/;
+
+/** SPEC-0024 — caminho da página do show: dois segmentos (`/{cidade}/{show}`), fora os internos do Next.js. */
+const showPath = /^\/(?!_)([^/.]+)\/([^/.]+)$/;
+
+/** Formato do slug do show (`<titulo>-<aaaa-mm-dd>`, até 80 caracteres); fora dele nem se consulta a API. */
+const showSlug = /^[a-z0-9-]{2,80}$/;
 
 const statusByKind: Record<CityAgendaResult["kind"], number> = {
   ok: 200,
@@ -121,6 +134,19 @@ async function agendaKind(pathname: string): Promise<CityAgendaResult["kind"]> {
   return citySlug.test(slug) ? (await getCityAgenda(slug)).kind : "not-found";
 }
 
+async function showKind(
+  pathname: string,
+): Promise<CityAgendaResult["kind"] | undefined> {
+  const match = showPath.exec(pathname);
+  if (!match) {
+    return undefined;
+  }
+  const [, city = "", slug = ""] = match;
+  return citySlug.test(city) && showSlug.test(slug)
+    ? (await getShowDetail(city, slug)).kind
+    : "not-found";
+}
+
 export async function proxy(request: NextRequest) {
   const csp = contentSecurityPolicy(createNonce());
   const headers = new Headers(request.headers);
@@ -131,15 +157,24 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accountPage = isAccountPage(pathname);
   const adminPage = isAdminPage(pathname);
-  const kind =
-    !accountPage && !adminPage && agendaPath.test(pathname)
+  const publicPage = !accountPage && !adminPage;
+  const agenda =
+    publicPage && agendaPath.test(pathname)
       ? await agendaKind(pathname)
       : undefined;
-  if (kind) {
-    headers.set(agendaStatusHeader, kind);
-  } else {
-    headers.delete(agendaStatusHeader);
+  const show =
+    publicPage && agenda === undefined ? await showKind(pathname) : undefined;
+  for (const [header, value] of [
+    [agendaStatusHeader, agenda],
+    [showStatusHeader, show],
+  ] as const) {
+    if (value) {
+      headers.set(header, value);
+    } else {
+      headers.delete(header);
+    }
   }
+  const kind = agenda ?? show;
 
   const response = adminPage
     ? await adminResponse(request, headers)

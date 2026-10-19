@@ -205,6 +205,14 @@ namespace Subsolo.Modules.Events.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<int?>("FullHeight")
+                        .HasColumnType("integer")
+                        .HasColumnName("full_height");
+
+                    b.Property<int?>("FullWidth")
+                        .HasColumnType("integer")
+                        .HasColumnName("full_width");
+
                     b.Property<Guid>("UploadedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("uploaded_by");

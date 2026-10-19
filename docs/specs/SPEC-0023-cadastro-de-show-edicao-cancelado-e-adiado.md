@@ -4,7 +4,7 @@ title: Cadastro de show, edição, cancelado e adiado
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-17
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0022]
@@ -202,29 +202,29 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 0: Caracterização**
-- [ ] CH-01 escrito(s), passando no código atual, commitado(s) antes de qualquer mudança
+- [x] CH-01 escrito(s), passando no código atual, commitado(s) antes de qualquer mudança
 
 **Fase 1: Domínio e regras**
-- [ ] Red: UT-01, UT-02, UT-03, UT-04 com a tag `SPEC-0023:<ID>`, falhando pelo motivo certo
-- [ ] Green: implementar o mínimo seguindo o padrão de referência
-- [ ] Refactor mantendo tudo verde
+- [x] Red: UT-01, UT-02, UT-03, UT-04 com a tag `SPEC-0023:<ID>`, falhando pelo motivo certo
+- [x] Green: implementar o mínimo seguindo o padrão de referência
+- [x] Refactor mantendo tudo verde
 
 **Fase 2: API, persistência e contratos**
-- [ ] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, CT-01 falhando pelo motivo certo
-- [ ] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
-- [ ] Refactor mantendo tudo verde
-- [ ] Validar: build + suíte completa + arquitetura (G2/G3)
+- [x] Red: IT-01, IT-02, IT-03, IT-04, IT-05, IT-06, IT-07, CT-01 falhando pelo motivo certo
+- [x] Green: endpoints, migração aditiva, OpenAPI e cliente TS regenerados
+- [x] Refactor mantendo tudo verde
+- [x] Validar: build + suíte completa + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
-- [ ] Validar: build + suíte + E2E (G2/G3)
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: telas conforme o Stitch e os ajustes do §6; jornada completa passando localmente
+- [x] Validar: build + suíte + E2E (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -236,9 +236,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 4s 909ms) — 28717fe | 2026-10-18 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED em 28717fe — contrato v3 conferido no código e no OpenAPI, autorização por recurso (dono do organizador ou admin) em criar, editar, situação e detalhe, X-CSRF, https no ingresso, textos escapados, sem script inline nem env no navegador; IShowProfiles no contrato do Events implementado pelo Profiles e Events → Users só pelos dados pessoais; H22-01..06 conferidos (JpegHeaderCleaner seguro, matcher de requisição do Caddy aceito); dublê 7d723d0 sem mudar comportamento; telas fiéis ao Stitch com diálogo acessível; sem blocker/major; menores → SPEC-0024 (H23-01..07) e SPEC-0026 (H23-08) — 28717fe | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 11m 24s 366ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 332ms) — b0305ce | 2026-10-18 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-18 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-18 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — f1a6f18 (árvore suja) | 2026-10-18 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -251,36 +251,67 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Cadastro de show por artista dono do perfil organizador, ou pelo admin em qualquer perfil, com flyer, nome, data e hora no fuso da cidade, casa, line-up, estilos, preço e link do ingresso; o show entra na hora na agenda da cidade.
+- Editar, adiar e cancelar (com selo e diálogo de confirmação); o endereço do show (slug) nunca muda.
+- Telas "Meus shows" (`/conta/shows`, próximos e passados), "Cadastrar show" e "Editar show", como no Stitch; eventos `ShowPublished` e `ShowChanged` pela outbox para os avisos.
+- Reforços herdados do flyer (H22): corrida da limpeza, cache do Caddy, teto do corpo, carregadores da libvips, fila com tempo limite e `/media` no `next dev`.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (5e6d6c4 scaffold; 0927362, 717a843, f46eed6, 628902f, a3b4f2d testes) → Implementer (c16033c, 7d723d0 dublê, 9c744e5, ca8e43d, d6dc44a, 66a35d9, 182f07a, 41b79ef) → Reviewer APPROVED em 28717fe.
+- Emenda v2 (IMP-01): o `Events` lê perfis pelo `IShowProfiles` do próprio contrato, implementado pelo `Profiles`, sem ciclo; janela padrão da agenda; "Meus shows" por organizador; flyer reaproveitável; lacuna do horário de verão → 400.
+- Emenda v3: `GET /api/v1/shows/{id}` para a edição, `events.invalid_period` e `Events → Users` só pelos dados pessoais (ADR-0001 esclarecido).
+- `startsAt` da agenda passa a sair com `Z` (UTC), em vez de `+00:00`; os dois são RFC 3339 e o OpenAPI não muda.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| CH-01 | agenda atual (SPEC-0008) sem shows segue o contrato antes da mudança | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| UT-01 | criar "Noite da Peste II": slug com a data, início em UTC, flyer ligado e `ShowPublished` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| UT-02 | validação de título, data, line-up, estilos, preço, ingresso https e casa | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| UT-03 | artista só no próprio organizador (`auth.forbidden` no de outro); admin em qualquer um | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| UT-04 | hora local ↔ UTC com horário de verão; hora inexistente → `invalid_show` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-01 | criação pela API: 201, linha, flyer ligado, `ShowPublished` na outbox, p95 de 20 criações ≤ 300 ms | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-02 | casos inválidos, flyer inexistente e título repetido na data e cidade → 400/409 com os códigos do §6 | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-03 | anônimo 401, fã 403, artista de outro perfil 403, dono 201, admin em perfil sem dono 201 | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-04 | editar, adiar e cancelar: 200, slug imutável, agenda com a situação, `ShowChanged` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-05 | agenda com 300 shows: só a janela de -6 h a +90 dias, ordenada, `startsAt` em UTC, p95 ≤ 300 ms | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-06 | `/me/shows` por período, só os do dono, `no-store`; período inválido → `invalid_period` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| IT-07 | seção "shows" no export e tratamento no `UserDeleted` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| CT-01 | OpenAPI (contrato v3, com `GET /shows/{id}`) e eventos públicos de `Events.IntegrationEvents`; cliente TS em dia | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| E2E-01 | jornada cadastro-show (mobile-chrome e mobile-safari): "+ Novo show", flyer, dados e publicação, show na agenda; thumb lido pelo Caddy; axe | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| E2E-02 | editar a hora, adiar ("ADIADO") e cancelar com diálogo de foco preso | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-01 | limpeza apaga primeiro as linhas sem flyer ligado; reenvio renova `created_at_utc` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-02 | Caddy: cache imutável só nos arquivos servidos; 404 e arquivos com ponto sem cache | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-03 | corpo chunked acima de 10 MiB → 400 `flyer_too_large` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-04 | carregadores não confiáveis bloqueados; JPEG com aviso benigno aceito pelo `JpegHeaderCleaner` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-05 | fila ocupada → 503 `service.unavailable` depois do tempo limite; `ContentHash` conferido | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
+| H22-06 | rewrite de `/media` no `next dev` | PASS | `gate G2 --run` em 28717fe; `gate G5 --run` na integração (b0305ce); CI do PR #30 (run 39173686073, 10/10 checks em f1a6f18) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #30 (run 39173686073)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #30 (https://github.com/thomasravache/subsolo/pull/30), merge commit add02ff em 2026-10-18, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Menores da revisão G4: corridas da limpeza com reenvio e cadastro, cópia do `JpegHeaderCleaner`, diretório no Caddy, sobras de código, fuso em "Meus shows" e `aria-describedby` da line-up → SPEC-0024 (§7.6, H23-01..07); busca de qualquer perfil aprovado para casa e organizador → SPEC-0026 (H23-08).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0023`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

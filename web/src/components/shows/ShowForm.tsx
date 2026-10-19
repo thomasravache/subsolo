@@ -655,6 +655,10 @@ export function ShowForm({
                 autoComplete="off"
                 maxLength={80}
                 aria-invalid={errors.lineup ? true : undefined}
+                // SPEC-0024 (H23-07): cada campo liga o erro da line-up, não só o fieldset.
+                aria-describedby={
+                  errors.lineup ? `${id}-lineup-erro` : undefined
+                }
                 placeholder={
                   index === 0
                     ? "Nome da banda 1 (headliner)"

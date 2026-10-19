@@ -25,8 +25,6 @@ export interface MyShowsListProps {
   upcoming: MyShow[];
   past: MyShow[];
   cities: CitySummary[];
-  /** Fuso (IANA) de cada cidade dos shows, pelo slug. */
-  timeZones: Record<string, string>;
 }
 
 type Tab = "upcoming" | "past";
@@ -44,12 +42,7 @@ const actionClass = buttonClasses("secondary", "md", "flex-1 px-2");
  * flyer, a data em bloco no fuso da cidade, o nome, a casa e a cidade e o selo ADIADO/CANCELADO, e as ações "Editar",
  * "Adiar" e "Cancelar show" (com a confirmação em diálogo). Vazio → "Nenhum show cadastrado ainda.".
  */
-export function MyShowsList({
-  upcoming,
-  past,
-  cities,
-  timeZones,
-}: MyShowsListProps) {
+export function MyShowsList({ upcoming, past, cities }: MyShowsListProps) {
   const router = useRouter();
   const id = useId();
   const [tab, setTab] = useState<Tab>("upcoming");
@@ -157,10 +150,8 @@ export function MyShowsList({
           <ul className="flex flex-col gap-3">
             {shown.map((show) => {
               const current = statusOf(show);
-              const when = showDateParts(
-                show.startsAt,
-                timeZones[show.city] ?? "America/Sao_Paulo",
-              );
+              // SPEC-0024 (H23-06): o fuso da cidade vem em cada item de GET /api/v1/me/shows.
+              const when = showDateParts(show.startsAt, show.timeZone);
               const cancelled = current === "cancelled";
               const titleId = `${id}-show-${show.id}`;
               return (
