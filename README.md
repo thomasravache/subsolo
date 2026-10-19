@@ -77,6 +77,8 @@ Shows (SPEC-0023): quem tem perfil aprovado cadastra shows em https://localhost:
 
 Página do show (SPEC-0024): cada show tem a página https://localhost:8443/{cidade}/{slug} (toque no card da agenda), com prévia Open Graph e "Compartilhar"; o web lê o endereço público de `SUBSOLO_PUBLIC_URL`, variável só do servidor definida pelo AppHost e pelo `compose-up.sh`.
 
+Filtros da agenda (SPEC-0025): https://localhost:8443/curitiba?periodo=semana&estilo=death (também `periodo=mes` e `de`/`ate` em aaaa-mm-dd); a API aceita `from`, `to` e `styles` e devolve `period` e `total`.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

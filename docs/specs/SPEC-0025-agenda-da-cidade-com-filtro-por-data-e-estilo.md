@@ -4,7 +4,7 @@ title: Agenda da cidade com filtro por data e estilo
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
@@ -155,26 +155,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 0: Caracterização**
-- [ ] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
+- [x] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
 
 **Fase 1: Períodos e parâmetros**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0025:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0025:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: API e contrato**
-- [ ] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
-- [ ] Green: filtros na consulta, índice, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
+- [x] Green: filtros na consulta, índice, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Tela e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: chips, seletor de datas, estados e CTA conforme o Stitch e os ajustes
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: chips, seletor de datas, estados e CTA conforme o Stitch e os ajustes
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -187,8 +187,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED na 2ª rodada (M1, m1, m3 corrigidos; menores → herdados H25-01..03 na SPEC-0026) — 643a2af | 2026-10-19 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 11m 50s 449ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 082ms) — a933cb5 | 2026-10-19 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-19 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 44a36ef (árvore suja) | 2026-10-19 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -200,36 +200,54 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Filtros na agenda da cidade, como no Stitch: chips "ESTA SEMANA", "ESTE MÊS" e "ESCOLHER DATA" (formulário "De"/"Até"/"Aplicar") e chips de estilo; a URL filtrada é compartilhável e já vem filtrada do servidor.
+- Cabeçalho "PRÓXIMOS 90 DIAS · N SHOWS" ou "dd/MM A dd/MM · N SHOWS", com o total anunciado a leitores de tela; vazio com filtro e "Limpar filtros"; bloco "PRODUZINDO SHOW EM {CIDADE}?" com "Cadastrar evento na agenda".
+- API da agenda com `styles`, `period` e `total`; data mal formada ou fora de 2000–2100 passa a dar 400 `agenda.invalid_range` (antes, 500).
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (85acc8c scaffold; bef5790, 40186f2, e5eb10d, 7ec7168; 68724a4 teste da política de fallback; 2152a95 casos da revisão) → Implementer (00b70ed, 5c160ec, db7e2dc, 643a2af) → Reviewer: CHANGES REQUESTED (M1, m1, m3) e APPROVED na 2ª rodada em 643a2af.
+- Emenda v2 (contrato 2): mantém `agenda.invalid_range` (sem quebra), `period` padrão hoje a hoje + 90, formulário de datas, chips como links com `aria-current`, cabeçalho dd/MM.
+- Emendas sem mudança de contrato: teste da SPEC-0010 no escopo; contagem "X vão" mantida até a SPEC-0027; desvios aceitos (`ChipLink`, "Escolher data" como `?periodo=escolher`, layout desktop, CTA com sublinhado); IT-03 em Production e data extrema.
+- Data mal formada → 400 por filtro de endpoint (produção) e `IExceptionHandler` do módulo (desenvolvimento). As tags `subsolo.agenda.period` e `subsolo.agenda.styles_count` vão no span da requisição, não num span próprio da consulta.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| CH-01 | agenda sem parâmetros: shows de 6 h atrás até 90 dias, ordenados (antes da mudança) | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| UT-01 | "semana" e "mês" no fuso da cidade (quinta, domingo, virada de ano, fevereiro bissexto); `de`/`ate` válidos, invertidos, 181 dias, mal formados e extremos | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| UT-02 | leitor da página normaliza `estilo` pelos estilos conhecidos e ignora `periodo` inválido | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| IT-01 | sem parâmetros, semana e mês: só os shows do período, com `period` e `total` certos | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| IT-02 | 300 shows: `styles=death,grind` no período, `xpto` ignorado, p95 ≤ 300 ms | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| IT-03 | 400 `agenda.invalid_range` (invertido, 181 dias, mal formado e `9999-12-31`, em Development e Production, nomeando o campo) e `agenda.invalid_styles` | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| CT-01 | OpenAPI com `from`, `to`, `styles`, `period`, `total` e os códigos; `pnpm api:check` passa | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| E2E-01 | jornada agenda (mobile-chrome e mobile-safari): "Esta semana" + "DEATH", URL, total no cabeçalho e em aria-live, SSR filtrado em aba nova; axe | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
+| E2E-02 | "Escolher data" sem shows → "Nenhum show com esses filtros." e "Limpar filtros"; CTA do produtor para anônimo e artista | PASS | `gate G2 --run` em 643a2af; `gate G5 --run` na integração (a933cb5); CI do PR #37 (run 39236030152, 10/10 checks em 44a36ef) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #37 (run 39236030152)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #37 (https://github.com/thomasravache/subsolo/pull/37), merge commit 8756a1a em 2026-10-19, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Menores da revisão G4 → SPEC-0026 (§7.6, H25-01..03: chamada extra de "semana"/"mês", descrição de `styles` no OpenAPI, asserção do campo `from` no IT-03).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0025`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
