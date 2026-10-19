@@ -20,7 +20,9 @@ namespace Subsolo.Events.IntegrationTests.Infrastructure;
 /// <item>os limites <c>default</c> e <c>report</c> altos, a menos que <paramref name="productionRateLimits"/>;</item>
 /// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
 /// <item>SPEC-0023 — opcionalmente, configurações a mais (<paramref name="settings"/>, ex.: <c>Media:QueueTimeout</c>) e
-/// serviços a mais (<paramref name="configureServices"/>, ex.: o dublê do limite de corpo do Kestrel).</item>
+/// serviços a mais (<paramref name="configureServices"/>, ex.: o dublê do limite de corpo do Kestrel);</item>
+/// <item>SPEC-0025 — opcionalmente, outro ambiente (<paramref name="environment"/>, ex.: <c>Production</c>, que não
+/// aplica migrações nem semeia a cidade de exemplo: suba antes um host em Development no mesmo database).</item>
 /// </list>
 /// </summary>
 internal sealed class FlyersApiFactory(
@@ -28,7 +30,8 @@ internal sealed class FlyersApiFactory(
     FakeTimeProvider? clock = null,
     bool productionRateLimits = false,
     IReadOnlyDictionary<string, string>? settings = null,
-    Action<IServiceCollection>? configureServices = null)
+    Action<IServiceCollection>? configureServices = null,
+    string environment = "Development")
     : WebApplicationFactory<Program>
 {
     public const string AdminEmail = "admin@subsolo.test";
@@ -122,7 +125,7 @@ internal sealed class FlyersApiFactory(
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment(environment);
         builder.UseSetting($"ConnectionStrings:{CommonInfrastructureExtensions.ConnectionStringName}", connectionString);
         // SPEC-0016 (Emenda 5): a API exige App:PublicUrl na inicialização.
         builder.UseSetting("App:PublicUrl", "https://localhost");

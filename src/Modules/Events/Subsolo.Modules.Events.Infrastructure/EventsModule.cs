@@ -52,6 +52,8 @@ public static class EventsModule
             typeof(GetCityAgendaQuery).Assembly,
             typeof(Show).Assembly);
         services.ConfigureAllQuartzSchedulers(CleanupFlyersJob.Schedule);
+        // SPEC-0025: data mal formada na agenda → 400 agenda.invalid_range (também com ThrowOnBadRequest).
+        services.AddEventsPresentation();
         return services.AddEndpoints(AssemblyReference.Assembly);
     }
 }

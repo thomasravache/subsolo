@@ -17,10 +17,29 @@ namespace Subsolo.Modules.Events.Infrastructure.Shows;
 internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
 {
     public async Task<IReadOnlyList<ShowSummaryResponse>> ListAgendaAsync(
-        string city, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken)
+        string city,
+        DateTimeOffset fromUtc,
+        DateTimeOffset toUtc,
+        IReadOnlyCollection<string> styles,
+        CancellationToken cancellationToken)
     {
-        var shows = await db.Shows.AsNoTracking()
-            .Where(show => show.City == city && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc)
+        var query = db.Shows.AsNoTracking()
+            .Where(show => show.City == city && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc);
+        if (styles.Count > 0)
+        {
+            // SPEC-0025: só os estilos que existem filtram; com nenhum deles, a agenda segue sem filtro de estilo.
+            var requested = styles.ToList();
+            var known = await db.Styles.AsNoTracking()
+                .Where(style => requested.Contains(style.Slug))
+                .Select(style => style.Slug)
+                .ToListAsync(cancellationToken);
+            if (known.Count > 0)
+            {
+                query = query.Where(show => show.Styles.Any(style => known.Contains(style)));
+            }
+        }
+
+        var shows = await query
             .OrderBy(show => show.StartsAtUtc)
             .ThenBy(show => show.Id)
             .ToListAsync(cancellationToken);
