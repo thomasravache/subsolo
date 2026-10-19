@@ -17,6 +17,7 @@ namespace Subsolo.Common.Infrastructure.Media;
 /// JPEG, PNG e WebP; os bytes soltos do cabeçalho do JPEG (aviso benigno) saem antes da decodificação estrita
 /// (<see cref="JpegHeaderCleaner"/>), e dado corrompido ou arquivo truncado continuam erro; a espera
 /// pela vez tem o tempo limite <see cref="MediaOptions.QueueTimeout"/> e, passado, devolve <see cref="MediaErrors.Busy"/>.
+/// SPEC-0026 (H24-01): informa as medidas da variante <c>full</c> gerada (<see cref="FlyerImages.FullSize"/>).
 /// </summary>
 internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
 {
@@ -109,10 +110,10 @@ internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
             var masterWidth = Math.Min(header.Display.Width, Math.Max(sizes.Full.Width, sizes.OgFlyer.Width));
             using var master = LoadMaster(buffer, header, masterWidth);
 
-            var thumb = Variant(master, sizes.Thumb);
-            var full = Variant(master, sizes.Full);
+            var (thumb, _) = Variant(master, sizes.Thumb);
+            var (full, fullSize) = Variant(master, sizes.Full);
             var og = OpenGraph(master, sizes);
-            return Result.Success(new FlyerImages(thumb, full, og, Convert.ToHexStringLower(SHA256.HashData(buffer))));
+            return Result.Success(new FlyerImages(thumb, full, og, Convert.ToHexStringLower(SHA256.HashData(buffer)), fullSize));
         }
         catch (VipsException)
         {
@@ -190,10 +191,11 @@ internal sealed class NetVipsImageProcessor : IImageProcessor, IDisposable
         return ToSrgb(rotated);
     }
 
-    private static byte[] Variant(Image master, PixelSize size)
+    /// <summary>A variante WebP em <paramref name="size"/> e as medidas da imagem gerada (SPEC-0026, H24-01).</summary>
+    private static (byte[] Bytes, PixelSize Size) Variant(Image master, PixelSize size)
     {
         using var resized = master.ThumbnailImage(size.Width, height: size.Height, size: Enums.Size.Force);
-        return resized.WebpsaveBuffer(q: 82, keep: Enums.ForeignKeep.None);
+        return (resized.WebpsaveBuffer(q: 82, keep: Enums.ForeignKeep.None), new PixelSize(resized.Width, resized.Height));
     }
 
     /// <summary>1200×630: o flyer contido e centralizado sobre ele mesmo cobrindo a tela, desfocado e escurecido.</summary>

@@ -40,6 +40,7 @@ public static class EventsModule
         // SPEC-0022: flyers (upload, catálogo interno para o cadastro de show e limpeza de hora em hora).
         services.AddScoped<IFlyerRepository, FlyerRepository>();
         services.AddScoped<IFlyerCatalog, FlyerCatalog>();
+        services.AddScoped<IFlyerLocks, FlyerLocks>();
         // SPEC-0023: shows (cadastro, agenda, "Meus shows") e a seção "shows" do export de dados pessoais. Os perfis vêm
         // do IShowProfiles, implementado pelo módulo Profiles (Emenda v2).
         services.AddScoped<IShowRepository, ShowRepository>();
