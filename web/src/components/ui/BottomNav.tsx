@@ -75,14 +75,18 @@ export function BottomNav({
         <CalendarIcon />
         Agenda
       </Link>
-      <Link
+      {/*
+        SPEC-0027 — documento novo (não a navegação do router): `/seguindo` é dado pessoal, renderizado por requisição, e a
+        página anterior não fica escondida no DOM (Activity do cacheComponents) junto da lista.
+      */}
+      <a
         href={followingPath}
         aria-current={current === "seguindo" ? "page" : undefined}
         className={`${item} ${tone("seguindo")}`}
       >
         <BookmarkIcon />
         Seguindo
-      </Link>
+      </a>
       <Link
         href="/apoie"
         aria-current={current === "apoie" ? "page" : undefined}

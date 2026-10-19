@@ -171,6 +171,7 @@ export default async function CityAgendaPage(props: PageProps<"/[cidade]">) {
             {summary}
           </p>
         </div>
+        {/* Separa o total do botão no conteúdo textual da página (leitores e buscas por "1 SHOW"). */}{" "}
         {/* SPEC-0027 — "SEGUIR {CIDADE}" (contorno) / "SEGUINDO" (vermelho, com o visto). */}
         <FollowButton
           target={{ kind: "city", slug: city.slug }}
