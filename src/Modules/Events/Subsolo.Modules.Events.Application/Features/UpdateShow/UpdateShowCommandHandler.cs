@@ -67,6 +67,11 @@ internal sealed partial class UpdateShowCommandHandler(
         {
             return Result.Failure<ShowSaved>(EventsErrors.ShowSlugTakenError());
         }
+        catch (MissingFlyerException)
+        {
+            // SPEC-0024 (H23-02): a limpeza apagou o flyer entre a conferência e a gravação.
+            return Result.Failure<ShowSaved>(EventsErrors.FlyerNotFoundError());
+        }
 
         LogShowUpdated(logger, command.UserId, show.Id);
         return Result.Success(new ShowSaved(show.Id, show.Slug));

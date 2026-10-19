@@ -10,12 +10,13 @@ namespace Subsolo.Modules.Events.Application.Features.CleanupFlyers;
 /// SPEC-0022 — apaga os flyers não ligados criados antes de agora − <see cref="Retention"/>. SPEC-0023 (H22-01):
 /// primeiro as linhas, num comando só com a condição no banco (um flyer ligado a um show ou reenviado no meio da limpeza
 /// não casa mais e fica), depois os arquivos só das linhas apagadas (apagar de novo um que já sumiu não falha). Se a
-/// limpeza parar entre os dois passos, sobram arquivos sem linha, nunca linha sem arquivo.
+/// limpeza parar entre os dois passos, sobram arquivos sem linha, nunca linha sem arquivo. SPEC-0024 (H23-01): antes de
+/// apagar os arquivos de um id, confere que a linha não voltou (o mesmo arquivo reenviado no meio); se voltou, os
+/// arquivos ficam. A exclusão grava sozinha: a limpeza não usa unidade de trabalho (H23-05).
 /// </summary>
 internal sealed partial class CleanupFlyersCommandHandler(
     IFlyerRepository flyers,
     IFileStorage storage,
-    IEventsUnitOfWork unitOfWork,
     TimeProvider clock,
     ILogger<CleanupFlyersCommandHandler> logger)
     : ICommandHandler<CleanupFlyersCommand>
@@ -23,23 +24,8 @@ internal sealed partial class CleanupFlyersCommandHandler(
     /// <summary>Por quanto tempo um flyer sem show fica guardado.</summary>
     public static readonly TimeSpan Retention = TimeSpan.FromHours(24);
 
-    /// <summary>
-    /// SPEC-0024 (H23-05, andaime) — o construtor que fica depois da remoção do <see cref="IEventsUnitOfWork"/> sem uso;
-    /// os dublês dos testes já constroem por ele.
-    /// </summary>
-    public CleanupFlyersCommandHandler(
-        IFlyerRepository flyers,
-        IFileStorage storage,
-        TimeProvider clock,
-        ILogger<CleanupFlyersCommandHandler> logger)
-        : this(flyers, storage, UnusedUnitOfWork.Instance, clock, logger)
-    {
-    }
-
     public async Task<Result> Handle(CleanupFlyersCommand command, CancellationToken cancellationToken)
     {
-        // A exclusão condicional grava sozinha (comando direto no banco): nada fica para a unidade de trabalho.
-        _ = unitOfWork;
         var deleted = await flyers.DeleteUnattachedCreatedBeforeAsync(clock.GetUtcNow() - Retention, cancellationToken);
         if (deleted.Count == 0)
         {
@@ -48,6 +34,12 @@ internal sealed partial class CleanupFlyersCommandHandler(
 
         foreach (var id in deleted)
         {
+            if (await flyers.ExistsAsync(id, cancellationToken))
+            {
+                // Reenviado depois da exclusão da linha: os arquivos voltaram a ter dono.
+                continue;
+            }
+
             foreach (var path in Flyer.VariantPaths(id))
             {
                 await storage.DeleteAsync(path, cancellationToken);
@@ -60,12 +52,4 @@ internal sealed partial class CleanupFlyersCommandHandler(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Limpeza dos flyers sem show: {Deleted} apagados")]
     private static partial void LogDeleted(ILogger logger, int deleted);
-
-    /// <summary>SPEC-0024 (H23-05, andaime) — a unidade de trabalho que a limpeza nunca usa.</summary>
-    private sealed class UnusedUnitOfWork : IEventsUnitOfWork
-    {
-        public static readonly UnusedUnitOfWork Instance = new();
-
-        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    }
 }
