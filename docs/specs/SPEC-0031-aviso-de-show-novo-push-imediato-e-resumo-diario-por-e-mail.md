@@ -11,7 +11,7 @@ depends_on: [SPEC-0023, SPEC-0027, SPEC-0030]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**]
 adrs: [ADR-0001, ADR-0008, ADR-0014]
 external: []
 size: M
@@ -128,6 +128,7 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 - **Itens herdados da revisão da SPEC-0026 (G4):**
   - H26-01 — `ListProfileShowsEndpoint.cs`: remover o `.Cast<ProfileShowResponse>()`; tipar `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` como `ProfileShowResponse`.
   - H26-02 — `IFlyerLocks` obrigatório no construtor de `UploadFlyerCommandHandler` e `CleanupFlyersCommandHandler` (fake no-op nos testes unitários).
+  - H26-03b — `profile-metadata.ts` `ogImageOf` (web): montar a URL do og a partir do id do flyer, não por regex sobre `flyerThumbUrl`; exige expor o id do flyer nos itens de show (contrato do `Events`).
   - H26-07 — upload de flyer: não manter o advisory lock e a transação abertos durante a escrita dos três arquivos (avaliar antes do go-live).
 - N/A — sem superfície pública nova.
 
