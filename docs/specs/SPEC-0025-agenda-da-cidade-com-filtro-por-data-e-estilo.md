@@ -11,7 +11,7 @@ depends_on: [SPEC-0023]
 consumes_contract: []
 contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/agenda/**, web/src/components/ui/Chip.tsx, e2e/tests/agenda/**, tests/**/packages.lock.json, docs/design/**]
+touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/agenda/**, web/src/components/ui/Chip.tsx, e2e/tests/agenda/**, tests/**/packages.lock.json, docs/design/**, tests/Security/Subsolo.Security.IntegrationTests/AgendaUnderFallbackPolicyTests.cs]
 adrs: [ADR-0013, ADR-0016]
 external: []
 size: M
@@ -235,3 +235,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 2 | 2026-10-19 | (a) Data inválida, `to < from` e mais de 180 dias seguem com o código atual `agenda.invalid_range` (SPEC-0008), em vez de `agenda.invalid_period` — mudança sem quebra; IT-03 e CT-01 ajustados. (b) `period` sem `from`/`to` = hoje a hoje + 90 nas datas locais da cidade. (c) UT-02: o leitor filtra pelos estilos conhecidos de `GET /api/v1/styles`. (d) "Escolher data" abre um formulário GET com "De", "Até" e "Aplicar"; chips são links com `aria-current`. (e) Cabeçalho com datas dd/MM, singular "1 SHOW" e total em aria-live. | Relatório do Test-writer (SD-1..SD-5) | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. (a) `tests/Security/Subsolo.Security.IntegrationTests/AgendaUnderFallbackPolicyTests.cs` (SPEC-0010:CT-01) entra em `touches`: o corpo da agenda passa a ter `period` e `total`, e o Test-writer ajusta a lista de campos. (b) A contagem "X vão" dos cards fica: já é entregue e testada desde a SPEC-0008 (`Card.tsx`), e a SPEC-0027 ("Vou") a torna real — o ajuste "sem a contagem" do §6 deixa de valer. (c) Desvios aceitos do Implementer: "Escolher data" como link `?periodo=escolher` que abre o formulário no servidor; tocar no chip ativo remove o filtro; `ChipLink` novo ao lado do `Chip` de alternância; chips de estilo no visual atual do `Chip`; no desktop o título fica acima da grade de duas colunas; CTA com sublinhado vermelho por contraste; vazio com filtro com marcação própria; data mal formada → 400 por filtro de endpoint (produção) e `IExceptionHandler` do módulo (desenvolvimento). | Relatório do Implementer | — | Architect (piloto automático do Thomas, 2026-10-17) |
