@@ -80,13 +80,13 @@ test.describe("página do show", () => {
     const agenda = await page.goto(`/${producer.city.slug}`);
     expect(agenda?.status()).toBe(200);
     await press(
-      card(page.locator("main"), show.title).getByRole("link", {
+      card(page.getByRole("main"), show.title).getByRole("link", {
         name: show.title,
       }),
     );
     await expect(page).toHaveURL((url) => url.pathname === show.path);
 
-    const main = page.locator("main");
+    const main = page.getByRole("main");
     await expect(
       page.getByRole("heading", { level: 1, name: show.title }),
     ).toBeVisible();
@@ -138,7 +138,7 @@ test.describe("página do show", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: cancelled.title }),
     ).toBeVisible();
-    await expect(page.locator("main")).toContainText(/cancelado/i);
+    await expect(page.getByRole("main")).toContainText(/cancelado/i);
     await axe.check(page);
   });
 
@@ -243,7 +243,7 @@ test.describe("página do show", () => {
     const opened = await page.goto(show.path);
     expect(opened?.status()).toBe(200);
     const flyer = page
-      .locator("main")
+      .getByRole("main")
       .getByRole("img", { name: `Flyer de ${show.title}` });
     await expect(flyer).toBeVisible();
     await page.waitForLoadState("load");
