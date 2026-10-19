@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
 import { mainContentId } from "@/components/ui/shell";
@@ -8,11 +7,15 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 import { AgendaUnavailable } from "./agenda-unavailable";
 import { agendaStatus } from "./agenda-status";
+import CityNotFound from "./not-found";
 
 /**
  * SPEC-0008 — agenda da cidade, renderizada no servidor a partir da API (cliente tipado): título
  * "Agenda {Cidade}", lista de shows ou estado vazio; cidade inexistente → página 404; API fora do ar → mensagem
  * de indisponibilidade (503). O status HTTP vem do `proxy`, que consulta a API antes da renderização.
+ * SPEC-0024 (CH-01, achado da SPEC-0015) — a cidade inexistente é renderizada pela própria página (sem `notFound()`,
+ * com o 404 já definido pelo `proxy`), para o `<title>` "Cidade não encontrada · Subsolo" valer também na página
+ * carregada direto (com `notFound()` saía o título do layout raiz).
  * SPEC-0011 — dentro do shell público; shows em `Card` (data no fuso da cidade) e estado vazio em `EmptyState`.
  */
 
@@ -42,7 +45,10 @@ export async function generateMetadata({
     case "ok":
       return { title: `Agenda ${result.agenda.city.name} · Subsolo` };
     case "not-found":
-      return { title: "Cidade não encontrada · Subsolo" };
+      return {
+        title: "Cidade não encontrada · Subsolo",
+        robots: { index: false },
+      };
     case "unavailable":
       return { title: "Agenda indisponível · Subsolo" };
   }
@@ -53,7 +59,7 @@ export default async function CityAgendaPage({
 }: PageProps<"/[cidade]">) {
   const result = await loadAgenda(params);
   if (result.kind === "not-found") {
-    notFound();
+    return <CityNotFound />;
   }
   if (result.kind === "unavailable") {
     return <AgendaUnavailable />;

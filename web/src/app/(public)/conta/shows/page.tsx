@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getProfileFormData } from "@/api/profiles-data";
 import { getSession } from "@/api/session";
-import { getCityTimeZones, getMyShows } from "@/api/shows-data";
+import { getMyShows } from "@/api/shows-data";
 import { Announcement } from "@/components/profiles/Announcement";
 import { MyShowsList } from "@/components/shows/MyShowsList";
 import {
@@ -62,11 +62,6 @@ export default async function MyShowsPage({
     session.kind === "signed-in"
       ? await Promise.all([getMyShows(), getProfileFormData()])
       : [undefined, undefined];
-  const timeZones = shows
-    ? await getCityTimeZones(
-        [...shows.upcoming, ...shows.past].map((show) => show.city),
-      )
-    : {};
 
   return (
     <AccountMain>
@@ -89,7 +84,6 @@ export default async function MyShowsPage({
             upcoming={shows.upcoming}
             past={shows.past}
             cities={form.cities}
-            timeZones={timeZones}
           />
         </>
       ) : (
