@@ -1,4 +1,7 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -483,5 +486,159 @@ describe("proxy e as páginas dos perfis", () => {
     );
 
     expect(response.status).toBe(200);
+  });
+});
+
+/**
+ * SPEC-0027 — a aba "Seguindo" e os itens herdados da revisão da SPEC-0026 no proxy (ADR-0016):
+ * - E2E-02 (no nível do proxy): `/seguindo` é uma página do site, não a agenda de uma cidade: segue para o Next.js sem
+ *   consultar a API de agenda e sem o 404 de "cidade não encontrada", com `Cache-Control: no-store` (o que o fã segue é
+ *   dado pessoal, como `/conta`); a página manda o anônimo para `/entrar?returnTo=/seguindo`;
+ * - H26-06: com a API de perfis fora do ar (conexão recusada ou 5xx), o 503 vem da consulta de
+ *   `GET /api/v1/profiles/{type}/{slug}` (a rota é de fato chamada);
+ * - H26-08: `/apoie/{x}` não é tratado como show, e todo slug reservado do backend (`City.ReservedSlugs`, SPEC-0017) é
+ *   um primeiro segmento que o proxy nunca trata como a cidade de um show.
+ */
+describe("proxy, a aba Seguindo e os segmentos reservados", () => {
+  function urlOf(input: Parameters<typeof fetch>[0]): URL {
+    return new URL(
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url,
+    );
+  }
+
+  function problem(status: number, code: string): Response {
+    return Response.json(
+      { status, code },
+      { status, headers: { "content-type": "application/problem+json" } },
+    );
+  }
+
+  /** Toda rota da API responde 404 (cidade, show e perfil inexistentes); `/me` responde anônimo. */
+  function stubNotFoundApi() {
+    vi.stubEnv("API_URL", "http://api.test");
+    return vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) =>
+        urlOf(input).pathname === "/api/v1/me"
+          ? problem(401, "auth.required")
+          : problem(404, "events.city_not_found"),
+      );
+  }
+
+  function calledPaths(fetch: ReturnType<typeof stubNotFoundApi>): string[] {
+    return fetch.mock.calls.map(([input]) => urlOf(input).pathname);
+  }
+
+  /** Os slugs de `City.ReservedSlugs` no domínio do Events (SPEC-0017). */
+  function backendReservedSlugs(): string[] {
+    const source = readFileSync(
+      fileURLToPath(
+        new URL(
+          "../../src/Modules/Events/Subsolo.Modules.Events.Domain/Cities/City.cs",
+          import.meta.url,
+        ),
+      ),
+      "utf8",
+    );
+    const block = /ReservedSlugs\s*=\s*new\[\]\s*\{([\s\S]*?)\}/.exec(
+      source,
+    )?.[1];
+    expect(block, "City.ReservedSlugs não encontrado no backend").toBeDefined();
+    return [...(block ?? "").matchAll(/"([^"]+)"/g)].map(
+      (match) => match[1] ?? "",
+    );
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("SPEC-0027:E2E-02 /seguindo não é tratado como cidade e sai sem cache", async () => {
+    const fetch = stubNotFoundApi();
+
+    const response = await proxy(new NextRequest("http://localhost/seguindo"));
+
+    expect(
+      calledPaths(fetch).filter((path) => path.startsWith("/api/v1/cities/")),
+      "/seguindo consultou a API de agenda",
+    ).toEqual([]);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("SPEC-0027:H26-06 API de perfis fora do ar (conexão recusada) vira 503 depois de consultar o perfil", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const response = await proxy(
+      new NextRequest("http://localhost/banda/podridao"),
+    );
+
+    expect(response.status).toBe(503);
+    expect(fetch.mock.calls.map(([input]) => urlOf(input).pathname)).toContain(
+      "/api/v1/profiles/band/podridao",
+    );
+  });
+
+  it("SPEC-0027:H26-06 API de perfis com erro 5xx vira 503 depois de consultar o perfil", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => problem(503, "service.unavailable"));
+
+    const response = await proxy(
+      new NextRequest("http://localhost/casa/porao-do-rock"),
+    );
+
+    expect(response.status).toBe(503);
+    expect(fetch.mock.calls.map(([input]) => urlOf(input).pathname)).toContain(
+      "/api/v1/profiles/venue/porao-do-rock",
+    );
+  });
+
+  it("SPEC-0027:H26-08 /apoie/{x} não é tratado como show", async () => {
+    const fetch = stubNotFoundApi();
+
+    await proxy(new NextRequest("http://localhost/apoie/obrigado"));
+
+    expect(
+      calledPaths(fetch).filter((path) =>
+        /^\/api\/v1\/cities\/[^/]+\/shows\//.test(path),
+      ),
+      "/apoie/obrigado consultou a API do show",
+    ).toEqual([]);
+  });
+
+  it("SPEC-0027:H26-08 todo slug reservado do backend (City.ReservedSlugs) é um primeiro segmento que nunca vira show", async () => {
+    const reserved = backendReservedSlugs();
+    expect(reserved).toEqual(expect.arrayContaining(["apoie", "seguindo"]));
+
+    const treatedAsShow: string[] = [];
+    for (const slug of reserved) {
+      const fetch = stubNotFoundApi();
+      const path = `/${slug}/noite-da-peste-2026-11-14`;
+      await proxy(new NextRequest(`http://localhost${path}`));
+      if (
+        calledPaths(fetch).some((called) =>
+          called.startsWith(`/api/v1/cities/${slug}/shows/`),
+        )
+      ) {
+        treatedAsShow.push(path);
+      }
+      vi.restoreAllMocks();
+    }
+
+    expect(
+      treatedAsShow,
+      "caminhos com primeiro segmento reservado no backend tratados como show",
+    ).toEqual([]);
   });
 });

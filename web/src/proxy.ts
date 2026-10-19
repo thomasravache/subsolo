@@ -13,7 +13,11 @@ import {
   profileSlug,
   profileTypeBySegment,
 } from "@/components/profiles/profile-routes";
-import { isAccountPage, isAdminPage } from "@/components/ui/shell";
+import {
+  isAccountPage,
+  isAdminPage,
+  isFollowingPage,
+} from "@/components/ui/shell";
 
 /**
  * SPEC-0010 — toda página passa por aqui: o proxy gera um nonce novo por requisição, monta a Content-Security-Policy
@@ -46,6 +50,10 @@ import { isAccountPage, isAdminPage } from "@/components/ui/shell";
  * perfil não entram na decisão: sem eles a página sai 200 com o aviso). A página é avisada pelo cabeçalho interno
  * {@link profileStatusHeader}, que o proxy sempre sobrescreve. H24-05: os primeiros segmentos reservados
  * ({@link reservedSegments}) nunca são tratados como cidade de um show.
+ *
+ * SPEC-0027 — a aba "Seguindo" (`/seguindo`) é dado pessoal, como `/conta`: segue direto para o Next.js, sem consultar a
+ * agenda, com `Cache-Control: no-store` (a página manda o anônimo para `/entrar`). H26-08: {@link reservedSegments}
+ * tem todos os slugs reservados do backend (`City.ReservedSlugs`, SPEC-0017).
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -63,16 +71,26 @@ const showPath = /^\/(?!_)([^/.]+)\/([^/.]+)$/;
 
 /**
  * SPEC-0026 (H24-05) — primeiros segmentos que são páginas do site, nunca a cidade de um show (os mesmos slugs
- * reservados para cidades na SPEC-0017): `/banda/x` não consulta a API do show.
+ * reservados para cidades na SPEC-0017, `City.ReservedSlugs`; H26-08: a lista toda): `/banda/x` não consulta a API do
+ * show.
  */
 const reservedSegments = new Set([
+  "entrar",
+  "conta",
+  "admin",
+  "apoie",
+  "privacidade",
+  "termos",
+  "api",
+  "health",
+  "_next",
+  "show",
   "banda",
   "casa",
   "produtor",
-  "conta",
-  "admin",
-  "entrar",
-  "apoie",
+  "buscar",
+  "seguindo",
+  "offline",
 ]);
 
 /** Formato do slug do show (`<titulo>-<aaaa-mm-dd>`, até 80 caracteres); fora dele nem se consulta a API. */
@@ -201,9 +219,9 @@ export async function proxy(request: NextRequest) {
   headers.delete(adminAccessHeader);
 
   const { pathname } = request.nextUrl;
-  const accountPage = isAccountPage(pathname);
+  const personalPage = isAccountPage(pathname) || isFollowingPage(pathname);
   const adminPage = isAdminPage(pathname);
-  const publicPage = !accountPage && !adminPage;
+  const publicPage = !personalPage && !adminPage;
   const agenda =
     publicPage && agendaPath.test(pathname)
       ? await agendaKind(pathname)
@@ -242,7 +260,7 @@ export async function proxy(request: NextRequest) {
   for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
   }
-  if (accountPage || adminPage) {
+  if (personalPage || adminPage) {
     response.headers.set("Cache-Control", "no-store");
   }
   return response;

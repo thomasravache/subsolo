@@ -5,7 +5,8 @@ import { publishProfiles } from "./perfil-publico";
 
 /**
  * SPEC-0026 — perfil público de banda, casa e produtor na aplicação completa (pilha do Compose). Tela do Stitch "Perfil
- * da Banda - Podridão - Subsolo", com os ajustes do §6 (sem foto, sem "Seguir" nem seguidores, sem o botão "Vou").
+ * da Banda - Podridão - Subsolo", com os ajustes do §6 (sem foto e sem o botão "Vou"; o "Seguir" e a contagem chegam
+ * com a SPEC-0027).
  *
  * - E2E-01 (mobile-chrome e mobile-safari): com uma banda e uma casa com perfil e um show com as duas, o fã abre a
  *   página do show, toca no nome da banda e cai em `/banda/{slug}`: nome, links "Instagram", "Bandcamp" e "Metal
@@ -73,7 +74,6 @@ test.describe("perfil público", () => {
       page.locator(`main a[href="${show.path}"]`).first(),
       "o card do próximo show não leva à página do show",
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: /seguir/i })).toHaveCount(0);
     await axe.check(page);
 
     // Volta ao show e vai à casa.

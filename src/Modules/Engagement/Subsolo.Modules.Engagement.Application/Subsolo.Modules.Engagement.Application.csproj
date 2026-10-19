@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0027 — casos de uso do módulo Engagement (ADR-0001), um por pasta em Features/: seguir cidade e perfil, deixar
+    de seguir, listar os meus, contar seguidores e a interface pública IEngagementApi. A cidade é validada pelo
+    IEventsCatalog (Events.IntegrationEvents) e o perfil pelo IProfilesApi (Profiles.IntegrationEvents); o UserDeleted
+    e o IPersonalDataSection vêm do Users.IntegrationEvents.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Engagement.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) e os endpoints (Presentation) usam os tipos internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Engagement.Infrastructure" />
+    <InternalsVisibleTo Include="Subsolo.Modules.Engagement.Presentation" />
+    <InternalsVisibleTo Include="Subsolo.Engagement.UnitTests" />
+    <InternalsVisibleTo Include="Subsolo.Engagement.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.Domain/Subsolo.Modules.Engagement.Domain.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

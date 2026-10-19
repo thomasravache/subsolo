@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { ProfileShowItem, PublicProfile } from "@/api/public-profile";
+import { FollowButton } from "@/components/engagement/FollowButton";
 import { cityTimeParts } from "@/components/shows/city-time";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { InstagramIcon } from "@/components/ui/icons";
 import { mainContentId } from "@/components/ui/shell";
 
-import { profileTypeLabel } from "./profile-metadata";
+import { profileSegments, profileTypeLabel } from "./profile-metadata";
 import { BookIcon, HeadphonesIcon, PlaceIcon } from "./profile-icons";
 
 /** Textos da página do perfil (§6). */
@@ -24,13 +25,15 @@ export const profileMessages = {
  * SPEC-0026 — a página pública do perfil (§6): nome, cidade, estilos, links das redes, "PRÓXIMOS SHOWS" e "SHOWS
  * PASSADOS". `upcoming`/`past` = `null` quando o endpoint de shows falhou ("Não foi possível carregar os shows agora.").
  * Tela do Stitch "Perfil da Banda - Podridão - Subsolo", usada também para casa e produtor, com os ajustes do §6: sem
- * foto (o topo é a tipografia sobre fundo escuro), sem "Seguir" nem seguidores e sem o botão "Vou" nos cards (a
- * contagem "X vão" do `Card` fica).
+ * foto (o topo é a tipografia sobre fundo escuro) e sem o botão "Vou" nos cards (a contagem "X vão" do `Card` fica).
+ * SPEC-0027 — "Seguir" / "Seguindo" e a contagem "{n} seguidores" (sem a contagem quando ela não veio).
  */
 export interface ProfilePageProps {
   profile: PublicProfile;
   upcoming: ProfileShowItem[] | null;
   past: ProfileShowItem[] | null;
+  /** SPEC-0027 — quantos seguem o perfil; `undefined` = indisponível. */
+  followers?: number;
 }
 
 /** Os links das redes do perfil, na ordem do Stitch, só os informados. */
@@ -96,7 +99,12 @@ function showCount(count: number): string {
   return `${count} ${count === 1 ? "show" : "shows"}`;
 }
 
-export function ProfilePage({ profile, upcoming, past }: ProfilePageProps) {
+export function ProfilePage({
+  profile,
+  upcoming,
+  past,
+  followers,
+}: ProfilePageProps) {
   const links = networks(profile);
   // Ids únicos por perfil: a navegação no cliente mantém a página anterior escondida no DOM (Activity, cacheComponents).
   const ids = {
@@ -118,6 +126,13 @@ export function ProfilePage({ profile, upcoming, past }: ProfilePageProps) {
             {profile.name}
           </h1>
         </div>
+
+        <FollowButton
+          target={{ kind: "profile", id: profile.id }}
+          name={profile.name}
+          followers={followers}
+          returnTo={`/${profileSegments[profile.type] ?? "banda"}/${profile.slug}`}
+        />
 
         {profile.styles.length > 0 && (
           <ul className="flex flex-wrap gap-1.5" aria-label="Estilos">

@@ -66,6 +66,12 @@
     <ProjectReference Include="../../src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/Subsolo.Modules.Profiles.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
     <ProjectReference Include="../../src/Modules/Profiles/Subsolo.Modules.Profiles.Presentation/Subsolo.Modules.Profiles.Presentation.csproj" />
+    <!-- SPEC-0027: módulo Engagement. -->
+    <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Application/Subsolo.Modules.Engagement.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Domain/Subsolo.Modules.Engagement.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Infrastructure/Subsolo.Modules.Engagement.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Presentation/Subsolo.Modules.Engagement.Presentation.csproj" />
     <!-- SPEC-0018 IT-05 (Emenda 2): a regra "só o Notifications usa SMTP" também avalia os hosts (Api e ServiceDefaults). -->
     <ProjectReference Include="../../src/Subsolo.Api/Subsolo.Api.csproj" />
     <ProjectReference Include="../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />

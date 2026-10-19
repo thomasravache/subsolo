@@ -931,6 +931,7 @@
           "NetVips.Native": "[8.18.7, )",
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Notifications.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Profiles.Infrastructure": "[1.0.0, )",
@@ -973,6 +974,45 @@
           "Subsolo.UnitTests.Common": "[1.0.0, )",
           "Testcontainers.PostgreSql": "[4.16.0, )",
           "xunit.v3.extensibility.core": "[4.0.2, )"
+        }
+      },
+      "subsolo.modules.engagement.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Application": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Application": "[1.0.0, )"
         }
       },
       "subsolo.modules.events.application": {

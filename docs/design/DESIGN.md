@@ -13,7 +13,7 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 
 | Tela | Dispositivo | Screen no Stitch | Captura |
 |---|---|---|---|
-| Agenda da cidade (com o shell) | celular | `5d1946463ad9484b83c67cc2e6d78fd3` | [agenda-mobile.png](stitch/agenda-mobile.png) |
+| Agenda da cidade (com o shell; SPEC-0027: "SEGUIR {CIDADE}" / "SEGUINDO" no cabeçalho, incluído em 2026-10-18 — a captura é anterior) | celular | `5d1946463ad9484b83c67cc2e6d78fd3` | [agenda-mobile.png](stitch/agenda-mobile.png) |
 | Agenda da cidade (com o shell) | desktop | `a9c7a58a62a5431bb833a132609c0c70` | [agenda-desktop.png](stitch/agenda-desktop.png) |
 | Página do show (estrutura) | celular | `98cc07285ec5439197d3273da0f7a11d` | [show-mobile.png](stitch/show-mobile.png) |
 | Página do show (estrutura) | desktop | `ddae50bdb35f4cdaa2437a12f23fe257` | [show-desktop.png](stitch/show-desktop.png) |
@@ -24,7 +24,8 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Pedir Perfil (SPEC-0021; também `/admin/perfis/novo`, sem o contato) | celular | `af62730f71414b6082259d068b025b00` | pendente (capturada pelo Architect) |
 | Reivindicar Perfil (SPEC-0021) | celular | `75b72cdf03284a5998d07d0fd8ae6543` | pendente (capturada pelo Architect) |
 | Fila do Admin (SPEC-0021, só a aba "Pedidos de perfil") | desktop | `600bfe18de6e44a995790033ab0f817e` | pendente (capturada pelo Architect) |
-| Perfil da Banda — Podridão (SPEC-0026; também casa e produtor, sem foto, sem "Seguir" e sem "Vou") | celular | `bdf4a66e751846d5a73dca2f606aac6a` | [perfil-mobile.png](stitch/perfil-mobile.png) |
+| Perfil da Banda — Podridão (SPEC-0026; também casa e produtor, sem foto e sem "Vou"; SPEC-0027: "Seguir" / "Seguindo" e "{n} seguidores" por extenso) | celular | `bdf4a66e751846d5a73dca2f606aac6a` | [perfil-mobile.png](stitch/perfil-mobile.png) |
+| Avisos e Seguindo (SPEC-0027: só a parte "Seguindo", em `/seguindo`, com uma seção por tipo; os avisos vêm com a spec de push; a navegação fica Agenda, Seguindo, Apoie, Conta) | celular | `35b282364c47425c9e9cfe89e7b1c1e2` | [seguindo-mobile.png](stitch/seguindo-mobile.png) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).
@@ -124,7 +125,7 @@ Regras que saem da tabela:
 | `Header` | `city cities onCityChange` | wordmark "Subsolo", navegação (só desktop), `CitySwitcher` |
 | `CitySwitcher` | `city cities onCityChange` | `<select>` nativo com rótulo "Cidade" (teclado e leitor de tela sem script extra) |
 | `Footer` | `links={apoie, instagram, privacidade}` | "Apoie" em destaque; Instagram abre em nova aba (avisado ao leitor de tela) |
-| `BottomNav` | `city current?` | navegação inferior fixa, só no celular (< 768 px), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque |
+| `BottomNav` | `city current? signedIn? returnTo?` | navegação inferior fixa, só no celular (< 768 px), abas Agenda, Seguindo, Apoie e Conta (SPEC-0027), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque |
 | `AppShell` | `cities` | link "Pular para o conteúdo", `Header`, conteúdo, `Footer`, `BottomNav`; a cidade atual vem da URL |
 
 Painel do admin (`web/src/components/admin/`, SPEC-0017):
@@ -157,7 +158,7 @@ do Google) e "Sessão atual" só com o botão "Sair da conta", sem aparelho nem 
 
 - Layout de `(public)` (`web/src/app/(public)/layout.tsx`): `AppShell` com as cidades de `GET /api/v1/cities`
   (API fora do ar → cabeçalho sem seletor). Cada página traz o próprio `<main id="conteudo">`.
-- Celular (< 768 px): cabeçalho fixo no topo (wordmark + seletor), navegação inferior fixa (Agenda, Apoie), conteúdo
+- Celular (< 768 px): cabeçalho fixo no topo (wordmark + seletor), navegação inferior fixa (Agenda, Seguindo, Apoie, Conta), conteúdo
   com folga de 64 px embaixo para não ficar sob a navegação.
 - Desktop (≥ 768 px): cabeçalho completo (wordmark, Agenda, Apoie, seletor), sem navegação inferior; agenda em grade
   de 2–3 colunas com cards verticais.

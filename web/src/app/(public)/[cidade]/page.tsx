@@ -11,6 +11,7 @@ import {
 } from "@/api/agenda";
 import { AgendaFilterBar } from "@/components/agenda/AgendaFilterBar";
 import { AgendaProducerCta } from "@/components/agenda/AgendaProducerCta";
+import { FollowButton } from "@/components/engagement/FollowButton";
 import {
   agendaApiQuery,
   dayMonth,
@@ -40,6 +41,7 @@ import { agendaStatus } from "./agenda-status";
  * lidos no servidor: a URL filtrada é compartilhável e já vem filtrada. Cabeçalho "PRÓXIMOS 90 DIAS · N SHOWS" ou
  * "dd/MM A dd/MM · N SHOWS" (anunciado em `aria-live`), vazio com filtro ("Nenhum show com esses filtros." e "Limpar
  * filtros") e o bloco do produtor no fim. Telas do Stitch "Agenda Curitiba - Subsolo" e "Agenda Curitiba - Desktop".
+ * SPEC-0027 — "Seguir {cidade}" / "Seguindo" no cabeçalho (o estado vem do navegador: a página é igual para todos).
  */
 
 // Sem shell de carregamento: a página só aparece com a agenda (ou o aviso) pronta.
@@ -48,6 +50,14 @@ export const instant = false;
 // Cidade fora do build é renderizada na requisição (sem servir o shell genérico de `/[cidade]`), para o status
 // definido pelo `proxy` (404/503) chegar ao navegador; com o shell genérico a resposta sairia sempre 200.
 export const unstable_paramMatching = { cidade: "blocking" };
+
+const dayMs = 86_400_000;
+
+/** SPEC-0027 (H26-04) — a sondagem do fuso: da véspera em UTC até hoje em UTC (um dia). */
+function probeWindow(now: Date): { from: string; to: string } {
+  const date = (time: number) => new Date(time).toISOString().slice(0, 10);
+  return { from: date(now.getTime() - dayMs), to: date(now.getTime()) };
+}
 
 interface AgendaPage {
   result: CityAgendaResult;
@@ -88,10 +98,11 @@ const loadAgenda = cache(
       const result = await getCityAgenda(cidade, agendaApiQuery(filters, ""));
       return { result, filters, styles };
     }
-    // SPEC-0026 (H25-01): o fuso vem de uma sondagem de um dia só (o dia de hoje em UTC), não da agenda de 90 dias.
+    // SPEC-0026 (H25-01): o fuso vem de uma sondagem de um dia só, não da agenda de 90 dias. SPEC-0027 (H26-04): a
+    // sondagem começa na véspera em UTC, que é o "hoje" da cidade quando ela ainda está no dia anterior (o Brasil fica
+    // atrás de UTC), e cobre no máximo um dia.
     const now = new Date();
-    const utcToday = now.toISOString().slice(0, 10);
-    const probe = await getCityAgenda(cidade, { from: utcToday, to: utcToday });
+    const probe = await getCityAgenda(cidade, probeWindow(now));
     if (probe.kind !== "ok") {
       return { result: probe, filters, styles };
     }
@@ -148,16 +159,26 @@ export default async function CityAgendaPage(props: PageProps<"/[cidade]">) {
       id={mainContentId}
       className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8"
     >
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl uppercase leading-none tracking-wide text-text md:text-5xl">
-          Agenda {city.name}
-        </h1>
-        <p
-          aria-live="polite"
-          className="font-label text-xs font-medium uppercase tracking-wider text-text-muted"
-        >
-          {summary}
-        </p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-3xl uppercase leading-none tracking-wide text-text md:text-5xl">
+            Agenda {city.name}
+          </h1>
+          <p
+            aria-live="polite"
+            className="font-label text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            {summary}
+          </p>
+        </div>
+        {/* Separa o total do botão no conteúdo textual da página (leitores e buscas por "1 SHOW"). */}{" "}
+        {/* SPEC-0027 — "SEGUIR {CIDADE}" (contorno) / "SEGUINDO" (vermelho, com o visto). */}
+        <FollowButton
+          target={{ kind: "city", slug: city.slug }}
+          name={city.name}
+          label={`Seguir ${city.name}`}
+          returnTo={`/${city.slug}`}
+        />
       </header>
       {/* Separa o total do texto seguinte no conteúdo textual da página (leitores e buscas por "1 SHOW"). */}{" "}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
