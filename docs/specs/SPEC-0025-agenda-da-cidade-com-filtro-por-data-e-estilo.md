@@ -118,7 +118,7 @@ GET /api/v1/cities/{slug}/agenda:        # AllowAnonymous + default (inalterado)
 ### 7.3 Testes de Integração
 - **IT-01** — Dados shows em Curitiba hoje, no domingo, no próximo mês e daqui a 100 dias, quando a agenda é pedida sem parâmetros, com a semana e com o mês, então cada resposta traz só os do período, com `period` e `total` certos.
 - **IT-02** — Dados 300 shows com estilos variados, quando a agenda é pedida com `styles=death,grind` e um período, então vêm só os com algum desses estilos no período, em p95 ≤ 300 ms; `styles=xpto` não quebra (lista ignorada).
-- **IT-03** — Dados `from` depois de `to`, intervalo de 181 dias e data mal formada, quando pedidos, então 400 `agenda.invalid_range`; e `styles` com slug fora do padrão → 400 `agenda.invalid_styles`.
+- **IT-03** — Dados `from` depois de `to`, intervalo de 181 dias e data mal formada, quando pedidos, então 400 `agenda.invalid_range` — as datas mal formadas e extremas (`9999-12-31`) nos ambientes Development e Production; e `styles` com slug fora do padrão → 400 `agenda.invalid_styles`.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json`, quando lido, então a agenda tem os parâmetros, o `period`, o `total` e os códigos do §6, e `(cd web && pnpm api:check)` passa.
@@ -182,9 +182,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 794f227 | 2026-10-18 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 7ec7168 | 2026-10-19 |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 68724a4 | 2026-10-19 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 242ms) — 68724a4 | 2026-10-19 |
+| G4 Review | FAIL | Reviewer independente: CHANGES REQUESTED (M1: caminho de produção da data mal formada sem teste; m1: data extrema → 500) | 2026-10-19 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -236,3 +236,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|---|---|
 | 2 | 2026-10-19 | (a) Data inválida, `to < from` e mais de 180 dias seguem com o código atual `agenda.invalid_range` (SPEC-0008), em vez de `agenda.invalid_period` — mudança sem quebra; IT-03 e CT-01 ajustados. (b) `period` sem `from`/`to` = hoje a hoje + 90 nas datas locais da cidade. (c) UT-02: o leitor filtra pelos estilos conhecidos de `GET /api/v1/styles`. (d) "Escolher data" abre um formulário GET com "De", "Até" e "Aplicar"; chips são links com `aria-current`. (e) Cabeçalho com datas dd/MM, singular "1 SHOW" e total em aria-live. | Relatório do Test-writer (SD-1..SD-5) | — | Architect (piloto automático do Thomas, 2026-10-17) |
 | 2 | 2026-10-19 | Sem mudança de contrato. (a) `tests/Security/Subsolo.Security.IntegrationTests/AgendaUnderFallbackPolicyTests.cs` (SPEC-0010:CT-01) entra em `touches`: o corpo da agenda passa a ter `period` e `total`, e o Test-writer ajusta a lista de campos. (b) A contagem "X vão" dos cards fica: já é entregue e testada desde a SPEC-0008 (`Card.tsx`), e a SPEC-0027 ("Vou") a torna real — o ajuste "sem a contagem" do §6 deixa de valer. (c) Desvios aceitos do Implementer: "Escolher data" como link `?periodo=escolher` que abre o formulário no servidor; tocar no chip ativo remove o filtro; `ChipLink` novo ao lado do `Chip` de alternância; chips de estilo no visual atual do `Chip`; no desktop o título fica acima da grade de duas colunas; CTA com sublinhado vermelho por contraste; vazio com filtro com marcação própria; data mal formada → 400 por filtro de endpoint (produção) e `IExceptionHandler` do módulo (desenvolvimento). | Relatório do Implementer | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. Revisão G4: IT-03 passa a rodar os casos de data mal formada também no ambiente Production (o caminho do filtro de endpoint) e inclui a data extrema `9999-12-31`, que hoje estoura em 500 e deve dar 400 `agenda.invalid_range`; o erro de data mal formada deixa de culpar sempre `From`. | Revisão G4 (M1, m1, m3) | — | Architect (piloto automático do Thomas, 2026-10-17) |
