@@ -176,7 +176,10 @@ describe("OpenAPI do perfil público fiel ao contrato §6", () => {
     expect(propertiesOf(body)).toEqual(["shows"]);
     const shows = property(body, "shows");
     expect([shows.type].flat()).toContain("array");
-    expect(propertiesOf(shows.items)).toEqual(summaryFields);
+    // O resumo da agenda (SPEC-0008); campos a mais (ex.: a cidade de cada show) não quebram o contrato.
+    expect(propertiesOf(shows.items)).toEqual(
+      expect.arrayContaining(summaryFields),
+    );
   });
 
   it("SPEC-0026:CT-01 os shows do perfil declaram 400 com events.invalid_query em ProblemDetails", () => {
