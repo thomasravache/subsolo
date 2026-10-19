@@ -155,6 +155,7 @@ export default async function CityAgendaPage(props: PageProps<"/[cidade]">) {
           {summary}
         </p>
       </header>
+      {/* Separa o total do texto seguinte no conteúdo textual da página (leitores e buscas por "1 SHOW"). */}{" "}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
         <div className="lg:sticky lg:top-20">
           <AgendaFilterBar
