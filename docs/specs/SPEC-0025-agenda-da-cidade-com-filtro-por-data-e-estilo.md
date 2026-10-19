@@ -4,14 +4,14 @@ title: Agenda da cidade com filtro por data e estilo
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/agenda/**, web/src/components/ui/Chip.tsx, e2e/tests/agenda/**, tests/**/packages.lock.json, docs/design/**]
+touches: [src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/agenda/**, web/src/components/ui/Chip.tsx, e2e/tests/agenda/**, tests/**/packages.lock.json, docs/design/**, tests/Security/Subsolo.Security.IntegrationTests/AgendaUnderFallbackPolicyTests.cs, .github/workflows/ci.yml]
 adrs: [ADR-0013, ADR-0016]
 external: []
 size: M
@@ -73,7 +73,8 @@ A agenda da cidade (`/{cidade}`) ganha filtros por período ("Esta semana", "Est
 GET /api/v1/cities/{slug}/agenda:        # AllowAnonymous + default (inalterado)
   query: from?: aaaa-mm-dd, to?: aaaa-mm-dd (to ≥ from; ≤ 180 dias), styles?: "death,grind"
   200: { city, shows: ShowSummary[] (contrato da SPEC-0008), period: { from, to }, total }
-  400: ProblemDetails code=agenda.invalid_period | agenda.invalid_styles
+  400: ProblemDetails code=agenda.invalid_range (to < from, > 180 dias ou data mal formada; código atual da SPEC-0008, mantido) | agenda.invalid_styles
+  period: datas locais da cidade; sem from/to → { from: hoje, to: hoje + 90 } (a busca segue a janela de 6 h atrás da SPEC-0023)
   404: agenda.city_not_found (inalterado)
 ```
 
@@ -81,8 +82,8 @@ GET /api/v1/cities/{slug}/agenda:        # AllowAnonymous + default (inalterado)
 /{cidade} (SSR dinâmica)
   ?periodo=semana → de hoje até domingo ; ?periodo=mes → de hoje até o fim do mês ; ?de=aaaa-mm-dd&ate=aaaa-mm-dd → intervalo escolhido
   ?estilo=death,grind → só shows com algum desses estilos ; parâmetros inválidos → ignorados (agenda padrão) sem erro na página
-  cabeçalho: "AGENDA {CIDADE}" + "PRÓXIMOS 90 DIAS · N SHOWS" | "{de} A {ate} · N SHOWS"
-  chips de período: "ESTA SEMANA", "ESTE MÊS", "ESCOLHER DATA" ; chips de estilo (vindos de GET /api/v1/styles)
+  cabeçalho: "AGENDA {CIDADE}" + "PRÓXIMOS 90 DIAS · N SHOWS" | "{de} A {ate} · N SHOWS" (datas dd/MM, ex. "12/11 A 15/11"; singular "1 SHOW"); o total também é anunciado em aria-live
+  chips de período (links com aria-current="page" no ativo): "ESTA SEMANA", "ESTE MÊS", "ESCOLHER DATA" (abre um formulário GET com os campos de data "De" e "Até" e o botão "Aplicar", que também envia com Enter) ; chips de estilo (vindos de GET /api/v1/styles)
   vazio com filtro → "Nenhum show com esses filtros." + "Limpar filtros" ; vazio sem filtro → texto atual da SPEC-0008
   bloco final: "PRODUZINDO SHOW EM {CIDADE}?" + "Cadastrar evento na agenda" → /conta/shows/novo
 ```
@@ -112,12 +113,12 @@ GET /api/v1/cities/{slug}/agenda:        # AllowAnonymous + default (inalterado)
 
 ### 7.2 Testes Unitários
 - **UT-01** — Dados "hoje" 2026-11-12 (quinta) em `America/Sao_Paulo` e o fim do mês, quando os períodos são calculados, então "semana" = 12 a 15/11 e "mês" = 12 a 30/11; e `de`/`ate` válidos, `ate < de` e 181 dias são aceitos ou recusados como no §6.
-- **UT-02** — Dado o leitor de parâmetros da página, quando recebe `estilo=death,,GRIND,xpto` e `periodo=foo`, então normaliza para `death,grind` (o inexistente é tratado na API) e ignora o período inválido.
+- **UT-02** — Dado o leitor de parâmetros da página, quando recebe `estilo=death,,GRIND,xpto` e `periodo=foo`, então normaliza para `death,grind` (comparando com os estilos conhecidos de `GET /api/v1/styles`, que a página já carrega para os chips; a API também ignora o inexistente) e ignora o período inválido.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados shows em Curitiba hoje, no domingo, no próximo mês e daqui a 100 dias, quando a agenda é pedida sem parâmetros, com a semana e com o mês, então cada resposta traz só os do período, com `period` e `total` certos.
 - **IT-02** — Dados 300 shows com estilos variados, quando a agenda é pedida com `styles=death,grind` e um período, então vêm só os com algum desses estilos no período, em p95 ≤ 300 ms; `styles=xpto` não quebra (lista ignorada).
-- **IT-03** — Dados `from` depois de `to`, intervalo de 181 dias e data mal formada, quando pedidos, então 400 `agenda.invalid_period`; e `styles` com slug fora do padrão → 400 `agenda.invalid_styles`.
+- **IT-03** — Dados `from` depois de `to`, intervalo de 181 dias e data mal formada, quando pedidos, então 400 `agenda.invalid_range` — as datas mal formadas e extremas (`9999-12-31`) nos ambientes Development e Production; e `styles` com slug fora do padrão → 400 `agenda.invalid_styles`.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json`, quando lido, então a agenda tem os parâmetros, o `period`, o `total` e os códigos do §6, e `(cd web && pnpm api:check)` passa.
@@ -180,12 +181,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 794f227 | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 7ec7168 | 2026-10-19 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 643a2af | 2026-10-19 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 6s 226ms) — 643a2af | 2026-10-19 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED na 2ª rodada (M1, m1, m3 corrigidos; menores → herdados H25-01..03 na SPEC-0026) — 643a2af | 2026-10-19 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 11m 50s 449ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 082ms) — a933cb5 | 2026-10-19 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -233,3 +234,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0025`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-19 | (a) Data inválida, `to < from` e mais de 180 dias seguem com o código atual `agenda.invalid_range` (SPEC-0008), em vez de `agenda.invalid_period` — mudança sem quebra; IT-03 e CT-01 ajustados. (b) `period` sem `from`/`to` = hoje a hoje + 90 nas datas locais da cidade. (c) UT-02: o leitor filtra pelos estilos conhecidos de `GET /api/v1/styles`. (d) "Escolher data" abre um formulário GET com "De", "Até" e "Aplicar"; chips são links com `aria-current`. (e) Cabeçalho com datas dd/MM, singular "1 SHOW" e total em aria-live. | Relatório do Test-writer (SD-1..SD-5) | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. (a) `tests/Security/Subsolo.Security.IntegrationTests/AgendaUnderFallbackPolicyTests.cs` (SPEC-0010:CT-01) entra em `touches`: o corpo da agenda passa a ter `period` e `total`, e o Test-writer ajusta a lista de campos. (b) A contagem "X vão" dos cards fica: já é entregue e testada desde a SPEC-0008 (`Card.tsx`), e a SPEC-0027 ("Vou") a torna real — o ajuste "sem a contagem" do §6 deixa de valer. (c) Desvios aceitos do Implementer: "Escolher data" como link `?periodo=escolher` que abre o formulário no servidor; tocar no chip ativo remove o filtro; `ChipLink` novo ao lado do `Chip` de alternância; chips de estilo no visual atual do `Chip`; no desktop o título fica acima da grade de duas colunas; CTA com sublinhado vermelho por contraste; vazio com filtro com marcação própria; data mal formada → 400 por filtro de endpoint (produção) e `IExceptionHandler` do módulo (desenvolvimento). | Relatório do Implementer | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. Revisão G4: IT-03 passa a rodar os casos de data mal formada também no ambiente Production (o caminho do filtro de endpoint) e inclui a data extrema `9999-12-31`, que hoje estoura em 500 e deve dar 400 `agenda.invalid_range`; o erro de data mal formada deixa de culpar sempre `From`. | Revisão G4 (M1, m1, m3) | — | Architect (piloto automático do Thomas, 2026-10-17) |
+| 2 | 2026-10-19 | Sem mudança de contrato. `.github/workflows/ci.yml` entra em `touches`: o job `test` passa de `timeout-minutes: 35` para 50 (já levava 29–32 min no runner e o PR #37 foi cancelado na etapa do relatório TRX, com todos os testes passando). | CI do PR #37 cancelado por tempo | — | Architect (piloto automático do Thomas, 2026-10-17) |
