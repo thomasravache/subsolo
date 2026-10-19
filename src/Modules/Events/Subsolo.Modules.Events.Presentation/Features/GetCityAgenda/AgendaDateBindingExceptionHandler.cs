@@ -21,7 +21,7 @@ internal sealed class AgendaDateBindingExceptionHandler : IExceptionHandler
             return false;
         }
 
-        await AgendaDateBinding.Problem().ExecuteAsync(httpContext);
+        await AgendaDateBinding.Problem(httpContext.Request).ExecuteAsync(httpContext);
         return true;
     }
 }

@@ -20,15 +20,22 @@ public static class AgendaErrors
     /// <summary>404: nenhuma cidade com o slug.</summary>
     public const string CityNotFound = "agenda.city_not_found";
 
-    /// <summary>SPEC-0025 — <c>from</c> ou <c>to</c> que não é uma data <c>aaaa-mm-dd</c>.</summary>
-    public static Error MalformedDateError() =>
-        Error.Validation(
+    /// <summary>
+    /// SPEC-0025 — <c>from</c> e/ou <c>to</c> que não são datas <c>aaaa-mm-dd</c>: os erros apontam os campos que falharam
+    /// (<see cref="GetCityAgendaQuery.From"/>, <see cref="GetCityAgendaQuery.To"/>; nenhum identificado → os dois).
+    /// </summary>
+    public static Error MalformedDateError(IReadOnlyCollection<string> fields)
+    {
+        ArgumentNullException.ThrowIfNull(fields);
+        string[] failed = fields.Count > 0 ? [.. fields] : [nameof(GetCityAgendaQuery.From), nameof(GetCityAgendaQuery.To)];
+        return Error.Validation(
             InvalidRange,
             "Período da agenda inválido.",
-            new Dictionary<string, string[]>(StringComparer.Ordinal)
-            {
-                [nameof(GetCityAgendaQuery.From)] = ["\"from\" e \"to\" devem ser datas no formato aaaa-mm-dd."],
-            });
+            failed.ToDictionary(
+                field => field,
+                field => new[] { $"\"{field.ToLowerInvariant()}\" deve ser uma data no formato aaaa-mm-dd." },
+                StringComparer.Ordinal));
+    }
 
     /// <summary>Erro de validação do período já resolvido (o validador só confere quando as duas datas vêm na consulta).</summary>
     internal static Error InvalidRangeError(AgendaPeriod period) =>

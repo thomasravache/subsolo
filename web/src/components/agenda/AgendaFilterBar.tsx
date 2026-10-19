@@ -8,6 +8,8 @@ import { CalendarIcon } from "@/components/ui/icons";
 
 import {
   agendaHref,
+  maxDate,
+  minDate,
   type AgendaFilters,
   type AgendaPeriodFilter,
 } from "./agenda-filters";
@@ -99,6 +101,8 @@ export function AgendaFilterBar({
               name="de"
               type="date"
               required
+              min={minDate}
+              max={maxDate}
               defaultValue={range?.from}
               className={fieldControl}
             />
@@ -109,6 +113,8 @@ export function AgendaFilterBar({
               name="ate"
               type="date"
               required
+              min={minDate}
+              max={maxDate}
               defaultValue={range?.to}
               className={fieldControl}
             />

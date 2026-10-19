@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Primitives;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
 using Subsolo.Common.Presentation;
@@ -74,8 +76,23 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
 /// </summary>
 internal static class AgendaDateBinding
 {
-    /// <summary>O ProblemDetails de data mal formada.</summary>
-    public static IResult Problem() => ApiResults.Problem(Result.Failure(AgendaErrors.MalformedDateError()));
+    /// <summary>O ProblemDetails de data mal formada, com os campos (<c>From</c>, <c>To</c>) que não são datas.</summary>
+    public static IResult Problem(HttpRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        string[] fields =
+        [
+            .. new[] { (Query: "from", Field: nameof(GetCityAgendaQuery.From)), (Query: "to", Field: nameof(GetCityAgendaQuery.To)) }
+                .Where(item => IsMalformed(request.Query[item.Query]))
+                .Select(item => item.Field),
+        ];
+        return ApiResults.Problem(Result.Failure(AgendaErrors.MalformedDateError(fields)));
+    }
+
+    /// <summary>Valor presente que o Minimal API não lê como <see cref="DateOnly"/> (mesma leitura: cultura invariante).</summary>
+    private static bool IsMalformed(StringValues values) =>
+        !StringValues.IsNullOrEmpty(values)
+        && !DateOnly.TryParse(values.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
 
     /// <summary>Filtro do endpoint: com a leitura dos parâmetros já reprovada (status 400), responde o código da agenda.</summary>
     public static async ValueTask<object?> RejectMalformedDatesAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
@@ -83,7 +100,7 @@ internal static class AgendaDateBinding
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(next);
         return context.HttpContext.Response.StatusCode == StatusCodes.Status400BadRequest
-            ? Problem()
+            ? Problem(context.HttpContext.Request)
             : await next(context);
     }
 }

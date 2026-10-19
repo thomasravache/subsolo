@@ -6,7 +6,8 @@ namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 /// <summary>
 /// SPEC-0008 — slug em <c>^[a-z0-9-]{2,60}$</c> (<see cref="AgendaErrors.InvalidSlug"/>) e, com as duas datas,
 /// <c>from ≤ to</c> e no máximo <see cref="AgendaPeriod.MaxDays"/> dias (<see cref="AgendaErrors.InvalidRange"/>);
-/// SPEC-0025: cada estilo do filtro em <see cref="GetCityAgendaQuery.StylePattern"/> e no máximo
+/// SPEC-0025: <c>from</c>/<c>to</c> entre <see cref="AgendaPeriod.MinDate"/> e <see cref="AgendaPeriod.MaxDate"/>
+/// (<see cref="AgendaErrors.InvalidRange"/>); cada estilo do filtro em <see cref="GetCityAgendaQuery.StylePattern"/> e no máximo
 /// <see cref="GetCityAgendaQuery.MaxStyles"/> (<see cref="AgendaErrors.InvalidStyles"/>). O código vai no
 /// <c>ErrorCode</c> de cada falha.
 /// </summary>
@@ -18,6 +19,19 @@ internal sealed class GetCityAgendaQueryValidator : AbstractValidator<GetCityAge
             .Matches(GetCityAgendaQuery.SlugPattern)
             .WithErrorCode(AgendaErrors.InvalidSlug)
             .WithMessage("O slug da cidade deve ter de 2 a 60 letras minúsculas, dígitos ou hífens.");
+
+        // SPEC-0025: cada data entre 2000-01-01 e 2100-12-31 (9999-12-31 estouraria o fim do período).
+        RuleFor(query => query.From)
+            .Must(from => AgendaPeriod.IsWithinBounds(from!.Value))
+            .When(query => query.From.HasValue)
+            .WithErrorCode(AgendaErrors.InvalidRange)
+            .WithMessage($"\"from\" deve estar entre {AgendaPeriod.MinDate:yyyy-MM-dd} e {AgendaPeriod.MaxDate:yyyy-MM-dd}.");
+
+        RuleFor(query => query.To)
+            .Must(to => AgendaPeriod.IsWithinBounds(to!.Value))
+            .When(query => query.To.HasValue)
+            .WithErrorCode(AgendaErrors.InvalidRange)
+            .WithMessage($"\"to\" deve estar entre {AgendaPeriod.MinDate:yyyy-MM-dd} e {AgendaPeriod.MaxDate:yyyy-MM-dd}.");
 
         RuleFor(query => query.To)
             .Must((query, to) => AgendaPeriod.IsValidRange(query.From!.Value, to!.Value))

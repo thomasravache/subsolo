@@ -9,6 +9,18 @@ internal sealed record AgendaPeriod(DateOnly From, DateOnly To)
     /// <summary>Duração máxima de um período.</summary>
     public const int MaxDays = 180;
 
+    /// <summary>SPEC-0025 — primeira data aceita em <c>from</c>/<c>to</c>.</summary>
+    public static readonly DateOnly MinDate = new(2000, 1, 1);
+
+    /// <summary>
+    /// SPEC-0025 — última data aceita em <c>from</c>/<c>to</c> (longe de <see cref="DateOnly.MaxValue"/>: o período padrão
+    /// e o fim do dia somam dias sem estourar).
+    /// </summary>
+    public static readonly DateOnly MaxDate = new(2100, 12, 31);
+
+    /// <summary>SPEC-0025 — <paramref name="date"/> entre <see cref="MinDate"/> e <see cref="MaxDate"/>.</summary>
+    public static bool IsWithinBounds(DateOnly date) => date >= MinDate && date <= MaxDate;
+
     /// <summary><c>from ≤ to</c> e no máximo <see cref="MaxDays"/> dias entre as duas datas.</summary>
     public bool IsValid => IsValidRange(From, To);
 

@@ -12,6 +12,10 @@
 /** Duração máxima de um intervalo escolhido (a mesma da API). */
 export const maxPeriodDays = 180;
 
+/** Primeira e última data aceitas em `de`/`ate` (os mesmos limites da API). */
+export const minDate = "2000-01-01";
+export const maxDate = "2100-12-31";
+
 /** Os parâmetros de busca da página (`searchParams` do Next.js). */
 export type AgendaSearchParams = Record<string, string | string[] | undefined>;
 
@@ -114,6 +118,8 @@ function readPeriod(
     to === undefined ||
     fromDay === undefined ||
     toDay === undefined ||
+    from < minDate ||
+    to > maxDate ||
     toDay < fromDay ||
     (toDay - fromDay) / dayMs > maxPeriodDays
   ) {
