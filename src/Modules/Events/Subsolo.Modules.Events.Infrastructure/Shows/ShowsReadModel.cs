@@ -90,6 +90,15 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
         ];
     }
 
+    /// <summary>SPEC-0026 — esqueleto do Test-writer: o Implementer escreve a consulta (G2).</summary>
+    public Task<IReadOnlyList<ShowSummaryResponse>> ListByProfileAsync(
+        Guid profileId,
+        DateTimeOffset boundaryUtc,
+        bool upcoming,
+        int limit,
+        CancellationToken cancellationToken) =>
+        throw new NotImplementedException("SPEC-0026: ListByProfileAsync ainda não implementado.");
+
     public async Task<ShowDetails?> GetAsync(Guid showId, CancellationToken cancellationToken)
     {
         var show = await db.Shows.AsNoTracking().SingleOrDefaultAsync(item => item.Id == showId, cancellationToken);

@@ -32,6 +32,18 @@ internal interface IShowsReadModel
         bool upcoming,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// SPEC-0026 — até <paramref name="limit"/> shows em que <paramref name="profileId"/> é organizador, casa ou banda do
+    /// line-up: os próximos (início a partir de <paramref name="boundaryUtc"/>, por data) ou os passados (antes dele, mais
+    /// recentes primeiro).
+    /// </summary>
+    Task<IReadOnlyList<ShowSummaryResponse>> ListByProfileAsync(
+        Guid profileId,
+        DateTimeOffset boundaryUtc,
+        bool upcoming,
+        int limit,
+        CancellationToken cancellationToken);
+
     /// <summary>O show para a tela de edição, ou <see langword="null"/>.</summary>
     Task<ShowDetails?> GetAsync(Guid showId, CancellationToken cancellationToken);
 
