@@ -39,6 +39,12 @@ public sealed class Flyer : Entity
 
     public DateTimeOffset? AttachedAtUtc { get; private set; }
 
+    /// <summary>SPEC-0024 — largura da variante <see cref="Full"/> em pixels (<see langword="null"/> nos flyers antigos).</summary>
+    public int? FullWidth { get; private set; }
+
+    /// <summary>SPEC-0024 — altura da variante <see cref="Full"/> em pixels (<see langword="null"/> nos flyers antigos).</summary>
+    public int? FullHeight { get; private set; }
+
     public static Flyer Create(string id, Guid uploadedBy, DateTimeOffset createdAtUtc)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -48,6 +54,15 @@ public sealed class Flyer : Entity
         }
 
         return new Flyer(id, uploadedBy, createdAtUtc);
+    }
+
+    /// <summary>SPEC-0024 — guarda as medidas da variante <see cref="Full"/> gravada no envio.</summary>
+    public void MeasureFull(int width, int height)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        FullWidth = width;
+        FullHeight = height;
     }
 
     /// <summary>Caminho da variante <paramref name="file"/> (<see cref="Thumb"/>, <see cref="Full"/> ou <see cref="Og"/>) de <paramref name="id"/>, relativo ao <c>Media:Root</c>.</summary>
