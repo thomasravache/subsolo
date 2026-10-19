@@ -9,7 +9,7 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0024]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [web/src/app/(public)/conta/shows/**, e2e/tests/shows/**, src/Modules/Profiles/**, tests/Modules/Profiles/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/app/(public)/[cidade]/**, web/src/components/profiles/**, web/src/components/shows/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/perfis/**, src/Common/Subsolo.Common.Application/Media/**, src/Common/Subsolo.Common.Infrastructure/Media/**, tests/Common/Subsolo.Common.UnitTests/**, tests/**/packages.lock.json, docs/design/**]
 adrs: [ADR-0001, ADR-0013, ADR-0016]
@@ -75,17 +75,21 @@ GET /api/v1/profiles/{type}/{slug}:      # AllowAnonymous + default ; type ∈ b
   200: { id, type, name, slug, city: { slug, name }, styles: [{ slug, name }], links: { instagram?, bandcamp?, metalArchives? } }
   404: ProblemDetails code=profiles.not_found          # inexistente, pendente ou recusado
 GET /api/v1/shows?profileId={id}&period=upcoming|past:   # AllowAnonymous + default
-  200: { shows: ShowSummary[] }          # resumo da SPEC-0008; upcoming ≤ 50 por data asc ; past ≤ 20 por data desc
+  200: { shows: (ShowSummary & { city: { slug, name, timeZone } })[] }   # resumo da SPEC-0008 + cidade (aditivo); upcoming ≤ 50 por data asc ; past ≤ 20 por data desc
   400: ProblemDetails code=events.invalid_query
+GET /api/v1/profiles/lookup?q=&type=:      # artista ou admin + default ; type ∈ band|venue|producer (opcional) ; q ≥ 2 caracteres
+  200: [{ id, type, name, slug, city: { slug, name } }]   # perfis aprovados com ou sem dono, até 20, por nome (H23-08)
+  400: ProblemDetails code=profiles.invalid_query ; 401/403 como as demais rotas de conta
 ```
 
 ```text
 /banda/{slug} · /casa/{slug} · /produtor/{slug} (SSR dinâmica; o tipo da URL tem de bater com o do perfil, senão 404)
-  <title>{nome} · {Banda|Casa|Produtor} · Subsolo</title> ; description "{tipo} de {cidade} · {estilos}" ; og:title/description ; og:image = flyer og do próximo show ou padrão
+  <title>{nome} · {Banda|Casa|Produtor} · Subsolo</title> ; description "{tipo} de {cidade} · {estilos}" ; og:title/description ; og:image = flyer og do próximo show (`{publicUrl}/media/flyers/{id}-og.jpg`, nomes do ADR-0015) ou nenhuma imagem
   topo: nome (Anton), cidade, chips de estilo (banda) ; links "Instagram", "Bandcamp", "Metal Archives" em destaque
   "PRÓXIMOS SHOWS": cards (link para a página do show) ; vazio → "Nenhum show anunciado ainda."
   "SHOWS PASSADOS": lista compacta (data e nome)
-  falha nos shows → "Não foi possível carregar os shows agora."
+  falha nos shows → "Não foi possível carregar os shows agora." (200)
+  API de perfis fora → 503 com a página "Perfil indisponível" e mensagem em role=alert, como a agenda e a página do show
 Página do show: casa e bandas com perfil viram links para /casa/{slug} e /banda/{slug}
 ```
 
@@ -120,7 +124,7 @@ Página do show: casa e bandas com perfil viram links para /casa/{slug} e /banda
 - **IT-02** — Dado um perfil com 200 shows entre passados e futuros, quando `GET /api/v1/shows?profileId=…&period=upcoming` e `past` são chamados, então vêm os limites e a ordem do §6, em p95 ≤ 150 ms; `period` inválido → 400.
 - **IT-03** — Dada a página `/banda/{slug}` servida pela pilha local, quando o HTML é baixado sem JavaScript, então tem o `<title>`, a descrição e o OG do §6.
 - **IT-04** — Dados `/casa/{slug-de-banda}` e `/banda/inexistente`, quando pedidos, então 404 real com "Perfil não encontrado".
-- **IT-05** — Dado o endpoint de shows indisponível (simulado), quando a página do perfil é pedida, então 200 com o perfil e "Não foi possível carregar os shows agora.".
+- **IT-05** — Dado o endpoint de shows indisponível (simulado), quando a página do perfil é pedida, então 200 com o perfil e "Não foi possível carregar os shows agora."; e, com a API de perfis indisponível, 503 com "Perfil indisponível".
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json`, quando lido, então os dois endpoints têm corpos, parâmetros e códigos do §6, e `(cd web && pnpm api:check)` passa.
@@ -237,3 +241,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0026`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-19 | (a) H23-08 ganha contrato: `GET /api/v1/profiles/lookup?q=&type=` (artista ou admin, rate limit default), perfis aprovados com ou sem dono, até 20; a sugestão de casa e a busca de organizador do admin usam essa rota; o servidor continua recusando organizador alheio para o artista; IT da busca sob a tag H23-08. (b) Cada item de `/api/v1/shows?profileId=` ganha `city { slug, name, timeZone }` (aditivo), para o link `/{cidade}/{show}` e o fuso. (c) og:image do perfil = `{publicUrl}/media/flyers/{id}-og.jpg` do próximo show (ADR-0015); sem próximo show, nenhuma imagem (sem imagem padrão do site). (d) API de perfis fora → 503 "Perfil indisponível" (IT-05). (e) H25-03 revelou que `from=12/11/2026` é aceito como data (MM/dd): as datas da agenda passam a aceitar só `aaaa-mm-dd` estrito. | Relatório do Test-writer (SPEC_DEFECT 1–5) | — | Architect (piloto automático do Thomas, 2026-10-17) |
