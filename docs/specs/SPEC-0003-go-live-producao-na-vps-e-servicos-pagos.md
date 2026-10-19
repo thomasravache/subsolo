@@ -84,6 +84,7 @@ Os IDs de teste são definidos quando as filhas forem criadas.
 - [ ] Ligar o Google em produção (revisão da SPEC-0020): criar o cliente OAuth, validar na inicialização (Authority `https` e `ClientSecret` obrigatórios fora de Development) e aceitar só o emissor `https://accounts.google.com` fora de Development, porque o admin é dado por e-mail e a conta é ligada pelo e-mail verificado (Thomas)
 - [ ] Configuração das páginas institucionais (SPEC-0028): `Support:PixKey` (chave aleatória), `Support:PixName`, `Support:PixCity` e `Site:ContactEmail` (canal do titular, LGPD); revisão jurídica da política de privacidade e dos termos antes do lançamento (Thomas)
 - [ ] Chaves VAPID de produção para o Web Push (SPEC-0030), como segredo do environment (Thomas)
+- [ ] `SUBSOLO_PUBLIC_URL` do web definida no ambiente publicado (o Compose de publicação não a define) e validada na partida do web (`instrumentation.ts`), como a API faz com `App:PublicUrl` — herdado H24-04 da revisão da SPEC-0024
 - [ ] Endereço definitivo do Instagram do Subsolo (perfil ainda não criado; hoje o rodapé aponta para o provisório `https://www.instagram.com/subsolo.app` em `web/src/components/ui/Footer.tsx`, SPEC-0011) — trocar antes do lançamento (Thomas)
 
 ## 9. Aprovação (H1)
