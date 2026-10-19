@@ -24,6 +24,7 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Pedir Perfil (SPEC-0021; também `/admin/perfis/novo`, sem o contato) | celular | `af62730f71414b6082259d068b025b00` | pendente (capturada pelo Architect) |
 | Reivindicar Perfil (SPEC-0021) | celular | `75b72cdf03284a5998d07d0fd8ae6543` | pendente (capturada pelo Architect) |
 | Fila do Admin (SPEC-0021, só a aba "Pedidos de perfil") | desktop | `600bfe18de6e44a995790033ab0f817e` | pendente (capturada pelo Architect) |
+| Perfil da Banda — Podridão (SPEC-0026; também casa e produtor, sem foto, sem "Seguir" e sem "Vou") | celular | `bdf4a66e751846d5a73dca2f606aac6a` | [perfil-mobile.png](stitch/perfil-mobile.png) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).

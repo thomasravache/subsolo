@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { mainContentId } from "@/components/ui/shell";
 
+import { cityTimeParts } from "./city-time";
 import { ShareButton } from "./ShareButton";
 import { ArrowLeftIcon, ExternalIcon, PinIcon, TicketIcon } from "./show-icons";
 
@@ -13,23 +14,16 @@ const fallbackFlyer = { width: 1080, height: 1440 } as const;
 
 /** Dia da semana, dia, mês e hora ("21h", "21h30") do início do show no fuso da cidade. */
 function showDate(iso: string, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("pt-BR", {
-    timeZone,
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date(iso));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    (parts.find((item) => item.type === type)?.value ?? "").replace(".", "");
-  const minute = part("minute");
+  const { weekday, day, month, hour, minute } = cityTimeParts(iso, timeZone);
   return {
-    date: `${part("weekday")} ${part("day")} ${part("month")}`,
-    time: `${part("hour")}h${minute === "00" ? "" : minute}`,
+    date: `${weekday} ${day} ${month}`,
+    time: `${hour}h${minute === "00" ? "" : minute}`,
   };
 }
+
+/** Classes do nome ligado à página do perfil (sublinhado no destaque, como os demais links do texto). */
+const profileLink =
+  "underline decoration-accent decoration-2 underline-offset-4 hover:text-accent";
 
 /** Título de seção no estilo do Stitch: barra de destaque e rótulo em maiúsculas. */
 function SectionTitle({ id, children }: { id: string; children: string }) {
@@ -54,8 +48,8 @@ export interface ShowPageProps {
  * SPEC-0024 — a página do show (telas do Stitch "Página do Show - Noite da Peste II", celular e desktop): o flyer
  * inteiro (`object-contain`) sobre o próprio flyer desfocado, a data e a hora no fuso da cidade, o selo de cancelado ou
  * adiado, o título, os estilos, o line-up, a casa, o preço, "Ingresso" (nova aba, `noopener noreferrer`) e
- * "Compartilhar". Ajustes do §6: sem "Vou", "Quem vai", "Seguir" e "Denunciar" (specs próprias) e sem links de perfil
- * (a página do perfil ainda não existe).
+ * "Compartilhar". Ajustes do §6: sem "Vou", "Quem vai", "Seguir" e "Denunciar" (specs próprias). SPEC-0026: a casa e as
+ * bandas com perfil levam às páginas `/casa/{slug}` e `/banda/{slug}`.
  */
 export function ShowPage({ show, url }: ShowPageProps) {
   const when = showDate(show.startsAt, show.city.timeZone);
@@ -189,7 +183,16 @@ export function ShowPage({ show, url }: ShowPageProps) {
             <ul className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-display text-2xl uppercase leading-tight text-text md:text-3xl">
               {show.lineup.map((band, index) => (
                 <li key={`${index}-${band.name}`} className="break-words">
-                  {band.name}
+                  {band.profileSlug ? (
+                    <Link
+                      href={`/banda/${band.profileSlug}`}
+                      className={profileLink}
+                    >
+                      {band.name}
+                    </Link>
+                  ) : (
+                    band.name
+                  )}
                   {index < bands - 1 && (
                     <span aria-hidden="true" className="ml-2 text-accent">
                       {" "}
@@ -207,7 +210,17 @@ export function ShowPage({ show, url }: ShowPageProps) {
             </div>
             <p className="flex items-center gap-2 text-lg text-text">
               <PinIcon className="shrink-0 text-accent" />
-              {show.venue.name} · {show.city.name}
+              {show.venue.profileSlug ? (
+                <Link
+                  href={`/casa/${show.venue.profileSlug}`}
+                  className={profileLink}
+                >
+                  {show.venue.name}
+                </Link>
+              ) : (
+                show.venue.name
+              )}{" "}
+              · {show.city.name}
             </p>
           </section>
         </div>

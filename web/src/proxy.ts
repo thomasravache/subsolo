@@ -1,11 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCityAgenda, type CityAgendaResult } from "@/api/agenda";
+import { getPublicProfile } from "@/api/public-profile";
 import { sessionForCookie } from "@/api/session";
 import { getShowDetail } from "@/api/show-detail";
 import { agendaStatusHeader } from "@/app/(public)/[cidade]/agenda-status";
 import { showStatusHeader } from "@/app/(public)/[cidade]/[show]/show-status";
 import { adminAccessHeader, type AdminAccess } from "@/app/admin/admin-access";
+import { profileStatusHeader } from "@/components/profiles/profile-status";
+import {
+  profilePath,
+  profileSlug,
+  profileTypeBySegment,
+} from "@/components/profiles/profile-routes";
 import { isAccountPage, isAdminPage } from "@/components/ui/shell";
 
 /**
@@ -32,6 +39,13 @@ import { isAccountPage, isAdminPage } from "@/components/ui/shell";
  * `GET /api/v1/cities/{city}/shows/{slug}`: show ou cidade inexistente (ou endereço fora do padrão) → 404; API fora do
  * ar → 503; encontrado → segue. A página é avisada pelo cabeçalho interno {@link showStatusHeader}, que o proxy sempre
  * sobrescreve. As páginas de dois segmentos de entrar, da conta e do admin não são shows.
+ *
+ * SPEC-0026 — as páginas dos perfis `/banda/{slug}`, `/casa/{slug}` e `/produtor/{slug}` também têm o status decidido
+ * aqui, com `GET /api/v1/profiles/{type}/{slug}` (`banda` → `band`, `casa` → `venue`, `produtor` → `producer`): perfil
+ * inexistente, pendente, recusado ou do outro tipo → 404; API de perfis fora do ar → 503; encontrado → segue (os shows do
+ * perfil não entram na decisão: sem eles a página sai 200 com o aviso). A página é avisada pelo cabeçalho interno
+ * {@link profileStatusHeader}, que o proxy sempre sobrescreve. H24-05: os primeiros segmentos reservados
+ * ({@link reservedSegments}) nunca são tratados como cidade de um show.
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -46,6 +60,20 @@ const agendaPath = /^\/(?!_)[^/.]+$/;
 
 /** SPEC-0024 — caminho da página do show: dois segmentos (`/{cidade}/{show}`), fora os internos do Next.js. */
 const showPath = /^\/(?!_)([^/.]+)\/([^/.]+)$/;
+
+/**
+ * SPEC-0026 (H24-05) — primeiros segmentos que são páginas do site, nunca a cidade de um show (os mesmos slugs
+ * reservados para cidades na SPEC-0017): `/banda/x` não consulta a API do show.
+ */
+const reservedSegments = new Set([
+  "banda",
+  "casa",
+  "produtor",
+  "conta",
+  "admin",
+  "entrar",
+  "apoie",
+]);
 
 /** Formato do slug do show (`<titulo>-<aaaa-mm-dd>`, até 80 caracteres); fora dele nem se consulta a API. */
 const showSlug = /^[a-z0-9-]{2,80}$/;
@@ -142,8 +170,26 @@ async function showKind(
     return undefined;
   }
   const [, city = "", slug = ""] = match;
+  if (reservedSegments.has(city)) {
+    return undefined;
+  }
   return citySlug.test(city) && showSlug.test(slug)
     ? (await getShowDetail(city, slug)).kind
+    : "not-found";
+}
+
+/** SPEC-0026 — o resultado da consulta do perfil de `/banda|casa|produtor/{slug}`, ou `undefined` (outra página). */
+async function profileKind(
+  pathname: string,
+): Promise<CityAgendaResult["kind"] | undefined> {
+  const match = profilePath.exec(pathname);
+  const type = match ? profileTypeBySegment[match[1] ?? ""] : undefined;
+  if (!match || !type) {
+    return undefined;
+  }
+  const slug = match[2] ?? "";
+  return profileSlug.test(slug)
+    ? (await getPublicProfile(type, slug)).kind
     : "not-found";
 }
 
@@ -162,11 +208,18 @@ export async function proxy(request: NextRequest) {
     publicPage && agendaPath.test(pathname)
       ? await agendaKind(pathname)
       : undefined;
+  const profile =
+    publicPage && agenda === undefined
+      ? await profileKind(pathname)
+      : undefined;
   const show =
-    publicPage && agenda === undefined ? await showKind(pathname) : undefined;
+    publicPage && agenda === undefined && profile === undefined
+      ? await showKind(pathname)
+      : undefined;
   for (const [header, value] of [
     [agendaStatusHeader, agenda],
     [showStatusHeader, show],
+    [profileStatusHeader, profile],
   ] as const) {
     if (value) {
       headers.set(header, value);
@@ -174,7 +227,7 @@ export async function proxy(request: NextRequest) {
       headers.delete(header);
     }
   }
-  const kind = agenda ?? show;
+  const kind = agenda ?? profile ?? show;
 
   const response = adminPage
     ? await adminResponse(request, headers)
