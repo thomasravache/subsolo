@@ -37,7 +37,7 @@ public sealed class AgendaUnderFallbackPolicyTests(PostgresFixture postgres)
         response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
         using var document = JsonDocument.Parse(body);
         document.RootElement.EnumerateObject().Select(property => property.Name)
-            .ShouldBe(["city", "shows"], ignoreOrder: true);
+            .ShouldBe(["city", "shows", "period", "total"], ignoreOrder: true);
         var city = document.RootElement.GetProperty("city");
         city.EnumerateObject().Select(property => property.Name)
             .ShouldBe(["slug", "name", "state", "timeZone"], ignoreOrder: true);
