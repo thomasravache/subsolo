@@ -1,36 +1,62 @@
 using Microsoft.EntityFrameworkCore;
 using Subsolo.Modules.Profiles.Application;
+using Subsolo.Modules.Profiles.Application.Features.GetPublicProfile;
 using Subsolo.Modules.Profiles.Application.Features.ListMyProfiles;
 using Subsolo.Modules.Profiles.Application.Features.ListProfileRequests;
+using Subsolo.Modules.Profiles.Application.Features.LookupProfiles;
 using Subsolo.Modules.Profiles.Application.Features.SearchClaimableProfiles;
 using Subsolo.Modules.Profiles.Domain.Profiles;
 using Subsolo.Modules.Profiles.Domain.Requests;
 
 namespace Subsolo.Modules.Profiles.Infrastructure;
 
-/// <summary>SPEC-0021 — as leituras das consultas do módulo, sem rastreamento.</summary>
+/// <summary>SPEC-0021 — as leituras das consultas do módulo, sem rastreamento. SPEC-0026: o perfil público e a busca do cadastro de show.</summary>
 internal sealed class ProfilesReadModel(ProfilesDbContext db) : IProfilesReadModel
 {
     public async Task<IReadOnlyList<ClaimableProfileResponse>> SearchClaimableAsync(
-        string term, string termSlug, string? type, int limit, CancellationToken cancellationToken)
-    {
-        var pattern = $"%{EscapeLike(term)}%";
-        var query = db.Profiles.AsNoTracking().Where(profile => profile.OwnerUserId == null);
-        if (type is not null)
-        {
-            query = query.Where(profile => profile.Type == type);
-        }
-
-        query = termSlug.Length > 0
-            ? query.Where(profile => EF.Functions.ILike(profile.Name, pattern, "\\") || profile.Slug.Contains(termSlug))
-            : query.Where(profile => EF.Functions.ILike(profile.Name, pattern, "\\"));
-
-        return await query
-            .OrderBy(profile => profile.Name)
-            .ThenBy(profile => profile.Id)
+        string term, string termSlug, string? type, int limit, CancellationToken cancellationToken) =>
+        await Matching(db.Profiles.AsNoTracking().Where(profile => profile.OwnerUserId == null), term, termSlug, type)
             .Take(limit)
             .Select(profile => new ClaimableProfileResponse(profile.Id, profile.Type, profile.Name, profile.City, profile.Styles))
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<ProfileLookupData>> LookupAsync(
+        string term, string termSlug, string? type, int limit, CancellationToken cancellationToken) =>
+        await Matching(db.Profiles.AsNoTracking(), term, termSlug, type)
+            .Take(limit)
+            .Select(profile => new ProfileLookupData(profile.Id, profile.Type, profile.Name, profile.Slug, profile.City))
+            .ToListAsync(cancellationToken);
+
+    public async Task<PublicProfileData?> GetPublicAsync(string type, string slug, CancellationToken cancellationToken)
+    {
+        var profile = await db.Profiles.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Type == type && item.Slug == slug, cancellationToken);
+        return profile is null
+            ? null
+            : new PublicProfileData(
+                profile.Id,
+                profile.Type,
+                profile.Name,
+                profile.Slug,
+                profile.City,
+                profile.Styles,
+                profile.Links.Instagram,
+                profile.Links.Bandcamp,
+                profile.Links.MetalArchives);
+    }
+
+    /// <summary>
+    /// Os perfis de <paramref name="profiles"/> cujo nome contém <paramref name="term"/> (sem diferenciar caixa) ou cujo
+    /// slug contém <paramref name="termSlug"/>, do <paramref name="type"/> quando informado, por nome.
+    /// </summary>
+    private static IOrderedQueryable<Profile> Matching(IQueryable<Profile> profiles, string term, string termSlug, string? type)
+    {
+        var pattern = $"%{EscapeLike(term)}%";
+        var query = type is null ? profiles : profiles.Where(profile => profile.Type == type);
+        query = termSlug.Length > 0
+            ? query.Where(profile => EF.Functions.ILike(profile.Name, pattern, "\\") || profile.Slug.Contains(termSlug))
+            : query.Where(profile => EF.Functions.ILike(profile.Name, pattern, "\\"));
+        return query.OrderBy(profile => profile.Name).ThenBy(profile => profile.Id);
     }
 
     public async Task<MyProfilesResponse> ListMineAsync(Guid userId, CancellationToken cancellationToken)

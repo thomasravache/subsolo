@@ -26,6 +26,9 @@ public static class ProfilesErrors
     /// <summary>409: o pedido já foi decidido.</summary>
     public const string RequestDecided = "profiles.request_decided";
 
+    /// <summary>SPEC-0026 — 400: busca de perfis inválida (<c>q</c> com menos de 2 caracteres ou tipo desconhecido).</summary>
+    public const string InvalidQuery = "profiles.invalid_query";
+
     internal static Error RequestPendingError() =>
         Error.Conflict(RequestPending, "Você já tem um pedido em análise; espere a decisão do admin.");
 
@@ -37,6 +40,12 @@ public static class ProfilesErrors
     internal static Error AlreadyOwnedError() => Error.Conflict(AlreadyOwned, "Esse perfil já tem dono.");
 
     internal static Error RequestNotFoundError() => Error.NotFound(RequestNotFound, "Pedido não encontrado.");
+
+    internal static Error InvalidQueryError(string field, string message) =>
+        Error.Validation(
+            InvalidQuery,
+            "Busca de perfis inválida.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal) { [field] = [message] });
 
     internal static Error RequestDecidedError() => Error.Conflict(RequestDecided, "Esse pedido já foi decidido.");
 }

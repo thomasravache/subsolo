@@ -35,7 +35,9 @@ public static class EventsModule
         services.AddScoped<ICityAdminRepository>(provider => provider.GetRequiredService<CityRepository>());
         services.AddScoped<IStyleRepository, StyleRepository>();
         // SPEC-0021: cidades e estilos para os outros módulos (Profiles).
-        services.AddScoped<IEventsCatalog, EventsCatalog>();
+        services.AddScoped<EventsCatalog>();
+        services.AddScoped<IEventsCatalog>(provider => provider.GetRequiredService<EventsCatalog>());
+        services.AddScoped<IEventsCatalogNames>(provider => provider.GetRequiredService<EventsCatalog>());
         services.AddScoped<IEventsUnitOfWork>(provider => provider.GetRequiredService<EventsDbContext>());
         // SPEC-0022: flyers (upload, catálogo interno para o cadastro de show e limpeza de hora em hora).
         services.AddScoped<IFlyerRepository, FlyerRepository>();

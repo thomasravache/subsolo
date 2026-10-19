@@ -32,9 +32,11 @@ public sealed record CityResponse(
 
 /// <summary>
 /// SPEC-0008 — resumo de um show na agenda (contrato já definido para o épico de shows; vazio nesta spec).
-/// <see cref="StartsAt"/> em UTC (SPEC-0023: <see cref="DateTimeKind.Utc"/>, serializado com <c>Z</c>).
+/// <see cref="StartsAt"/> em UTC (SPEC-0023: <see cref="DateTimeKind.Utc"/>, serializado com <c>Z</c>). SPEC-0026: não
+/// selado, para a lista de shows do perfil estender o resumo com a cidade
+/// (<see cref="ListProfileShows.ProfileShowResponse"/>).
 /// </summary>
-public sealed record ShowSummaryResponse(
+public record ShowSummaryResponse(
     Guid Id,
     string Slug,
     string Title,
