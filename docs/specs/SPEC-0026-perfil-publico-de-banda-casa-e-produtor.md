@@ -189,7 +189,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — f10aaa7 | 2026-10-18 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 8de3b0a | 2026-10-19 |
-| G2 Green | PENDING | | |
+| G2 Green | FAIL | build exit 0 ($ next build); test exit 2 (Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit); lint exit 0 ($ tsc --noEmit); coverage exit 1 (+---------+--------+--------+--------+) — b34ca52 | 2026-10-19 |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
 | G5 Integração & CI | PENDING | | |
