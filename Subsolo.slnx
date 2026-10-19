@@ -10,6 +10,13 @@
     <Project Path="src/Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
     <Project Path="src/Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Engagement/">
+    <Project Path="src/Modules/Engagement/Subsolo.Modules.Engagement.Application/Subsolo.Modules.Engagement.Application.csproj" />
+    <Project Path="src/Modules/Engagement/Subsolo.Modules.Engagement.Domain/Subsolo.Modules.Engagement.Domain.csproj" />
+    <Project Path="src/Modules/Engagement/Subsolo.Modules.Engagement.Infrastructure/Subsolo.Modules.Engagement.Infrastructure.csproj" />
+    <Project Path="src/Modules/Engagement/Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Engagement/Subsolo.Modules.Engagement.Presentation/Subsolo.Modules.Engagement.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Events/">
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Application/Subsolo.Modules.Events.Application.csproj" />
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Domain/Subsolo.Modules.Events.Domain.csproj" />
@@ -62,6 +69,10 @@
     <Project Path="tests/Examples/Subsolo.Examples.IntegrationTests/Subsolo.Examples.IntegrationTests.csproj" />
     <Project Path="tests/Examples/Subsolo.Examples.Sample/Subsolo.Examples.Sample.csproj" />
     <Project Path="tests/Examples/Subsolo.Examples.UnitTests/Subsolo.Examples.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Engagement/">
+    <Project Path="tests/Modules/Engagement/Subsolo.Engagement.IntegrationTests/Subsolo.Engagement.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Engagement/Subsolo.Engagement.UnitTests/Subsolo.Engagement.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Events/">
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />

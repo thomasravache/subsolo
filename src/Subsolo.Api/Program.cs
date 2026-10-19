@@ -10,6 +10,7 @@ using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Common.Infrastructure.Media;
 using Subsolo.Common.Presentation;
 using Subsolo.Common.Presentation.Security;
+using Subsolo.Modules.Engagement.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure.Cities;
 using Subsolo.Modules.Notifications.Infrastructure;
@@ -34,6 +35,7 @@ builder.Services.AddEventsModule(builder.Configuration);
 builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddProfilesModule(builder.Configuration);
+builder.Services.AddEngagementModule(builder.Configuration);
 
 // Métricas dos módulos: SPEC-0014 (subsolo.users.sign_ins e subsolo.users.sessions_revoked), SPEC-0018
 // (subsolo.notifications.emails), SPEC-0021 (subsolo.profiles.requests e subsolo.profiles.decisions) e SPEC-0022
