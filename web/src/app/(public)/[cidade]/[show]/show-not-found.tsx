@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import type { CitySummary } from "@/api/client";
@@ -5,7 +7,9 @@ import { mainContentId } from "@/components/ui/shell";
 
 /**
  * SPEC-0024 — show inexistente (status 404 pelo `proxy`): "Show não encontrado" e o caminho de volta, para a agenda da
- * cidade quando ela existe ("Ver a agenda de {cidade}") ou para o início.
+ * cidade quando ela existe ("Ver a agenda de {cidade}") ou para o início. Componente cliente: como alternativa do
+ * `not-found` da rota, entra no payload só como referência, e o texto do 404 não aparece na resposta de outra situação
+ * (ex.: o 503 de "Show indisponível").
  */
 export function ShowNotFound({ city }: { city: CitySummary | undefined }) {
   return (

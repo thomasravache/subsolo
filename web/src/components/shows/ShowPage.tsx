@@ -65,6 +65,12 @@ export function ShowPage({ show, url }: ShowPageProps) {
     height: show.flyer.height ?? fallbackFlyer.height,
   };
   const bands = show.lineup.length;
+  // Ids únicos por show: a navegação no cliente mantém a página anterior escondida no DOM (Activity, cacheComponents).
+  const ids = {
+    ticket: `ingresso-${show.id}`,
+    lineup: `line-up-${show.id}`,
+    venue: `casa-${show.id}`,
+  };
   return (
     <main
       id={mainContentId}
@@ -139,10 +145,10 @@ export function ShowPage({ show, url }: ShowPageProps) {
           </header>
 
           <section
-            aria-labelledby="ingresso"
+            aria-labelledby={ids.ticket}
             className="flex flex-col gap-4 rounded-md border border-border bg-surface p-4 md:p-6"
           >
-            <h2 id="ingresso" className="sr-only">
+            <h2 id={ids.ticket} className="sr-only">
               Ingresso
             </h2>
             <div className="flex items-start gap-3">
@@ -173,9 +179,9 @@ export function ShowPage({ show, url }: ShowPageProps) {
             </div>
           </section>
 
-          <section aria-labelledby="line-up" className="flex flex-col gap-3">
+          <section aria-labelledby={ids.lineup} className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between gap-2 border-b border-border pb-2">
-              <SectionTitle id="line-up">Line-up</SectionTitle>
+              <SectionTitle id={ids.lineup}>Line-up</SectionTitle>
               <p className="font-label text-xs font-bold uppercase tracking-wider text-text-muted">
                 {bands} {bands === 1 ? "banda" : "bandas"}
               </p>
@@ -195,9 +201,9 @@ export function ShowPage({ show, url }: ShowPageProps) {
             </ul>
           </section>
 
-          <section aria-labelledby="casa" className="flex flex-col gap-3">
+          <section aria-labelledby={ids.venue} className="flex flex-col gap-3">
             <div className="border-b border-border pb-2">
-              <SectionTitle id="casa">Casa</SectionTitle>
+              <SectionTitle id={ids.venue}>Casa</SectionTitle>
             </div>
             <p className="flex items-center gap-2 text-lg text-text">
               <PinIcon className="shrink-0 text-accent" />
