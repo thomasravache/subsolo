@@ -45,6 +45,9 @@ internal static class ShowsApi
 
     public static string Agenda(string city) => $"/api/v1/cities/{city}/agenda";
 
+    /// <summary>SPEC-0024 — <c>GET /api/v1/cities/{city}/shows/{slug}</c> (público).</summary>
+    public static string Detail(string city, string slug) => $"/api/v1/cities/{city}/shows/{slug}";
+
     public static string MyShowsFor(string period) => $"{MyShows}?period={period}";
 
     /// <summary>Mutação com corpo JSON e um token anti-forgery novo (pedido com os cookies atuais).</summary>

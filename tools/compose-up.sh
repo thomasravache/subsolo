@@ -27,6 +27,9 @@
 # (SUBSOLO_E2E_SENTINEL e SUBSOLO_E2E_SECRET_KEY, valores de E2E_PLAIN_SENTINEL e E2E_SECRET_SENTINEL) para o E2E-04
 # provar que nenhuma variável de ambiente chega ao navegador.
 #
+# SPEC-0024 (Emenda v2, a) — o web recebe SUBSOLO_PUBLIC_URL com o mesmo valor do App__PublicUrl da API (o endereço da
+# pilha): as URLs absolutas do Open Graph e o canonical da página do show. Só do servidor (sem NEXT_PUBLIC_).
+#
 # SPEC-0021 — também só neste Compose local: o limite `report` (pedido e reivindicação de perfil) sobe para
 # ${REPORT_RATE_LIMIT:-10000} por hora (a jornada de perfis repete os pedidos do mesmo IP a cada execução), e o limite de
 # links mágicos por e-mail sobe para ${MAGIC_LINK_EMAIL_LIMIT:-50} a cada 15 min (as jornadas de perfis e do admin entram
@@ -183,6 +186,7 @@ services:
       JSON_CONFIG: '{"interactiveLogin":true,"httpServer":"NettyWrapper"}'
   web:
     environment:
+      SUBSOLO_PUBLIC_URL: "$APP_URL"
       SUBSOLO_E2E_SENTINEL: "$E2E_PLAIN_SENTINEL"
       SUBSOLO_E2E_SECRET_KEY: "$E2E_SECRET_SENTINEL"
 YAML

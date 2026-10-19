@@ -21,7 +21,9 @@ internal static class JpegHeaderCleaner
 
     /// <summary>
     /// <paramref name="jpeg"/> sem os bytes soltos do cabeçalho; o próprio <paramref name="jpeg"/> se não houver nenhum
-    /// ou se a estrutura não for reconhecida (o decodificador decide).
+    /// ou se a estrutura não for reconhecida (o decodificador decide). SPEC-0024 (H23-03): a cópia só é alocada no
+    /// primeiro byte solto, e comprimento truncado, <c>FF 00</c> no cabeçalho ou a falta do SOS devolvem os bytes
+    /// originais.
     /// </summary>
     public static byte[] WithoutExtraneousHeaderBytes(byte[] jpeg)
     {
@@ -31,16 +33,22 @@ internal static class JpegHeaderCleaner
             return jpeg;
         }
 
-        using var output = new MemoryStream(jpeg.Length);
-        output.Write(jpeg, 0, 2);
-        var changed = false;
+        // Nasce no primeiro byte solto, com tudo o que veio antes dele.
+        byte[]? output = null;
+        var written = 0;
         var index = 2;
         while (index < jpeg.Length)
         {
             if (jpeg[index] != Prefix)
             {
                 // Byte solto antes do próximo marcador: o decodificador pularia com um aviso.
-                changed = true;
+                if (output is null)
+                {
+                    output = new byte[jpeg.Length];
+                    Array.Copy(jpeg, output, index);
+                    written = index;
+                }
+
                 index++;
                 continue;
             }
@@ -51,42 +59,58 @@ internal static class JpegHeaderCleaner
             }
 
             var marker = jpeg[index + 1];
+            int size;
             if (marker == Prefix)
             {
                 // Byte de preenchimento antes do marcador.
-                output.WriteByte(Prefix);
-                index++;
-                continue;
+                size = 1;
             }
-
-            if (marker is StartOfScan or EndOfImage)
+            else if (marker is StartOfScan or EndOfImage)
             {
-                output.Write(jpeg, index, jpeg.Length - index);
-                break;
+                if (output is null)
+                {
+                    return jpeg;
+                }
+
+                Array.Copy(jpeg, index, output, written, jpeg.Length - index);
+                written += jpeg.Length - index;
+                return output.AsSpan(0, written).ToArray();
             }
-
-            if (marker is 0x01 or (>= 0xD0 and <= 0xD7))
+            else if (marker == 0x00)
             {
-                output.Write(jpeg, index, 2);
-                index += 2;
-                continue;
-            }
-
-            if (index + 3 >= jpeg.Length)
-            {
+                // FF 00 só existe dentro dos dados comprimidos: no cabeçalho, a estrutura não é reconhecida.
                 return jpeg;
             }
-
-            var length = BinaryPrimitives.ReadUInt16BigEndian(jpeg.AsSpan(index + 2));
-            if (length < 2 || index + 2 + length > jpeg.Length)
+            else if (marker is 0x01 or (>= 0xD0 and <= 0xD7))
             {
-                return jpeg;
+                size = 2;
+            }
+            else
+            {
+                if (index + 3 >= jpeg.Length)
+                {
+                    return jpeg;
+                }
+
+                var length = BinaryPrimitives.ReadUInt16BigEndian(jpeg.AsSpan(index + 2));
+                if (length < 2 || index + 2 + length > jpeg.Length)
+                {
+                    return jpeg;
+                }
+
+                size = 2 + length;
             }
 
-            output.Write(jpeg, index, 2 + length);
-            index += 2 + length;
+            if (output is not null)
+            {
+                Array.Copy(jpeg, index, output, written, size);
+                written += size;
+            }
+
+            index += size;
         }
 
-        return changed ? output.ToArray() : jpeg;
+        // Sem SOS (nem EOI): a estrutura não é reconhecida.
+        return jpeg;
     }
 }

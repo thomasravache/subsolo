@@ -8,9 +8,6 @@ public interface IFlyerRepository
 
     Task<bool> ExistsAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>Os não ligados a show criados antes de <paramref name="cutoffUtc"/>.</summary>
-    Task<IReadOnlyList<Flyer>> ListUnattachedCreatedBeforeAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken);
-
     /// <summary>
     /// SPEC-0023 (H22-01) — apaga, num comando só e com a condição no banco (<c>attached_at_utc IS NULL AND
     /// created_at_utc &lt; corte</c>), as linhas dos flyers não ligados criados antes de <paramref name="cutoffUtc"/>, e

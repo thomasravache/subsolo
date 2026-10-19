@@ -64,37 +64,3 @@ export async function getShowForEdit(
     return undefined;
   }
 }
-
-/** Um dia sem shows: a agenda dele traz só a cidade (com o fuso). */
-const emptyDay = "2000-01-01";
-
-/**
- * O fuso (IANA) de cada cidade de `slugs`, pela agenda pública de um dia passado (só a cidade volta); a cidade que
- * não responder fica de fora.
- */
-export async function getCityTimeZones(
-  slugs: string[],
-): Promise<Record<string, string>> {
-  const unique = [...new Set(slugs)];
-  const zones: Record<string, string> = {};
-  try {
-    const client = await apiClient();
-    const answers = await Promise.all(
-      unique.map((slug) =>
-        client.GET("/api/v1/cities/{slug}/agenda", {
-          params: { path: { slug }, query: { from: emptyDay, to: emptyDay } },
-          signal: AbortSignal.timeout(apiTimeoutMs),
-          cache: "no-store",
-        }),
-      ),
-    );
-    for (const { data } of answers) {
-      if (data) {
-        zones[data.city.slug] = data.city.timeZone;
-      }
-    }
-  } catch (error) {
-    unstable_rethrow(error);
-  }
-  return zones;
-}

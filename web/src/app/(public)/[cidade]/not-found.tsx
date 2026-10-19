@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { mainContentId } from "@/components/ui/shell";
+
+/**
+ * SPEC-0024 (CH-01, achado da SPEC-0015) — com o status 404 (definido pelo `proxy`), o Next.js monta os metadados com
+ * os do `not-found` mais próximo, não com os da página: sem este título, a página carregada direto saía com o título do
+ * layout raiz ("Subsolo").
+ */
+export const metadata: Metadata = { title: "Cidade não encontrada · Subsolo" };
 
 /** SPEC-0008 — cidade sem agenda no Subsolo (status 404). */
 export default function CityNotFound() {

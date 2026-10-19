@@ -1,5 +1,6 @@
 using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 using Subsolo.Modules.Events.Application.Features.GetShow;
+using Subsolo.Modules.Events.Application.Features.GetShowDetail;
 using Subsolo.Modules.Events.Application.Features.ListMyShows;
 
 namespace Subsolo.Modules.Events.Application;
@@ -25,4 +26,7 @@ internal interface IShowsReadModel
 
     /// <summary>O show para a tela de edição, ou <see langword="null"/>.</summary>
     Task<ShowDetails?> GetAsync(Guid showId, CancellationToken cancellationToken);
+
+    /// <summary>SPEC-0024 — o show <paramref name="slug"/> da cidade <paramref name="city"/> com as medidas do flyer, ou <see langword="null"/>.</summary>
+    Task<PublicShowDetails?> GetBySlugAsync(string city, string slug, CancellationToken cancellationToken);
 }

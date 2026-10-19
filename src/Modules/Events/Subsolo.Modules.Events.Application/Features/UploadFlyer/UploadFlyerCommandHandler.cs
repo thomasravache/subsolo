@@ -15,7 +15,9 @@ namespace Subsolo.Modules.Events.Application.Features.UploadFlyer;
 /// (<see cref="IImageProcessor"/>: limite de pixels, metadados removidos, variantes; SPEC-0023: o hash devolvido tem de
 /// ser o do id, e a fila cheia além do tempo limite devolve <see cref="MediaErrors.Busy"/>, o 503), grava as três variantes
 /// (<see cref="IFileStorage"/>) e a linha de <c>events.flyers</c>. Se algo falha depois de gravar uma variante, as
-/// gravadas são apagadas: nada fica pela metade. O original não é guardado.
+/// gravadas são apagadas: nada fica pela metade. O original não é guardado. SPEC-0024: grava as medidas da variante
+/// <c>full</c> na linha; com a linha mas sem algum arquivo (H23-01), regrava as variantes; com a linha apagada pela
+/// limpeza depois da leitura (H23-02), processa e grava de novo em vez de 500.
 /// </summary>
 internal sealed partial class UploadFlyerCommandHandler(
     IImageProcessor processor,
@@ -41,14 +43,25 @@ internal sealed partial class UploadFlyerCommandHandler(
 
         content.Position = 0;
         var id = Convert.ToHexStringLower(await SHA256.HashDataAsync(content, cancellationToken));
-        if (await flyers.GetAsync(id, cancellationToken) is { } existing)
+        var existing = await flyers.GetAsync(id, cancellationToken);
+        if (existing is not null && await VariantsInPlaceAsync(id, cancellationToken))
         {
             // SPEC-0023 (H22-01): reenviar um flyer ainda sem show renova a contagem da limpeza.
             existing.Renew(clock.GetUtcNow());
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-            return Existing(id);
+            try
+            {
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                return Existing(id);
+            }
+            catch (MissingFlyerException)
+            {
+                // SPEC-0024 (H23-02): a limpeza apagou a linha depois da leitura; o arquivo é processado de novo.
+                existing = null;
+            }
         }
 
+        // SPEC-0024 (H23-01): sem linha, ou com a linha mas sem algum arquivo (apagado por uma limpeza no meio), as
+        // variantes são geradas e gravadas de novo.
         content.Position = 0;
         var started = Stopwatch.GetTimestamp();
         var processed = await processor.ProcessFlyerAsync(content, cancellationToken);
@@ -65,7 +78,9 @@ internal sealed partial class UploadFlyerCommandHandler(
             return Rejected(EventsErrors.FlyerUnprocessableError());
         }
 
+        var size = WebPSize.Read(images.Full);
         var saved = new List<string>();
+        var created = existing is null;
         try
         {
             foreach (var (path, bytes) in new[]
@@ -80,8 +95,25 @@ internal sealed partial class UploadFlyerCommandHandler(
                 saved.Add(path);
             }
 
-            flyers.Add(Flyer.Create(id, command.UploadedBy, clock.GetUtcNow()));
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            if (existing is not null)
+            {
+                existing.Renew(clock.GetUtcNow());
+                Measure(existing, size);
+                try
+                {
+                    await unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+                catch (MissingFlyerException)
+                {
+                    // A linha sumiu enquanto as variantes eram gravadas: grava a linha de novo.
+                    created = true;
+                    await AddAsync(id, command.UploadedBy, size, cancellationToken);
+                }
+            }
+            else
+            {
+                await AddAsync(id, command.UploadedBy, size, cancellationToken);
+            }
         }
         catch (DuplicateFlyerException)
         {
@@ -90,8 +122,17 @@ internal sealed partial class UploadFlyerCommandHandler(
         }
         catch
         {
-            await DeleteAsync(saved);
+            if (created)
+            {
+                await DeleteAsync(saved);
+            }
+
             throw;
+        }
+
+        if (!created)
+        {
+            return Existing(id);
         }
 
         LogFlyerUploaded(logger, command.UploadedBy, id);
@@ -127,6 +168,37 @@ internal sealed partial class UploadFlyerCommandHandler(
         MediaErrors.Busy => error,
         _ => error,
     };
+
+    private async Task AddAsync(string id, Guid uploadedBy, (int Width, int Height)? size, CancellationToken cancellationToken)
+    {
+        var flyer = Flyer.Create(id, uploadedBy, clock.GetUtcNow());
+        Measure(flyer, size);
+        flyers.Add(flyer);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private static void Measure(Flyer flyer, (int Width, int Height)? size)
+    {
+        if (size is var (width, height))
+        {
+            flyer.MeasureFull(width, height);
+        }
+    }
+
+    /// <summary>As três variantes de <paramref name="id"/> estão gravadas.</summary>
+    private async Task<bool> VariantsInPlaceAsync(string id, CancellationToken cancellationToken)
+    {
+        foreach (var path in Flyer.VariantPaths(id))
+        {
+            await using var file = await storage.OpenAsync(path, cancellationToken);
+            if (file is null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     private async Task DeleteAsync(IEnumerable<string> paths)
     {

@@ -34,4 +34,9 @@
     <ProjectReference Include="../Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- SPEC-0024 (H23-03): os testes unitários do JpegHeaderCleaner (interno). -->
+    <InternalsVisibleTo Include="Subsolo.Common.UnitTests" />
+  </ItemGroup>
+
 </Project>

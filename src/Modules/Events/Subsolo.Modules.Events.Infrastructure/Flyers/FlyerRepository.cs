@@ -12,13 +12,6 @@ internal sealed class FlyerRepository(EventsDbContext db) : IFlyerRepository
     public Task<bool> ExistsAsync(string id, CancellationToken cancellationToken) =>
         db.Flyers.AnyAsync(flyer => flyer.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<Flyer>> ListUnattachedCreatedBeforeAsync(
-        DateTimeOffset cutoffUtc, CancellationToken cancellationToken) =>
-        await db.Flyers
-            .Where(flyer => flyer.AttachedAtUtc == null && flyer.CreatedAtUtc < cutoffUtc)
-            .OrderBy(flyer => flyer.CreatedAtUtc)
-            .ToListAsync(cancellationToken);
-
     /// <summary>
     /// SPEC-0023 (H22-01) — um <c>DELETE … RETURNING</c> só: a condição é conferida pelo banco na hora de apagar (um flyer
     /// ligado ou reenviado depois da leitura não casa mais).

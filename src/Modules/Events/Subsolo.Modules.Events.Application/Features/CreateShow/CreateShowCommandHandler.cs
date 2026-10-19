@@ -56,6 +56,11 @@ internal sealed partial class CreateShowCommandHandler(
             // Outro cadastro gravou o mesmo slug na cidade entre a conferência e a gravação.
             return Result.Failure<ShowSaved>(EventsErrors.ShowSlugTakenError());
         }
+        catch (MissingFlyerException)
+        {
+            // SPEC-0024 (H23-02): a limpeza apagou o flyer entre a conferência e a gravação.
+            return Result.Failure<ShowSaved>(EventsErrors.FlyerNotFoundError());
+        }
 
         EventsTelemetry.ShowCreated(Stopwatch.GetElapsedTime(started));
         LogShowCreated(logger, command.UserId, show.Id, show.OrganizerProfileId);
