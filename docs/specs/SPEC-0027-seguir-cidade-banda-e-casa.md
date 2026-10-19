@@ -143,6 +143,12 @@ Navegação inferior: Agenda, Seguindo, Apoie, Conta
 - **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome: anônimo tocando em "Seguir Curitiba" vai para `/entrar?returnTo=/curitiba`; abrindo `/seguindo` vai para `/entrar?returnTo=/seguindo`. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Itens herdados da revisão da SPEC-0026 (G4):**
+  - H26-03 — `profile-metadata.ts` `ogImageOf`: montar a URL do og a partir do id do flyer (não por regex sobre `flyerThumbUrl`) e escolher como "próximo show" o primeiro não cancelado e ainda não iniciado.
+  - H26-04 — sonda de um dia da agenda (H25-01): usar a data de hoje no fuso da cidade, não em UTC.
+  - H26-05 — IT-05 da SPEC-0026: um teste único que passe por `loadProfile`/`ProfileRoute` com a lista de shows indisponível (200 com o aviso).
+  - H26-06 — testes 503 do proxy para perfil: verificar que `/api/v1/profiles/...` foi chamado.
+  - H26-08 — `reservedSegments` do proxy: teste para `/apoie` e um teste que compare com a lista de slugs reservados do backend (SPEC-0017).
 - Acessibilidade: `aria-pressed` e anúncio da mudança (E2E-01).
 
 **Dublês e dados de teste:** catálogo e perfis de teste no UT; perfis aprovados pela API (admin) e cidades semeadas nos IT e no E2E.

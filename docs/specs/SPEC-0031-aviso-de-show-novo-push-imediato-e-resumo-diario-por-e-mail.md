@@ -125,6 +125,10 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 - **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do show abre a página dele e o de descadastro confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Itens herdados da revisão da SPEC-0026 (G4):**
+  - H26-01 — `ListProfileShowsEndpoint.cs`: remover o `.Cast<ProfileShowResponse>()`; tipar `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` como `ProfileShowResponse`.
+  - H26-02 — `IFlyerLocks` obrigatório no construtor de `UploadFlyerCommandHandler` e `CleanupFlyersCommandHandler` (fake no-op nos testes unitários).
+  - H26-07 — upload de flyer: não manter o advisory lock e a transação abertos durante a escrita dos três arquivos (avaliar antes do go-live).
 - N/A — sem superfície pública nova.
 
 **Dublês e dados de teste:** nenhum dublê de módulo; seguidores e shows criados no banco do teste; `TimeProvider` fixo nos UT e IT.
