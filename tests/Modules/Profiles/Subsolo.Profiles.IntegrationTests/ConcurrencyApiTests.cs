@@ -159,6 +159,51 @@ public sealed class ConcurrencyApiTests(PostgresFixture postgres)
         }
     }
 
+    /// <summary>
+    /// SPEC-0026 (herança da revisão da SPEC-0021) — a mesma reivindicação aprovada por dois admins ao mesmo tempo: um 200
+    /// e o outro 409 <c>profiles.request_decided</c>, nunca 500; o perfil fica com o autor da reivindicação como dono e
+    /// um só evento do papel <c>artist</c> vai para a outbox.
+    /// </summary>
+    [Fact]
+    [Trait("Spec", "SPEC-0026:H21-01")]
+    [Trait("Kind", "Integration")]
+    public async Task TheSameClaimApprovedByTwoAdminsAtOnceGetsOne200AndOne409RequestDecided()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await FactoryAsync(ct);
+        var admins = await ConcurrentSends.AdminsAsync(api, ct, count: 2);
+        try
+        {
+            for (var round = 0; round < ConcurrentSends.Rounds; round++)
+            {
+                var profileId = await admins[0].Client.CreateOwnerlessAsync(ProfilesRequests.Ownerless(Name("Porão Aprovado Duas Vezes", round)), ct);
+                var (fan, fanId) = await api.SignedInAsync(string.Create(CultureInfo.InvariantCulture, $"corrida-mesma-claim-{round}@subsolo.test"), ct);
+                using (fan)
+                {
+                    var claimId = await fan.ClaimAsync(profileId, Proof, ct);
+
+                    await ConcurrentSends.ShouldSucceedOnceAsync(
+                        [.. admins.Select(admin => new ConcurrentSends.Send(admin.Client, admin.Token, ProfilesRequests.Approve(claimId), null))],
+                        HttpStatusCode.OK,
+                        ct,
+                        "profiles.request_decided");
+
+                    (await ProfilesDatabase.ProfilesAsync(api.ConnectionString, ct)).Single(profile => profile.Id == profileId)
+                        .OwnerUserId.ShouldBe(fanId, $"rodada {round}: o dono não é o autor da reivindicação");
+                    (await ProfilesDatabase.RequestsAsync(api.ConnectionString, ct)).Single(request => request.Id == claimId)
+                        .Status.ShouldBe("approved", $"rodada {round}: a reivindicação não ficou aprovada");
+                }
+            }
+
+            (await ProfilesDatabase.OutboxContentsAsync(api.ConnectionString, OwnerAssignedType, ct)).Count
+                .ShouldBe(ConcurrentSends.Rounds, "um só evento do papel artist por reivindicação aprovada");
+        }
+        finally
+        {
+            admins.ForEach(admin => admin.Client.Dispose());
+        }
+    }
+
     [Fact]
     [Trait("Spec", "SPEC-0021:IT-01")]
     [Trait("Kind", "Integration")]

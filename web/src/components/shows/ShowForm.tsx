@@ -14,7 +14,7 @@ import {
 import type { Style } from "@/api/admin";
 import type { ApiResult } from "@/api/browser";
 import type { CitySummary } from "@/api/client";
-import { searchClaimableProfiles, type ClaimableProfile } from "@/api/profiles";
+import { lookupProfiles, type LookupProfile } from "@/api/profile-lookup";
 import {
   createShow,
   updateShow,
@@ -165,9 +165,7 @@ export function ShowForm({
   const [venueProfileId, setVenueProfileId] = useState<string | null>(
     show?.venue.profileId ?? null,
   );
-  const [venueSuggestions, setVenueSuggestions] = useState<ClaimableProfile[]>(
-    [],
-  );
+  const [venueSuggestions, setVenueSuggestions] = useState<LookupProfile[]>([]);
   const [city, setCity] = useState(show?.city ?? initialOrganizer?.city ?? "");
   const [bands, setBands] = useState<Band[]>(() =>
     show && show.lineup.length > 0
@@ -185,15 +183,13 @@ export function ShowForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [organizerQuery, setOrganizerQuery] = useState("");
-  const [organizerResults, setOrganizerResults] = useState<ClaimableProfile[]>(
-    [],
-  );
+  const [organizerResults, setOrganizerResults] = useState<LookupProfile[]>([]);
 
   const fieldId = (field: FieldName) => `${id}-${field}`;
   const bandId = (index: number) => `${id}-banda-${index}`;
   const showOrganizerPicker = isAdmin || organizerOptions.length > 1;
 
-  // Busca de perfis de casa (sem dono, os que o admin cadastra) para ligar a casa ao perfil.
+  // Busca de perfis de casa (qualquer casa aprovada, com ou sem dono: SPEC-0026, H23-08) para ligar a casa ao perfil.
   useEffect(() => {
     const term = venueName.trim();
     if (venueProfileId || term.length < 2) {
@@ -201,7 +197,7 @@ export function ShowForm({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      void searchClaimableProfiles(term, controller.signal).then((result) => {
+      void lookupProfiles(term, "venue", controller.signal).then((result) => {
         if (result.ok) {
           setVenueSuggestions(
             result.value.filter((profile) => profile.type === "venue"),
@@ -215,7 +211,7 @@ export function ShowForm({
     };
   }, [venueName, venueProfileId]);
 
-  // Admin: busca de perfis sem dono para organizar o show.
+  // Admin: busca de qualquer perfil aprovado (com ou sem dono: SPEC-0026, H23-08) para organizar o show.
   useEffect(() => {
     const term = organizerQuery.trim();
     if (!isAdmin || term.length < 2) {
@@ -223,7 +219,7 @@ export function ShowForm({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      void searchClaimableProfiles(term, controller.signal).then((result) => {
+      void lookupProfiles(term, undefined, controller.signal).then((result) => {
         if (result.ok) {
           setOrganizerResults(result.value);
         }
@@ -282,7 +278,7 @@ export function ShowForm({
     }
   }
 
-  function chooseVenue(profile: ClaimableProfile) {
+  function chooseVenue(profile: LookupProfile) {
     setVenueProfileId(profile.id);
     setVenueName(profile.name);
     setVenueSuggestions([]);
@@ -430,7 +426,7 @@ export function ShowForm({
                 htmlFor={`${id}-organizer-search`}
                 className="text-sm text-text-muted"
               >
-                Buscar perfil sem dono
+                Buscar perfil
               </label>
               <input
                 id={`${id}-organizer-search`}
@@ -451,7 +447,7 @@ export function ShowForm({
                           chooseOrganizer({
                             id: profile.id,
                             name: profile.name,
-                            city: profile.city,
+                            city: profile.city.slug,
                           })
                         }
                       >

@@ -57,7 +57,8 @@ interface AgendaPage {
 
 /**
  * A agenda da requisição com os filtros (uma consulta só para os metadados e a página). "Esta semana" e "este mês"
- * dependem de "hoje" no fuso da cidade, que vem da própria agenda: nesses casos são duas chamadas à API.
+ * dependem de "hoje" no fuso da cidade, que vem da própria agenda: nesses casos são duas chamadas à API, a primeira só
+ * de um dia (SPEC-0026, H25-01).
  */
 const loadAgenda = cache(
   async (
@@ -83,16 +84,19 @@ const loadAgenda = cache(
     );
     const relative =
       filters.period?.kind === "semana" || filters.period?.kind === "mes";
-    let result = await getCityAgenda(
-      cidade,
-      relative
-        ? agendaApiQuery({ ...filters, period: undefined }, "")
-        : agendaApiQuery(filters, ""),
-    );
-    if (relative && result.kind === "ok") {
-      const today = localToday(result.agenda.city.timeZone, new Date());
-      result = await getCityAgenda(cidade, agendaApiQuery(filters, today));
+    if (!relative) {
+      const result = await getCityAgenda(cidade, agendaApiQuery(filters, ""));
+      return { result, filters, styles };
     }
+    // SPEC-0026 (H25-01): o fuso vem de uma sondagem de um dia só (o dia de hoje em UTC), não da agenda de 90 dias.
+    const now = new Date();
+    const utcToday = now.toISOString().slice(0, 10);
+    const probe = await getCityAgenda(cidade, { from: utcToday, to: utcToday });
+    if (probe.kind !== "ok") {
+      return { result: probe, filters, styles };
+    }
+    const today = localToday(probe.agenda.city.timeZone, now);
+    const result = await getCityAgenda(cidade, agendaApiQuery(filters, today));
     return { result, filters, styles };
   },
 );

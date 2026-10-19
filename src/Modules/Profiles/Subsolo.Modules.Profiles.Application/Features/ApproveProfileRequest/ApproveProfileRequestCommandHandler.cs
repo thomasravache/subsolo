@@ -11,6 +11,7 @@ namespace Subsolo.Modules.Profiles.Application.Features.ApproveProfileRequest;
 /// SPEC-0021 — pedido novo aprovado: cria o perfil com o dono; reivindicação aprovada: o perfil sem dono ganha o dono.
 /// Os dois levantam <c>ProfileOwnerAssignedDomainEvent</c>. Pedido inexistente → <see cref="ProfilesErrors.RequestNotFound"/>;
 /// já decidido → <see cref="ProfilesErrors.RequestDecided"/>; perfil que ganhou dono no meio → <see cref="ProfilesErrors.AlreadyOwned"/>.
+/// SPEC-0026 (H21-01): a mesma reivindicação aprovada por dois admins ao mesmo tempo dá 200 e 409 request_decided.
 /// Emenda 3: aprovações concorrentes têm um só vencedor (token otimista e índice único → 409, nunca 500). Um pedido novo cujo nome foi ocupado no tipo enquanto esperava (por um perfil criado pelo admin) → <see cref="ProfilesErrors.NameTaken"/>.
 /// </summary>
 internal sealed partial class ApproveProfileRequestCommandHandler(
@@ -45,9 +46,13 @@ internal sealed partial class ApproveProfileRequestCommandHandler(
                 return Result.Failure<ProfileRequestApproved>(ProfilesErrors.NotFoundError());
             }
 
-            if (claimed.OwnerUserId is not null)
+            if (claimed.OwnerUserId is { } owner)
             {
-                return Result.Failure<ProfileRequestApproved>(ProfilesErrors.AlreadyOwnedError());
+                // SPEC-0026 (H21-01): o perfil já é do autor da reivindicação — outra aprovação deste pedido chegou antes
+                // (o pedido foi lido ainda pendente, o perfil já com o dono): 409 request_decided, não already_owned.
+                return Result.Failure<ProfileRequestApproved>(owner == request.RequesterUserId
+                    ? ProfilesErrors.RequestDecidedError()
+                    : ProfilesErrors.AlreadyOwnedError());
             }
 
             claimed.AssignOwner(request.RequesterUserId);

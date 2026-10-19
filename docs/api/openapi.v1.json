@@ -395,6 +395,63 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Shows do perfil",
+        "description": "Os shows em que o perfil é organizador, casa ou banda do line-up, com o resumo da agenda e a cidade do show: os próximos (period=upcoming, até 50, por data) ou os passados (period=past, até 20, mais recentes primeiro).",
+        "operationId": "ListProfileShows",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileShowsBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=events.invalid_query)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/shows/{id}": {
@@ -1099,6 +1156,7 @@
           {
             "name": "styles",
             "in": "query",
+            "description": "Slugs de estilo separados por vírgula (no máximo 20), ex.: death,grind.",
             "schema": {
               "type": "string"
             }
@@ -2010,6 +2068,66 @@
         }
       }
     },
+    "/api/v1/profiles/{type}/{slug}": {
+      "get": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Perfil público",
+        "description": "O perfil aprovado do tipo (band, venue ou producer) pelo slug: nome, cidade, estilos e os links do Instagram, do Bandcamp e do Metal Archives. Sem dono nem contato.",
+        "operationId": "GetPublicProfile",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=profiles.not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/profiles": {
       "get": {
         "tags": [
@@ -2120,6 +2238,97 @@
                   "items": {
                     "$ref": "#/components/schemas/ProfileRequestQueueItem"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/lookup": {
+      "get": {
+        "tags": [
+          "Perfis"
+        ],
+        "summary": "Buscar perfil para o show",
+        "description": "Perfis aprovados, com ou sem dono, cujo nome contém q (ao menos 2 caracteres), do tipo informado (band, venue ou producer), até 20, por nome: a casa e o organizador do cadastro de show.",
+        "operationId": "LookupProfiles",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileLookupResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=profiles.invalid_query)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3013,6 +3222,21 @@
           }
         }
       },
+      "ProfileCityResponse": {
+        "required": [
+          "slug",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "ProfileLinksRequest": {
         "required": [
           "instagram",
@@ -3066,6 +3290,34 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ProfileLookupResponse": {
+        "required": [
+          "id",
+          "type",
+          "name",
+          "slug",
+          "city"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "city": {
+            "$ref": "#/components/schemas/ProfileCityResponse"
           }
         }
       },
@@ -3157,6 +3409,179 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "ProfileShowCityResponse": {
+        "required": [
+          "slug",
+          "name",
+          "timeZone"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileShowResponse": {
+        "required": [
+          "city",
+          "id",
+          "slug",
+          "title",
+          "startsAt",
+          "venueName",
+          "lineup",
+          "styles",
+          "status",
+          "flyerThumbUrl",
+          "attendingCount"
+        ],
+        "type": "object",
+        "properties": {
+          "city": {
+            "$ref": "#/components/schemas/ProfileShowCityResponse"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venueName": {
+            "type": "string"
+          },
+          "lineup": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShowStatus"
+          },
+          "flyerThumbUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "attendingCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProfileShowsBody": {
+        "required": [
+          "shows"
+        ],
+        "type": "object",
+        "properties": {
+          "shows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileShowResponse"
+            }
+          }
+        }
+      },
+      "ProfileStyleResponse": {
+        "required": [
+          "slug",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicProfileLinksResponse": {
+        "type": "object",
+        "properties": {
+          "instagram": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bandcamp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metalArchives": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PublicProfileResponse": {
+        "required": [
+          "id",
+          "type",
+          "name",
+          "slug",
+          "city",
+          "styles",
+          "links"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "city": {
+            "$ref": "#/components/schemas/ProfileCityResponse"
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileStyleResponse"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/PublicProfileLinksResponse"
           }
         }
       },
@@ -3786,13 +4211,13 @@
       "name": "Shows"
     },
     {
+      "name": "Agenda"
+    },
+    {
       "name": "Estilos"
     },
     {
       "name": "Cidades"
-    },
-    {
-      "name": "Agenda"
     },
     {
       "name": "Conta"

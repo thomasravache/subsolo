@@ -17,7 +17,9 @@ namespace Subsolo.Modules.Events.Application.Features.UploadFlyer;
 /// (<see cref="IFileStorage"/>) e a linha de <c>events.flyers</c>. Se algo falha depois de gravar uma variante, as
 /// gravadas são apagadas: nada fica pela metade. O original não é guardado. SPEC-0024: grava as medidas da variante
 /// <c>full</c> na linha; com a linha mas sem algum arquivo (H23-01), regrava as variantes; com a linha apagada pela
-/// limpeza depois da leitura (H23-02), processa e grava de novo em vez de 500.
+/// limpeza depois da leitura (H23-02), processa e grava de novo em vez de 500. SPEC-0026: as medidas do <c>full</c> vêm
+/// do processador (<see cref="FlyerImages.FullSize"/>, H24-01), e a gravação dos arquivos e da linha acontece sob a trava
+/// do id (<see cref="IFlyerLocks"/>, H24-02), a mesma da limpeza.
 /// </summary>
 internal sealed partial class UploadFlyerCommandHandler(
     IImageProcessor processor,
@@ -25,7 +27,8 @@ internal sealed partial class UploadFlyerCommandHandler(
     IFlyerRepository flyers,
     IEventsUnitOfWork unitOfWork,
     TimeProvider clock,
-    ILogger<UploadFlyerCommandHandler> logger)
+    ILogger<UploadFlyerCommandHandler> logger,
+    IFlyerLocks? locks = null)
     : ICommandHandler<UploadFlyerCommand, FlyerUploadResult>
 {
     public async Task<Result<FlyerUploadResult>> Handle(UploadFlyerCommand command, CancellationToken cancellationToken)
@@ -78,9 +81,10 @@ internal sealed partial class UploadFlyerCommandHandler(
             return Rejected(EventsErrors.FlyerUnprocessableError());
         }
 
-        var size = WebPSize.Read(images.Full);
+        var size = images.FullSize;
         var saved = new List<string>();
         var created = existing is null;
+        await using var held = locks is null ? null : await locks.AcquireAsync(id, cancellationToken);
         try
         {
             foreach (var (path, bytes) in new[]
@@ -113,6 +117,11 @@ internal sealed partial class UploadFlyerCommandHandler(
             else
             {
                 await AddAsync(id, command.UploadedBy, size, cancellationToken);
+            }
+
+            if (held is not null)
+            {
+                await held.CommitAsync(cancellationToken);
             }
         }
         catch (DuplicateFlyerException)
@@ -169,7 +178,7 @@ internal sealed partial class UploadFlyerCommandHandler(
         _ => error,
     };
 
-    private async Task AddAsync(string id, Guid uploadedBy, (int Width, int Height)? size, CancellationToken cancellationToken)
+    private async Task AddAsync(string id, Guid uploadedBy, PixelSize? size, CancellationToken cancellationToken)
     {
         var flyer = Flyer.Create(id, uploadedBy, clock.GetUtcNow());
         Measure(flyer, size);
@@ -177,11 +186,11 @@ internal sealed partial class UploadFlyerCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    private static void Measure(Flyer flyer, (int Width, int Height)? size)
+    private static void Measure(Flyer flyer, PixelSize? size)
     {
-        if (size is var (width, height))
+        if (size is { } full)
         {
-            flyer.MeasureFull(width, height);
+            flyer.MeasureFull(full.Width, full.Height);
         }
     }
 

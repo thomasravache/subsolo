@@ -21,9 +21,10 @@ internal static class JpegHeaderCleaner
 
     /// <summary>
     /// <paramref name="jpeg"/> sem os bytes soltos do cabeçalho; o próprio <paramref name="jpeg"/> se não houver nenhum
-    /// ou se a estrutura não for reconhecida (o decodificador decide). SPEC-0024 (H23-03): a cópia só é alocada no
-    /// primeiro byte solto, e comprimento truncado, <c>FF 00</c> no cabeçalho ou a falta do SOS devolvem os bytes
-    /// originais.
+    /// ou se a estrutura não for reconhecida (o decodificador decide). SPEC-0024 (H23-03): comprimento truncado,
+    /// <c>FF 00</c> no cabeçalho ou a falta do SOS devolvem os bytes originais. SPEC-0026 (H24-07): duas passadas pelo
+    /// cabeçalho — a primeira só conta os bytes soltos (sem alocar), a segunda copia para um único buffer já do tamanho
+    /// final.
     /// </summary>
     public static byte[] WithoutExtraneousHeaderBytes(byte[] jpeg)
     {
@@ -33,29 +34,45 @@ internal static class JpegHeaderCleaner
             return jpeg;
         }
 
-        // Nasce no primeiro byte solto, com tudo o que veio antes dele.
-        byte[]? output = null;
-        var written = 0;
+        var extraneous = Walk(jpeg, output: null);
+        if (extraneous <= 0)
+        {
+            return jpeg;
+        }
+
+        var output = new byte[jpeg.Length - extraneous];
+        Walk(jpeg, output);
+        return output;
+    }
+
+    /// <summary>
+    /// Percorre os segmentos do cabeçalho até o SOS (ou o EOI): devolve quantos bytes soltos há, ou −1 se a estrutura não
+    /// for reconhecida. Com <paramref name="output"/>, copia para ele tudo menos os bytes soltos.
+    /// </summary>
+    private static int Walk(byte[] jpeg, byte[]? output)
+    {
+        var extraneous = 0;
+        var written = 2;
+        if (output is not null)
+        {
+            output[0] = Prefix;
+            output[1] = StartOfImage;
+        }
+
         var index = 2;
         while (index < jpeg.Length)
         {
             if (jpeg[index] != Prefix)
             {
                 // Byte solto antes do próximo marcador: o decodificador pularia com um aviso.
-                if (output is null)
-                {
-                    output = new byte[jpeg.Length];
-                    Array.Copy(jpeg, output, index);
-                    written = index;
-                }
-
+                extraneous++;
                 index++;
                 continue;
             }
 
             if (index + 1 >= jpeg.Length)
             {
-                return jpeg;
+                return -1;
             }
 
             var marker = jpeg[index + 1];
@@ -67,19 +84,17 @@ internal static class JpegHeaderCleaner
             }
             else if (marker is StartOfScan or EndOfImage)
             {
-                if (output is null)
+                if (output is not null)
                 {
-                    return jpeg;
+                    Array.Copy(jpeg, index, output, written, jpeg.Length - index);
                 }
 
-                Array.Copy(jpeg, index, output, written, jpeg.Length - index);
-                written += jpeg.Length - index;
-                return output.AsSpan(0, written).ToArray();
+                return extraneous;
             }
             else if (marker == 0x00)
             {
                 // FF 00 só existe dentro dos dados comprimidos: no cabeçalho, a estrutura não é reconhecida.
-                return jpeg;
+                return -1;
             }
             else if (marker is 0x01 or (>= 0xD0 and <= 0xD7))
             {
@@ -89,13 +104,13 @@ internal static class JpegHeaderCleaner
             {
                 if (index + 3 >= jpeg.Length)
                 {
-                    return jpeg;
+                    return -1;
                 }
 
                 var length = BinaryPrimitives.ReadUInt16BigEndian(jpeg.AsSpan(index + 2));
                 if (length < 2 || index + 2 + length > jpeg.Length)
                 {
-                    return jpeg;
+                    return -1;
                 }
 
                 size = 2 + length;
@@ -111,6 +126,6 @@ internal static class JpegHeaderCleaner
         }
 
         // Sem SOS (nem EOI): a estrutura não é reconhecida.
-        return jpeg;
+        return -1;
     }
 }

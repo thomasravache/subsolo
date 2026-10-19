@@ -1,5 +1,7 @@
+using Subsolo.Modules.Profiles.Application.Features.GetPublicProfile;
 using Subsolo.Modules.Profiles.Application.Features.ListMyProfiles;
 using Subsolo.Modules.Profiles.Application.Features.ListProfileRequests;
+using Subsolo.Modules.Profiles.Application.Features.LookupProfiles;
 using Subsolo.Modules.Profiles.Application.Features.SearchClaimableProfiles;
 
 namespace Subsolo.Modules.Profiles.Application;
@@ -12,6 +14,17 @@ internal interface IProfilesReadModel
     /// caixa) ou cujo slug contém <paramref name="termSlug"/>, do <paramref name="type"/> quando informado, por nome.
     /// </summary>
     Task<IReadOnlyList<ClaimableProfileResponse>> SearchClaimableAsync(
+        string term, string termSlug, string? type, int limit, CancellationToken cancellationToken);
+
+    /// <summary>SPEC-0026 — o perfil aprovado do <paramref name="type"/> com o <paramref name="slug"/>, ou <see langword="null"/>.</summary>
+    Task<PublicProfileData?> GetPublicAsync(string type, string slug, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// SPEC-0026 (H23-08) — até <paramref name="limit"/> perfis aprovados, com ou sem dono, cujo nome contém
+    /// <paramref name="term"/> (sem diferenciar caixa) ou cujo slug contém <paramref name="termSlug"/>, do
+    /// <paramref name="type"/> quando informado, por nome.
+    /// </summary>
+    Task<IReadOnlyList<ProfileLookupData>> LookupAsync(
         string term, string termSlug, string? type, int limit, CancellationToken cancellationToken);
 
     /// <summary>Os perfis de que <paramref name="userId"/> é dono e os pedidos dele (mais novos primeiro), sem contato nem prova.</summary>
