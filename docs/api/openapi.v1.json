@@ -1068,7 +1068,7 @@
           "Agenda"
         ],
         "summary": "Agenda da cidade",
-        "description": "Cidade e shows entre from e to (padrão: de hoje, no fuso da cidade, até +60 dias; máximo 180 dias).",
+        "description": "Cidade e shows entre from e to (datas locais da cidade, aaaa-mm-dd; no máximo 180 dias; sem from e to, de 6 h atrás até 90 dias, com period de hoje a hoje + 90) e, com styles (slugs separados por vírgula), só os shows com algum desses estilos (estilos inexistentes são ignorados). Traz o period e o total.",
         "operationId": "GetCityAgenda",
         "parameters": [
           {
@@ -1095,6 +1095,13 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "styles",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1109,7 +1116,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Bad Request (code=agenda.invalid_slug) (code=agenda.invalid_range) (code=agenda.invalid_styles)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1119,7 +1126,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "Not Found (code=agenda.city_not_found)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2405,6 +2412,23 @@
           }
         }
       },
+      "AgendaPeriodResponse": {
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "AuthProvidersResponse": {
         "required": [
           "google"
@@ -2433,7 +2457,9 @@
       "CityAgendaResponse": {
         "required": [
           "city",
-          "shows"
+          "shows",
+          "period",
+          "total"
         ],
         "type": "object",
         "properties": {
@@ -2445,6 +2471,13 @@
             "items": {
               "$ref": "#/components/schemas/ShowSummaryResponse"
             }
+          },
+          "period": {
+            "$ref": "#/components/schemas/AgendaPeriodResponse"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

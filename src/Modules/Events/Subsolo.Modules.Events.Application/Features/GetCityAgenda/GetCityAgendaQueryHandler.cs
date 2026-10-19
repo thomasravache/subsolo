@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
 using Subsolo.Modules.Events.Domain.Cities;
@@ -8,7 +9,9 @@ namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 /// SPEC-0008 — devolve a cidade e os shows do período; cidade inexistente → <see cref="AgendaErrors.CityNotFound"/>
 /// (NotFound); período resolvido inválido (ex.: só <c>to</c>, antes de hoje) → <see cref="AgendaErrors.InvalidRange"/>
 /// (Validation). SPEC-0023 (Emenda v2, b): sem <c>from</c> e <c>to</c>, os shows de 6 h atrás até 90 dias à frente;
-/// com algum deles, os dias locais do período resolvido (SPEC-0008). Por data, com a situação.
+/// com algum deles, os dias locais do período resolvido (SPEC-0008). Por data, com a situação. SPEC-0025: filtro por
+/// estilos (os inexistentes são ignorados), o <c>period</c> em datas locais (sem <c>from</c>/<c>to</c>: hoje a hoje + 90)
+/// e o <c>total</c>; o tipo de período e o número de estilos vão como tags no span da requisição.
 /// </summary>
 internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProvider clock, IShowsReadModel shows)
     : IQueryHandler<GetCityAgendaQuery, CityAgendaResponse>
@@ -18,6 +21,12 @@ internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProv
 
     /// <summary>Quanto à frente a janela padrão vai.</summary>
     public static readonly TimeSpan DefaultLookAhead = TimeSpan.FromDays(90);
+
+    /// <summary>SPEC-0025 — tag do span: <c>default</c> (janela padrão) ou <c>range</c> (com <c>from</c>/<c>to</c>).</summary>
+    public const string PeriodTag = "subsolo.agenda.period";
+
+    /// <summary>SPEC-0025 — tag do span: quantos estilos vieram no filtro.</summary>
+    public const string StylesCountTag = "subsolo.agenda.styles_count";
 
     public async Task<Result<CityAgendaResponse>> Handle(GetCityAgendaQuery query, CancellationToken cancellationToken)
     {
@@ -30,13 +39,20 @@ internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProv
         }
 
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById(city.TimeZone);
+        var styles = query.Styles ?? [];
+        var isDefault = query.From is null && query.To is null;
+        Activity.Current?.SetTag(PeriodTag, isDefault ? "default" : "range");
+        Activity.Current?.SetTag(StylesCountTag, styles.Count);
         DateTimeOffset fromUtc;
         DateTimeOffset toUtc;
-        if (query.From is null && query.To is null)
+        AgendaPeriodResponse periodResponse;
+        if (isDefault)
         {
             var now = clock.GetUtcNow();
             fromUtc = now - DefaultLookBack;
             toUtc = now + DefaultLookAhead;
+            var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, timeZone).DateTime);
+            periodResponse = new AgendaPeriodResponse(today, today.AddDays(DefaultLookAhead.Days));
         }
         else
         {
@@ -48,12 +64,17 @@ internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProv
 
             fromUtc = StartOfDay(period.From, timeZone);
             toUtc = StartOfDay(period.To.AddDays(1), timeZone);
+            periodResponse = new AgendaPeriodResponse(period.From, period.To);
         }
 
-        var listed = await shows.ListAgendaAsync(city.Slug, fromUtc, toUtc, cancellationToken);
+        var listed = await shows.ListAgendaAsync(city.Slug, fromUtc, toUtc, styles, cancellationToken);
         return Result.Success(new CityAgendaResponse(
             new CityResponse(city.Slug, city.Name, city.State, city.TimeZone),
-            listed));
+            listed)
+        {
+            Period = periodResponse,
+            Total = listed.Count,
+        });
     }
 
     /// <summary>O instante UTC da meia-noite local de <paramref name="date"/> (ou do primeiro horário que existir nela).</summary>

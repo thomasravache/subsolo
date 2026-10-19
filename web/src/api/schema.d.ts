@@ -241,7 +241,7 @@ export interface paths {
     };
     /**
      * Agenda da cidade
-     * @description Cidade e shows entre from e to (padrão: de hoje, no fuso da cidade, até +60 dias; máximo 180 dias).
+     * @description Cidade e shows entre from e to (datas locais da cidade, aaaa-mm-dd; no máximo 180 dias; sem from e to, de 6 h atrás até 90 dias, com period de hoje a hoje + 90) e, com styles (slugs separados por vírgula), só os shows com algum desses estilos (estilos inexistentes são ignorados). Traz o period e o total.
      */
     get: operations["GetCityAgenda"];
     put?: never;
@@ -590,6 +590,12 @@ export interface components {
       state: string;
       timeZone: string;
     };
+    AgendaPeriodResponse: {
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+    };
     AuthProvidersResponse: {
       google: boolean;
     };
@@ -599,6 +605,9 @@ export interface components {
     CityAgendaResponse: {
       city: components["schemas"]["CityResponse"];
       shows: components["schemas"]["ShowSummaryResponse"][];
+      period: components["schemas"]["AgendaPeriodResponse"];
+      /** Format: int32 */
+      total: number;
     };
     CityResponse: {
       slug: string;
@@ -1788,6 +1797,7 @@ export interface operations {
       query?: {
         from?: string;
         to?: string;
+        styles?: string;
       };
       header?: never;
       path: {
@@ -1806,7 +1816,7 @@ export interface operations {
           "application/json": components["schemas"]["CityAgendaResponse"];
         };
       };
-      /** @description Bad Request */
+      /** @description Bad Request (code=agenda.invalid_slug) (code=agenda.invalid_range) (code=agenda.invalid_styles) */
       400: {
         headers: {
           [name: string]: unknown;
@@ -1815,7 +1825,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
-      /** @description Not Found */
+      /** @description Not Found (code=agenda.city_not_found) */
       404: {
         headers: {
           [name: string]: unknown;

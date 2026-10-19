@@ -3,8 +3,25 @@ using System.Text.Json.Serialization;
 
 namespace Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 
-/// <summary>SPEC-0008 — resposta de <c>GET /api/v1/cities/{slug}/agenda</c>: a cidade e os shows do período.</summary>
-public sealed record CityAgendaResponse(CityResponse City, IReadOnlyList<ShowSummaryResponse> Shows);
+/// <summary>
+/// SPEC-0008 — resposta de <c>GET /api/v1/cities/{slug}/agenda</c>: a cidade e os shows do período. SPEC-0025 — mais o
+/// <see cref="Period"/> (datas locais da cidade) e o <see cref="Total"/> de shows.
+/// </summary>
+public sealed record CityAgendaResponse(CityResponse City, IReadOnlyList<ShowSummaryResponse> Shows)
+{
+    /// <summary>SPEC-0025 — o período da agenda, em datas locais da cidade (sem <c>from</c>/<c>to</c>: hoje a hoje + 90).</summary>
+    [JsonRequired]
+    public AgendaPeriodResponse Period { get; init; }
+
+    /// <summary>SPEC-0025 — quantos shows há no período (com os filtros).</summary>
+    [JsonRequired]
+    public int Total { get; init; }
+}
+
+/// <summary>SPEC-0025 — período da agenda em datas locais da cidade (<c>aaaa-mm-dd</c>), com as duas pontas incluídas.</summary>
+public readonly record struct AgendaPeriodResponse(
+    [property: JsonRequired] DateOnly From,
+    [property: JsonRequired] DateOnly To);
 
 /// <summary>SPEC-0008 — dados públicos da cidade (<see cref="State"/> = UF com 2 letras).</summary>
 public sealed record CityResponse(

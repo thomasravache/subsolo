@@ -8,9 +8,17 @@ namespace Subsolo.Modules.Events.Application;
 /// <summary>SPEC-0023 — leituras de <c>events.shows</c> para as consultas (sem rastreamento, sem passar pelo domínio).</summary>
 internal interface IShowsReadModel
 {
-    /// <summary>Os shows da cidade <paramref name="city"/> com início em [<paramref name="fromUtc"/>, <paramref name="toUtc"/>), por data.</summary>
+    /// <summary>
+    /// Os shows da cidade <paramref name="city"/> com início em [<paramref name="fromUtc"/>, <paramref name="toUtc"/>), por
+    /// data. SPEC-0025: com <paramref name="styles"/>, só os que têm algum desses estilos; os estilos que não existem são
+    /// ignorados (nenhum existente = sem filtro de estilo).
+    /// </summary>
     Task<IReadOnlyList<ShowSummaryResponse>> ListAgendaAsync(
-        string city, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken);
+        string city,
+        DateTimeOffset fromUtc,
+        DateTimeOffset toUtc,
+        IReadOnlyCollection<string> styles,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Os shows organizados por um dos <paramref name="organizerProfileIds"/> ou, com <paramref name="createdBy"/>, os

@@ -8,11 +8,27 @@ public static class AgendaErrors
     /// <summary>400: slug fora de <c>^[a-z0-9-]{2,60}$</c>.</summary>
     public const string InvalidSlug = "agenda.invalid_slug";
 
-    /// <summary>400: <c>to &lt; from</c> ou período maior que <see cref="AgendaPeriod.MaxDays"/> dias.</summary>
+    /// <summary>
+    /// 400: <c>to &lt; from</c> ou período maior que <see cref="AgendaPeriod.MaxDays"/> dias; SPEC-0025: também data mal
+    /// formada em <c>from</c>/<c>to</c>.
+    /// </summary>
     public const string InvalidRange = "agenda.invalid_range";
+
+    /// <summary>SPEC-0025 — 400: slug de estilo fora do padrão ou estilos demais em <c>styles</c>.</summary>
+    public const string InvalidStyles = "agenda.invalid_styles";
 
     /// <summary>404: nenhuma cidade com o slug.</summary>
     public const string CityNotFound = "agenda.city_not_found";
+
+    /// <summary>SPEC-0025 — <c>from</c> ou <c>to</c> que não é uma data <c>aaaa-mm-dd</c>.</summary>
+    public static Error MalformedDateError() =>
+        Error.Validation(
+            InvalidRange,
+            "Período da agenda inválido.",
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                [nameof(GetCityAgendaQuery.From)] = ["\"from\" e \"to\" devem ser datas no formato aaaa-mm-dd."],
+            });
 
     /// <summary>Erro de validação do período já resolvido (o validador só confere quando as duas datas vêm na consulta).</summary>
     internal static Error InvalidRangeError(AgendaPeriod period) =>
