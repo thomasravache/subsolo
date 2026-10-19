@@ -4,7 +4,7 @@ title: Página do show com Open Graph e compartilhar
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023]
@@ -169,26 +169,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 0: Caracterização**
-- [ ] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
+- [x] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
 
 **Fase 1: Metadados e compartilhar**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0024:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0024:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: API e página**
-- [ ] Red: IT-01..IT-04, CT-01 falhando pelo motivo certo
-- [ ] Green: slice, página SSR, proxy, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-04, CT-01 falhando pelo motivo certo
+- [x] Green: slice, página SSR, proxy, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Jornada E2E**
-- [ ] Red: E2E-01..E2E-04 falhando pelo motivo certo
-- [ ] Green: jornada completa passando localmente
+- [x] Red: E2E-01..E2E-04 falhando pelo motivo certo
+- [x] Green: jornada completa passando localmente
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -201,8 +201,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (0 blocker, 0 major, 7 minor → herdados H24-02..08) — 154e458 | 2026-10-18 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 11m 45s 275ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 432ms) — 25a8682 | 2026-10-19 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-19 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — bbc0da7 (árvore suja) | 2026-10-19 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -214,36 +214,65 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Página pública do show (`/{cidade}/{slug}`), como no Stitch: flyer, data e hora no fuso da cidade, casa, line-up, estilos, preço, ingresso e selo de adiado/cancelado.
+- Prévia rica ao compartilhar (Open Graph e Twitter Card com imagem absoluta e medidas) e botão "Compartilhar" com Web Share ou cópia do link.
+- 404 real "Show não encontrado" e 503 "Show indisponível"; título da aba correto nas páginas de erro.
+- Endpoint público `GET /api/v1/cities/{city}/shows/{slug}` com rate limit; `timeZone` em "Meus shows".
+- Reforços herdados da revisão da SPEC-0023 (H23-01..07).
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (8da2c75 scaffold … e1f4963; 154e458 localizador do E2E-01; 3b6f445 espera da limpeza no IT-07) → Implementer (3d4b30d, dc80e80, f141cbc, b164ecd, 08a8ba2, cd63150, 6b07b01, 5bd64b0, 0155650, 2610677) → Reviewer APPROVED em 154e458.
+- Emenda v2 (contrato 2): `SUBSOLO_PUBLIC_URL` só do servidor (AppHost e `compose-up.sh`), medidas do flyer em colunas novas (migração aditiva `FlyerSizes`; `null` → 3:4), formato da descrição e página 503.
+- Emendas sem mudança de contrato: desvios aceitos (medidas lidas do cabeçalho WebP, 503 tratado no endpoint, títulos 404 do `not-found` mais próximo, line-up em lista, ícones locais) e o job `integration` do CI com 30 minutos.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| CH-01 | título da página de cidade inexistente registrado antes da mudança (achado da SPEC-0015) | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| UT-01 | metadados `title`, `description`, `og:*`, `twitter:card` e `canonical` como no §6, com URL absoluta | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| UT-02 | "Compartilhar" usa o Web Share com título e URL, ou copia o link e anuncia "Link copiado." | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| IT-01 | `GET /api/v1/cities/{city}/shows/{slug}`: 200 com o corpo do §6 para agendado e cancelado, sem expor o dono | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| IT-02 | HTML sem JavaScript com `og:image` absoluta, medidas e descrição para robôs de prévia | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| IT-03 | slug ou cidade inexistente → 404 real com "Show não encontrado"; conteúdo com `<script>` escapado | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| IT-04 | API sem banco → 503 com a página "Show indisponível" | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| CT-01 | OpenAPI com o novo endpoint e `flyer.width/height` anuláveis; `pnpm api:check` passa | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| E2E-01 | jornada compartilhar-show (mobile-chrome e mobile-safari): card → página, dados, compartilhar, selo CANCELADO; axe | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| E2E-02 | link de show inexistente: "Show não encontrado", status 404 e volta para a agenda | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| E2E-03 | LCP ≤ 2,5 s e flyer com `width` e `height` | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| E2E-04 | título da aba sem piscar durante a navegação pelo card | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-01 | limpeza confere se a linha voltou antes de apagar os arquivos; envio regrava variantes que faltam | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-02 | criar/editar com o flyer apagado no meio → 400 `events.flyer_not_found`, nunca 500 | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-03 | `JpegHeaderCleaner` só copia ao achar o primeiro byte solto; entradas malformadas voltam intactas | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-04 | Caddy: diretório fora do cache imutável | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-05 | sobras removidas (unidade de trabalho da limpeza, construtor da agenda, método morto) | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-06 | `/me/shows` com `timeZone` da cidade; o web não consulta mais a agenda só pelo fuso | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
+| H23-07 | erros da line-up ligados por `aria-describedby` | PASS | `gate G2 --run` em 154e458; `gate G5 --run` na integração (25a8682); CI do PR #31 (run 39198186809, 10/10 checks em bbc0da7) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #31 (run 39198186809)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #31 (https://github.com/thomasravache/subsolo/pull/31), merge commit bd57a1b em 2026-10-19, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Menores da revisão G4 → SPEC-0026 (§7.6, H24-01..03, H24-05..08: medidas do flyer no processador de imagem, trava da limpeza, recuo do Web Share, segmentos reservados no proxy, helper de data, buffer do `JpegHeaderCleaner`, IT de corrida só da linha); `SUBSOLO_PUBLIC_URL` no ambiente publicado e validada na partida → SPEC-0003 (H24-04).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0024`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
