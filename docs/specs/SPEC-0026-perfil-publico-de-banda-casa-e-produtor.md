@@ -4,7 +4,7 @@ title: Perfil público de banda, casa e produtor
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0024]
@@ -165,23 +165,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Metadados e filtro**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0026:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0026:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Endpoints e páginas**
-- [ ] Red: IT-01..IT-05, CT-01 falhando pelo motivo certo
-- [ ] Green: dois endpoints, índice, páginas SSR, proxy, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-05, CT-01 falhando pelo motivo certo
+- [x] Green: dois endpoints, índice, páginas SSR, proxy, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: links na página do show e jornada completa
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: links na página do show e jornada completa
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -194,8 +194,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores; desvios 1–10 aceitos; 8 itens menores H26-01..08 levados às SPEC-0027 (web) e SPEC-0031 (Events)) — b34ca52 | 2026-10-19 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 12m 35s 486ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 6s 800ms) — ce9c638 | 2026-10-19 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-19 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 4fdebe2 (árvore suja) | 2026-10-19 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -207,36 +207,60 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Páginas públicas `/banda/{slug}`, `/casa/{slug}` e `/produtor/{slug}`, como no Stitch: nome, "{Tipo} · {Cidade}", estilos, links das redes, próximos shows (com contador) e shows passados; o nome da banda e da casa na página do show leva ao perfil.
+- Prévia Open Graph com o flyer do próximo show (ou sem imagem); 404 "Perfil não encontrado" e 503 "Perfil indisponível"; aviso "Não foi possível carregar os shows agora." quando só a lista falha.
+- API: `GET /api/v1/profiles/{type}/{slug}`, `GET /api/v1/shows?profileId=&period=upcoming|past` (com `city`) e `GET /api/v1/profiles/lookup` para artistas e admins; o cadastro de show passa a sugerir qualquer perfil aprovado.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (0d32b1a scaffold; fd8ba11, d470031, 32c276a, 17f4ce4, 8de3b0a) → Implementer (2d05086, e6e251a, 306f028, 2bd8296, b34ca52) → Reviewer: APPROVED WITH MINOR ITEMS em b34ca52.
+- Emenda v2 (contrato 2): busca de perfis, `city` nos shows do perfil, regra do `og:image`, página 503 e datas estritas na agenda.
+- Profiles lê nomes de cidade e estilo pela interface `IEventsCatalogNames` (Events.IntegrationEvents), mantendo o sentido Profiles → Events (ADR-0001). Shows por perfil com SQL parametrizado e migração aditiva de índices (`venue_profile_id` e GIN em `lineup`).
+- Desvios aceitos na revisão: `ProfileShowResponse` derivado de `ShowSummaryResponse`; 400 também para `type` desconhecido na busca; contador e "Nenhum show passado." além do Stitch; `apoie` reservado no proxy; rótulo "Buscar perfil".
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | metadados do perfil: título, descrição e `og:image` do flyer do próximo show ou sem imagem | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| UT-02 | shows do perfil como organizador, casa e banda, com ordem e limites de `upcoming` e `past` | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| IT-01 | `GET /api/v1/profiles/{type}/{slug}`: 200 só para aprovado, sem dono nem contato; 404 `profiles.not_found` | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| IT-02 | 200 shows: limites e ordem de `upcoming`/`past`, `city` em cada item, p95 ≤ 150 ms; `period` inválido → 400 | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| IT-03 | HTML de `/banda/{slug}` sem JavaScript com `<title>`, descrição e Open Graph | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| IT-04 | `/casa/{slug-de-banda}` e `/banda/inexistente` → 404 "Perfil não encontrado" | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| IT-05 | shows indisponíveis → 200 com o aviso; API de perfis indisponível → 503 "Perfil indisponível" (role=alert) | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| CT-01 | OpenAPI com perfil público, shows por perfil e busca de perfis; `pnpm api:check` passa | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| E2E-01 | show → banda → página do perfil com redes e shows (mobile-chrome e mobile-safari); axe | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| E2E-02 | `/banda/nao-existe` → "Perfil não encontrado" com 404 | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| H21-01 | mesma reivindicação aprovada por dois admins ao mesmo tempo: um 200 e o outro 409 `profiles.request_decided` | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| H23-08 | busca de perfis aprovados por tipo (com ou sem dono) no cadastro de show; E2E `organizador-qualquer-perfil` | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| H24-01..03, H24-05..08 | medidas do flyer pelo NetVips, trava entre envio e limpeza de flyer, "Compartilhar" só ignora AbortError, segmentos reservados no proxy, helper único de data da cidade, limpeza do JPEG em duas passadas, variante só de linha da corrida | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
+| H25-01..03 | sonda de um dia para o fuso, descrição de `styles` no OpenAPI, campo `from` nomeado e datas estritas `aaaa-mm-dd` | PASS | `gate G2 --run` em b34ca52; `gate G5 --run` na integração (ce9c638); CI do PR #38 (run 39300243622, 10/10 checks em 4fdebe2) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #38 (run 39300243622)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #38 (https://github.com/thomasravache/subsolo/pull/38), merge commit 03fe544 em 2026-10-19, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Menores da revisão G4 → SPEC-0027 (§7.6, H26-03..06 e H26-08: og pelo id do flyer e próximo show válido, sonda no fuso da cidade, teste único do IT-05, chamada da API nos testes 503, `/apoie` e lista reservada) e SPEC-0031 (§7.6, H26-01, H26-02, H26-07: tipagem sem downcast, `IFlyerLocks` obrigatório, trava fora da escrita dos arquivos).
+- Teste instável `PersonalDataSectionNamesTests.SectionsWithDistinctNamesStartNormally` (`/health` 503 antes das migrações no CI) → SPEC-0030 (§7.6).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0026`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

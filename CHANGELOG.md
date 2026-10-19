@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Perfil público de banda, casa e produtor (SPEC-0026): páginas `/banda`, `/casa` e `/produtor/{slug}` com redes, próximos shows e passados, prévia Open Graph com o flyer do próximo show, 404 "Perfil não encontrado" e 503 "Perfil indisponível"; nomes na página do show viram links; o cadastro de show sugere qualquer perfil aprovado; a agenda passa a aceitar só datas `aaaa-mm-dd`.
 - Filtros da agenda (SPEC-0025): "Esta semana", "Este mês", "Escolher data" e estilos na agenda da cidade, com URL compartilhável já filtrada no servidor, total no cabeçalho e bloco para produtores cadastrarem shows; data mal formada ou fora de 2000–2100 na API passa a dar 400 `agenda.invalid_range` em vez de 500.
 - Página do show (SPEC-0024): página pública `/{cidade}/{slug}` com flyer, data no fuso da cidade, casa, line-up, preço, ingresso e selo de adiado/cancelado; prévia Open Graph para compartilhar e botão "Compartilhar" (Web Share ou cópia do link); 404 "Show não encontrado" e 503 "Show indisponível".
 - Cadastro de show (SPEC-0023): "Meus shows", "Cadastrar show" e "Editar show" para artistas donos do perfil organizador (e o admin), com flyer, data no fuso da cidade, casa, line-up, estilos, preço e ingresso; adiar e cancelar com selo; o show entra na hora na agenda da cidade.
