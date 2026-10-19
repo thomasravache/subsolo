@@ -4,7 +4,7 @@ title: Perfil público de banda, casa e produtor
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0021, SPEC-0024]
@@ -89,7 +89,7 @@ GET /api/v1/shows?profileId={id}&period=upcoming|past:   # AllowAnonymous + defa
 Página do show: casa e bandas com perfil viram links para /casa/{slug} e /banda/{slug}
 ```
 
-**Design:** Stitch, projeto 15194126668426659178: "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a), usado também para casa e produtor. Ajustes: sem foto (o perfil não tem foto), sem "Seguir" e contagem de seguidores (spec "Seguir"), sem "Vou" nos cards até a spec "Vou".
+**Design:** Stitch, projeto 15194126668426659178: "Perfil da Banda - Podridão - Subsolo" (bdf4a66e751846d5a73dca2f606aac6a), usado também para casa e produtor. Ajustes: sem foto (o perfil não tem foto), sem "Seguir" e contagem de seguidores (spec "Seguir"), sem o botão "Vou" nos cards até a spec "Vou" (a contagem "X vão" do `Card` fica, como decidido na SPEC-0025).
 
 **Arquivos/módulos afetados:** ver `touches` no frontmatter.
 

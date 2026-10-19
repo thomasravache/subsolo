@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 8, implemented 22
+- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 7, in-progress 1, implemented 22
 - Impedimentos: **0 aberto(s)**, 18 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0026  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0026
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0026 | Perfil público de banda, casa e produtor | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0026 | Perfil público de banda, casa e produtor | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0027 | Seguir cidade, banda e casa | full/M | approved | ⛔ aguarda implementação de SPEC-0026 |  |
 | 3 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0026; saiu da onda 2: arquivos em comum com SPEC-0027 |
 | 4 | SPEC-0029 | Vou com contagem | full/S | approved | ⛔ aguarda implementação de SPEC-0027 | saiu da onda 3: arquivos em comum com SPEC-0028 |
@@ -79,7 +79,7 @@ flowchart LR
     S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::implemented
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::implemented
     S0025["SPEC-0025<br/>Agenda da cidade com filtro por data e …"]:::implemented
-    S0026["SPEC-0026<br/>Perfil público de banda, casa e produtor"]:::approved
+    S0026["SPEC-0026<br/>Perfil público de banda, casa e produtor"]:::inprogress
     S0027["SPEC-0027<br/>Seguir cidade, banda e casa"]:::approved
     S0028["SPEC-0028<br/>Páginas Apoie (Pix), privacidade e term…"]:::approved
     S0029["SPEC-0029<br/>Vou com contagem"]:::approved
@@ -147,7 +147,7 @@ flowchart LR
 | [SPEC-0023](SPEC-0023-cadastro-de-show-edicao-cancelado-e-adiado.md) | Cadastro de show, edição, cancelado e adiado | full | feature | implemented | 2026-10-17 | SPEC-0002 | SPEC-0021, SPEC-0022 | — |
 | [SPEC-0024](SPEC-0024-pagina-do-show-com-open-graph-e-compartilhar.md) | Página do show com Open Graph e compartilhar | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
 | [SPEC-0025](SPEC-0025-agenda-da-cidade-com-filtro-por-data-e-estilo.md) | Agenda da cidade com filtro por data e estilo | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0023 | — |
-| [SPEC-0026](SPEC-0026-perfil-publico-de-banda-casa-e-produtor.md) | Perfil público de banda, casa e produtor | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0021, SPEC-0024 | — |
+| [SPEC-0026](SPEC-0026-perfil-publico-de-banda-casa-e-produtor.md) | Perfil público de banda, casa e produtor | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0021, SPEC-0024 | — |
 | [SPEC-0027](SPEC-0027-seguir-cidade-banda-e-casa.md) | Seguir cidade, banda e casa | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0025, SPEC-0026 | — |
 | [SPEC-0028](SPEC-0028-paginas-apoie-pix-privacidade-e-termos.md) | Páginas Apoie (Pix), privacidade e termos | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0017 | — |
 | [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
