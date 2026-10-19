@@ -12,6 +12,8 @@ import { describe, expect, it } from "vitest";
  * - 200 com `period: {from, to}` (datas) e `total` (inteiro), além de `city` e `shows` (contrato da SPEC-0008);
  * - 400 em ProblemDetails com `agenda.invalid_range` e `agenda.invalid_styles`; 404 com `agenda.city_not_found`;
  * - o cliente `src/api/schema.d.ts` foi regenerado e `(cd web && pnpm api:check)` passa.
+ * SPEC-0026 (H25-02, revisão da SPEC-0025): o parâmetro `styles` tem descrição no OpenAPI (slugs separados por vírgula,
+ * no máximo 20), e o cliente foi regenerado com ela.
  */
 
 type Schema = {
@@ -141,6 +143,33 @@ describe("OpenAPI dos filtros da agenda fiel ao contrato §6", () => {
     expect(notFound, "404 não declarado").toBeDefined();
     expect(notFound?.content?.["application/problem+json"]).toBeDefined();
     expect(notFound?.description ?? "").toContain("code=agenda.city_not_found");
+  });
+
+  it("SPEC-0026:H25-02 o parâmetro styles tem descrição: slugs separados por vírgula, no máximo 20", () => {
+    const found = (agenda().parameters ?? []).find(
+      (parameter) => parameter.in === "query" && parameter.name === "styles",
+    ) as (Parameter & { description?: string }) | undefined;
+    expect(found, "parâmetro de consulta styles ausente").toBeDefined();
+    const description = [
+      found?.description,
+      (found?.schema as { description?: string } | undefined)?.description,
+    ]
+      .filter((text) => text !== undefined)
+      .join(" ");
+    expect(description, "styles sem descrição no OpenAPI").toMatch(
+      /v[íi]rgula/i,
+    );
+    expect(description, "a descrição não diz o máximo de 20").toMatch(/\b20\b/);
+  });
+
+  it("SPEC-0026:H25-02 o cliente src/api/schema.d.ts foi regenerado com a descrição de styles", () => {
+    const client = readFileSync(clientPath, "utf8");
+    const getOperation = /GetCityAgenda: \{([\s\S]*?)\n {2}\};/.exec(client);
+    expect(
+      getOperation,
+      "operação GetCityAgenda ausente no cliente",
+    ).not.toBeNull();
+    expect(getOperation?.[1] ?? "").toMatch(/v[íi]rgula/i);
   });
 
   it("SPEC-0025:CT-01 o cliente src/api/schema.d.ts foi regenerado com period e total", () => {
