@@ -20,7 +20,8 @@ namespace Subsolo.Events.IntegrationTests;
 /// <item>IT-03 — <c>from</c> depois de <c>to</c>, 181 dias e data mal formada → 400 <c>agenda.invalid_range</c>;
 /// slug de estilo fora do padrão → 400 <c>agenda.invalid_styles</c>. As datas mal formadas e a extrema
 /// (<c>9999-12-31</c>) valem em Development e em Production (o filtro de endpoint), e <c>to</c> mal formado aponta o
-/// campo <c>to</c> nos erros (não só <c>from</c>).</item>
+/// campo <c>to</c> nos erros (não só <c>from</c>). SPEC-0026 (H25-03): e só <c>from</c> mal formado aponta o campo
+/// <c>from</c>.</item>
 /// </list>
 /// "Hoje" é fixado com <see cref="FakeTimeProvider"/> ao meio-dia local (São Paulo) do dia corrente: assim os shows de
 /// hoje à noite ainda estão no futuro e a janela padrão (−6 h a +90 dias) vai, em datas locais, de hoje a hoje + 90.
@@ -198,6 +199,7 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
 
     [Theory]
     [Trait("Spec", "SPEC-0025:IT-03")]
+    [Trait("Spec", "SPEC-0026:H25-03")]
     [Trait("Kind", "Integration")]
     [InlineData("Development")]
     [InlineData("Production")]
@@ -219,8 +221,9 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
 
         (string Query, string? Field)[] cases =
         [
-            ($"from=2026-13-01&to={today}", null),
-            ($"from=12/11/2026&to={today}", null),
+            // SPEC-0026 (H25-03): só "from" mal formado — o erro aponta o campo from.
+            ($"from=2026-13-01&to={today}", "from"),
+            ($"from=12/11/2026&to={today}", "from"),
             ($"from={today}&to=amanha", "to"),
             ($"from={today}&to=2026-02-30", "to"),
             ("from=9999-12-31&to=9999-12-31", null),
@@ -247,7 +250,7 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
                 continue;
             }
 
-            // Só "to" mal formado: o erro aponta o campo to (não só from).
+            // Só um campo mal formado: o erro aponta esse campo (from ou to).
             if (field is not null
                 && !(document.RootElement.TryGetProperty("errors", out var errors)
                     && errors.EnumerateObject().Any(error => error.Name.StartsWith(field, StringComparison.OrdinalIgnoreCase))))

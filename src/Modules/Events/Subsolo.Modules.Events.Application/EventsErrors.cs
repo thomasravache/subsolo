@@ -59,6 +59,12 @@ public static class EventsErrors
     /// <summary>SPEC-0023 — 400: <c>period</c> fora de <c>upcoming</c> e <c>past</c> (em <c>GET /me/shows</c>).</summary>
     public const string InvalidPeriod = "events.invalid_period";
 
+    /// <summary>
+    /// SPEC-0026 — 400: consulta dos shows do perfil inválida (<c>profileId</c> ausente ou fora do formato uuid,
+    /// <c>period</c> fora de <c>upcoming</c> e <c>past</c>).
+    /// </summary>
+    public const string InvalidQuery = "events.invalid_query";
+
     /// <summary>Mensagem do campo para um slug gerado fora do formato.</summary>
     internal const string GeneratedSlugMessage = "O nome precisa ter ao menos duas letras ou dígitos para gerar o endereço.";
 
@@ -108,6 +114,10 @@ public static class EventsErrors
 
     internal static Error InvalidPeriodError() =>
         FieldError(InvalidPeriod, "Período inválido.", "period", "Use upcoming ou past.");
+
+    /// <summary>SPEC-0026 — 400 <see cref="InvalidQuery"/> no campo <paramref name="field"/>.</summary>
+    public static Error InvalidQueryError(string field, string message) =>
+        FieldError(InvalidQuery, "Consulta de shows inválida.", field, message);
 
     internal static Error ShowNotFoundError() => Error.NotFound(ShowNotFound, "Show não encontrado.");
 

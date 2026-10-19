@@ -1,5 +1,7 @@
 import type { ApiResult } from "@/api/browser";
 
+import { cityTimeParts } from "./city-time";
+
 /** SPEC-0023 — textos das telas de shows (§6 e telas "Cadastrar Show" e "Meus Shows - Produtor" do Stitch). */
 export const showMessages = {
   published: "Show publicado.",
@@ -97,21 +99,6 @@ export function flyerErrorMessage(
 
 /** Dia, mês, dia da semana e hora ("22:00") de `iso` no fuso `timeZone` da cidade. */
 export function showDateParts(iso: string, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("pt-BR", {
-    timeZone,
-    day: "2-digit",
-    month: "short",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date(iso));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    (parts.find((item) => item.type === type)?.value ?? "").replace(".", "");
-  return {
-    day: part("day"),
-    month: part("month"),
-    weekday: part("weekday"),
-    time: `${part("hour")}:${part("minute")}`,
-  };
+  const { day, month, weekday, hour, minute } = cityTimeParts(iso, timeZone);
+  return { day, month, weekday, time: `${hour}:${minute}` };
 }

@@ -71,7 +71,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * Shows do perfil
+     * @description Os shows em que o perfil é organizador, casa ou banda do line-up, com o resumo da agenda e a cidade do show: os próximos (period=upcoming, até 50, por data) ou os passados (period=past, até 20, mais recentes primeiro).
+     */
+    get: operations["ListProfileShows"];
     put?: never;
     /**
      * Cadastrar show
@@ -480,6 +484,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/profiles/{type}/{slug}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Perfil público
+     * @description O perfil aprovado do tipo (band, venue ou producer) pelo slug: nome, cidade, estilos e os links do Instagram, do Bandcamp e do Metal Archives. Sem dono nem contato.
+     */
+    get: operations["GetPublicProfile"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/profiles": {
     parameters: {
       query?: never;
@@ -512,6 +536,26 @@ export interface paths {
      * @description Pedidos de perfil e reivindicações em análise, mais antigos primeiro, com os dados do perfil, o contato ou a prova e o e-mail de quem pediu (visíveis só aqui).
      */
     get: operations["ListProfileRequests"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/profiles/lookup": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Buscar perfil para o show
+     * @description Perfis aprovados, com ou sem dono, cujo nome contém q (ao menos 2 caracteres), do tipo informado (band, venue ou producer), até 20, por nome: a casa e o organizador do cadastro de show.
+     */
+    get: operations["LookupProfiles"];
     put?: never;
     post?: never;
     delete?: never;
@@ -748,6 +792,10 @@ export interface components {
       /** @description Código estável do erro (ex.: agenda.invalid_slug, agenda.city_not_found). */
       code?: string;
     };
+    ProfileCityResponse: {
+      slug: string;
+      name: string;
+    };
     ProfileLinksRequest: {
       instagram: null | string;
       bandcamp: null | string;
@@ -757,6 +805,14 @@ export interface components {
       instagram: null | string;
       bandcamp: null | string;
       metalArchives: null | string;
+    };
+    ProfileLookupResponse: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      name: string;
+      slug: string;
+      city: components["schemas"]["ProfileCityResponse"];
     };
     ProfileRequestApproved: {
       /** Format: uuid */
@@ -782,6 +838,49 @@ export interface components {
       createdAtUtc: string;
       /** Format: uuid */
       profileId: null | string;
+    };
+    ProfileShowCityResponse: {
+      slug: string;
+      name: string;
+      timeZone: string;
+    };
+    ProfileShowResponse: {
+      city: components["schemas"]["ProfileShowCityResponse"];
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      title: string;
+      /** Format: date-time */
+      startsAt: string;
+      venueName: string;
+      lineup: string[];
+      styles: string[];
+      status: components["schemas"]["ShowStatus"];
+      flyerThumbUrl: null | string;
+      /** Format: int32 */
+      attendingCount: number;
+    };
+    ProfileShowsBody: {
+      shows: components["schemas"]["ProfileShowResponse"][];
+    };
+    ProfileStyleResponse: {
+      slug: string;
+      name: string;
+    };
+    PublicProfileLinksResponse: {
+      instagram?: null | string;
+      bandcamp?: null | string;
+      metalArchives?: null | string;
+    };
+    PublicProfileResponse: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      name: string;
+      slug: string;
+      city: components["schemas"]["ProfileCityResponse"];
+      styles: components["schemas"]["ProfileStyleResponse"][];
+      links: components["schemas"]["PublicProfileLinksResponse"];
     };
     RejectProfileRequestRequest: {
       reason: string;
@@ -1169,6 +1268,47 @@ export interface operations {
       };
       /** @description Service Unavailable (code=service.unavailable) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ListProfileShows: {
+    parameters: {
+      query?: {
+        profileId?: string;
+        period?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileShowsBody"];
+        };
+      };
+      /** @description Bad Request (code=events.invalid_query) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
         headers: {
           [name: string]: unknown;
         };
@@ -1797,6 +1937,7 @@ export interface operations {
       query?: {
         from?: string;
         to?: string;
+        /** @description Slugs de estilo separados por vírgula (no máximo 20), ex.: death,grind. */
         styles?: string;
       };
       header?: never;
@@ -2583,6 +2724,47 @@ export interface operations {
       };
     };
   };
+  GetPublicProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        type: string;
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublicProfileResponse"];
+        };
+      };
+      /** @description Not Found (code=profiles.not_found) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   ListMyProfiles: {
     parameters: {
       query?: never;
@@ -2646,6 +2828,74 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ProfileRequestQueueItem"][];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Forbidden (code=auth.forbidden) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  LookupProfiles: {
+    parameters: {
+      query?: {
+        q?: string;
+        type?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileLookupResponse"][];
+        };
+      };
+      /** @description Bad Request (code=profiles.invalid_query) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
       /** @description Unauthorized (code=auth.required) */

@@ -326,3 +326,162 @@ describe("proxy e a página do show", () => {
     },
   );
 });
+
+/**
+ * SPEC-0026 — as páginas dos perfis `/banda/{slug}`, `/casa/{slug}` e `/produtor/{slug}` no proxy (ADR-0016):
+ * - H24-05 (revisão da SPEC-0024): o proxy tem uma lista explícita de primeiros segmentos reservados (`banda`, `casa`,
+ *   `produtor`, `conta`, `admin`, `entrar`): nenhum caminho de dois segmentos que comece por eles é tratado como show
+ *   (a API do detalhe do show não é consultada);
+ * - IT-04 (no nível do proxy): o status vem de `GET /api/v1/profiles/{type}/{slug}` (`banda` → `band`, `casa` →
+ *   `venue`, `produtor` → `producer`): perfil encontrado → segue (200); inexistente, pendente, recusado ou do outro tipo
+ *   (`/casa/{slug-de-banda}`) → 404 real;
+ * - IT-05 (no nível do proxy): com o endpoint de shows fora do ar, a página do perfil continua 200 (o proxy decide só
+ *   pelo perfil); com a API de perfis fora do ar (conexão recusada ou 5xx), 503 (Emenda v2, d).
+ */
+describe("proxy e as páginas dos perfis", () => {
+  const profile = {
+    id: "0199f0c1-6a4d-7e7f-9b21-8d5c0e9a1f42",
+    type: "band",
+    name: "Podridão",
+    slug: "podridao",
+    city: { slug: "curitiba", name: "Curitiba" },
+    styles: [],
+    links: {},
+  };
+
+  function urlOf(input: Parameters<typeof fetch>[0]): URL {
+    return new URL(
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url,
+    );
+  }
+
+  function problem(status: number, code: string): Response {
+    return Response.json(
+      { status, code },
+      { status, headers: { "content-type": "application/problem+json" } },
+    );
+  }
+
+  /**
+   * Só a banda `podridao` existe (`GET /api/v1/profiles/band/podridao`); os outros perfis dão 404; o detalhe de show e a
+   * lista de shows do perfil respondem 500 (o proxy não deveria precisar deles); `/me` responde anônimo.
+   */
+  function stubApi() {
+    vi.stubEnv("API_URL", "http://api.test");
+    return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const { pathname } = urlOf(input);
+      if (pathname === "/api/v1/profiles/band/podridao") {
+        return Response.json(profile);
+      }
+      if (pathname.startsWith("/api/v1/profiles/")) {
+        return problem(404, "profiles.not_found");
+      }
+      if (pathname === "/api/v1/me") {
+        return problem(401, "auth.required");
+      }
+      return new Response(null, { status: 500 });
+    });
+  }
+
+  function showDetailCalls(fetch: ReturnType<typeof stubApi>): string[] {
+    return fetch.mock.calls
+      .map(([input]) => urlOf(input).pathname)
+      .filter((pathname) =>
+        /^\/api\/v1\/cities\/[^/]+\/shows\//.test(pathname),
+      );
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it.each([
+    "/banda/podridao",
+    "/casa/porao-do-rock",
+    "/produtor/peste-producoes",
+    "/conta/perfis",
+    "/admin/fila",
+    "/entrar/confirmar",
+  ])(
+    "SPEC-0026:H24-05 %s não é tratado como show (primeiro segmento reservado)",
+    async (path) => {
+      const fetch = stubApi();
+
+      await proxy(new NextRequest(`http://localhost${path}`));
+
+      expect(showDetailCalls(fetch), `${path} consultou a API do show`).toEqual(
+        [],
+      );
+    },
+  );
+
+  it("SPEC-0026:IT-04 perfil encontrado segue para a página (200), pela rota do perfil", async () => {
+    const fetch = stubApi();
+
+    const response = await proxy(
+      new NextRequest("http://localhost/banda/podridao"),
+    );
+
+    expect(fetch.mock.calls.map(([input]) => urlOf(input).pathname)).toContain(
+      "/api/v1/profiles/band/podridao",
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
+  it.each([
+    ["/banda/inexistente", "/api/v1/profiles/band/inexistente"],
+    ["/casa/podridao", "/api/v1/profiles/venue/podridao"],
+    ["/produtor/podridao", "/api/v1/profiles/producer/podridao"],
+  ])("SPEC-0026:IT-04 %s dá 404 real", async (path, route) => {
+    const fetch = stubApi();
+
+    const response = await proxy(new NextRequest(`http://localhost${path}`));
+
+    expect(fetch.mock.calls.map(([input]) => urlOf(input).pathname)).toContain(
+      route,
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("SPEC-0026:IT-05 API de perfis fora do ar (conexão recusada) vira 503", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const response = await proxy(
+      new NextRequest("http://localhost/banda/podridao"),
+    );
+
+    expect(response.status).toBe(503);
+  });
+
+  it("SPEC-0026:IT-05 API de perfis com erro 5xx vira 503", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+      problem(503, "service.unavailable"),
+    );
+
+    const response = await proxy(
+      new NextRequest("http://localhost/casa/porao-do-rock"),
+    );
+
+    expect(response.status).toBe(503);
+  });
+
+  it("SPEC-0026:IT-05 com a API de shows fora do ar, a página do perfil continua 200", async () => {
+    stubApi();
+
+    const response = await proxy(
+      new NextRequest("http://localhost/banda/podridao"),
+    );
+
+    expect(response.status).toBe(200);
+  });
+});

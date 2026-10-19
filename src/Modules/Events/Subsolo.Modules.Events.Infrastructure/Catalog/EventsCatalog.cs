@@ -3,9 +3,34 @@ using Subsolo.Modules.Events.IntegrationEvents;
 
 namespace Subsolo.Modules.Events.Infrastructure.Catalog;
 
-/// <summary>SPEC-0021 — implementação de <see cref="IEventsCatalog"/> sobre as cidades e estilos do schema <c>events</c>.</summary>
-internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog
+/// <summary>
+/// SPEC-0021 — implementação de <see cref="IEventsCatalog"/> sobre as cidades e estilos do schema <c>events</c>. SPEC-0026:
+/// e de <see cref="IEventsCatalogNames"/> (os nomes).
+/// </summary>
+internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEventsCatalogNames
 {
+    public async Task<CatalogNames> GetNamesAsync(
+        IReadOnlyCollection<string> citySlugs,
+        IReadOnlyCollection<string> styleSlugs,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(citySlugs);
+        ArgumentNullException.ThrowIfNull(styleSlugs);
+        var cities = citySlugs.Distinct(StringComparer.Ordinal).ToList();
+        var styles = styleSlugs.Distinct(StringComparer.Ordinal).ToList();
+        var cityNames = cities.Count == 0
+            ? new Dictionary<string, string>(StringComparer.Ordinal)
+            : await db.Cities.AsNoTracking()
+                .Where(city => cities.Contains(city.Slug))
+                .ToDictionaryAsync(city => city.Slug, city => city.Name, StringComparer.Ordinal, ct);
+        var styleNames = styles.Count == 0
+            ? new Dictionary<string, string>(StringComparer.Ordinal)
+            : await db.Styles.AsNoTracking()
+                .Where(style => styles.Contains(style.Slug))
+                .ToDictionaryAsync(style => style.Slug, style => style.Name, StringComparer.Ordinal, ct);
+        return new CatalogNames(cityNames, styleNames);
+    }
+
     public Task<bool> CityExistsAsync(string slug, CancellationToken ct) =>
         db.Cities.AsNoTracking().AnyAsync(city => city.Slug == slug, ct);
 

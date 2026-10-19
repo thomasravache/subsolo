@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using FluentValidation;
@@ -49,7 +50,7 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
         [RegularExpression(GetCityAgendaQuery.SlugPattern)] string slug,
         DateOnly? from,
         DateOnly? to,
-        string? styles,
+        [Description("Slugs de estilo separados por vírgula (no máximo 20), ex.: death,grind.")] string? styles,
         IValidator<GetCityAgendaQuery> validator,
         IQueryHandler<GetCityAgendaQuery, CityAgendaResponse> handler,
         CancellationToken cancellationToken)
@@ -76,6 +77,9 @@ internal sealed class GetCityAgendaEndpoint : IEndpoint
 /// </summary>
 internal static class AgendaDateBinding
 {
+    /// <summary>O formato das datas da agenda.</summary>
+    private const string DateFormat = "yyyy-MM-dd";
+
     /// <summary>O ProblemDetails de data mal formada, com os campos (<c>From</c>, <c>To</c>) que não são datas.</summary>
     public static IResult Problem(HttpRequest request)
     {
@@ -89,18 +93,27 @@ internal static class AgendaDateBinding
         return ApiResults.Problem(Result.Failure(AgendaErrors.MalformedDateError(fields)));
     }
 
-    /// <summary>Valor presente que o Minimal API não lê como <see cref="DateOnly"/> (mesma leitura: cultura invariante).</summary>
+    /// <summary>
+    /// Valor presente que não é uma data <c>aaaa-mm-dd</c> estrita. SPEC-0026 (H25-03): a leitura do Minimal API (cultura
+    /// invariante) aceitaria também <c>12/11/2026</c> (mês/dia); aqui só vale o formato do contrato.
+    /// </summary>
     private static bool IsMalformed(StringValues values) =>
         !StringValues.IsNullOrEmpty(values)
-        && !DateOnly.TryParse(values.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        && !DateOnly.TryParseExact(values.ToString(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
 
-    /// <summary>Filtro do endpoint: com a leitura dos parâmetros já reprovada (status 400), responde o código da agenda.</summary>
+    /// <summary>
+    /// Filtro do endpoint: com a leitura dos parâmetros já reprovada (status 400) ou com uma data fora do formato estrito
+    /// (lida pelo Minimal API em outro formato), responde o código da agenda.
+    /// </summary>
     public static async ValueTask<object?> RejectMalformedDatesAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(next);
+        var request = context.HttpContext.Request;
         return context.HttpContext.Response.StatusCode == StatusCodes.Status400BadRequest
-            ? Problem(context.HttpContext.Request)
+               || IsMalformed(request.Query["from"])
+               || IsMalformed(request.Query["to"])
+            ? Problem(request)
             : await next(context);
     }
 }

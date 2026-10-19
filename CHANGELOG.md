@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Filtros da agenda (SPEC-0025): "Esta semana", "Este mês", "Escolher data" e estilos na agenda da cidade, com URL compartilhável já filtrada no servidor, total no cabeçalho e bloco para produtores cadastrarem shows; data mal formada ou fora de 2000–2100 na API passa a dar 400 `agenda.invalid_range` em vez de 500.
 - Página do show (SPEC-0024): página pública `/{cidade}/{slug}` com flyer, data no fuso da cidade, casa, line-up, preço, ingresso e selo de adiado/cancelado; prévia Open Graph para compartilhar e botão "Compartilhar" (Web Share ou cópia do link); 404 "Show não encontrado" e 503 "Show indisponível".
 - Cadastro de show (SPEC-0023): "Meus shows", "Cadastrar show" e "Editar show" para artistas donos do perfil organizador (e o admin), com flyer, data no fuso da cidade, casa, line-up, estilos, preço e ingresso; adiar e cancelar com selo; o show entra na hora na agenda da cidade.
 - Flyers (SPEC-0022): envio de flyer por artista ou admin (`POST /api/v1/flyers`) com tipo detectado pelo conteúdo, limite de 10 MiB e 40 megapixels, metadados removidos e três variantes (WebP e JPEG para Open Graph); servidos em `/media/flyers` com cache imutável pelo Caddy; flyers não usados somem depois de 24 h.

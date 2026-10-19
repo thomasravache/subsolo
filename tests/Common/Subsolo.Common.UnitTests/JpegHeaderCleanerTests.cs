@@ -90,4 +90,29 @@ public sealed class JpegHeaderCleanerTests
 
         cleaned.ShouldBe(Jpeg(StartOfImage, App0, StartOfScan, entropy, EndOfImage));
     }
+
+    /// <summary>
+    /// SPEC-0026 H24-07 (revisão da SPEC-0024) — quando tira bytes soltos, o limpador devolve um único buffer, já do
+    /// tamanho certo: nada de um buffer do tamanho do original seguido da cópia final (o dobro da memória num flyer de
+    /// 10 MB).
+    /// </summary>
+    [Fact]
+    [Trait("Spec", "SPEC-0026:H24-07")]
+    public void RemovingBytesAllocatesASingleBufferOfTheRightSize()
+    {
+        var entropy = Entropy(1024 * 1024);
+        var jpeg = Jpeg(StartOfImage, App0, [0x00, 0x00], StartOfScan, entropy, EndOfImage);
+        // Aquecimento (JIT) fora da medida.
+        JpegHeaderCleaner.WithoutExtraneousHeaderBytes(Jpeg(StartOfImage, App0, [0x00], StartOfScan, Entropy(16), EndOfImage));
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var cleaned = JpegHeaderCleaner.WithoutExtraneousHeaderBytes(jpeg);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        cleaned.Length.ShouldBe(jpeg.Length - 2, "o buffer devolvido não tem o tamanho do JPEG sem os 2 bytes soltos");
+        cleaned.ShouldBe(Jpeg(StartOfImage, App0, StartOfScan, entropy, EndOfImage));
+        allocated.ShouldBeLessThan(
+            jpeg.Length + (64 * 1024),
+            $"o limpador alocou {allocated} bytes para tirar 2 bytes de um JPEG de {jpeg.Length} bytes (esperado um só buffer do tamanho final)");
+    }
 }

@@ -9,6 +9,7 @@ import { ShareIcon } from "./show-icons";
 /**
  * SPEC-0024 — "Compartilhar" da página do show: Web Share API (título e URL) quando houver, como no celular; senão copia
  * o link e anuncia "Link copiado." numa região `aria-live` (sempre no DOM, para o leitor de tela ouvir a mudança).
+ * SPEC-0026 (H24-03): se o compartilhamento falhar por outro motivo que não o cancelamento, também copia o link.
  */
 export interface ShareButtonProps {
   /** Título do show (vai no compartilhamento). */
@@ -25,10 +26,14 @@ export function ShareButton({ title, url }: ShareButtonProps) {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ title, url });
-      } catch {
-        // Compartilhamento cancelado por quem tocou: nada a anunciar.
+        return;
+      } catch (error) {
+        // SPEC-0026 (H24-03): só o cancelamento por quem tocou fica em silêncio; outro erro (compartilhamento negado,
+        // dados recusados) cai na cópia do link.
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
       }
-      return;
     }
     try {
       await navigator.clipboard.writeText(url);
