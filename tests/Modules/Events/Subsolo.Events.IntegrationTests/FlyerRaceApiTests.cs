@@ -13,6 +13,9 @@ namespace Subsolo.Events.IntegrationTests;
 /// <item>H23-02 — a limpeza apagou o flyer entre o <c>ExistsAsync</c> e o <c>SaveChanges</c> do cadastro ou da edição:
 /// 400 <c>events.flyer_not_found</c> (nunca 500) e nada gravado; o reenvio do mesmo arquivo com a linha apagada depois da
 /// leitura (o <c>Renew</c>) reprocessa e grava de novo, em vez de 500.</item>
+/// <item>SPEC-0026 H24-08 — a variante em que a limpeza apagou só a linha (os arquivos continuam no disco): o reenvio
+/// passa pelo <c>Renew</c> da linha que sumiu (erro de concorrência no <c>SaveChanges</c>) e grava a linha de novo, com
+/// as variantes no lugar, em vez de 500.</item>
 /// </list>
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -141,5 +144,39 @@ public sealed class FlyerRaceApiTests(PostgresFixture postgres)
         {
             File.Exists(Path.Combine(api.MediaRoot, relativePath)).ShouldBeTrue($"o reenvio não regravou o {variant}");
         }
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0026:H24-08")]
+    [Trait("Kind", "Integration")]
+    public async Task UploadingAgainWhileTheCleanupDeletesOnlyTheRowWritesTheRowAgainInsteadOf500()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (api, race) = await FactoryAsync(ct);
+        await using var _ = api;
+        var (admin, _) = await api.SignedInAsync(FlyersApiFactory.AdminEmail, ct);
+        using var __ = admin;
+        var image = TestImages.Jpeg(600, 900, seed: 76);
+        FlyerUploaded first;
+        using (var response = await admin.UploadAsync(image, ct))
+        {
+            first = await FlyerUploaded.ReadAsync(response, HttpStatusCode.Created, ct);
+        }
+
+        race.Arm(first.FlyerId, rowOnly: true);
+        using var again = await admin.UploadAsync(image, ct);
+        var body = await again.Content.ReadAsStringAsync(ct);
+
+        race.Fired.ShouldBe(1, "a limpeza simulada não rodou (o envio não leu o flyer existente pelo IFlyerRepository)");
+        foreach (var (variant, _, relativePath) in first.Variants)
+        {
+            File.Exists(Path.Combine(api.MediaRoot, relativePath)).ShouldBeTrue($"o {variant} sumiu: a corrida devia apagar só a linha");
+        }
+
+        again.StatusCode.ShouldBeOneOf(
+            [HttpStatusCode.OK, HttpStatusCode.Created],
+            $"o reenvio com só a linha apagada no meio deu {(int)again.StatusCode}: {FlyersApiClient.Excerpt(body)}");
+        (await FlyersDatabase.FlyersAsync(api.ConnectionString, ct)).Select(row => row.Id)
+            .ShouldContain(first.FlyerId, "o reenvio não gravou de novo a linha do flyer apagada no meio");
     }
 }

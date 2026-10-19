@@ -9,16 +9,23 @@ namespace Subsolo.Events.IntegrationTests.Infrastructure;
 /// SPEC-0024 (H23-01, H23-02) — a limpeza dos flyers chegando no pior momento: quando o flyer armado
 /// (<see cref="Arm"/>) é conferido pelo cadastro (<see cref="IFlyerCatalog.ExistsAsync"/>) ou lido pelo envio
 /// (<see cref="IFlyerRepository.GetAsync"/>), a linha dele é apagada direto no banco e os arquivos do <c>Media:Root</c>
-/// somem — o que a limpeza faria entre a leitura e o <c>SaveChanges</c>. Dispara uma vez por armação.
+/// somem — o que a limpeza faria entre a leitura e o <c>SaveChanges</c>. Dispara uma vez por armação. SPEC-0026 (H24-08):
+/// armado com <c>rowOnly</c>, apaga só a linha e deixa os arquivos (a limpeza parada entre os dois passos).
 /// </summary>
 internal sealed class CleanupRace(string connectionString, Func<string> mediaRoot)
 {
     private string? _armed;
 
+    private bool _rowOnly;
+
     /// <summary>Quantas vezes a limpeza simulada rodou.</summary>
     public int Fired { get; private set; }
 
-    public void Arm(string flyerId) => _armed = flyerId;
+    public void Arm(string flyerId, bool rowOnly = false)
+    {
+        _armed = flyerId;
+        _rowOnly = rowOnly;
+    }
 
     /// <summary>Troca o <see cref="IFlyerCatalog"/> e o <see cref="IFlyerRepository"/> registrados pelos que disparam a corrida.</summary>
     public void Install(IServiceCollection services)
@@ -42,6 +49,11 @@ internal sealed class CleanupRace(string connectionString, Func<string> mediaRoo
             await using var delete = new NpgsqlCommand("delete from events.flyers where id = @id", connection);
             delete.Parameters.AddWithValue("id", flyerId);
             await delete.ExecuteNonQueryAsync(ct);
+        }
+
+        if (_rowOnly)
+        {
+            return;
         }
 
         foreach (var path in Flyer.VariantPaths(flyerId))
