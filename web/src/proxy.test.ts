@@ -336,7 +336,7 @@ describe("proxy e a página do show", () => {
  *   `venue`, `produtor` → `producer`): perfil encontrado → segue (200); inexistente, pendente, recusado ou do outro tipo
  *   (`/casa/{slug-de-banda}`) → 404 real;
  * - IT-05 (no nível do proxy): com o endpoint de shows fora do ar, a página do perfil continua 200 (o proxy decide só
- *   pelo perfil).
+ *   pelo perfil); com a API de perfis fora do ar (conexão recusada ou 5xx), 503 (Emenda v2, d).
  */
 describe("proxy e as páginas dos perfis", () => {
   const profile = {
@@ -447,6 +447,32 @@ describe("proxy e as páginas dos perfis", () => {
       route,
     );
     expect(response.status).toBe(404);
+  });
+
+  it("SPEC-0026:IT-05 API de perfis fora do ar (conexão recusada) vira 503", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const response = await proxy(
+      new NextRequest("http://localhost/banda/podridao"),
+    );
+
+    expect(response.status).toBe(503);
+  });
+
+  it("SPEC-0026:IT-05 API de perfis com erro 5xx vira 503", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+      problem(503, "service.unavailable"),
+    );
+
+    const response = await proxy(
+      new NextRequest("http://localhost/casa/porao-do-rock"),
+    );
+
+    expect(response.status).toBe(503);
   });
 
   it("SPEC-0026:IT-05 com a API de shows fora do ar, a página do perfil continua 200", async () => {

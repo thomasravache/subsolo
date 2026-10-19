@@ -15,7 +15,7 @@ namespace Subsolo.Events.IntegrationTests;
 /// <item>o perfil entra como organizador, como casa (<c>venue.profileId</c>) e, para a banda, como banda do line-up; o
 /// show de outra casa não entra;</item>
 /// <item><c>upcoming</c>: até 50, por data crescente; <c>past</c>: até 20, mais recentes primeiro; cada item com o resumo
-/// de show da agenda (SPEC-0008);</item>
+/// de show da agenda (SPEC-0008) e, pela Emenda v2 (b), a cidade do show (<c>city: {slug, name, timeZone}</c>);</item>
 /// <item>p95 de 20 chamadas ≤ 150 ms em <c>upcoming</c>, em <c>past</c> e no perfil público
 /// (<c>GET /api/v1/profiles/venue/{slug}</c>, o outro endpoint da página — Mapa de Comportamentos, "Desempenho");</item>
 /// <item><c>period</c> inválido, <c>profileId</c> ausente ou mal formado → 400 <c>events.invalid_query</c>.</item>
@@ -90,6 +90,15 @@ public sealed class ProfileShowsApiTests(PostgresFixture postgres)
         foreach (var field in SummaryFields)
         {
             upcoming[0].TryGetProperty(field, out var __).ShouldBeTrue($"item sem {field} (resumo da agenda, SPEC-0008): {upcoming[0]}");
+        }
+
+        // Emenda v2 (b): cada item traz a cidade do show (link /{cidade}/{show} e fuso).
+        foreach (var show in upcoming.Take(3))
+        {
+            show.TryGetProperty("city", out var city).ShouldBeTrue($"item sem city (Emenda v2): {show}");
+            city.GetProperty("slug").GetString().ShouldBe(ShowsApi.City);
+            city.GetProperty("name").GetString().ShouldBe("Cidade Exemplo");
+            city.GetProperty("timeZone").GetString().ShouldBe("America/Sao_Paulo");
         }
 
         upcoming[0].GetProperty("venueName").GetString().ShouldBe("Porão do Rock");

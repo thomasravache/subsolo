@@ -1,5 +1,5 @@
 import { expect, test } from "../fixtures";
-import { appURL } from "../agenda/environment";
+import { appURL, externalApp, webWithoutApiURL } from "../agenda/environment";
 import { meta, titleOf } from "../shows/show-page";
 import { publishProfiles } from "./perfil-publico";
 
@@ -10,6 +10,8 @@ import { publishProfiles } from "./perfil-publico";
  *   HTML com `rel="noopener noreferrer"`; a casa sem estilos tem "Casa de {cidade}"; o perfil sem shows não tem imagem
  *   de flyer;
  * - IT-04: `/casa/{slug-de-banda}` (tipo errado) e `/banda/inexistente` → 404 real com "Perfil não encontrado".
+ * - IT-05 (Emenda v2, d): o Next.js de produção sem API (o mesmo do IT-04 da SPEC-0008) responde a página do perfil com
+ *   503 e a página "Perfil indisponível", com a mensagem em `role="alert"` (nunca "Perfil não encontrado").
  */
 test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
@@ -80,6 +82,33 @@ test.describe("página do perfil sem JavaScript", () => {
         (await response.text()).includes("Perfil não encontrado"),
         `GET ${path} sem "Perfil não encontrado"`,
       ).toBe(true);
+    }
+  });
+
+  test("SPEC-0026:IT-05 sem a API de perfis, a página do perfil responde 503 com Perfil indisponível", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      externalApp,
+      "com BASE_URL o webServer não sobe o Next.js sem API",
+    );
+    test.skip(
+      testInfo.project.name !== "desktop-chrome",
+      "verificação do servidor: basta um projeto",
+    );
+
+    for (const path of ["/banda/podridao", "/casa/porao-do-rock"]) {
+      const response = await page.goto(`${webWithoutApiURL}${path}`);
+
+      expect(response?.status(), `GET ${path} sem API`).toBe(503);
+      await expect(
+        page.getByRole("heading", {
+          level: 1,
+          name: /perfil indispon[íi]vel/i,
+        }),
+      ).toBeVisible();
+      await expect(page.getByRole("alert").first()).toBeVisible();
+      await expect(page.getByText("Perfil não encontrado")).toHaveCount(0);
     }
   });
 });

@@ -11,7 +11,10 @@ import { describe, expect, it } from "vitest";
  * - `GET /api/v1/profiles/{type}/{slug}`: 200 `{id, type, name, slug, city: {slug, name}, styles: [{slug, name}],
  *   links: {instagram?, bandcamp?, metalArchives?}}`; 404 em ProblemDetails com `profiles.not_found`;
  * - `GET /api/v1/shows?profileId=&period=`: `profileId` (uuid) e `period` na consulta; 200 `{shows: ShowSummary[]}` (o
- *   resumo da agenda, SPEC-0008); 400 em ProblemDetails com `events.invalid_query`;
+ *   resumo da agenda, SPEC-0008, mais `city: {slug, name, timeZone}` — Emenda v2, b); 400 em ProblemDetails com
+ *   `events.invalid_query`;
+ * - Emenda v2 (a, H23-08): `GET /api/v1/profiles/lookup?q=&type=`: `q` e `type` na consulta; 200
+ *   `[{id, type, name, slug, city: {slug, name}}]`; 400 em ProblemDetails com `profiles.invalid_query`;
  * - o cliente `src/api/schema.d.ts` foi regenerado com as duas rotas e `(cd web && pnpm api:check)` passa.
  */
 type Schema = {
@@ -54,6 +57,7 @@ const document = JSON.parse(
 
 const profilePath = "/api/v1/profiles/{type}/{slug}";
 const showsPath = "/api/v1/shows";
+const lookupPath = "/api/v1/profiles/lookup";
 
 const summaryFields = [
   "attendingCount",
@@ -176,19 +180,50 @@ describe("OpenAPI do perfil público fiel ao contrato §6", () => {
     expect(propertiesOf(body)).toEqual(["shows"]);
     const shows = property(body, "shows");
     expect([shows.type].flat()).toContain("array");
-    // O resumo da agenda (SPEC-0008); campos a mais (ex.: a cidade de cada show) não quebram o contrato.
+    // O resumo da agenda (SPEC-0008) mais a cidade do show (Emenda v2, b).
     expect(propertiesOf(shows.items)).toEqual(
-      expect.arrayContaining(summaryFields),
+      [...summaryFields, "city"].sort(),
     );
+    expect(propertiesOf(property(nonNull(shows.items), "city"))).toEqual([
+      "name",
+      "slug",
+      "timeZone",
+    ]);
   });
 
   it("SPEC-0026:CT-01 os shows do perfil declaram 400 com events.invalid_query em ProblemDetails", () => {
     expectProblem(showsPath, "400", "events.invalid_query");
   });
 
-  it("SPEC-0026:CT-01 o cliente src/api/schema.d.ts foi regenerado com as duas rotas", () => {
+  it("SPEC-0026:CT-01 GET /api/v1/profiles/lookup aceita q e type e devolve [{id, type, name, slug, city}]", () => {
+    expect(
+      parameters(lookupPath, "query")
+        .map((parameter) => parameter.name)
+        .sort(),
+    ).toEqual(["q", "type"]);
+    const body = okBody(lookupPath);
+    expect([body.type].flat()).toContain("array");
+    expect(propertiesOf(body.items)).toEqual([
+      "city",
+      "id",
+      "name",
+      "slug",
+      "type",
+    ]);
+    expect(propertiesOf(property(nonNull(body.items), "city"))).toEqual([
+      "name",
+      "slug",
+    ]);
+  });
+
+  it("SPEC-0026:CT-01 a busca de perfis declara 400 com profiles.invalid_query em ProblemDetails", () => {
+    expectProblem(lookupPath, "400", "profiles.invalid_query");
+  });
+
+  it("SPEC-0026:CT-01 o cliente src/api/schema.d.ts foi regenerado com as rotas novas", () => {
     const client = readFileSync(clientPath, "utf8");
     expect(client).toContain(`"${profilePath}": {`);
+    expect(client).toContain(`"${lookupPath}": {`);
     const start = client.indexOf(`"${showsPath}": {`);
     expect(start, `${showsPath} ausente no cliente`).toBeGreaterThanOrEqual(0);
     const next = client.indexOf('\n  "/', start + 1);
