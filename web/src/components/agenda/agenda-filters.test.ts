@@ -117,6 +117,7 @@ describe("períodos da agenda", () => {
     ["data inexistente", { de: "2026-02-30", ate: "2026-03-02" }],
     ["mês 13", { de: "2026-13-01", ate: "2026-13-05" }],
     ["formato brasileiro", { de: "12/11/2026", ate: "15/11/2026" }],
+    ["data extrema", { de: "9999-12-31", ate: "9999-12-31" }],
   ])(
     "SPEC-0025:UT-01 intervalo recusado (%s) é ignorado: agenda padrão, sem from/to",
     (_, params) => {

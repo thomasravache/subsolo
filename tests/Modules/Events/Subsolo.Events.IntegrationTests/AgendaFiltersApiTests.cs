@@ -18,7 +18,9 @@ namespace Subsolo.Events.IntegrationTests;
 /// <item>IT-02 — 300 shows com estilos variados: <c>styles=death,grind</c> com um período traz só os com algum desses
 /// estilos no período, em p95 ≤ 300 ms; <c>styles=xpto</c> não quebra (estilo inexistente ignorado);</item>
 /// <item>IT-03 — <c>from</c> depois de <c>to</c>, 181 dias e data mal formada → 400 <c>agenda.invalid_range</c>;
-/// slug de estilo fora do padrão → 400 <c>agenda.invalid_styles</c>.</item>
+/// slug de estilo fora do padrão → 400 <c>agenda.invalid_styles</c>. As datas mal formadas e a extrema
+/// (<c>9999-12-31</c>) valem em Development e em Production (o filtro de endpoint), e <c>to</c> mal formado aponta o
+/// campo <c>to</c> nos erros (não só <c>from</c>).</item>
 /// </list>
 /// "Hoje" é fixado com <see cref="FakeTimeProvider"/> ao meio-dia local (São Paulo) do dia corrente: assim os shows de
 /// hoje à noite ainda estão no futuro e a janela padrão (−6 h a +90 dias) vai, em datas locais, de hoje a hoje + 90.
@@ -170,9 +172,6 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
         [
             ($"from={Iso(today.AddDays(10))}&to={Iso(today.AddDays(5))}", "agenda.invalid_range"),
             ($"from={Iso(today)}&to={Iso(today.AddDays(181))}", "agenda.invalid_range"),
-            ($"from=2026-13-01&to={Iso(today)}", "agenda.invalid_range"),
-            ($"from=12/11/2026&to={Iso(today)}", "agenda.invalid_range"),
-            ($"from={Iso(today)}&to=amanha", "agenda.invalid_range"),
             ("styles=death,Grind_X", "agenda.invalid_styles"),
             ("styles=%3Cscript%3E", "agenda.invalid_styles"),
             ($"from={Iso(today)}&to={Iso(today.AddDays(7))}&styles=death%20metal", "agenda.invalid_styles"),
@@ -195,6 +194,69 @@ public sealed class AgendaFiltersApiTests(PostgresFixture postgres)
             using var response = await client.GetAsync($"{ShowsApi.Agenda(ShowsApi.City)}?{query}", ct);
             response.StatusCode.ShouldBe(HttpStatusCode.OK, $"?{query}: {await response.Content.ReadAsStringAsync(ct)}");
         }
+    }
+
+    [Theory]
+    [Trait("Spec", "SPEC-0025:IT-03")]
+    [Trait("Kind", "Integration")]
+    [InlineData("Development")]
+    [InlineData("Production")]
+    public async Task MalformedAndExtremeDatesAreRejectedWithInvalidRangeInEachEnvironment(string environment)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var database = await FlyersApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct);
+        // Development aplica as migrações e semeia a cidade de exemplo; Production usa o mesmo database já pronto.
+        await using (var development = new FlyersApiFactory(database))
+        {
+            using var warmUp = development.CreateFlyersClient();
+            using var ready = await warmUp.GetAsync(ShowsApi.Agenda(ShowsApi.City), ct);
+            ready.StatusCode.ShouldBe(HttpStatusCode.OK, await ready.Content.ReadAsStringAsync(ct));
+        }
+
+        await using var api = new FlyersApiFactory(database, environment: environment);
+        using var client = api.CreateFlyersClient();
+        var today = Iso(TodayInSaoPaulo());
+
+        (string Query, string? Field)[] cases =
+        [
+            ($"from=2026-13-01&to={today}", null),
+            ($"from=12/11/2026&to={today}", null),
+            ($"from={today}&to=amanha", "to"),
+            ($"from={today}&to=2026-02-30", "to"),
+            ("from=9999-12-31&to=9999-12-31", null),
+        ];
+
+        // Cada caso é conferido e as falhas vêm juntas (uma não esconde a outra).
+        var failures = new List<string>();
+        foreach (var (query, field) in cases)
+        {
+            using var response = await client.GetAsync($"{ShowsApi.Agenda(ShowsApi.City)}?{query}", ct);
+            var body = await response.Content.ReadAsStringAsync(ct);
+            if (response.StatusCode != HttpStatusCode.BadRequest
+                || response.Content.Headers.ContentType?.MediaType != "application/problem+json")
+            {
+                failures.Add($"?{query}: {(int)response.StatusCode} {response.Content.Headers.ContentType?.MediaType} {body}");
+                continue;
+            }
+
+            using var document = JsonDocument.Parse(body);
+            var code = document.RootElement.TryGetProperty("code", out var actual) ? actual.GetString() : null;
+            if (code != "agenda.invalid_range")
+            {
+                failures.Add($"?{query}: code {code ?? "(nenhum)"}: {body}");
+                continue;
+            }
+
+            // Só "to" mal formado: o erro aponta o campo to (não só from).
+            if (field is not null
+                && !(document.RootElement.TryGetProperty("errors", out var errors)
+                    && errors.EnumerateObject().Any(error => error.Name.StartsWith(field, StringComparison.OrdinalIgnoreCase))))
+            {
+                failures.Add($"?{query}: errors sem o campo {field}: {body}");
+            }
+        }
+
+        failures.ShouldBeEmpty($"{environment}:\n{string.Join("\n", failures)}");
     }
 
     private static async Task<AgendaSetup> SetupAsync(FlyersApiFactory api, CancellationToken ct)
