@@ -19,12 +19,6 @@ internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProv
     /// <summary>Quanto à frente a janela padrão vai.</summary>
     public static readonly TimeSpan DefaultLookAhead = TimeSpan.FromDays(90);
 
-    /// <summary>SPEC-0008 — sem leitura de shows (agenda sempre vazia), para os testes do contrato da agenda.</summary>
-    public GetCityAgendaQueryHandler(ICityRepository cities, TimeProvider clock)
-        : this(cities, clock, NoShows.Instance)
-    {
-    }
-
     public async Task<Result<CityAgendaResponse>> Handle(GetCityAgendaQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -72,26 +66,5 @@ internal sealed class GetCityAgendaQueryHandler(ICityRepository cities, TimeProv
         }
 
         return new DateTimeOffset(local, timeZone.GetUtcOffset(local)).ToUniversalTime();
-    }
-
-    /// <summary>Leitura vazia (a agenda da SPEC-0008, antes do cadastro de shows).</summary>
-    private sealed class NoShows : IShowsReadModel
-    {
-        public static readonly NoShows Instance = new();
-
-        public Task<IReadOnlyList<ShowSummaryResponse>> ListAgendaAsync(
-            string city, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<ShowSummaryResponse>>([]);
-
-        public Task<IReadOnlyList<ListMyShows.MyShowResponse>> ListMineAsync(
-            IReadOnlyCollection<Guid> organizerProfileIds,
-            Guid? createdBy,
-            DateTimeOffset boundaryUtc,
-            bool upcoming,
-            CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<ListMyShows.MyShowResponse>>([]);
-
-        public Task<GetShow.ShowDetails?> GetAsync(Guid showId, CancellationToken cancellationToken) =>
-            Task.FromResult<GetShow.ShowDetails?>(null);
     }
 }
