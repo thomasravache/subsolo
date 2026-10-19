@@ -1,24 +1,33 @@
+using Microsoft.Extensions.Logging;
 using Subsolo.Common.Application.Messaging;
 using Subsolo.Common.Domain;
+using Subsolo.Modules.Engagement.Application.Features.Shared;
 using Subsolo.Modules.Engagement.Domain.Follows;
 using Subsolo.Modules.Profiles.IntegrationEvents;
 
 namespace Subsolo.Modules.Engagement.Application.Features.FollowProfile;
 
-#pragma warning disable CS9113 // Scaffold do contrato (SPEC-0027): as dependências são usadas pela implementação.
-
 /// <summary>
-/// SPEC-0027 — perfil aprovado (o <see cref="IProfilesApi"/> o encontra) → grava o follow (se ainda não existe);
-/// inexistente ou não aprovado → <see cref="EngagementErrors.TargetNotFound"/>.
+/// SPEC-0027 — perfil aprovado (o <see cref="IProfilesApi"/> o encontra: pedido pendente ou recusado não é perfil) →
+/// grava o follow (se ainda não existe); inexistente ou não aprovado → <see cref="EngagementErrors.TargetNotFound"/>.
 /// </summary>
 internal sealed class FollowProfileCommandHandler(
     IProfilesApi profiles,
     IFollowRepository follows,
     IEngagementUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<FollowProfileCommand>
+    TimeProvider clock,
+    ILogger<FollowProfileCommandHandler> logger) : ICommandHandler<FollowProfileCommand>
 {
-    public Task<Result> Handle(FollowProfileCommand command, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0027: FollowProfile ainda não implementado.");
-}
+    public async Task<Result> Handle(FollowProfileCommand command, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (await profiles.GetAsync(command.ProfileId, cancellationToken) is null)
+        {
+            return Result.Failure(EngagementErrors.TargetNotFoundError());
+        }
 
-#pragma warning restore CS9113
+        await FollowWriter.FollowAsync(
+            follows, unitOfWork, command.UserId, FollowTarget.Profile(command.ProfileId), clock.GetUtcNow(), logger, cancellationToken);
+        return Result.Success();
+    }
+}

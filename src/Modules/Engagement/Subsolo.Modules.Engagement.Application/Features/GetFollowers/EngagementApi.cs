@@ -3,17 +3,28 @@ using Subsolo.Modules.Engagement.IntegrationEvents;
 
 namespace Subsolo.Modules.Engagement.Application.Features.GetFollowers;
 
-#pragma warning disable CS9113 // Scaffold do contrato (SPEC-0027): o repositório é usado pela implementação.
-
 /// <summary>
 /// SPEC-0027 — <see cref="IEngagementApi"/>: quem segue a cidade ou algum dos perfis, pelos follows de
-/// <see cref="IFollowRepository.GetFollowerIdsAsync"/>, sem repetição.
+/// <see cref="IFollowRepository.GetFollowerIdsAsync"/> (uma consulta só, pelo índice do alvo), sem repetição.
 /// </summary>
 internal sealed class EngagementApi(IFollowRepository follows) : IEngagementApi
 {
-    public Task<IReadOnlyCollection<Guid>> GetFollowersAsync(
-        string citySlug, IReadOnlyCollection<Guid> profileIds, CancellationToken ct) =>
-        throw new NotImplementedException("SPEC-0027: IEngagementApi ainda não implementado.");
-}
+    public async Task<IReadOnlyCollection<Guid>> GetFollowersAsync(
+        string citySlug, IReadOnlyCollection<Guid> profileIds, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(profileIds);
+        List<FollowTarget> targets = [.. profileIds.Distinct().Select(FollowTarget.Profile)];
+        if (!string.IsNullOrWhiteSpace(citySlug))
+        {
+            targets.Add(FollowTarget.City(citySlug));
+        }
 
-#pragma warning restore CS9113
+        if (targets.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = await follows.GetFollowerIdsAsync(targets, ct);
+        return ids.ToHashSet();
+    }
+}
