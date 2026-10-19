@@ -17,6 +17,7 @@ public sealed class ModularMonolithRulesTests
     [Fact]
     [Trait("Spec", "SPEC-0007:IT-06")]
     [Trait("Spec", "SPEC-0021:IT-08")]
+    [Trait("Spec", "SPEC-0027:IT-06")]
     [Trait("Kind", "Integration")]
     public void EveryModuleAssemblyBesideTheTestsIsEvaluated()
     {
@@ -24,6 +25,11 @@ public sealed class ModularMonolithRulesTests
 
         names.ShouldBe(
             [
+                "Subsolo.Modules.Engagement.Application",
+                "Subsolo.Modules.Engagement.Domain",
+                "Subsolo.Modules.Engagement.Infrastructure",
+                "Subsolo.Modules.Engagement.IntegrationEvents",
+                "Subsolo.Modules.Engagement.Presentation",
                 "Subsolo.Modules.Events.Application",
                 "Subsolo.Modules.Events.Domain",
                 "Subsolo.Modules.Events.Infrastructure",
