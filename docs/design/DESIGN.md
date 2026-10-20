@@ -13,9 +13,9 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 
 | Tela | Dispositivo | Screen no Stitch | Captura |
 |---|---|---|---|
-| Agenda da cidade (com o shell; SPEC-0027: "SEGUIR {CIDADE}" / "SEGUINDO" no cabeçalho, incluído em 2026-10-18 — a captura é anterior) | celular | `5d1946463ad9484b83c67cc2e6d78fd3` | [agenda-mobile.png](stitch/agenda-mobile.png) |
+| Agenda da cidade (com o shell; SPEC-0027: "SEGUIR {CIDADE}" / "SEGUINDO" no cabeçalho, incluído em 2026-10-18 — a captura é anterior; SPEC-0029: "{n} vão" nos cards com o ícone por situação — chama no agendado, relógio no adiado, "x" no cancelado, sempre "vão", nunca "iam"; sem contagem quando ela não vem) | celular | `5d1946463ad9484b83c67cc2e6d78fd3` | [agenda-mobile.png](stitch/agenda-mobile.png) |
 | Agenda da cidade (com o shell) | desktop | `a9c7a58a62a5431bb833a132609c0c70` | [agenda-desktop.png](stitch/agenda-desktop.png) |
-| Página do show (estrutura) | celular | `98cc07285ec5439197d3273da0f7a11d` | [show-mobile.png](stitch/show-mobile.png) |
+| Página do show (estrutura; SPEC-0029: "VOU" vermelho com a chama e, marcado, "VOU ✓" em contorno vermelho, com "{n} vão" ao lado, no bloco do ingresso — não na barra fixa; cancelado ou adiado só "{n} vão", passado só "{n} foram"; sem "Quem vai", ADR-0008) | celular | `98cc07285ec5439197d3273da0f7a11d` | [show-mobile.png](stitch/show-mobile.png) |
 | Página do show (estrutura) | desktop | `ddae50bdb35f4cdaa2437a12f23fe257` | [show-desktop.png](stitch/show-desktop.png) |
 | Admin - Cidades e Estilos (SPEC-0017) | desktop | `a14b19f0df03454483d4dd012d44ea8f` | pendente (capturada pelo Architect) |
 | Minha Conta (SPEC-0019) | celular | `3b3765cf36c344f6bb48e52429570e12` | pendente (capturada pelo Architect) |
@@ -121,15 +121,15 @@ Regras que saem da tabela:
 | Componente | Props principais | Regras |
 |---|---|---|
 | `Button` | `variant="primary\|secondary\|ghost"`, `size="md\|lg"` | alvo ≥ 44 px; `buttonClasses()` aplica o mesmo visual a um link |
-| `Card` | `href flyerSrc? title date timeZone venue lineup styles status attendingCount` | campos do `ShowSummary`; data e hora no fuso da cidade (`timeZone` IANA); o card inteiro é clicável pelo link do título |
+| `Card` | `href flyerSrc? title date timeZone venue lineup styles status attendingCount?` | campos do `ShowSummary`; data e hora no fuso da cidade (`timeZone` IANA); o card inteiro é clicável pelo link do título; SPEC-0029: `attendingCount` vem do `Engagement` (em lote) — ausente, sem texto de "vão" |
 | `Badge` | `kind="style\|cancelled\|postponed"` | `cancelled`/`postponed` têm papel `status` e o texto "Cancelado"/"Adiado" |
 | `Chip` | `selected onToggle` | filtro com `aria-pressed`; ativo = preenchido com o destaque |
 | `EmptyState` | `title hint action?` | moldura tracejada; mensagem em texto principal, dica em rótulo |
-| `Header` | `city cities onCityChange` | wordmark "Subsolo", navegação (só desktop), `CitySwitcher` |
+| `Header` | `city cities onCityChange` | wordmark "Subsolo", navegação (só desktop: Agenda, Seguindo, Apoie, Conta/Entrar — "Seguindo" desde a SPEC-0029), `CitySwitcher` |
 | `CitySwitcher` | `city cities onCityChange` | `<select>` nativo com rótulo "Cidade" (teclado e leitor de tela sem script extra) |
 | `Footer` | `links={apoie, instagram, privacidade}` | "Apoie" em destaque; Instagram abre em nova aba (avisado ao leitor de tela) |
-| `BottomNav` | `city current? signedIn? returnTo?` | navegação inferior fixa, só no celular (< 768 px), abas Agenda, Seguindo, Apoie e Conta (SPEC-0027), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque |
-| `AppShell` | `cities` | link "Pular para o conteúdo", `Header`, conteúdo, `Footer`, `BottomNav`; a cidade atual vem da URL |
+| `BottomNav` | `city current? signedIn? returnTo?` | navegação inferior fixa, só no celular (< 768 px), abas Agenda, Seguindo, Apoie e Conta (SPEC-0027), com `aria-current`; o item ativo tem texto claro, ícone e barra superior no destaque; só marca o `current` recebido (SPEC-0029) |
+| `AppShell` | `cities` | link "Pular para o conteúdo", `Header`, conteúdo, `Footer`, `BottomNav`; a cidade atual vem da URL; calcula o destino ativo (inclusive "Seguindo" em `/seguindo`, SPEC-0029) |
 
 Painel do admin (`web/src/components/admin/`, SPEC-0017):
 
