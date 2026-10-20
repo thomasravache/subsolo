@@ -183,7 +183,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 8s 094ms) — f40342f | 2026-10-20 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; decisões 1–12 aceitas; itens H28-01..06 levados à SPEC-0003 e à SPEC-0030) — f40342f | 2026-10-20 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 13m 28s 530ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 7s 544ms) — 5bcab76 | 2026-10-20 |
-| H2 Integração aprovada | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-20 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
