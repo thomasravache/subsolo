@@ -38,6 +38,13 @@
     <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
     <Project Path="src/Modules/Profiles/Subsolo.Modules.Profiles.Presentation/Subsolo.Modules.Profiles.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Site/">
+    <Project Path="src/Modules/Site/Subsolo.Modules.Site.Application/Subsolo.Modules.Site.Application.csproj" />
+    <Project Path="src/Modules/Site/Subsolo.Modules.Site.Domain/Subsolo.Modules.Site.Domain.csproj" />
+    <Project Path="src/Modules/Site/Subsolo.Modules.Site.Infrastructure/Subsolo.Modules.Site.Infrastructure.csproj" />
+    <Project Path="src/Modules/Site/Subsolo.Modules.Site.IntegrationEvents/Subsolo.Modules.Site.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Site/Subsolo.Modules.Site.Presentation/Subsolo.Modules.Site.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Users/">
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Application/Subsolo.Modules.Users.Application.csproj" />
     <Project Path="src/Modules/Users/Subsolo.Modules.Users.Domain/Subsolo.Modules.Users.Domain.csproj" />
@@ -85,6 +92,10 @@
   <Folder Name="/tests/Modules/Profiles/">
     <Project Path="tests/Modules/Profiles/Subsolo.Profiles.IntegrationTests/Subsolo.Profiles.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Profiles/Subsolo.Profiles.UnitTests/Subsolo.Profiles.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Site/">
+    <Project Path="tests/Modules/Site/Subsolo.Site.IntegrationTests/Subsolo.Site.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Site/Subsolo.Site.UnitTests/Subsolo.Site.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Users/">
     <Project Path="tests/Modules/Users/Subsolo.Users.IntegrationTests/Subsolo.Users.IntegrationTests.csproj" />

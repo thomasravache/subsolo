@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0028 — casos de uso do módulo Site (ADR-0001), um por pasta em Features/: listar os apoiadores (público),
+    adicionar e remover (admin).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Site.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) e os endpoints (Presentation) usam os tipos internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Site.Infrastructure" />
+    <InternalsVisibleTo Include="Subsolo.Modules.Site.Presentation" />
+    <InternalsVisibleTo Include="Subsolo.Site.UnitTests" />
+    <InternalsVisibleTo Include="Subsolo.Site.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Application/Subsolo.Common.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Site.Domain/Subsolo.Modules.Site.Domain.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Site.IntegrationEvents/Subsolo.Modules.Site.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -151,6 +151,9 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome com a permissão negada: "Ativar avisos" mostra "Os avisos estão bloqueados no navegador."; e abrindo um link de descadastro válido (gerado pelo teste) a página confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Herdado da revisão da SPEC-0028 (G4):**
+  - H28-05 — o AppHost do Aspire passa `Support__PixKey`, `Support__PixName`, `Support__PixCity` e `Site__ContactEmail` ao web (valores de desenvolvimento, só do servidor), como o `tools/compose-up.sh`.
+  - H28-06 — refactor: o helper de validação de endpoint (`EndpointValidation` do Events, cópias no Profiles e no `SiteEndpoints`) vai para `Common.Presentation`, usado pelo endpoint novo desta spec; os outros módulos migram quando forem tocados.
 - **Herdado do CI da SPEC-0026:** H26-09 — `PersonalDataSectionNamesTests.SectionsWithDistinctNamesStartNormally` (SPEC-0021:IT-07) é instável no CI: chama `/health` logo após criar o banco isolado e recebe 503 enquanto as migrações (outbox/inbox) ainda rodam. Esperar o host ficar pronto (ou repetir até um prazo) antes de afirmar o 200.
 - Segurança: G4 confere a lista de serviços de push permitidos (SSRF), o segredo VAPID e o token de descadastro.
 

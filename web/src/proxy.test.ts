@@ -642,3 +642,68 @@ describe("proxy, a aba Seguindo e os segmentos reservados", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * SPEC-0028 — as páginas institucionais `/apoie`, `/privacidade` e `/termos` são páginas do site (slugs reservados,
+ * SPEC-0017), não a agenda de uma cidade:
+ * - E2E-02 (no nível do proxy): seguem para o Next.js sem consultar a API de agenda e sem a reescrita com o 404 de
+ *   "cidade não encontrada" (os links do rodapé, hoje 404, passam a responder 200);
+ * - IT-03 (no nível do proxy): com a API fora do ar, `/apoie` não vira o 503 da agenda (a página sai 200 com o Pix e o
+ *   aviso da lista).
+ */
+describe("proxy e as páginas institucionais", () => {
+  function urlOf(input: Parameters<typeof fetch>[0]): URL {
+    return new URL(
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url,
+    );
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it.each(["/apoie", "/privacidade", "/termos"])(
+    "SPEC-0028:E2E-02 %s não é tratado como cidade e segue com 200",
+    async (path) => {
+      vi.stubEnv("API_URL", "http://api.test");
+      const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+        Response.json(
+          { status: 404, code: "events.city_not_found" },
+          {
+            status: 404,
+            headers: { "content-type": "application/problem+json" },
+          },
+        ),
+      );
+
+      const response = await proxy(new NextRequest(`http://localhost${path}`));
+
+      expect(
+        fetch.mock.calls
+          .map(([input]) => urlOf(input).pathname)
+          .filter((called) => called.startsWith("/api/v1/cities/")),
+        `${path} consultou a API de agenda`,
+      ).toEqual([]);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+      expect(response.headers.get("content-security-policy")).toBeTruthy();
+    },
+  );
+
+  it("SPEC-0028:IT-03 com a API fora do ar, /apoie não vira 503", async () => {
+    vi.stubEnv("API_URL", "http://api.test");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const response = await proxy(new NextRequest("http://localhost/apoie"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+});

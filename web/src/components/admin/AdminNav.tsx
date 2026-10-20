@@ -1,10 +1,14 @@
 import Link from "next/link";
 
-/** SPEC-0017 — páginas do painel do admin que já existem (o menu só mostra o que existe); SPEC-0021 — fila e perfil sem dono. */
+/**
+ * SPEC-0017 — páginas do painel do admin que já existem (o menu só mostra o que existe); SPEC-0021 — fila e perfil sem
+ * dono; SPEC-0028 — apoiadores.
+ */
 const pages = [
   { href: "/admin/fila", label: "Fila" },
   { href: "/admin/perfis/novo", label: "Novo perfil" },
   { href: "/admin/cidades-e-estilos", label: "Cidades e estilos" },
+  { href: "/admin/apoiadores", label: "Apoiadores" },
 ] as const;
 
 export interface AdminNavProps {

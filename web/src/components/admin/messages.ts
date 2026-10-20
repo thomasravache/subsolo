@@ -20,6 +20,16 @@ export const styleMessages = {
   notFound: "Esse estilo não existe mais. Recarregue a página.",
 } as const;
 
+/** SPEC-0028 — mensagens do painel de apoiadores. */
+export const supporterMessages = {
+  added: "Apoiador adicionado.",
+  removed: "Apoiador removido.",
+  invalidName: "O nome deve ter de 2 a 60 caracteres.",
+  invalidUrl: "O link deve começar com https://.",
+  notFound: "Esse apoiador já tinha sido removido.",
+  removeFailed: "Não deu para remover agora. Tente de novo em instantes.",
+} as const;
+
 /** Erro genérico (sessão expirada, sem permissão, API fora do ar). */
 export function genericMessage(status: number): string {
   if (status === 401) {

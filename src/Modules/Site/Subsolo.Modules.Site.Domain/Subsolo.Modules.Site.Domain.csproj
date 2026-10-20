@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0028 — domínio do módulo Site (ADR-0001, esclarecido em 2026-10-18): conteúdo institucional mantido pelo admin
+    (Supporter: nome de 2 a 60 caracteres, link https opcional, ordem de cadastro).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Site.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

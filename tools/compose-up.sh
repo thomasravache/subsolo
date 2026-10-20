@@ -35,6 +35,11 @@
 # links mágicos por e-mail sobe para ${MAGIC_LINK_EMAIL_LIMIT:-50} a cada 15 min (as jornadas de perfis e do admin entram
 # várias vezes com `admin@subsolo.test` na mesma subida).
 #
+# SPEC-0028 — também só neste Compose local: o web recebe a chave Pix de teste e o recebedor (Support__PixKey,
+# Support__PixName e Support__PixCity, de E2E_PIX_KEY, E2E_PIX_NAME e E2E_PIX_CITY, com os padrões de
+# e2e/tests/site/environment.ts) e o e-mail de contato de teste (Site__ContactEmail, de E2E_CONTACT_EMAIL). Só do servidor
+# (sem NEXT_PUBLIC_); os valores reais entram no go-live.
+#
 # SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
 # entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
 #
@@ -87,6 +92,16 @@ readonly E2E_SECRET_SENTINEL="${E2E_SECRET_SENTINEL:-subsolo-sentinela-segredo-e
 for sentinel in "$E2E_PLAIN_SENTINEL" "$E2E_SECRET_SENTINEL"; do
   if ! [[ "$sentinel" =~ ^[A-Za-z0-9._-]+$ ]]; then
     echo "compose-up: sentinela inválida ('$sentinel'): use só letras, números, ponto, hífen e sublinhado" >&2
+    exit 2
+  fi
+done
+readonly E2E_PIX_KEY="${E2E_PIX_KEY:-chave-teste-e2e@subsolo.test}"
+readonly E2E_PIX_NAME="${E2E_PIX_NAME:-Subsolo}"
+readonly E2E_PIX_CITY="${E2E_PIX_CITY:-Curitiba}"
+readonly E2E_CONTACT_EMAIL="${E2E_CONTACT_EMAIL:-contato-teste@subsolo.test}"
+for setting in "$E2E_PIX_KEY" "$E2E_PIX_NAME" "$E2E_PIX_CITY" "$E2E_CONTACT_EMAIL"; do
+  if ! [[ "$setting" =~ ^[A-Za-z0-9@.+\ _-]+$ ]]; then
+    echo "compose-up: configuração de teste do Pix ou do contato inválida ('$setting'): use letras, números, espaço, @ . + _ -" >&2
     exit 2
   fi
 done
@@ -189,6 +204,10 @@ services:
       SUBSOLO_PUBLIC_URL: "$APP_URL"
       SUBSOLO_E2E_SENTINEL: "$E2E_PLAIN_SENTINEL"
       SUBSOLO_E2E_SECRET_KEY: "$E2E_SECRET_SENTINEL"
+      Support__PixKey: "$E2E_PIX_KEY"
+      Support__PixName: "$E2E_PIX_NAME"
+      Support__PixCity: "$E2E_PIX_CITY"
+      Site__ContactEmail: "$E2E_CONTACT_EMAIL"
 YAML
 
 compose() {
