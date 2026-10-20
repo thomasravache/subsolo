@@ -11,7 +11,7 @@ depends_on: [SPEC-0027]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/BottomNav.tsx, web/src/components/ui/__tests__/**, src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Application/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/BottomNav.tsx, web/src/components/ui/__tests__/**, src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Application/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**, web/src/components/ui/Card.tsx, e2e/tests/seguir/**]
 adrs: [ADR-0001, ADR-0008]
 external: []
 size: S
@@ -50,7 +50,7 @@ O fã logado marca "Vou" num show (na página do show e nos cards da agenda e do
 ## 4. Decisão Arquitetural
 **Contexto:** `Engagement` (SPEC-0027); resumo de show da SPEC-0008 já tem `AttendingCount`; regra de sem ciclos do ADR-0001.
 
-**Decisão:** o `Events` precisa da contagem para montar a agenda, mas o `Engagement` já depende do `Events` (valida cidade pelo `IEventsCatalog`). Para não criar ciclo, a contagem não entra pelo `Events`: o web pede a contagem ao `Engagement` (`GET /api/v1/attendances/counts?showIds=…`) e junta com a agenda no servidor. O `Engagement` valida o show por uma leitura pública do `Events` (`IEventsCatalog.ShowExistsAsync`, situação e data).
+**Decisão:** o `Events` precisa da contagem para montar a agenda, mas o `Engagement` já depende do `Events` (valida cidade pelo `IEventsCatalog`). Para não criar ciclo, a contagem não entra pelo `Events`: o web pede a contagem ao `Engagement` (`GET /api/v1/attendances/counts?showIds=…`) e junta com a agenda no servidor. O `Engagement` valida o show por uma leitura pública do `Events` (`IEventsCatalog.GetShowStateAsync`, situação e data).
 
 **Justificativa:** ADR-0001 (sem ciclos; leitura por interface pública), ADR-0008 (só a contagem é pública).
 
@@ -73,7 +73,7 @@ O fã logado marca "Vou" num show (na página do show e nos cards da agenda e do
 
 ```yaml
 PUT    /api/v1/me/attendances/{showId}:   # fan + X-CSRF + default ; 204 (idempotente)
-  404: engagement.show_not_found ; 409: engagement.show_not_attendable (cancelado ou já passou)
+  404: engagement.show_not_found ; 409: engagement.show_not_attendable (cancelado, adiado ou já passou)
 DELETE /api/v1/me/attendances/{showId}:   # fan + X-CSRF + default ; 204 (idempotente)
 GET    /api/v1/me/attendances?period=upcoming:   # fan + default ; no-store ; 200 { showIds: uuid[] }
 GET    /api/v1/attendances/counts?showIds=a,b,c: # AllowAnonymous + default ; até 100 ids ; 200 { counts: { "<showId>": n } } ; 400 engagement.invalid_query
@@ -91,7 +91,7 @@ Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct);   // reco
 
 ```text
 Banco (schema engagement): attendances(user_id, show_id, created_at_utc; PK(user_id, show_id)); índice por show_id
-Página do show: botão "VOU" / "VOU ✓" + "{n} vão" ; cancelado/passado → só "{n} foram"/"{n} vão" sem botão
+Página do show: botão "VOU" / "VOU ✓" + "{n} vão" ; passado → só "{n} foram" sem botão; cancelado ou adiado → só "{n} vão" sem botão
 Cards (agenda e perfil): "{n} vão" com o ícone do Stitch ; o web busca as contagens em lote
 Anônimo tocando "Vou" → /entrar?returnTo=/{cidade}/{show}
 ```
@@ -254,3 +254,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0029`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-20 | `touches` ganha `web/src/components/ui/Card.tsx` (card aceita contagem ausente, IT-05) e `e2e/tests/seguir/**` (nome acessível constante "Seguir {nome}" do H27-04 muda o E2E da SPEC-0027); §4 cita `GetShowStateAsync`, como no §6; show adiado também dá 409 `show_not_attendable` (só o agendado futuro aceita, como no UT-01), e o "vou" já marcado continua contando; rótulo "{n} foram" no show passado e "{n} vão" no cancelado ou adiado. | SPEC_DEFECTs do Test-writer no G1 | — | piloto automático do Thomas (2026-10-17) |
