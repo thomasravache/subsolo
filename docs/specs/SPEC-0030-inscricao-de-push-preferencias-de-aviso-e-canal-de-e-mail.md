@@ -11,7 +11,7 @@ depends_on: [SPEC-0019, SPEC-0027]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/packages.lock.json, src/Subsolo.AppHost/**, Directory.Packages.props, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/avisos/**, web/src/app/manifest.ts, web/public/sw.js, web/public/icons/**, web/src/components/notifications/**, web/src/proxy.ts, web/src/proxy.test.ts, tools/compose-up.sh, e2e/tests/avisos/**, docs/design/**]
+touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/packages.lock.json, src/Subsolo.AppHost/**, Directory.Packages.props, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/avisos/**, web/src/app/manifest.ts, web/public/sw.js, web/public/icons/**, web/src/components/notifications/**, web/src/proxy.ts, web/src/proxy.test.ts, tools/compose-up.sh, e2e/tests/avisos/**, docs/design/**, src/Common/Subsolo.Common.Presentation/**, tests/Common/Subsolo.Common.UnitTests/**]
 adrs: [ADR-0001, ADR-0008, ADR-0009, ADR-0013, ADR-0014]
 external: []
 size: M
@@ -258,3 +258,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0030`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-20 | `touches` ganha `src/Common/Subsolo.Common.Presentation/**` e `tests/Common/Subsolo.Common.UnitTests/**` para o H28-06 (helper de validação de endpoint em `Common.Presentation`, com teste). | lacuna de escopo vista pelo Architect antes do G1 | — | piloto automático do Thomas (2026-10-17) |
