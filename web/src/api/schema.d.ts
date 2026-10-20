@@ -624,6 +624,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/attendances/{showId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Marcar vou
+     * @description O fã marca "vou" no show agendado que ainda não começou (idempotente: marcar de novo não muda nada). Exige o cabeçalho X-CSRF.
+     */
+    put: operations["AttendShow"];
+    post?: never;
+    /**
+     * Desmarcar vou
+     * @description O fã desmarca o "vou" no show (idempotente: sem "vou", nada muda). Exige o cabeçalho X-CSRF.
+     */
+    delete: operations["UnattendShow"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/attendances/counts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Quantos vão
+     * @description Quantos marcaram "vou" em cada show (até 100 ids separados por vírgula; só os números, nunca quem vai).
+     */
+    get: operations["CountAttendances"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/profiles/{profileId}/followers": {
     parameters: {
       query?: never;
@@ -707,6 +751,26 @@ export interface paths {
      * @description O fã deixa de seguir o perfil (idempotente: sem follow, nada muda). Exige o cabeçalho X-CSRF.
      */
     delete: operations["UnfollowProfile"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/attendances": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Shows em que eu vou
+     * @description Os ids dos shows em que o usuário marcou "vou" e que ainda não começaram (period=upcoming, o padrão).
+     */
+    get: operations["ListMyAttendances"];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -808,6 +872,11 @@ export interface components {
       /** Format: date */
       to: string;
     };
+    AttendanceCountsResponse: {
+      counts: {
+        [key: string]: number;
+      };
+    };
     AuthProvidersResponse: {
       google: boolean;
     };
@@ -893,6 +962,9 @@ export interface components {
       email: string;
       displayName: null | string;
       roles: string[];
+    };
+    MyAttendancesResponse: {
+      showIds: string[];
     };
     MyFollowsResponse: {
       cities: components["schemas"]["FollowedCityResponse"][];
@@ -3343,6 +3415,176 @@ export interface operations {
       };
     };
   };
+  AttendShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        showId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not Found (code=engagement.show_not_found) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Conflict (code=engagement.show_not_attendable) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UnattendShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        showId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  CountAttendances: {
+    parameters: {
+      query?: {
+        showIds?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AttendanceCountsResponse"];
+        };
+      };
+      /** @description Bad Request (code=engagement.invalid_query) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   CountProfileFollowers: {
     parameters: {
       query?: never;
@@ -3628,6 +3870,64 @@ export interface operations {
         content?: never;
       };
       /** @description Bad Request (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ListMyAttendances: {
+    parameters: {
+      query?: {
+        period?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyAttendancesResponse"];
+        };
+      };
+      /** @description Bad Request (code=engagement.invalid_query) */
       400: {
         headers: {
           [name: string]: unknown;

@@ -11,7 +11,7 @@ depends_on: [SPEC-0029, SPEC-0030, SPEC-0031]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**]
 adrs: [ADR-0001, ADR-0014]
 external: []
 size: S
@@ -115,7 +115,10 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
 - **E2E-01** — Dada a pilha do Compose com `Engagement:ReminderCron` a cada minuto e `Engagement:ReminderHour` = 0: um artista publica um show para amanhã; o fã logado marca "vou" e liga "Lembrete na véspera (por e-mail)"; em até 2 minutos chega ao Mailpit o e-mail "Amanhã: …" com o link do show, que abre a página dele. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
-- N/A — sem superfície pública nova.
+- **Itens herdados da revisão da SPEC-0029 (G4, tag `SPEC-0032:H29-NN`):**
+  - H29-01 — `ListMyAttendancesQueryHandler`: uma chamada `GetShowStateAsync` por "vou" marcado, que cresce com o tempo (o `AttendButton` chama em toda página de show); trocar por leitura em lote no `IEventsCatalog` (`GetShowStatesAsync(ids)`) ou filtrar pela data de início numa consulta só, com teste.
+  - H29-02 — `AttendShowCommandHandler`: o PUT que perde a corrida não incrementa o contador `subsolo.engagement.attendances`; documentar no código (sem mudança de comportamento).
+  - H29-03 — `ShowPage.tsx`: trocar o nó de texto `{" "}` depois da contagem por separação estrutural (contagem num bloco próprio).
 
 **Dublês e dados de teste:** `TimeProvider` fixo nos UT e IT; dados criados no banco do teste.
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CitySwitcher, type CityOption } from "./CitySwitcher";
-import { accountHref } from "./shell";
+import { accountHref, followingPath } from "./shell";
 
 export interface HeaderProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
@@ -23,7 +23,7 @@ const navLink =
 /**
  * SPEC-0011 — cabeçalho do app: wordmark "Subsolo", navegação (só no desktop; no celular fica a navegação inferior)
  * e o seletor de cidade (quando há cidades para escolher). SPEC-0016 — a navegação termina em "Entrar" (sem sessão)
- * ou "Conta" (com sessão).
+ * ou "Conta" (com sessão). SPEC-0029 (H27-05) — "Seguindo" → `/seguindo` também no desktop, como na navegação inferior.
  */
 export function Header({
   city,
@@ -45,6 +45,10 @@ export function Header({
           <Link href={city ? `/${city}` : "/"} className={navLink}>
             Agenda
           </Link>
+          {/* Documento novo, como na navegação inferior: `/seguindo` é dado pessoal, renderizado por requisição. */}
+          <a href={followingPath} className={navLink}>
+            Seguindo
+          </a>
           <Link href="/apoie" className={navLink}>
             Apoie
           </Link>

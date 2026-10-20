@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import type { ShowDetail } from "@/api/show-detail";
+import { AttendButton } from "@/components/engagement/AttendButton";
+import { FlameIcon } from "@/components/engagement/icons";
+import { goingCount, wentCount } from "@/components/engagement/messages";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { mainContentId } from "@/components/ui/shell";
@@ -42,6 +45,44 @@ export interface ShowPageProps {
   show: ShowDetail;
   /** URL canônica da página (vai no "Compartilhar"). */
   url: string;
+  /** SPEC-0029 — quantos marcaram "vou" (do `Engagement`); `undefined` = contagem indisponível (a página sai sem ela). */
+  attendingCount?: number;
+  /** SPEC-0029 — o show já começou (sem o botão "Vou"; a contagem vira "{n} foram"). */
+  past?: boolean;
+}
+
+/**
+ * SPEC-0029 — o "vou" do show: agendado e futuro → o botão "Vou" com "{n} vão"; cancelado ou adiado → só "{n} vão";
+ * já passou → só "{n} foram". Sem a contagem (indisponível), só o botão (ou nada).
+ */
+function Attendance({
+  show,
+  count,
+  past,
+}: {
+  show: ShowDetail;
+  count: number | undefined;
+  past: boolean;
+}) {
+  if (show.status === "scheduled" && !past) {
+    return (
+      <AttendButton
+        showId={show.id}
+        title={show.title}
+        count={count}
+        returnTo={`/${show.city.slug}/${show.slug}`}
+      />
+    );
+  }
+  if (count === undefined) {
+    return null;
+  }
+  return (
+    <p className="flex items-center gap-2 font-label text-sm font-bold uppercase tracking-wider text-text-muted">
+      <FlameIcon className="shrink-0 text-accent" />
+      {past ? wentCount(count) : goingCount(count)}
+    </p>
+  );
 }
 
 /**
@@ -49,9 +90,15 @@ export interface ShowPageProps {
  * inteiro (`object-contain`) sobre o próprio flyer desfocado, a data e a hora no fuso da cidade, o selo de cancelado ou
  * adiado, o título, os estilos, o line-up, a casa, o preço, "Ingresso" (nova aba, `noopener noreferrer`) e
  * "Compartilhar". Ajustes do §6: sem "Vou", "Quem vai", "Seguir" e "Denunciar" (specs próprias). SPEC-0026: a casa e as
- * bandas com perfil levam às páginas `/casa/{slug}` e `/banda/{slug}`.
+ * bandas com perfil levam às páginas `/casa/{slug}` e `/banda/{slug}`. SPEC-0029: o "Vou" com a contagem "{n} vão" (ou
+ * "{n} foram" no show que já passou), nunca "Quem vai" (ADR-0008).
  */
-export function ShowPage({ show, url }: ShowPageProps) {
+export function ShowPage({
+  show,
+  url,
+  attendingCount,
+  past = false,
+}: ShowPageProps) {
   const when = showDate(show.startsAt, show.city.timeZone);
   const cancelled = show.status === "cancelled";
   const flyer = {
@@ -145,6 +192,8 @@ export function ShowPage({ show, url }: ShowPageProps) {
             <h2 id={ids.ticket} className="sr-only">
               Ingresso
             </h2>
+            <Attendance show={show} count={attendingCount} past={past} />
+            {/* Separa a contagem ("3 vão") do texto seguinte no conteúdo textual da página (leitores e buscas). */}{" "}
             <div className="flex items-start gap-3">
               <TicketIcon className="mt-1 shrink-0 text-accent" />
               <div className="flex flex-col gap-1">

@@ -23,7 +23,8 @@ public sealed class ProfilesApiContractTests
         var api = typeof(IProfilesApi);
         api.IsInterface.ShouldBeTrue();
         api.IsPublic.ShouldBeTrue();
-        api.GetMethods().Select(method => method.Name).ShouldBe(["GetOwnedProfilesAsync", "GetAsync"], ignoreOrder: true);
+        // SPEC-0029 (H27-06): o contrato ganhou a busca em lote GetManyAsync (conferida em IProfilesApiHasTheBatchRead).
+        api.GetMethods().Select(method => method.Name).ShouldBe(["GetOwnedProfilesAsync", "GetAsync", "GetManyAsync"], ignoreOrder: true);
 
         var owned = api.GetMethod("GetOwnedProfilesAsync").ShouldNotBeNull();
         owned.GetParameters().Select(parameter => parameter.ParameterType).ShouldBe([typeof(Guid), typeof(CancellationToken)]);
@@ -34,6 +35,25 @@ public sealed class ProfilesApiContractTests
         get.ReturnType.ShouldBe(typeof(Task<ProfileSummary>));
         new NullabilityInfoContext().Create(get.ReturnParameter).GenericTypeArguments.ShouldHaveSingleItem()
             .ReadState.ShouldBe(NullabilityState.Nullable, "GetAsync devolve null para perfil inexistente");
+    }
+
+    /// <summary>
+    /// SPEC-0029 H27-06 — a busca em lote para a lista "Seguindo" e o export do Engagement:
+    /// <c>GetManyAsync(IReadOnlyCollection&lt;Guid&gt;, CancellationToken)</c> →
+    /// <c>Task&lt;IReadOnlyDictionary&lt;Guid, ProfileSummary&gt;&gt;</c> (como o <c>IShowProfiles.GetManyAsync</c>).
+    /// </summary>
+    [Fact]
+    [Trait("Spec", "SPEC-0029:H27-06")]
+    public void IProfilesApiHasTheBatchRead()
+    {
+        var many = typeof(IProfilesApi).GetMethod("GetManyAsync");
+        many.ShouldNotBeNull("IProfilesApi sem a busca em lote GetManyAsync");
+        many.GetParameters().Select(parameter => (parameter.Name, parameter.ParameterType)).ShouldBe(
+        [
+            ("profileIds", typeof(IReadOnlyCollection<Guid>)),
+            ("ct", typeof(CancellationToken)),
+        ]);
+        many.ReturnType.ShouldBe(typeof(Task<IReadOnlyDictionary<Guid, ProfileSummary>>));
     }
 
     [Fact]

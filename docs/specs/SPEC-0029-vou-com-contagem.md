@@ -4,14 +4,14 @@ title: Vou com contagem
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0027]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/BottomNav.tsx, web/src/components/ui/__tests__/**, src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Application/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/BottomNav.tsx, web/src/components/ui/__tests__/**, src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Application/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**, web/src/components/ui/Card.tsx, e2e/tests/seguir/**, e2e/tests/shows/show-page.spec.ts]
 adrs: [ADR-0001, ADR-0008]
 external: []
 size: S
@@ -50,7 +50,7 @@ O fã logado marca "Vou" num show (na página do show e nos cards da agenda e do
 ## 4. Decisão Arquitetural
 **Contexto:** `Engagement` (SPEC-0027); resumo de show da SPEC-0008 já tem `AttendingCount`; regra de sem ciclos do ADR-0001.
 
-**Decisão:** o `Events` precisa da contagem para montar a agenda, mas o `Engagement` já depende do `Events` (valida cidade pelo `IEventsCatalog`). Para não criar ciclo, a contagem não entra pelo `Events`: o web pede a contagem ao `Engagement` (`GET /api/v1/attendances/counts?showIds=…`) e junta com a agenda no servidor. O `Engagement` valida o show por uma leitura pública do `Events` (`IEventsCatalog.ShowExistsAsync`, situação e data).
+**Decisão:** o `Events` precisa da contagem para montar a agenda, mas o `Engagement` já depende do `Events` (valida cidade pelo `IEventsCatalog`). Para não criar ciclo, a contagem não entra pelo `Events`: o web pede a contagem ao `Engagement` (`GET /api/v1/attendances/counts?showIds=…`) e junta com a agenda no servidor. O `Engagement` valida o show por uma leitura pública do `Events` (`IEventsCatalog.GetShowStateAsync`, situação e data).
 
 **Justificativa:** ADR-0001 (sem ciclos; leitura por interface pública), ADR-0008 (só a contagem é pública).
 
@@ -73,7 +73,7 @@ O fã logado marca "Vou" num show (na página do show e nos cards da agenda e do
 
 ```yaml
 PUT    /api/v1/me/attendances/{showId}:   # fan + X-CSRF + default ; 204 (idempotente)
-  404: engagement.show_not_found ; 409: engagement.show_not_attendable (cancelado ou já passou)
+  404: engagement.show_not_found ; 409: engagement.show_not_attendable (cancelado, adiado ou já passou)
 DELETE /api/v1/me/attendances/{showId}:   # fan + X-CSRF + default ; 204 (idempotente)
 GET    /api/v1/me/attendances?period=upcoming:   # fan + default ; no-store ; 200 { showIds: uuid[] }
 GET    /api/v1/attendances/counts?showIds=a,b,c: # AllowAnonymous + default ; até 100 ids ; 200 { counts: { "<showId>": n } } ; 400 engagement.invalid_query
@@ -91,7 +91,7 @@ Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct);   // reco
 
 ```text
 Banco (schema engagement): attendances(user_id, show_id, created_at_utc; PK(user_id, show_id)); índice por show_id
-Página do show: botão "VOU" / "VOU ✓" + "{n} vão" ; cancelado/passado → só "{n} foram"/"{n} vão" sem botão
+Página do show: botão "VOU" / "VOU ✓" + "{n} vão" ; passado → só "{n} foram" sem botão; cancelado ou adiado → só "{n} vão" sem botão
 Cards (agenda e perfil): "{n} vão" com o ícone do Stitch ; o web busca as contagens em lote
 Anônimo tocando "Vou" → /entrar?returnTo=/{cidade}/{show}
 ```
@@ -146,7 +146,7 @@ Anônimo tocando "Vou" → /entrar?returnTo=/{cidade}/{show}
   - H27-05 — link "Seguindo" no cabeçalho do desktop (`Header.tsx`) e a aba ativa calculada em `AppShell.currentDestination`, não no `BottomNav`.
   - H27-06 — `ProfileReader`/`IProfilesApi`: busca em lote (`GetManyAsync`) para a lista "Seguindo" e a exportação, sem uma chamada por perfil.
   - H27-07 — teste do H26-04 também ao meio-dia UTC (sonda de no máximo um dia; `from` final na data da cidade).
-  - H27-08 — captura da agenda no `docs/design/stitch/` atualizada com o botão "SEGUIR CURITIBA".
+  - H27-08 — captura da agenda no `docs/design/stitch/` atualizada com o botão "SEGUIR CURITIBA". Movido para a SPEC-0003 §8 (Emenda de 2026-10-20): a tela do Stitch ainda não tem o botão e só é editada com o Thomas.
   - H27-09 — follows de perfil que deixa de ser aprovado ou é excluído: não contam em `GetFollowersAsync` (ou são removidos), com teste; hoje ficam ocultos só na lista.
 - Privacidade: G4 confere que nenhuma resposta pública expõe quem vai.
 
@@ -201,12 +201,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 7cf550a | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 025f357 | 2026-10-20 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 241087e | 2026-10-20 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 8s 932ms) — 241087e | 2026-10-20 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; decisões 1–11 e o aviso do verify aceitos; H29-01..03 levados à SPEC-0032 §7.6; IT-05 por testes web com a API simulada fora do ar, registrado na Verificação) — f617ab8 | 2026-10-20 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 18s 766ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 744ms) — 70147aa | 2026-10-20 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-20 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -254,3 +254,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0029`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-20 | `touches` ganha `web/src/components/ui/Card.tsx` (card aceita contagem ausente, IT-05) e `e2e/tests/seguir/**` (nome acessível constante "Seguir {nome}" do H27-04 muda o E2E da SPEC-0027); §4 cita `GetShowStateAsync`, como no §6; show adiado também dá 409 `show_not_attendable` (só o agendado futuro aceita, como no UT-01), e o "vou" já marcado continua contando; rótulo "{n} foram" no show passado e "{n} vão" no cancelado ou adiado. | SPEC_DEFECTs do Test-writer no G1 | — | piloto automático do Thomas (2026-10-17) |
+| 1 (sem mudança de contrato) | 2026-10-20 | `touches` ganha `e2e/tests/shows/show-page.spec.ts` (o E2E da página do show da SPEC-0024 afirma que não há botão "Vou", o que esta spec passa a ter); H27-08 sai desta spec e vai para a SPEC-0003 §8, pois a tela "Agenda Curitiba - Subsolo" do Stitch ainda não tem o botão "SEGUIR CURITIBA" e o Stitch só é editado com o Thomas. | TEST_DEFECT e lacuna do Implementer | SPEC-0003 | piloto automático do Thomas (2026-10-17) |

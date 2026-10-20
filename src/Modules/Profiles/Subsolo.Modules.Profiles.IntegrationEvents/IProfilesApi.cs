@@ -11,6 +11,12 @@ public interface IProfilesApi
 
     /// <summary>O perfil <paramref name="profileId"/>, ou <see langword="null"/>.</summary>
     Task<ProfileSummary?> GetAsync(Guid profileId, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0029 (H27-06) — os perfis entre <paramref name="profileIds"/>, por id, numa consulta só (os que não existem
+    /// ficam de fora).
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, ProfileSummary>> GetManyAsync(IReadOnlyCollection<Guid> profileIds, CancellationToken ct);
 }
 
 /// <summary>

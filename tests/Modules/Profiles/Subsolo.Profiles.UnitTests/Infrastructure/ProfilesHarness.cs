@@ -152,6 +152,9 @@ internal sealed class TestEventsCatalog : IEventsCatalog
 
     public List<IReadOnlyCollection<string>> StyleQueries { get; } = [];
 
+    /// <summary>SPEC-0029 — o Profiles não lê shows: nenhum existe aqui.</summary>
+    public Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) => Task.FromResult<ShowState?>(null);
+
     public Task<bool> CityExistsAsync(string slug, CancellationToken ct)
     {
         CityQueries.Add(slug);

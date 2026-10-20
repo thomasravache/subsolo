@@ -18,4 +18,20 @@ internal sealed class ProfilesApi(ProfilesDbContext db) : IProfilesApi
             .Where(profile => profile.Id == profileId)
             .Select(profile => new ProfileSummary(profile.Id, profile.Type, profile.Name, profile.Slug, profile.City, profile.OwnerUserId))
             .SingleOrDefaultAsync(ct);
+
+    /// <summary>SPEC-0029 (H27-06) — uma consulta só pelos ids (<c>id = any(@ids)</c>).</summary>
+    public async Task<IReadOnlyDictionary<Guid, ProfileSummary>> GetManyAsync(IReadOnlyCollection<Guid> profileIds, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(profileIds);
+        if (profileIds.Count == 0)
+        {
+            return new Dictionary<Guid, ProfileSummary>();
+        }
+
+        var ids = profileIds.Distinct().ToList();
+        return await db.Profiles.AsNoTracking()
+            .Where(profile => ids.Contains(profile.Id))
+            .Select(profile => new ProfileSummary(profile.Id, profile.Type, profile.Name, profile.Slug, profile.City, profile.OwnerUserId))
+            .ToDictionaryAsync(profile => profile.Id, ct);
+    }
 }

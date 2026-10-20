@@ -9,7 +9,7 @@ import { BottomNav } from "./BottomNav";
 import type { CityOption } from "./CitySwitcher";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
-import { isAccountPage, mainContentId } from "./shell";
+import { isAccountPage, isFollowingPage, mainContentId } from "./shell";
 
 export interface AppShellProps {
   cities: CityOption[];
@@ -27,11 +27,17 @@ function goToCity(slug: string) {
   window.location.assign(`/${encodeURIComponent(slug)}`);
 }
 
-/** SPEC-0016 — destino ativo da navegação inferior pela URL. */
+/**
+ * SPEC-0016 — destino ativo da navegação inferior pela URL. SPEC-0029 (H27-05): decidido só aqui, também para
+ * "Seguindo" (`/seguindo`); o `BottomNav` só mostra o `current` que recebe.
+ */
 function currentDestination(
   pathname: string,
   city: string,
-): "agenda" | "apoie" | "conta" | undefined {
+): "agenda" | "seguindo" | "apoie" | "conta" | undefined {
+  if (isFollowingPage(pathname)) {
+    return "seguindo";
+  }
   if (pathname === "/apoie") {
     return "apoie";
   }

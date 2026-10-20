@@ -9,6 +9,7 @@ import {
   getCityAgenda,
   type CityAgendaResult,
 } from "@/api/agenda";
+import { getAttendanceCounts } from "@/api/attendances-data";
 import { AgendaFilterBar } from "@/components/agenda/AgendaFilterBar";
 import { AgendaProducerCta } from "@/components/agenda/AgendaProducerCta";
 import { FollowButton } from "@/components/engagement/FollowButton";
@@ -42,6 +43,7 @@ import { agendaStatus } from "./agenda-status";
  * "dd/MM A dd/MM · N SHOWS" (anunciado em `aria-live`), vazio com filtro ("Nenhum show com esses filtros." e "Limpar
  * filtros") e o bloco do produtor no fim. Telas do Stitch "Agenda Curitiba - Subsolo" e "Agenda Curitiba - Desktop".
  * SPEC-0027 — "Seguir {cidade}" / "Seguindo" no cabeçalho (o estado vem do navegador: a página é igual para todos).
+ * SPEC-0029 — "{n} vão" nos cards, com as contagens do `Engagement` pedidas em lote e juntadas no servidor.
  */
 
 // Sem shell de carregamento: a página só aparece com a agenda (ou o aviso) pronta.
@@ -150,6 +152,9 @@ export default async function CityAgendaPage(props: PageProps<"/[cidade]">) {
   }
 
   const { city, shows, period, total } = result.agenda;
+  // SPEC-0029: o `attendingCount` do Events é sempre 0 (§4); a contagem vem do Engagement, numa chamada em lote para os
+  // shows da página. Sem ela, os cards saem sem a contagem.
+  const counts = await getAttendanceCounts(shows.map((show) => show.id));
   const choosing = isChoosingDates(await props.searchParams);
   const summary = filters.period
     ? `${dayMonth(period.from)} A ${dayMonth(period.to)} · ${showCount(total)}`
@@ -205,7 +210,7 @@ export default async function CityAgendaPage(props: PageProps<"/[cidade]">) {
                     lineup={show.lineup}
                     styles={show.styles}
                     status={show.status}
-                    attendingCount={show.attendingCount}
+                    attendingCount={counts?.[show.id]}
                   />
                 </li>
               ))}
