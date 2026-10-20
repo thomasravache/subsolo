@@ -16,7 +16,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  *   `PUT /api/v1/me/attendances/{showId}` com o `X-CSRF`, vira "Vou ✓" (`aria-pressed="true"`), a contagem sobe e a
  *   mudança é anunciada (`role="status"`) com a nova contagem; tocar de novo desmarca (`DELETE`) e a contagem volta. O
  *   estado inicial vem de `GET /api/v1/me/attendances`.
- * - E2E-02 (parte do botão) — show cancelado: sem o botão, a contagem continua visível; show que já passou: sem o botão.
+ * - E2E-02 (parte do botão, Emenda 1) — show cancelado ou adiado: sem o botão, com "{n} vão"; show que já passou: sem
+ *   o botão, com "{n} foram".
  * - IT-05 — contagem indisponível (a rota de contagens fora do ar): a página sai com o show e o botão, sem a contagem e
  *   sem aviso de erro.
  * - Privacidade (ADR-0008): a página não tem "Quem vai" nem lista de pessoas.
@@ -259,7 +260,7 @@ describe("Vou na página do show", () => {
     expect(screen.queryByRole("button", { name: /vou/i })).toBeNull();
   });
 
-  it("SPEC-0029:E2E-02 show que já passou: sem o botão Vou", async () => {
+  it('SPEC-0029:E2E-02 show que já passou: sem o botão Vou, com "{n} foram"', async () => {
     stubApi({
       show: showDetail("scheduled", "2026-10-18T01:00:00Z"),
       count: 2,
@@ -268,9 +269,16 @@ describe("Vou na página do show", () => {
 
     const { container } = await renderShowPage();
 
-    await waitFor(() =>
-      expect(countText(container)).toMatch(/^2\s*(vão|foram)$/i),
-    );
+    await waitFor(() => expect(countText(container)).toMatch(/^2\s*foram$/i));
+    expect(screen.queryByRole("button", { name: /vou/i })).toBeNull();
+  });
+
+  it('SPEC-0029:E2E-02 show adiado: sem o botão Vou, com "{n} vão"', async () => {
+    stubApi({ show: showDetail("postponed"), count: 4, mine: [] });
+
+    const { container } = await renderShowPage();
+
+    await waitFor(() => expect(countText(container)).toMatch(/^4\s*vão$/i));
     expect(screen.queryByRole("button", { name: /vou/i })).toBeNull();
   });
 

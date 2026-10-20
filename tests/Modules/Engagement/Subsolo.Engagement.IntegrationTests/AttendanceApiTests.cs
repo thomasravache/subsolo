@@ -10,7 +10,8 @@ namespace Subsolo.Engagement.IntegrationTests;
 /// (<c>PUT /me/attendances/{showId}</c>, 204), vê o show em <c>GET /me/attendances?period=upcoming</c> (<c>no-store</c>)
 /// e a contagem pública (<c>GET /attendances/counts</c>) sobe; outro fã soma; desmarcar (<c>DELETE</c>, 204,
 /// idempotente) faz a lista e a contagem voltarem; repetir o <c>PUT</c> não duplica. Show cancelado ou que já passou →
-/// 409 <c>engagement.show_not_attendable</c> (o "vou" já marcado num show depois cancelado fica e continua contando);
+/// 409 <c>engagement.show_not_attendable</c>, como o adiado (Emenda 1); o "vou" já marcado num show depois cancelado ou
+/// adiado fica e continua contando;
 /// inexistente → 404 <c>engagement.show_not_found</c>. Marcar e desmarcar em ≤ 100 ms p95 (§5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -134,6 +135,35 @@ public sealed class AttendanceApiTests(PostgresFixture postgres)
 
         await fan.DeleteAsync(AttendanceRequests.Attend(show), ct).ShouldSucceedAsync(ct);
         (await anonymous.CountOfAsync(show, ct)).ShouldBe(0);
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0029:IT-01")]
+    [Trait("Kind", "Integration")]
+    public async Task APostponedShowIs409AndAnEarlierAttendanceKeepsCounting()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await FactoryAsync(ct);
+        var (admin, _) = await api.SignedInAsync(EngagementApiFactory.AdminEmail, ct);
+        var (fan, fanId) = await api.SignedInAsync("fa.antes.do.adiamento@subsolo.test", ct);
+        var (late, lateId) = await api.SignedInAsync("fa.depois.do.adiamento@subsolo.test", ct);
+        using var anonymous = api.CreateEngagementClient();
+        using var _ = admin;
+        using var __ = fan;
+        using var ___ = late;
+        var (show, _) = await admin.CreateShowAsync("Adiado Fest", ct);
+        await fan.PutAsync(AttendanceRequests.Attend(show), ct).ShouldSucceedAsync(ct);
+
+        await admin.ChangeShowStatusAsync(show, "postponed", ct);
+
+        using (var response = await late.PutAsync(AttendanceRequests.Attend(show), ct))
+        {
+            await response.ShouldBeProblemAsync(HttpStatusCode.Conflict, "engagement.show_not_attendable", ct);
+        }
+
+        (await AttendanceDatabase.AttendancesOfAsync(api.ConnectionString, lateId, ct)).ShouldBeEmpty();
+        (await AttendanceDatabase.AttendancesOfAsync(api.ConnectionString, fanId, ct)).ShouldHaveSingleItem();
+        (await anonymous.CountOfAsync(show, ct)).ShouldBe(1, "o vou marcado antes do adiamento continua contando");
     }
 
     [Fact]

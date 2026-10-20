@@ -8,7 +8,7 @@ namespace Subsolo.Engagement.UnitTests;
 /// <summary>
 /// SPEC-0029 UT-01 — o handler de <c>AttendShow</c> com o catálogo de teste (shows agendado, cancelado e passado): só o
 /// agendado futuro aceita o "vou" (gravado com a data do relógio, show validado pelo
-/// <c>IEventsCatalog.GetShowStateAsync</c>); repetir dá sucesso sem duplicar; cancelado e passado →
+/// <c>IEventsCatalog.GetShowStateAsync</c>); repetir dá sucesso sem duplicar; cancelado, adiado (Emenda 1) e passado →
 /// <c>engagement.show_not_attendable</c> (409); inexistente → <c>engagement.show_not_found</c> (404), sem gravar nada.
 /// </summary>
 public sealed class AttendShowTests
@@ -81,6 +81,19 @@ public sealed class AttendShowTests
 
         ShouldBeNotAttendable(result, "cancelado");
         harness.Attendances.All.ShouldBeEmpty("nada é gravado para show cancelado");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0029:UT-01")]
+    public async Task PostponedShowIsNotAttendable()
+    {
+        var harness = new EngagementHarness();
+        var show = harness.Catalog.AddShow("postponed", EngagementHarness.Start.AddDays(3));
+
+        var result = await AttendAsync(harness, show);
+
+        ShouldBeNotAttendable(result, "adiado");
+        harness.Attendances.All.ShouldBeEmpty("nada é gravado para show adiado");
     }
 
     [Theory]

@@ -102,11 +102,15 @@ internal static class AttendanceRequests
     }
 
     /// <summary>O admin cancela o show (<c>POST /shows/{id}/status</c>, 200).</summary>
-    public static async Task CancelShowAsync(this EngagementApiClient admin, Guid showId, CancellationToken ct)
+    public static Task CancelShowAsync(this EngagementApiClient admin, Guid showId, CancellationToken ct) =>
+        admin.ChangeShowStatusAsync(showId, "cancelled", ct);
+
+    /// <summary>O admin muda a situação do show (<c>cancelled</c> | <c>postponed</c> | <c>scheduled</c>; 200).</summary>
+    public static async Task ChangeShowStatusAsync(this EngagementApiClient admin, Guid showId, string status, CancellationToken ct)
     {
-        using var response = await admin.PostAsync($"/api/v1/shows/{showId}/status", new { status = "cancelled" }, ct);
+        using var response = await admin.PostAsync($"/api/v1/shows/{showId}/status", new { status }, ct);
         response.StatusCode.ShouldBe(
-            HttpStatusCode.OK, $"cancelar {showId}: {EngagementApiClient.Excerpt(await response.Content.ReadAsStringAsync(ct))}");
+            HttpStatusCode.OK, $"mudar {showId} para {status}: {EngagementApiClient.Excerpt(await response.Content.ReadAsStringAsync(ct))}");
     }
 
     /// <summary>Um flyer JPEG 300×400 enviado (<c>POST /api/v1/flyers</c>, 201 ou 200); devolve o id.</summary>
