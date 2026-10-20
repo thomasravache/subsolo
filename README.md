@@ -83,6 +83,8 @@ Perfil público (SPEC-0026): https://localhost:8443/banda/{slug}, /casa/{slug} e
 
 Seguir (SPEC-0027): logado, toque em "Seguir Curitiba" na agenda ou em "Seguir" no perfil; a aba https://localhost:8443/seguindo lista o que você segue. A API fica em `/api/v1/me/follows` (CSRF) e as contagens públicas em `/api/v1/cities/{slug}/followers` e `/api/v1/profiles/{id}/followers`.
 
+Apoie, privacidade e termos (SPEC-0028): https://localhost:8443/apoie (QR e chave Pix vindos de `Support__PixKey`, `Support__PixName` e `Support__PixCity`, só no servidor web; sem chave, "chega em breve"), /privacidade e /termos (contato do titular em `Site__ContactEmail`); o admin mantém os apoiadores em /admin/apoiadores. A API fica em `GET /api/v1/supporters` e `/api/v1/admin/supporters` (CSRF). Incidente com dados pessoais: `docs/runbooks/incidente-dados.md`.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

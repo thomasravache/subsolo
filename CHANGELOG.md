@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Apoie, privacidade e termos (SPEC-0028): página `/apoie` com QR code e chave Pix (configurados só no servidor) e lista de apoiadores mantida pelo admin em `/admin/apoiadores`; páginas `/privacidade` e `/termos` com índice e canal do titular; runbook de incidente com dados pessoais.
 - Seguir cidade, banda e casa (SPEC-0027): botão "Seguir" na agenda da cidade e nos perfis, contagem pública de seguidores, aba "Seguindo" na navegação inferior; follows na exportação de dados e removidos ao apagar a conta.
 - Perfil público de banda, casa e produtor (SPEC-0026): páginas `/banda`, `/casa` e `/produtor/{slug}` com redes, próximos shows e passados, prévia Open Graph com o flyer do próximo show, 404 "Perfil não encontrado" e 503 "Perfil indisponível"; nomes na página do show viram links; o cadastro de show sugere qualquer perfil aprovado; a agenda passa a aceitar só datas `aaaa-mm-dd`.
 - Filtros da agenda (SPEC-0025): "Esta semana", "Este mês", "Escolher data" e estilos na agenda da cidade, com URL compartilhável já filtrada no servidor, total no cabeçalho e bloco para produtores cadastrarem shows; data mal formada ou fora de 2000–2100 na API passa a dar 400 `agenda.invalid_range` em vez de 500.

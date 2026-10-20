@@ -4,7 +4,7 @@ title: Páginas Apoie (Pix), privacidade e termos
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0017]
@@ -155,23 +155,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: BR Code e validação**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0028:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0028:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Módulo e API**
-- [ ] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
-- [ ] Green: módulo `Site`, schema, endpoints, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
+- [x] Green: módulo `Site`, schema, endpoints, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Páginas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: `/apoie`, `/privacidade`, `/termos`, `/admin/apoiadores`, runbook
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: `/apoie`, `/privacidade`, `/termos`, `/admin/apoiadores`, runbook
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -184,8 +184,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; decisões 1–12 aceitas; itens H28-01..06 levados à SPEC-0003 e à SPEC-0030) — f40342f | 2026-10-20 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 13m 28s 530ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 7s 544ms) — 5bcab76 | 2026-10-20 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-20 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-20 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 1d0906a (árvore suja) | 2026-10-20 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -197,36 +197,55 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- `/apoie`: texto, QR code e "copia e cola" Pix gerados no servidor a partir de `Support__PixKey`, `Support__PixName` e `Support__PixCity` (só no servidor, nunca `NEXT_PUBLIC_`), "Copiar chave" e lista de apoiadores; sem chave, "O Pix do Subsolo chega em breve.".
+- `/privacidade` e `/termos`: textos com data de atualização, índice com âncoras e canal do titular (`Site__ContactEmail`).
+- `/admin/apoiadores`: listar, adicionar e remover com confirmação; API `GET /api/v1/supporters` pública e `POST`/`DELETE /api/v1/admin/supporters` só admin (CSRF).
+- Runbook `docs/runbooks/incidente-dados.md` (conter, avaliar, comunicar ANPD e titulares, registrar).
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (06afe4f scaffold; 49438f6, f0cf781, 921f4ef, aa0a180, 0e92280) → Implementer (8df501d, 1761c41, fad2222, 717979a, 63e9ea9, b4b3f1e, c93c10e, f40342f) → Reviewer: APPROVED WITH MINOR ITEMS em f40342f.
+- Módulo novo `Site` (schema `site`) no padrão dos módulos existentes; BR Code montado no servidor web com CRC16-CCITT próprio e QR pela biblioteca `qrcode` (1.5.4).
+- Páginas SSR seguindo as telas do Stitch; a lista de apoiadores degrada com aviso quando a API falha.
+- Emenda sem mudança de contrato: E2E-02 "sem chave" no servidor Next sem API; `/termos` pelo link de `/entrar` (rodapé como no Stitch); nomes das variáveis de ambiente do servidor web.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | BR Code no formato EMV do Pix (00, 26 com `br.gov.bcb.pix` e a chave, 52, 53=986, 58=BR, 59, 60, 62, 63) com CRC16-CCITT igual ao payload de referência; sem chave, texto "chega em breve" | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| UT-02 | validador de apoiador: nome de 1 e 61 caracteres e link `http` recusados; `https://zine.example` aceito | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| IT-01 | dois apoiadores cadastrados voltam em `GET /api/v1/supporters` na ordem de cadastro, p95 ≤ 100 ms | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| IT-02 | POST/DELETE de admin: anônimo 401, fã 403, admin 201/204; inválido 400; inexistente 404; sem `X-CSRF` 400 | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| IT-03 | API indisponível: `/apoie` responde 200 com o Pix e "A lista de apoiadores volta já." | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| CT-01 | OpenAPI com os endpoints do §6; `pnpm api:check` passa | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| E2E-01 | "Apoie" na navegação mostra QR code e chave; "Copiar chave" anuncia "Chave copiada."; admin adiciona e remove "Putridearth Zine" (mobile-chrome e mobile-safari); axe | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
+| E2E-02 | sem chave: "O Pix do Subsolo chega em breve."; "Privacidade" no rodapé e "Termos" em `/entrar` abrem as páginas com seções e índice; axe | PASS | `gate G2 --run` em f40342f; `gate G5 --run` na integração (5bcab76); CI do PR #40 (run 39375193655, checks verdes em 1d0906a) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #40 (run 39375193655)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #40 (https://github.com/thomasravache/subsolo/pull/40), merge commit 1e8f887 em 2026-10-20, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0003 §8 (go-live): H28-01..03 (revisão jurídica, prazo de 15 dias, "suspender a conta", link da ANPD) e H28-04 (validar a chave Pix).
+- SPEC-0030 §7.6: H28-05 (AppHost passa as variáveis do Pix e do e-mail de contato) e H28-06 (helper de validação em Common.Presentation).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0028`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
