@@ -126,6 +126,8 @@ internal sealed class TestEventsCatalog : IEventsCatalog
 
     public Task<bool> StylesExistAsync(IReadOnlyCollection<string> slugs, CancellationToken ct) =>
         Task.FromResult(false);
+
+    public Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) => Task.FromResult<ShowState?>(null);
 }
 
 /// <summary>

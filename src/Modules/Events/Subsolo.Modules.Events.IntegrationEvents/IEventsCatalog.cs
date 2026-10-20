@@ -11,4 +11,16 @@ public interface IEventsCatalog
 
     /// <summary>Todos os <paramref name="slugs"/> são estilos existentes.</summary>
     Task<bool> StylesExistAsync(IReadOnlyCollection<string> slugs, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0029 — a situação e o início do show <paramref name="showId"/> (o <c>Engagement</c> valida o "vou" com ela), ou
+    /// <see langword="null"/> se o show não existe.
+    /// </summary>
+    Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct);
 }
+
+/// <summary>
+/// SPEC-0029 — situação (<c>scheduled</c> | <c>cancelled</c> | <c>postponed</c>) e início (UTC) de um show, para outros
+/// módulos.
+/// </summary>
+public sealed record ShowState(string Status, DateTimeOffset StartsAtUtc);
