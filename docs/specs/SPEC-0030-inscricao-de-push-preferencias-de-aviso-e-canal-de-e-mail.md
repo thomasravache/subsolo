@@ -151,6 +151,7 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome com a permissão negada: "Ativar avisos" mostra "Os avisos estão bloqueados no navegador."; e abrindo um link de descadastro válido (gerado pelo teste) a página confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Herdado do CI da SPEC-0026:** H26-09 — `PersonalDataSectionNamesTests.SectionsWithDistinctNamesStartNormally` (SPEC-0021:IT-07) é instável no CI: chama `/health` logo após criar o banco isolado e recebe 503 enquanto as migrações (outbox/inbox) ainda rodam. Esperar o host ficar pronto (ou repetir até um prazo) antes de afirmar o 200.
 - Segurança: G4 confere a lista de serviços de push permitidos (SSRF), o segredo VAPID e o token de descadastro.
 
 **Dublês e dados de teste:** servidor de push falso nos IT; chaves VAPID de teste geradas no teste; Mailpit real.

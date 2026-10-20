@@ -4,14 +4,14 @@ title: Seguir cidade, banda e casa
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0025, SPEC-0026]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/profiles/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/seguir/**, docs/design/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/profiles/**, web/src/components/ui/BottomNav.tsx, web/src/components/ui/shell.ts, web/src/components/ui/__tests__/**, web/src/proxy.ts, web/src/proxy.test.ts, e2e/tests/seguir/**, docs/design/**, e2e/tests/perfis/perfil-publico.spec.ts]
 adrs: [ADR-0001, ADR-0008]
 external: []
 size: M
@@ -51,7 +51,7 @@ O fã logado segue a cidade (pela agenda), bandas, casas e produtores (pela pág
 ## 4. Decisão Arquitetural
 **Contexto:** módulos novos seguem o padrão de `Profiles`/`Notifications` (SPEC-0018/0021); regras do ADR-0001 com o esclarecimento de 2026-10-18 (sem ciclos; evento no contrato do consumidor).
 
-**Decisão:** módulo `Engagement` com slices `FollowCity`, `FollowProfile`, `Unfollow*`, `ListMyFollows`, `CountFollowers`; valida o alvo por `IEventsCatalog.CityExistsAsync` e `IProfilesApi.GetAsync` (perfil aprovado); consome `UserDeleted` e implementa `IPersonalDataSection` do `Users`. Dependências: `Engagement → Users, Events, Profiles` (nenhum deles depende do `Engagement`); a spec de avisos fará `Notifications → Engagement` pelo `IEngagementApi`.
+**Decisão:** módulo `Engagement` com slices `FollowCity`, `FollowProfile`, `Unfollow*`, `ListMyFollows`, `CountFollowers`; valida o alvo por `IEventsCatalog.CityExistsAsync` e `IProfilesApi.GetAsync` (perfil aprovado); consome `UserDeleted` e implementa `IPersonalDataSection` do `Users`. Dependências: `Engagement → Users, Events, Profiles` (nenhum deles depende do `Engagement`); a spec de avisos mora no próprio `Engagement` e entrega pelo `INotificationsApi` (`Engagement → Notifications`, nunca o contrário; Emenda de 2026-10-19).
 
 **Justificativa:** ADR-0001 (módulo `Engagement`: seguir e "vou"), ADR-0008 (o que o fã segue é dado pessoal: export e exclusão).
 
@@ -144,8 +144,8 @@ Navegação inferior: Agenda, Seguindo, Apoie, Conta
 
 ### 7.6 Outros
 - **Itens herdados da revisão da SPEC-0026 (G4):**
-  - H26-03 — `profile-metadata.ts` `ogImageOf`: montar a URL do og a partir do id do flyer (não por regex sobre `flyerThumbUrl`) e escolher como "próximo show" o primeiro não cancelado e ainda não iniciado.
-  - H26-04 — sonda de um dia da agenda (H25-01): usar a data de hoje no fuso da cidade, não em UTC.
+  - H26-03 — `profile-metadata.ts` `ogImageOf`: escolher como "próximo show" o primeiro não cancelado e ainda não iniciado. (A montagem da URL pelo id do flyer foi para a SPEC-0031, que pode mudar o contrato do `Events`; Emenda de 2026-10-19.)
+  - H26-04 — sonda de um dia da agenda (H25-01): o `from` da sonda é a data de hoje no fuso da cidade, não em UTC, e a sonda cobre no máximo um dia; o modo de obter o fuso (consulta ou janela a partir da véspera em UTC) fica a cargo da implementação (Emenda de 2026-10-19).
   - H26-05 — IT-05 da SPEC-0026: um teste único que passe por `loadProfile`/`ProfileRoute` com a lista de shows indisponível (200 com o aviso).
   - H26-06 — testes 503 do proxy para perfil: verificar que `/api/v1/profiles/...` foi chamado.
   - H26-08 — `reservedSegments` do proxy: teste para `/apoie` e um teste que compare com a lista de slugs reservados do backend (SPEC-0017).
@@ -200,12 +200,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — eb0bfe7 | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — ba68720 | 2026-10-19 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 4b83b52 | 2026-10-19 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 7s 357ms) — 4b83b52 | 2026-10-19 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; desvios 1–11 aceitos; itens menores H27-01..09 levados à SPEC-0029) — 4b83b52 | 2026-10-19 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 13m 13s 692ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 7s 919ms) — 42e8def | 2026-10-19 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -253,3 +253,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0027`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-19 | `e2e/tests/perfis/perfil-publico.spec.ts` no escopo (o E2E-01 da SPEC-0026 afirma que não há botão "Seguir" no perfil); H26-03 fica só com a escolha do próximo show, e a URL do og pelo id do flyer vai para a SPEC-0031; H26-04 esclarecido (`from` na data da cidade, no máximo um dia); §4 corrigido: avisos moram no `Engagement`, que depende do `Notifications`, nunca o contrário (como no §2 e no ADR-0001). | SPEC_DEFECTs do Test-writer no G1 | SPEC-0031 | piloto automático do Thomas (2026-10-17) |

@@ -79,6 +79,8 @@ Página do show (SPEC-0024): cada show tem a página https://localhost:8443/{cid
 
 Filtros da agenda (SPEC-0025): https://localhost:8443/curitiba?periodo=semana&estilo=death (também `periodo=mes` e `de`/`ate` em aaaa-mm-dd); a API aceita `from`, `to` e `styles` e devolve `period` e `total`.
 
+Perfil público (SPEC-0026): https://localhost:8443/banda/{slug}, /casa/{slug} e /produtor/{slug} (toque no nome da banda ou da casa na página do show), com redes, próximos shows e shows passados; a API expõe `GET /api/v1/profiles/{type}/{slug}`, `GET /api/v1/shows?profileId=&period=upcoming|past` e a busca `GET /api/v1/profiles/lookup` (artistas e admins).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

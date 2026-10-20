@@ -102,3 +102,51 @@ describe("agenda da cidade com período relativo", () => {
     },
   );
 });
+
+/**
+ * SPEC-0027 H26-04 (revisão da SPEC-0026, sobre o H25-01) — a sondagem de um dia que descobre o fuso usa a data de
+ * hoje no fuso da cidade, não em UTC: às 01:30 UTC de 19/10 ainda é 18/10, 22:30, em Curitiba (America/Sao_Paulo); a
+ * sondagem não pode começar no dia 19 (o "hoje" em UTC) e continua de no máximo um dia, e a chamada final começa no
+ * "hoje" da cidade (18/10).
+ */
+describe("agenda da cidade com período relativo perto da meia-noite UTC", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it.each(["semana", "mes"])(
+    "SPEC-0027:H26-04 ?periodo=%s às 01:30 UTC sonda o dia da cidade (18/10), não o dia em UTC (19/10)",
+    async (periodo) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-10-19T01:30:00Z"));
+      const cityToday = "2026-10-18";
+      getCityAgenda.mockImplementation(async (_slug, query) =>
+        agendaFor({ ...query, from: query?.from ?? cityToday }),
+      );
+      const { generateMetadata } = await import("./page");
+
+      await generateMetadata({
+        params: Promise.resolve({ cidade: "curitiba" }),
+        searchParams: Promise.resolve({ periodo }),
+      } as unknown as Parameters<typeof generateMetadata>[0]);
+
+      const queries = getCityAgenda.mock.calls.map(([, query]) => query);
+      expect(queries.length, "nenhuma chamada à agenda").toBeGreaterThan(0);
+      expect(
+        queries.length,
+        `chamadas à agenda: ${JSON.stringify(queries)}`,
+      ).toBeLessThanOrEqual(2);
+      expect(queries.at(-1)?.from, "a chamada final").toBe(cityToday);
+      for (const probe of queries.slice(0, -1)) {
+        expect(
+          spanDays(probe),
+          `a sondagem do fuso pediu mais de um dia: ${JSON.stringify(probe)}`,
+        ).toBeLessThanOrEqual(1);
+        expect(
+          probe?.from,
+          `a sondagem começou no dia em UTC: ${JSON.stringify(probe)}`,
+        ).toBe(cityToday);
+      }
+    },
+  );
+});

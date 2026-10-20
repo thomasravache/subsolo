@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0027 — domínio do módulo Engagement (ADR-0001): o que o fã segue (Follow: usuário, alvo cidade por slug ou
+    perfil por id, criado em; único por usuário e alvo).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Engagement.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

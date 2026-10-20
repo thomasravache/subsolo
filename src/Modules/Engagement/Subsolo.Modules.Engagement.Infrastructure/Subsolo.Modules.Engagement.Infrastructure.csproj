@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0027 — infraestrutura do módulo Engagement (ADR-0001, ADR-0002): DbContext do schema `engagement`, migrações e
+    o registro do módulo (AddEngagementModule).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Engagement.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Só para gerar as migrações com `dotnet ef` (não vai para quem referencia o projeto). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.Application/Subsolo.Modules.Engagement.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.Presentation/Subsolo.Modules.Engagement.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

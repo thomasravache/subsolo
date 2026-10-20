@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SPEC-0027 — endpoints Minimal API do módulo Engagement (ADR-0001): /api/v1/me/follows*, /profiles/{id}/followers e /cities/{slug}/followers. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Engagement.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- O registro do módulo (Infrastructure) usa os tipos internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Engagement.Infrastructure" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Presentation/Subsolo.Common.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Engagement.Application/Subsolo.Modules.Engagement.Application.csproj" />
+  </ItemGroup>
+
+</Project>

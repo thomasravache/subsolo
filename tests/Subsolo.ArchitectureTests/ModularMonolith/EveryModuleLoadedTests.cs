@@ -13,6 +13,7 @@ public sealed class EveryModuleLoadedTests
     [Fact]
     [Trait("Spec", "SPEC-0007:IT-09")]
     [Trait("Spec", "SPEC-0021:IT-08")]
+    [Trait("Spec", "SPEC-0027:IT-06")]
     [Trait("Kind", "Integration")]
     public void ModuleProjectsAreFoundUnderSrcAndTests()
     {
@@ -20,6 +21,11 @@ public sealed class EveryModuleLoadedTests
 
         projects.ShouldBe(
             [
+                "Subsolo.Modules.Engagement.Application",
+                "Subsolo.Modules.Engagement.Domain",
+                "Subsolo.Modules.Engagement.Infrastructure",
+                "Subsolo.Modules.Engagement.IntegrationEvents",
+                "Subsolo.Modules.Engagement.Presentation",
                 "Subsolo.Modules.Events.Application",
                 "Subsolo.Modules.Events.Domain",
                 "Subsolo.Modules.Events.Infrastructure",
@@ -50,6 +56,7 @@ public sealed class EveryModuleLoadedTests
     [Fact]
     [Trait("Spec", "SPEC-0007:IT-09")]
     [Trait("Spec", "SPEC-0021:IT-08")]
+    [Trait("Spec", "SPEC-0027:IT-06")]
     [Trait("Kind", "Integration")]
     public void EveryModuleProjectOfTheRepositoryIsLoadedByTheRules()
     {

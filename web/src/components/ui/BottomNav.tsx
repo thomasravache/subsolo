@@ -1,13 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { BookmarkIcon } from "@/components/engagement/icons";
 
 import { CalendarIcon, HeartIcon } from "./icons";
-import { accountHref } from "./shell";
+import { accountHref, followingPath, isFollowingPage } from "./shell";
 
 export interface BottomNavProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
   city: string;
   /** Destino ativo, marcado com `aria-current="page"`. */
-  current?: "agenda" | "apoie" | "conta";
+  current?: "agenda" | "seguindo" | "apoie" | "conta";
   /** SPEC-0016 — há sessão (`GET /api/v1/me`): a aba "Conta" leva a `/conta`; sem sessão, a `/entrar`. */
   signedIn?: boolean;
   /** SPEC-0016 — página atual, para a volta depois de entrar (`/entrar?returnTo=…`). */
@@ -40,13 +45,18 @@ const item =
 /**
  * SPEC-0011 — navegação inferior fixa, só no celular (< 768 px); no desktop a navegação fica no cabeçalho.
  * SPEC-0016 — a aba "Conta" leva a `/conta` com sessão e a `/entrar` (com a volta para a página atual) sem sessão.
+ * SPEC-0027 — abas Agenda, Seguindo, Apoie e Conta ("Buscar", fora do MVP, vira "Seguindo"); "Seguindo" leva a
+ * `/seguindo` (a página manda o anônimo para `/entrar`) e é o item ativo nela, mesmo sem `current`.
  */
 export function BottomNav({
   city,
-  current,
+  current: given,
   signedIn = false,
   returnTo,
 }: BottomNavProps) {
+  const pathname = usePathname();
+  const current =
+    given ?? (pathname && isFollowingPage(pathname) ? "seguindo" : undefined);
   // Ativo: texto claro com ícone e barra no destaque (o destaque não tem contraste para texto pequeno).
   const tone = (name: BottomNavProps["current"]) =>
     current === name
@@ -65,6 +75,18 @@ export function BottomNav({
         <CalendarIcon />
         Agenda
       </Link>
+      {/*
+        SPEC-0027 — documento novo (não a navegação do router): `/seguindo` é dado pessoal, renderizado por requisição, e a
+        página anterior não fica escondida no DOM (Activity do cacheComponents) junto da lista.
+      */}
+      <a
+        href={followingPath}
+        aria-current={current === "seguindo" ? "page" : undefined}
+        className={`${item} ${tone("seguindo")}`}
+      >
+        <BookmarkIcon />
+        Seguindo
+      </a>
       <Link
         href="/apoie"
         aria-current={current === "apoie" ? "page" : undefined}

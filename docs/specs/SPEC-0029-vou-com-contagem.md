@@ -11,7 +11,7 @@ depends_on: [SPEC-0027]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/**, src/Modules/Events/Subsolo.Modules.Events.Infrastructure/**, tests/Modules/Events/**, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/app/(public)/banda/**, web/src/app/(public)/casa/**, web/src/app/(public)/produtor/**, web/src/components/engagement/**, web/src/components/agenda/**, web/src/components/shows/**, web/src/components/profiles/**, e2e/tests/vou/**, docs/design/**, web/src/components/ui/Header.tsx, web/src/components/ui/AppShell.tsx, web/src/components/ui/BottomNav.tsx, web/src/components/ui/__tests__/**, src/Modules/Profiles/Subsolo.Modules.Profiles.IntegrationEvents/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Application/**, src/Modules/Profiles/Subsolo.Modules.Profiles.Infrastructure/**, tests/Modules/Profiles/**]
 adrs: [ADR-0001, ADR-0008]
 external: []
 size: S
@@ -138,6 +138,16 @@ Anônimo tocando "Vou" → /entrar?returnTo=/{cidade}/{show}
 - **E2E-02** — Dada a aplicação completa, no projeto mobile-chrome: anônimo tocando em "Vou" vai para `/entrar?returnTo=…`; um show cancelado não mostra o botão. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Itens herdados da revisão da SPEC-0027 (G4, tag `SPEC-0029:H27-NN`):**
+  - H27-01 — `FollowButton.tsx`: dependências do efeito por valores primitivos (`target.kind` e `target.slug ?? target.id`), sem refazer `GET /me/follows` a cada re-render da agenda.
+  - H27-02 — botões de seguir e "Deixar de seguir": `aria-disabled` e cliques ignorados durante a requisição, em vez de `disabled` (não perder o foco do teclado).
+  - H27-03 — `FollowButton`: a contagem acompanha a prop `followers` quando ela muda.
+  - H27-04 — nome acessível do botão de seguir (WCAG 2.5.3, rótulo no nome): nome constante "Seguir {nome}" com `aria-pressed`, texto visível "Seguindo" quando seguido; vale também para o botão "Vou" desta spec.
+  - H27-05 — link "Seguindo" no cabeçalho do desktop (`Header.tsx`) e a aba ativa calculada em `AppShell.currentDestination`, não no `BottomNav`.
+  - H27-06 — `ProfileReader`/`IProfilesApi`: busca em lote (`GetManyAsync`) para a lista "Seguindo" e a exportação, sem uma chamada por perfil.
+  - H27-07 — teste do H26-04 também ao meio-dia UTC (sonda de no máximo um dia; `from` final na data da cidade).
+  - H27-08 — captura da agenda no `docs/design/stitch/` atualizada com o botão "SEGUIR CURITIBA".
+  - H27-09 — follows de perfil que deixa de ser aprovado ou é excluído: não contam em `GetFollowersAsync` (ou são removidos), com teste; hoje ficam ocultos só na lista.
 - Privacidade: G4 confere que nenhuma resposta pública expõe quem vai.
 
 **Dublês e dados de teste:** catálogo de teste no UT; shows criados pela API nos IT e no E2E.
