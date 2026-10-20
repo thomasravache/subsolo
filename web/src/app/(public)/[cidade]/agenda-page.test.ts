@@ -150,3 +150,46 @@ describe("agenda da cidade com período relativo perto da meia-noite UTC", () =>
     },
   );
 });
+
+/**
+ * SPEC-0029 H27-07 (revisão da SPEC-0027) — o teste do H26-04 também ao meio-dia UTC: às 12:00 UTC de 19/10 já é
+ * 19/10, 09:00, em Curitiba; a sondagem do fuso (se houver) cobre no máximo um dia e a chamada final começa no "hoje"
+ * da cidade (19/10).
+ */
+describe("agenda da cidade com período relativo ao meio-dia UTC", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it.each(["semana", "mes"])(
+    "SPEC-0029:H27-07 ?periodo=%s às 12:00 UTC sonda no máximo um dia e começa no dia da cidade (19/10)",
+    async (periodo) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-10-19T12:00:00Z"));
+      const cityToday = "2026-10-19";
+      getCityAgenda.mockImplementation(async (_slug, query) =>
+        agendaFor({ ...query, from: query?.from ?? cityToday }),
+      );
+      const { generateMetadata } = await import("./page");
+
+      await generateMetadata({
+        params: Promise.resolve({ cidade: "curitiba" }),
+        searchParams: Promise.resolve({ periodo }),
+      } as unknown as Parameters<typeof generateMetadata>[0]);
+
+      const queries = getCityAgenda.mock.calls.map(([, query]) => query);
+      expect(queries.length, "nenhuma chamada à agenda").toBeGreaterThan(0);
+      expect(
+        queries.length,
+        `chamadas à agenda: ${JSON.stringify(queries)}`,
+      ).toBeLessThanOrEqual(2);
+      expect(queries.at(-1)?.from, "a chamada final").toBe(cityToday);
+      for (const probe of queries.slice(0, -1)) {
+        expect(
+          spanDays(probe),
+          `a sondagem do fuso pediu mais de um dia: ${JSON.stringify(probe)}`,
+        ).toBeLessThanOrEqual(1);
+      }
+    },
+  );
+});
