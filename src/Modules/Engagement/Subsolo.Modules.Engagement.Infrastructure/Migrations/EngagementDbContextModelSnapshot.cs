@@ -149,6 +149,28 @@ namespace Subsolo.Modules.Engagement.Infrastructure.Migrations
                     b.ToTable("outbox_message_consumers", "engagement");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Engagement.Domain.Attendances.Attendance", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("ShowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("show_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.HasKey("UserId", "ShowId")
+                        .HasName("PK_attendances");
+
+                    b.HasIndex("ShowId");
+
+                    b.ToTable("attendances", "engagement");
+                });
+
             modelBuilder.Entity("Subsolo.Modules.Engagement.Domain.Follows.Follow", b =>
                 {
                     b.Property<Guid>("UserId")

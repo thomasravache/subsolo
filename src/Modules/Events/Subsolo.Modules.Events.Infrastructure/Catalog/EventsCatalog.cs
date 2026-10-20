@@ -47,7 +47,10 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
         return found == wanted.Count;
     }
 
-    /// <summary>SPEC-0029 — esqueleto (G1): a leitura da situação do show entra na implementação.</summary>
-    public Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) =>
-        throw new NotImplementedException("SPEC-0029: GetShowStateAsync ainda não implementado");
+    /// <summary>SPEC-0029 — a situação e o início do show (só essas duas colunas), ou <see langword="null"/> se não existe.</summary>
+    public async Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) =>
+        await db.Shows.AsNoTracking()
+            .Where(show => show.Id == showId)
+            .Select(show => new ShowState(show.Status, show.StartsAtUtc))
+            .SingleOrDefaultAsync(ct);
 }
