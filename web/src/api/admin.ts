@@ -76,3 +76,35 @@ export function renameStyle(
     return data ? { ok: true, value: data } : failure(response.status, error);
   });
 }
+
+/** SPEC-0028 — apoiador da lista (o admin vê a mesma lista pública, na ordem de cadastro). */
+export type AdminSupporter = components["schemas"]["SupporterResponse"];
+
+/** SPEC-0028 — `POST /api/v1/admin/supporters`: cadastra o apoiador (link `https` ou nenhum); devolve o id. */
+export function addSupporter(
+  name: string,
+  url: string | null,
+): Promise<ApiResult<string>> {
+  return guarded(async () => {
+    const { data, response, error } = await api.POST(
+      "/api/v1/admin/supporters",
+      { body: { name, url }, headers: await csrfHeaders() },
+    );
+    return data
+      ? { ok: true, value: data.id }
+      : failure(response.status, error);
+  });
+}
+
+/** SPEC-0028 — `DELETE /api/v1/admin/supporters/{id}`: remove o apoiador. */
+export function removeSupporter(id: string): Promise<ApiResult> {
+  return guarded(async () => {
+    const { response, error } = await api.DELETE(
+      "/api/v1/admin/supporters/{id}",
+      { params: { path: { id } }, headers: await csrfHeaders() },
+    );
+    return response.ok
+      ? { ok: true, value: undefined }
+      : failure(response.status, error);
+  });
+}
