@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 4, implemented 26
+- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 3, in-progress 1, implemented 26
 - Impedimentos: **0 aberto(s)**, 18 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0030  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0030
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | approved | ✅ pronta |  |
+| 1 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0030 |  |
 | 3 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
 | 4 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0031 | saiu da onda 3: arquivos em comum com SPEC-0032 |
@@ -75,7 +75,7 @@ flowchart LR
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::implemented
     S0027["SPEC-0027<br/>Seguir cidade, banda e casa"]:::implemented
     S0029["SPEC-0029<br/>Vou com contagem"]:::implemented
-    S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::approved
+    S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::inprogress
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::approved
     S0032["SPEC-0032<br/>Lembrete na véspera"]:::approved
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
@@ -136,7 +136,7 @@ flowchart LR
 | [SPEC-0027](SPEC-0027-seguir-cidade-banda-e-casa.md) | Seguir cidade, banda e casa | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0025, SPEC-0026 | — |
 | [SPEC-0028](SPEC-0028-paginas-apoie-pix-privacidade-e-termos.md) | Páginas Apoie (Pix), privacidade e termos | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0017 | — |
 | [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
-| [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
+| [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
 | [SPEC-0031](SPEC-0031-aviso-de-show-novo-push-imediato-e-resumo-diario-por-e-mail.md) | Aviso de show novo (push imediato e resumo diário por e-mail) | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023, SPEC-0027, SPEC-0030 | — |
 | [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
 | [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
