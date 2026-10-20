@@ -45,7 +45,7 @@ export default async function ApoiePage() {
         className="flex flex-col items-center gap-6 rounded-md border border-border bg-surface p-6"
       >
         <div className="flex w-full flex-col gap-1">
-          <p className="font-label text-xs font-bold uppercase tracking-wider text-accent">
+          <p className="font-label text-xs font-bold uppercase tracking-wider text-text-muted">
             Qualquer valor
           </p>
           <h2

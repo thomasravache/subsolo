@@ -68,7 +68,7 @@ export function InstitutionalPage({
                 href={`#${section.id}`}
                 className="flex min-h-11 items-center gap-3 font-label text-sm font-bold uppercase tracking-wider text-text hover:text-white"
               >
-                <span aria-hidden="true" className="text-accent">
+                <span aria-hidden="true" className="text-text-muted">
                   {number(index)}
                 </span>
                 <span>{section.title}</span>
@@ -89,7 +89,7 @@ export function InstitutionalPage({
             <div className="flex items-baseline gap-3 border-b border-border pb-2">
               <span
                 aria-hidden="true"
-                className="font-label text-sm font-bold text-accent"
+                className="font-label text-sm font-bold text-text-muted"
               >
                 {number(index)}
               </span>
