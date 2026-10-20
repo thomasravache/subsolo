@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { SVGProps } from "react";
 
 import type { components } from "@/api/schema";
 
@@ -12,7 +13,9 @@ export type ShowStatus = components["schemas"]["ShowStatus"];
  * - `href`: página do show;
  * - `flyerSrc`: miniatura do flyer (`flyerThumbUrl`); sem flyer, placeholder escuro com o nome do show;
  * - `date`: início do show em ISO 8601 (`startsAt`), exibido no fuso `timeZone` (IANA) da cidade;
- * - `status`: `cancelled`/`postponed` mostram o `Badge` "Cancelado"/"Adiado" com papel de status.
+ * - `status`: `cancelled`/`postponed` mostram o `Badge` "Cancelado"/"Adiado" com papel de status;
+ * - `attendingCount`: SPEC-0029 — quantos vão (do `Engagement`); ausente (contagem indisponível), o card não mostra
+ *   nenhuma contagem.
  */
 export interface CardProps {
   href: string;
@@ -24,7 +27,7 @@ export interface CardProps {
   lineup: string[];
   styles: string[];
   status: ShowStatus;
-  attendingCount: number;
+  attendingCount?: number;
 }
 
 interface ShowDate {
@@ -54,6 +57,51 @@ function showDate(iso: string, timeZone: string): ShowDate {
     weekday: part("weekday"),
     time: `${part("hour")}h${minute === "00" ? "" : minute}`,
   };
+}
+
+const numberFormat = new Intl.NumberFormat("pt-BR");
+
+const iconBase = {
+  viewBox: "0 0 24 24",
+  width: 14,
+  height: 14,
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "square",
+  "aria-hidden": true,
+  focusable: false,
+} as const;
+
+/**
+ * SPEC-0029 — o ícone da contagem, como na tela "Agenda Curitiba - Subsolo" do Stitch: chama (destaque) no agendado,
+ * relógio (aviso) no adiado e "x" no cancelado; decorativo.
+ */
+function AttendanceIcon({
+  status,
+  ...props
+}: { status: ShowStatus } & SVGProps<SVGSVGElement>) {
+  if (status === "postponed") {
+    return (
+      <svg {...iconBase} {...props} className="shrink-0 text-warning">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+  if (status === "cancelled") {
+    return (
+      <svg {...iconBase} {...props} className="shrink-0 text-text-muted">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9 9l6 6M15 9l-6 6" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...iconBase} {...props} className="shrink-0 text-accent">
+      <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.6 1 2.6 2 3 0-3 .5-5.5.5-8z" />
+    </svg>
+  );
 }
 
 /**
@@ -148,9 +196,13 @@ export function Card({
               </li>
             ))}
           </ul>
-          <p className="shrink-0 font-label text-xs font-semibold text-text-muted">
-            {attendingCount} {attendingCount === 1 ? "vai" : "vão"}
-          </p>
+          {attendingCount !== undefined && (
+            <p className="flex shrink-0 items-center gap-1 font-label text-xs font-semibold text-text-muted">
+              <AttendanceIcon status={status} />
+              {numberFormat.format(attendingCount)}{" "}
+              {attendingCount === 1 ? "vai" : "vão"}
+            </p>
+          )}
         </div>
       </div>
     </article>

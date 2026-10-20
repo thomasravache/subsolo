@@ -30,3 +30,12 @@ export function BookmarkIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+/** SPEC-0029 — chama do "Vou" e da contagem "{n} vão" (tela "Página do Show" do Stitch). */
+export function FlameIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.6 1 2.6 2 3 0-3 .5-5.5.5-8z" />
+    </svg>
+  );
+}
