@@ -72,6 +72,12 @@
     <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Infrastructure/Subsolo.Modules.Engagement.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
     <ProjectReference Include="../../src/Modules/Engagement/Subsolo.Modules.Engagement.Presentation/Subsolo.Modules.Engagement.Presentation.csproj" />
+    <!-- SPEC-0028: módulo Site. -->
+    <ProjectReference Include="../../src/Modules/Site/Subsolo.Modules.Site.Application/Subsolo.Modules.Site.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/Site/Subsolo.Modules.Site.Domain/Subsolo.Modules.Site.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Site/Subsolo.Modules.Site.Infrastructure/Subsolo.Modules.Site.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Site/Subsolo.Modules.Site.IntegrationEvents/Subsolo.Modules.Site.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../src/Modules/Site/Subsolo.Modules.Site.Presentation/Subsolo.Modules.Site.Presentation.csproj" />
     <!-- SPEC-0018 IT-05 (Emenda 2): a regra "só o Notifications usa SMTP" também avalia os hosts (Api e ServiceDefaults). -->
     <ProjectReference Include="../../src/Subsolo.Api/Subsolo.Api.csproj" />
     <ProjectReference Include="../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />

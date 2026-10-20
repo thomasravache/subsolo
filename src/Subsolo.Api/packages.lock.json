@@ -458,6 +458,42 @@
           "Subsolo.Modules.Profiles.Application": "[1.0.0, )"
         }
       },
+      "subsolo.modules.site.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Site.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Site.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Site.Application": "[1.0.0, )",
+          "Subsolo.Modules.Site.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Site.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Site.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.users.application": {
         "type": "Project",
         "dependencies": {
