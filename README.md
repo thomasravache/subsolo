@@ -81,6 +81,8 @@ Filtros da agenda (SPEC-0025): https://localhost:8443/curitiba?periodo=semana&es
 
 Perfil público (SPEC-0026): https://localhost:8443/banda/{slug}, /casa/{slug} e /produtor/{slug} (toque no nome da banda ou da casa na página do show), com redes, próximos shows e shows passados; a API expõe `GET /api/v1/profiles/{type}/{slug}`, `GET /api/v1/shows?profileId=&period=upcoming|past` e a busca `GET /api/v1/profiles/lookup` (artistas e admins).
 
+Seguir (SPEC-0027): logado, toque em "Seguir Curitiba" na agenda ou em "Seguir" no perfil; a aba https://localhost:8443/seguindo lista o que você segue. A API fica em `/api/v1/me/follows` (CSRF) e as contagens públicas em `/api/v1/cities/{slug}/followers` e `/api/v1/profiles/{id}/followers`.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

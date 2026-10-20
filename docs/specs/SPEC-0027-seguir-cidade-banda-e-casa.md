@@ -4,7 +4,7 @@ title: Seguir cidade, banda e casa
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0025, SPEC-0026]
@@ -177,23 +177,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Domínio**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0027:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0027:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Módulo, API e contrato**
-- [ ] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
-- [ ] Green: módulo `Engagement`, schema, endpoints, consumidor do `UserDeleted`, seção do export, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
+- [x] Green: módulo `Engagement`, schema, endpoints, consumidor do `UserDeleted`, seção do export, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: botões na agenda e no perfil, aba Seguindo, navegação
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: botões na agenda e no perfil, aba Seguindo, navegação
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -206,8 +206,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; desvios 1–11 aceitos; itens menores H27-01..09 levados à SPEC-0029) — 4b83b52 | 2026-10-19 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 13m 13s 692ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 7s 919ms) — 42e8def | 2026-10-19 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-19 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-19 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — c39e4b5 (árvore suja) | 2026-10-19 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -219,36 +219,57 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Seguir cidade, banda, casa e produtor: botão "Seguir {cidade}" na agenda e "Seguir" com contagem de seguidores por extenso no perfil, como no Stitch; anônimo vai para o login e volta.
+- Aba "Seguindo" (`/seguindo`) na navegação inferior (Agenda, Seguindo, Apoie, Conta), com as listas por tipo e "Deixar de seguir".
+- API `PUT`/`DELETE /api/v1/me/follows/...`, `GET /api/v1/me/follows`, contagens públicas de seguidores (sem lista) e `IEngagementApi.GetFollowersAsync` para os avisos; follows na exportação de dados e removidos ao apagar a conta.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (28eaf65 scaffold; 0b65b30, 184a4c3, 2ab8aba, ea0b5fb, ba68720, 4b83b52) → Implementer (ca170eb, 6c480c8, a5e94cb, 30bc915, 8490af9) → Reviewer: APPROVED WITH MINOR ITEMS em 4b83b52.
+- Módulo novo `Engagement` (schema `engagement`, outbox/inbox), no padrão do `Profiles`: depende só dos `IntegrationEvents` de Users, Events e Profiles; consome `UserDeleted` e implementa `IPersonalDataSection`; corrida de follows resolvida pela chave primária (violação única = sucesso). Contadores `subsolo.engagement.follows` e `unfollows`.
+- Web: estado do botão lido no navegador por `GET /me/follows` (páginas iguais para todos); contagem no servidor, degradando se falhar; proxy trata `/seguindo` como `/conta`.
+- Emenda sem mudança de contrato: E2E do perfil da SPEC-0026 no escopo; URL do og pelo id do flyer para a SPEC-0031; sonda da agenda esclarecida; direção `Engagement → Notifications` corrigida no §4.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | seguir cidade e perfil aprovado; repetir não duplica; cidade inexistente, perfil pendente ou inexistente → `engagement.target_not_found` sem gravar | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| UT-02 | `GetFollowersAsync` devolve os ids sem repetição | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-01 | seguir, listar, contar e deixar de seguir com 204 e contagens certas; contagem pública sem ids nem e-mails; alvo inválido → 404 | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-02 | quatro PUT iguais em paralelo (5 rodadas): todos 204 e um follow só | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-03 | anônimo → 401 `auth.required`; sem `X-CSRF` ou inválido → 400 `security.csrf_invalid`, sem mudança | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-04 | 10.000 seguidores da cidade e 500 do perfil: ids únicos em p95 ≤ 200 ms | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-05 | exportação com a seção `follows`; `UserDeleted` remove os follows e baixa as contagens | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| IT-06 | regras do ADR-0001 com o `Engagement`, `IEngagementApi` em `IntegrationEvents`, sem ciclos | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| CT-01 | OpenAPI e `IEngagementApi` como no §6; `pnpm api:check` passa | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| E2E-01 | seguir cidade e banda, aba "Seguindo", deixar de seguir (mobile-chrome e mobile-safari); axe | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| E2E-02 | anônimo em "Seguir Curitiba" e em `/seguindo` vai para `/entrar?returnTo=…` | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
+| H26-03..06, H26-08 | próximo show não cancelado e não iniciado no og; sonda da agenda de no máximo um dia; teste único do perfil com shows indisponíveis; testes 503 conferem a chamada à API de perfis; `/apoie` e lista completa de slugs reservados no proxy | PASS | `gate G2 --run` em 4b83b52; `gate G5 --run` na integração (42e8def); CI do PR #39 (run 39347130673, 10/10 checks em c39e4b5) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #39 (run 39347130673)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #39 (https://github.com/thomasravache/subsolo/pull/39), merge commit 1473b33 em 2026-10-19, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- Menores da revisão G4 → SPEC-0029 (§7.6, H27-01..09: dependências e foco do botão de seguir, nome acessível constante, "Seguindo" no cabeçalho do desktop, busca de perfis em lote, teste da sonda ao meio-dia, captura do Stitch da agenda, follows de perfil não aprovado).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0027`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
