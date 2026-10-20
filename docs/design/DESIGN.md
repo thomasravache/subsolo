@@ -26,6 +26,9 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Fila do Admin (SPEC-0021, só a aba "Pedidos de perfil") | desktop | `600bfe18de6e44a995790033ab0f817e` | pendente (capturada pelo Architect) |
 | Perfil da Banda — Podridão (SPEC-0026; também casa e produtor, sem foto e sem "Vou"; SPEC-0027: "Seguir" / "Seguindo" e "{n} seguidores" por extenso) | celular | `bdf4a66e751846d5a73dca2f606aac6a` | [perfil-mobile.png](stitch/perfil-mobile.png) |
 | Avisos e Seguindo (SPEC-0027: só a parte "Seguindo", em `/seguindo`, com uma seção por tipo; os avisos vêm com a spec de push; a navegação fica Agenda, Seguindo, Apoie, Conta) | celular | `35b282364c47425c9e9cfe89e7b1c1e2` | [seguindo-mobile.png](stitch/seguindo-mobile.png) |
+| Apoie o Subsolo v2 (SPEC-0028; QR code gerado da chave real da configuração, sem a chave de exemplo; "Copiar chave"; textos do §6; lista de apoiadores sem a descrição de cada um) | celular | `eac502a950a545e481a18f8ea78d4149` | [apoie-mobile.png](stitch/apoie-mobile.png) |
+| Privacidade (SPEC-0028; também modelo de `/termos`; textos do §6, da tabela do ADR-0008) | celular | `e5fe5036928f4a29bf3c95fd51132ea3` | [privacidade-mobile.png](stitch/privacidade-mobile.png) |
+| Admin - Apoiadores (SPEC-0028; na ordem de cadastro, não alfabética; confirmação em `dialog` modal) | celular | `af1b0081f220444c893e1d85e071c1bc` | [admin-apoiadores-mobile.png](stitch/admin-apoiadores-mobile.png) |
 
 O HTML exportado pelo Stitch é só referência visual: os componentes são reescritos com os tokens, com HTML semântico
 e com contraste verificado (nada de fonte de terceiros, CDN do Tailwind ou ícones por fonte remota).
@@ -137,9 +140,24 @@ Painel do admin (`web/src/components/admin/`, SPEC-0017):
 | `CitiesPanel` | `initialCities onSuccess` | tabela Nome/UF/Fuso/Endereço; "Nova cidade" com a prévia `agendasubsolo.com.br/{slug}` gerada do nome (endereço apagado volta ao gerado); "Editar" com o endereço só leitura |
 | `StylesPanel` | `initialStyles onSuccess` | estilos em chips com "Renomear"; campo "Novo estilo" + "Adicionar" |
 | `Field` | `id label error? hint?` | rótulo visível; erro e dica ligados ao controle por `aria-describedby`, com `aria-invalid` no erro |
+| `SupportersPanel` | `initialSupporters` | SPEC-0028: "Novo apoiador" (Nome do apoiador, Link opcional com a dica "Começa com https://.", "Adicionar"), "Cadastrados ({n})" na ordem de cadastro com "Remover" em cada item, e a região `role="status"` ("Apoiador adicionado.", "Apoiador removido.") |
+| `RemoveSupporterDialog` | `name busy error onConfirm onRemoved` | SPEC-0028: `dialog` modal "Confirmar remoção" com foco preso, "Cancelar" em foco ao abrir, "Remover" no botão primário; ao remover, o foco vai para o título da lista |
 
 Ajustes aprovados sobre a tela do Stitch: sem textos de exclusão nem a caixa "Regra da cena", sem contagens de shows,
 menu só com o que existe, endereço só leitura na edição e o domínio decidido (`agendasubsolo.com.br`, ADR-0004) no lugar de "subsolo.art".
+
+Páginas institucionais (`web/src/components/site/`, SPEC-0028):
+
+| Componente | Props principais | Regras |
+|---|---|---|
+| `PixQrCode` | `source` | QR code do BR Code gerado no servidor (`pixQrCodeSource`, pacote `qrcode`) como SVG preto no branco num `<img>` `data:` (CSP `img-src data:`), com o texto alternativo "QR code do Pix do Subsolo"; a chave sempre aparece em texto ao lado |
+| `CopyPixKey` | `pixKey` | a chave em texto selecionável e "Copiar chave"; "Chave copiada." anunciado em `role="status"` |
+| `SupportersList` | `result` | seção "APOIADORES": nomes na ordem de cadastro, com link (nova aba, avisada ao leitor de tela) só para quem tem; vazio e API fora do ar com os textos do §6 |
+| `InstitutionalPage` | `title updatedAt intro sections` | título, "Atualizada em …", introdução com filete do destaque, índice "Neste documento" (`<nav>` com âncoras; os números são decorativos) e as seções numeradas |
+
+Ajustes aprovados sobre as telas do Stitch: QR code gerado da chave da configuração (o Stitch usa uma imagem de
+exemplo), sem a chave de exemplo, sem a descrição de cada apoiador e sem o rodapé próprio (vale o rodapé do shell);
+o admin lista na ordem de cadastro.
 
 Minha conta (`web/src/components/account/`, SPEC-0019):
 
