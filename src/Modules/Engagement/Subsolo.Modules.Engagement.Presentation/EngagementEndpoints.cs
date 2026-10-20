@@ -18,13 +18,16 @@ internal static class EngagementEndpoints
 {
     public const string Tag = "Seguir";
 
-    public static RouteHandlerBuilder RequireEngagementFan(this RouteHandlerBuilder builder, bool mutation)
+    /// <summary>SPEC-0029 — tag das rotas do "vou".</summary>
+    public const string AttendanceTag = "Vou";
+
+    public static RouteHandlerBuilder RequireEngagementFan(this RouteHandlerBuilder builder, bool mutation, string tag = Tag)
     {
         builder
             .RequireAuthorization(AuthorizationPolicies.Fan)
             .RequireRateLimiting(RateLimitPolicies.Default)
             .RequireNoStore()
-            .WithTags(Tag)
+            .WithTags(tag)
             .ProducesProblemCode(StatusCodes.Status401Unauthorized, SecurityProblems.AuthRequired)
             .ProducesProblemCode(StatusCodes.Status429TooManyRequests, SecurityProblems.RateLimited)
             .ProducesProblemCode(StatusCodes.Status503ServiceUnavailable, SecurityProblems.ServiceUnavailable);

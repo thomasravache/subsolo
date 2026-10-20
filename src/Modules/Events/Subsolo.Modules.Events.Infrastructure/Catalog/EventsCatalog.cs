@@ -46,4 +46,11 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
         var found = await db.Styles.AsNoTracking().CountAsync(style => wanted.Contains(style.Slug), ct);
         return found == wanted.Count;
     }
+
+    /// <summary>SPEC-0029 — a situação e o início do show (só essas duas colunas), ou <see langword="null"/> se não existe.</summary>
+    public async Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) =>
+        await db.Shows.AsNoTracking()
+            .Where(show => show.Id == showId)
+            .Select(show => new ShowState(show.Status, show.StartsAtUtc))
+            .SingleOrDefaultAsync(ct);
 }

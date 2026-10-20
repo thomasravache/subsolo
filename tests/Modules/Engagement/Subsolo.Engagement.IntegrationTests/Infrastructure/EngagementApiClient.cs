@@ -50,6 +50,23 @@ internal sealed class EngagementApiClient(HttpClient http) : IDisposable
         return response;
     }
 
+    /// <summary>SPEC-0029 — envia <paramref name="content"/> (ex.: multipart do flyer) com o <c>X-CSRF</c> novo.</summary>
+    public async Task<HttpResponseMessage> SendContentAsync(
+        HttpMethod method, string route, HttpContent content, CancellationToken cancellationToken)
+    {
+        var token = await CsrfTokenAsync(cancellationToken);
+        using var request = new HttpRequestMessage(method, route) { Content = content };
+        if (_cookies.Count > 0)
+        {
+            request.Headers.Add("Cookie", string.Join("; ", _cookies.Select(cookie => $"{cookie.Key}={cookie.Value}")));
+        }
+
+        request.Headers.Add(CsrfHeader, token);
+        var response = await http.SendAsync(request, cancellationToken);
+        Store(response);
+        return response;
+    }
+
     public Task<HttpResponseMessage> GetAsync(string route, CancellationToken cancellationToken) =>
         SendAsync(HttpMethod.Get, route, cancellationToken);
 

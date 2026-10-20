@@ -10,7 +10,7 @@ import { prepareFollowTargets } from "./seguir";
  * "Seguindo" de "Avisos e Seguindo"; navegação inferior Agenda, Seguindo, Apoie, Conta.
  *
  * - E2E-01 (mobile-chrome e mobile-safari): o fã logado toca em "Seguir {cidade}" no cabeçalho da agenda (vira
- *   "Seguindo", `aria-pressed="true"`, nome "Deixar de seguir {cidade}", mudança anunciada), segue a banda na página do
+ *   "Seguindo", `aria-pressed="true"`, nome constante "Seguir {cidade}" — SPEC-0029 H27-04 —, mudança anunciada), segue a banda na página do
  *   perfil ("0 seguidores" → "1 seguidor(es)"), abre a aba "Seguindo" e vê as duas (seções de cidades e de bandas, com
  *   cabeçalhos); deixa de seguir a banda e ela some (a cidade fica). Sem violações do axe em cada tela.
  * - E2E-02 (mobile-chrome): anônimo tocando em "Seguir {cidade}" vai para `/entrar?returnTo=/{cidade}`; abrindo
@@ -52,8 +52,9 @@ test.describe("seguir cidade, banda e casa", () => {
     });
     await expect(followCity).toHaveAttribute("aria-pressed", "false");
     await press(followCity);
+    // SPEC-0029:H27-04 — nome acessível constante "Seguir {nome}"; o estado vem do aria-pressed.
     const followingCity = page.getByRole("button", {
-      name: `Deixar de seguir ${city.name}`,
+      name: `Seguir ${city.name}`,
       exact: true,
     });
     await expect(followingCity).toHaveAttribute("aria-pressed", "true");
@@ -83,8 +84,9 @@ test.describe("seguir cidade, banda e casa", () => {
     });
     await expect(followBand).toHaveAttribute("aria-pressed", "false");
     await press(followBand);
+    // SPEC-0029:H27-04 — nome acessível constante "Seguir {nome}"; o estado vem do aria-pressed.
     const followingBand = page.getByRole("button", {
-      name: `Deixar de seguir ${band.name}`,
+      name: `Seguir ${band.name}`,
       exact: true,
     });
     await expect(followingBand).toHaveAttribute("aria-pressed", "true");

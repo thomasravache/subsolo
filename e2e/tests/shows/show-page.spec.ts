@@ -110,8 +110,8 @@ test.describe("página do show", () => {
     expect(rel, 'rel do "Ingresso"').toEqual(
       expect.arrayContaining(["noopener", "noreferrer"]),
     );
-    // Ajustes do §6: nada de botões que ainda não funcionam.
-    for (const name of [/^vou\b/i, /quem vai/i, /^seguir/i, /denunciar/i]) {
+    // Ajustes do §6: nada de botões que ainda não funcionam. SPEC-0029:E2E-01 — o "Vou" agora existe (sai da lista).
+    for (const name of [/quem vai/i, /^seguir/i, /denunciar/i]) {
       await expect(
         page.getByRole("button", { name }).or(page.getByRole("link", { name })),
         `controle ${name} na página (fica para a spec própria)`,

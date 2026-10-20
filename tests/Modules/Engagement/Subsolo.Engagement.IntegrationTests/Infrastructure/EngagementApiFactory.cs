@@ -23,7 +23,9 @@ namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 /// <item>os limites <c>default</c> e <c>report</c> altos (a menos que <paramref name="productionRateLimits"/>), para os
 /// testes de volume, e as configurações extras de <paramref name="settings"/>;</item>
 /// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
-/// <item>logs e spans exportados em memória (<see cref="Logs"/>, <see cref="Spans"/>).</item>
+/// <item>logs e spans exportados em memória (<see cref="Logs"/>, <see cref="Spans"/>);</item>
+/// <item>SPEC-0029 — <c>Media:Root</c> num diretório temporário só deste host (<see cref="MediaRoot"/>, apagado no fim),
+/// para o admin enviar o flyer dos shows de teste.</item>
 /// </list>
 /// </summary>
 internal sealed class EngagementApiFactory(
@@ -53,6 +55,9 @@ internal sealed class EngagementApiFactory(
     private readonly List<Activity> _spans = [];
 
     public string ConnectionString => connectionString;
+
+    /// <summary>SPEC-0029 — o <c>Media:Root</c> deste host (diretório temporário).</summary>
+    public string MediaRoot { get; } = Directory.CreateTempSubdirectory("subsolo-engagement-media-").FullName;
 
     public IReadOnlyList<LogRecord> Logs
     {
@@ -115,8 +120,22 @@ internal sealed class EngagementApiFactory(
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        using var connection = new NpgsqlConnection(connectionString);
-        NpgsqlConnection.ClearPool(connection);
+        using (var connection = new NpgsqlConnection(connectionString))
+        {
+            NpgsqlConnection.ClearPool(connection);
+        }
+
+        try
+        {
+            Directory.Delete(MediaRoot, recursive: true);
+        }
+        catch (IOException)
+        {
+            // Diretório temporário: o que sobrar o sistema limpa.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -126,6 +145,7 @@ internal sealed class EngagementApiFactory(
         // SPEC-0016 (Emenda 5): a API exige App:PublicUrl na inicialização.
         builder.UseSetting("App:PublicUrl", "https://localhost");
         builder.UseSetting("Users:AdminEmails:0", AdminEmail);
+        builder.UseSetting("Media:Root", MediaRoot);
         foreach (var (key, value) in productionRateLimits ? [] : HighRateLimits)
         {
             builder.UseSetting(key, value);

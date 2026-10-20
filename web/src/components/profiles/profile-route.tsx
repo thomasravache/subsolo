@@ -8,6 +8,10 @@ import {
   type PublicProfile,
   type PublicProfileType,
 } from "@/api/public-profile";
+import {
+  getAttendanceCounts,
+  type AttendanceCounts,
+} from "@/api/attendances-data";
 import { getProfileFollowerCount } from "@/api/follows-data";
 import { publicUrl } from "@/app/(public)/[cidade]/[show]/public-url";
 
@@ -28,6 +32,8 @@ type ProfileView =
       upcoming: ProfileShowItem[] | null;
       past: ProfileShowItem[] | null;
       followers: number | undefined;
+      /** SPEC-0029 — quantos vão a cada próximo show; `undefined` = contagem indisponível. */
+      attendance: AttendanceCounts | undefined;
     }
   | { kind: "not-found" }
   | { kind: "unavailable" };
@@ -36,7 +42,8 @@ type ProfileView =
  * SPEC-0026 — o perfil da requisição (uma consulta só para os metadados e a página). O status HTTP já veio do `proxy`
  * (ADR-0016): com 404 ou 503 ele avisa pelo cabeçalho interno e a API nem é consultada de novo. Os próximos e os
  * passados são pedidos juntos; se o endpoint de shows falhar, a página sai com o perfil e o aviso (status 200).
- * SPEC-0027 — a contagem de seguidores vem junto; se falhar, a página sai sem ela.
+ * SPEC-0027 — a contagem de seguidores vem junto; se falhar, a página sai sem ela. SPEC-0029 — e as contagens de "vão"
+ * dos próximos shows (uma chamada em lote); se falharem, os cards saem sem elas.
  */
 const loadProfile = cache(
   async (type: PublicProfileType, slug: string): Promise<ProfileView> => {
@@ -53,12 +60,18 @@ const loadProfile = cache(
       getProfileShows(result.profile.id, "past"),
       getProfileFollowerCount(result.profile.id),
     ]);
+    const upcomingShows = upcoming.kind === "ok" ? upcoming.shows : null;
+    // SPEC-0029: o `attendingCount` do Events é sempre 0; a contagem dos próximos vem do Engagement, em lote.
+    const attendance = upcomingShows
+      ? await getAttendanceCounts(upcomingShows.map((show) => show.id))
+      : undefined;
     return {
       kind: "ok",
       profile: result.profile,
-      upcoming: upcoming.kind === "ok" ? upcoming.shows : null,
+      upcoming: upcomingShows,
       past: past.kind === "ok" ? past.shows : null,
       followers,
+      attendance,
     };
   },
 );
@@ -119,6 +132,7 @@ export async function ProfileRoute({
           upcoming={view.upcoming}
           past={view.past}
           followers={view.followers}
+          attendance={view.attendance}
         />
       );
     case "not-found":

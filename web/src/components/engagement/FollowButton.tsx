@@ -40,11 +40,18 @@ function navigate(path: string) {
   window.location.assign(new URL(path, window.location.href).href);
 }
 
+/** O alvo de volta a partir dos valores primitivos (tipo e chave). */
+function targetOf(kind: FollowTarget["kind"], key: string): FollowTarget {
+  return kind === "city" ? { kind, slug: key } : { kind, id: key };
+}
+
 /**
  * SPEC-0027 — botão "Seguir" / "Seguindo" (§6): o estado vem de `GET /api/v1/me/follows` pelo navegador (a página fica
- * igual para todos e pode ser cacheada); `aria-pressed` e o nome completo ("Seguir {nome}" / "Deixar de seguir
- * {nome}"), a mudança anunciada numa região `role="status"` e a contagem (quando houver) atualizada na hora. Anônimo
- * que toca vai para `/entrar?returnTo=…`.
+ * igual para todos e pode ser cacheada); `aria-pressed`, a mudança anunciada numa região `role="status"` e a contagem
+ * (quando houver) atualizada na hora. Anônimo que toca vai para `/entrar?returnTo=…`. SPEC-0029 (itens H27): o efeito
+ * depende só do tipo e da chave do alvo (H27-01); carregando ou com a requisição em andamento, o botão fica
+ * `aria-disabled` e ignora cliques, sem perder o foco (H27-02); a contagem acompanha a prop `followers` (H27-03); o
+ * nome acessível é sempre "Seguir {nome}", com o estado no `aria-pressed` e o texto visível "Seguindo" (H27-04).
  */
 export function FollowButton({
   target,
@@ -56,8 +63,18 @@ export function FollowButton({
   const [session, setSession] = useState<Session>("loading");
   const [following, setFollowingState] = useState(false);
   const [count, setCount] = useState(followers);
+  const [shownFollowers, setShownFollowers] = useState(followers);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  // H27-03: a prop mudou (outra contagem do servidor) → mostra a nova.
+  if (followers !== shownFollowers) {
+    setShownFollowers(followers);
+    setCount(followers);
+  }
+
+  const kind = target.kind;
+  const key = target.kind === "city" ? target.slug : target.id;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -66,23 +83,28 @@ export function FollowButton({
         return;
       }
       if (result.ok) {
-        setFollowingState(isFollowing(result.value, target));
+        setFollowingState(isFollowing(result.value, targetOf(kind, key)));
         setSession("signed-in");
       } else {
         setSession(result.status === 401 ? "anonymous" : "unknown");
       }
     });
     return () => controller.abort();
-  }, [target]);
+  }, [kind, key]);
+
+  const inactive = session === "loading" || busy;
 
   async function toggle() {
+    if (inactive) {
+      return;
+    }
     if (session === "anonymous") {
       navigate(signInHref(returnTo));
       return;
     }
     const next = !following;
     setBusy(true);
-    const result = await setFollowing(target, next);
+    const result = await setFollowing(targetOf(kind, key), next);
     setBusy(false);
     if (result.ok) {
       setSession("signed-in");
@@ -105,13 +127,15 @@ export function FollowButton({
       <button
         type="button"
         aria-pressed={following}
-        aria-label={followLabel(name, following)}
-        disabled={session === "loading" || busy}
+        aria-label={followLabel(name)}
+        aria-disabled={inactive}
         onClick={() => void toggle()}
         className={buttonClasses(
           following ? "primary" : "secondary",
           "md",
-          following ? "" : "border-text-muted",
+          following
+            ? "aria-disabled:opacity-50"
+            : "border-text-muted aria-disabled:opacity-50",
         )}
       >
         {following ? (

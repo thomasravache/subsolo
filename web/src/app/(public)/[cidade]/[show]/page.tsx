@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 
+import { getAttendanceCounts } from "@/api/attendances-data";
 import { listCities } from "@/api/cities";
 import { getShowDetail, type ShowDetailResult } from "@/api/show-detail";
 import { ShowPage } from "@/components/shows/ShowPage";
@@ -17,7 +18,8 @@ import { ShowUnavailable } from "./show-unavailable";
  * "Ingresso" e "Compartilhar", com os metadados Open Graph (imagem `og` absoluta pelo `SUBSOLO_PUBLIC_URL`). Show ou
  * cidade inexistente → "Show não encontrado" (404); API fora do ar → "Show indisponível" (503). O status HTTP vem do
  * `proxy` (ADR-0016), que consulta a API antes da renderização; a página renderiza o aviso sem `notFound()`, para o
- * `<title>` da página valer também no 404.
+ * `<title>` da página valer também no 404. SPEC-0029: o "Vou" e a contagem "{n} vão" (do `Engagement`, sem ela se
+ * indisponível).
  */
 
 // Sem shell de carregamento: a página só aparece com o show (ou o aviso) pronto.
@@ -33,6 +35,11 @@ const loadShow = cache(
     return status ? { kind: status } : getShowDetail(cidade, show);
   },
 );
+
+/** SPEC-0029 — o show já começou (na hora da requisição): sem o "Vou" e com "{n} foram". */
+function hasStarted(startsAt: string): boolean {
+  return Date.parse(startsAt) <= Date.now();
+}
 
 export async function generateMetadata({
   params,
@@ -64,7 +71,15 @@ export default async function ShowDetailPage({
   if (result.kind === "unavailable") {
     return <ShowUnavailable />;
   }
+  // SPEC-0029: a contagem de "vão" vem do Engagement (§4), pela mesma rota em lote da agenda; sem ela, a página sai
+  // sem a contagem.
+  const counts = await getAttendanceCounts([result.show.id]);
   return (
-    <ShowPage show={result.show} url={showUrl(result.show, publicUrl())} />
+    <ShowPage
+      show={result.show}
+      url={showUrl(result.show, publicUrl())}
+      attendingCount={counts?.[result.show.id]}
+      past={hasStarted(result.show.startsAt)}
+    />
   );
 }

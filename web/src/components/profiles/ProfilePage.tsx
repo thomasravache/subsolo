@@ -27,6 +27,7 @@ export const profileMessages = {
  * Tela do Stitch "Perfil da Banda - Podridão - Subsolo", usada também para casa e produtor, com os ajustes do §6: sem
  * foto (o topo é a tipografia sobre fundo escuro) e sem o botão "Vou" nos cards (a contagem "X vão" do `Card` fica).
  * SPEC-0027 — "Seguir" / "Seguindo" e a contagem "{n} seguidores" (sem a contagem quando ela não veio).
+ * SPEC-0029 — "{n} vão" nos cards com as contagens do `Engagement` (sem a contagem quando ela não veio).
  */
 export interface ProfilePageProps {
   profile: PublicProfile;
@@ -34,6 +35,8 @@ export interface ProfilePageProps {
   past: ProfileShowItem[] | null;
   /** SPEC-0027 — quantos seguem o perfil; `undefined` = indisponível. */
   followers?: number;
+  /** SPEC-0029 — quantos vão a cada próximo show, por id; `undefined` = indisponível (cards sem a contagem). */
+  attendance?: Record<string, number>;
 }
 
 /** Os links das redes do perfil, na ordem do Stitch, só os informados. */
@@ -104,6 +107,7 @@ export function ProfilePage({
   upcoming,
   past,
   followers,
+  attendance,
 }: ProfilePageProps) {
   const links = networks(profile);
   // Ids únicos por perfil: a navegação no cliente mantém a página anterior escondida no DOM (Activity, cacheComponents).
@@ -187,7 +191,7 @@ export function ProfilePage({
                   lineup={show.lineup}
                   styles={show.styles}
                   status={show.status}
-                  attendingCount={show.attendingCount}
+                  attendingCount={attendance?.[show.id]}
                 />
               </li>
             ))}

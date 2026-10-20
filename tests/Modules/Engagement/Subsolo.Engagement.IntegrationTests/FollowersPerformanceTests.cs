@@ -10,7 +10,8 @@ namespace Subsolo.Engagement.IntegrationTests;
 /// SPEC-0027 IT-04 — dados 10.000 seguidores da cidade e 500 de um perfil (250 deles também seguem a cidade) gravados
 /// direto em <c>engagement.follows</c>, <see cref="IEngagementApi.GetFollowersAsync"/> (resolvido do contêiner do host,
 /// como a spec de avisos fará) devolve os 10.250 ids únicos, e o p95 de 20 chamadas (depois de 3 de aquecimento) fica
-/// em ≤ 200 ms.
+/// em ≤ 200 ms. SPEC-0029 (H27-09): o perfil é um perfil aprovado de verdade (criado pelo admin), porque follows de
+/// perfil que não existe mais não contam.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class FollowersPerformanceTests(PostgresFixture postgres)
@@ -40,7 +41,13 @@ public sealed class FollowersPerformanceTests(PostgresFixture postgres)
             using var health = await warm.GetAsync(EngagementRequests.CityFollowers(EngagementApiFactory.City), ct);
         }
 
-        var profileId = Guid.CreateVersion7();
+        var (admin, _) = await api.SignedInAsync(EngagementApiFactory.AdminEmail, ct);
+        Guid profileId;
+        using (admin)
+        {
+            profileId = await admin.CreateApprovedProfileAsync("Podridão", ct);
+        }
+
         var cityFans = Enumerable.Range(0, CityFollowers).Select(_ => Guid.CreateVersion7()).ToList();
         var profileFans = cityFans.Take(Overlap)
             .Concat(Enumerable.Range(0, ProfileFollowers - Overlap).Select(_ => Guid.CreateVersion7()))

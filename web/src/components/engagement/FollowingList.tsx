@@ -6,7 +6,7 @@ import { useState } from "react";
 import { setFollowing, type FollowTarget, type MyFollows } from "@/api/follows";
 import { buttonClasses } from "@/components/ui/Button";
 
-import { followAnnouncement, followLabel, followMessages } from "./messages";
+import { followAnnouncement, followMessages, unfollowLabel } from "./messages";
 
 /** Um item seguido, já com o endereço da página. */
 interface Item {
@@ -68,7 +68,8 @@ function without(follows: MyFollows, target: FollowTarget): MyFollows {
 /**
  * SPEC-0027 — a lista da aba "Seguindo" (parte "Seguindo" da tela "Avisos e Seguindo" do Stitch): uma seção por tipo,
  * com cabeçalho, só as que têm itens; cada item leva à página dele e tem "Deixar de seguir" (some da lista na hora, com
- * a mudança anunciada). Sem nada: o texto do §2.
+ * a mudança anunciada). Sem nada: o texto do §2. SPEC-0029 (H27-02): durante a requisição o botão fica `aria-disabled`
+ * e ignora cliques, em vez de `disabled` (que tira o foco do teclado).
  */
 export function FollowingList({ initial }: { initial: MyFollows }) {
   const [follows, setFollows] = useState(initial);
@@ -76,6 +77,10 @@ export function FollowingList({ initial }: { initial: MyFollows }) {
   const [message, setMessage] = useState("");
 
   async function unfollow(item: Item) {
+    // SPEC-0029 (H27-02): durante a requisição o botão fica aria-disabled e ignora cliques (sem perder o foco).
+    if (busy !== null) {
+      return;
+    }
     setBusy(item.key);
     const result = await setFollowing(item.target, false);
     setBusy(null);
@@ -128,13 +133,13 @@ export function FollowingList({ initial }: { initial: MyFollows }) {
                   </Link>
                   <button
                     type="button"
-                    aria-label={followLabel(item.name, true)}
-                    disabled={busy === item.key}
+                    aria-label={unfollowLabel(item.name)}
+                    aria-disabled={busy === item.key}
                     onClick={() => void unfollow(item)}
                     className={buttonClasses(
                       "secondary",
                       "md",
-                      "shrink-0 text-xs",
+                      "shrink-0 text-xs aria-disabled:opacity-50",
                     )}
                   >
                     {followMessages.unfollow}

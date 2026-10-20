@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import { BookmarkIcon } from "@/components/engagement/icons";
 
 import { CalendarIcon, HeartIcon } from "./icons";
-import { accountHref, followingPath, isFollowingPage } from "./shell";
+import { accountHref, followingPath } from "./shell";
 
 export interface BottomNavProps {
   /** Slug da cidade atual (vazio fora das páginas de cidade). */
@@ -46,17 +45,15 @@ const item =
  * SPEC-0011 — navegação inferior fixa, só no celular (< 768 px); no desktop a navegação fica no cabeçalho.
  * SPEC-0016 — a aba "Conta" leva a `/conta` com sessão e a `/entrar` (com a volta para a página atual) sem sessão.
  * SPEC-0027 — abas Agenda, Seguindo, Apoie e Conta ("Buscar", fora do MVP, vira "Seguindo"); "Seguindo" leva a
- * `/seguindo` (a página manda o anônimo para `/entrar`) e é o item ativo nela, mesmo sem `current`.
+ * `/seguindo` (a página manda o anônimo para `/entrar`). SPEC-0029 (H27-05): o item ativo é só o `current` recebido
+ * (calculado pelo `AppShell`); a navegação não deduz o destino pela URL.
  */
 export function BottomNav({
   city,
-  current: given,
+  current,
   signedIn = false,
   returnTo,
 }: BottomNavProps) {
-  const pathname = usePathname();
-  const current =
-    given ?? (pathname && isFollowingPage(pathname) ? "seguindo" : undefined);
   // Ativo: texto claro com ícone e barra no destaque (o destaque não tem contraste para texto pequeno).
   const tone = (name: BottomNavProps["current"]) =>
     current === name
