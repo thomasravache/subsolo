@@ -76,6 +76,8 @@ public sealed class AttendancePrivacyTests(PostgresFixture postgres)
         var (otherShow, _) = await admin.CreateShowAsync("Show Só do Outro", ct, days: 11);
         await fan.PutAsync(AttendanceRequests.Attend(show), ct).ShouldSucceedAsync(ct);
         await other.PutAsync(AttendanceRequests.Attend(otherShow), ct).ShouldSucceedAsync(ct);
+        // Seções vazias saem do export (SPEC-0019/0027): o fã segue a cidade para a seção follows existir.
+        await fan.PutAsync(EngagementRequests.FollowCity(EngagementApiFactory.City), ct).ShouldSucceedAsync(ct);
 
         using var response = await fan.GetAsync(EngagementRequests.Export, ct);
 
@@ -85,7 +87,7 @@ public sealed class AttendancePrivacyTests(PostgresFixture postgres)
         var text = section.ToString();
         text.ShouldContain(show.ToString(), Case.Insensitive, $"a seção não traz o show marcado: {text}");
         text.ShouldNotContain(otherShow.ToString(), Case.Insensitive, "a seção traz vou de outro fã");
-        // A seção de follows continua lá (SPEC-0027).
+        // A seção de follows continua lá, ao lado da de attendances (SPEC-0027).
         export.GetProperty("sections").TryGetProperty("follows", out var follows).ShouldBeTrue($"a seção follows sumiu: {follows}");
     }
 
