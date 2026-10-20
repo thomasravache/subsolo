@@ -1,5 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Subsolo.Common.Infrastructure;
+using Subsolo.Common.Presentation;
+using Subsolo.Modules.Site.Application;
+using Subsolo.Modules.Site.Domain.Supporters;
+using Subsolo.Modules.Site.Infrastructure.Supporters;
+using Subsolo.Modules.Site.Presentation;
 
 namespace Subsolo.Modules.Site.Infrastructure;
 
@@ -7,12 +13,20 @@ namespace Subsolo.Modules.Site.Infrastructure;
 public static class SiteModule
 {
     /// <summary>
-    /// Scaffold do contrato: ainda não registra nada (a implementação chama <c>AddModule&lt;SiteDbContext&gt;</c> e
-    /// <c>AddEndpoints</c>, como o módulo Engagement).
+    /// Chama <c>AddModule&lt;SiteDbContext&gt;</c> e <c>AddEndpoints</c> com os assemblies do módulo e registra o
+    /// repositório de apoiadores e a unidade de trabalho.
     /// </summary>
     public static IServiceCollection AddSiteModule(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        return services;
+        services.AddScoped<ISupporterRepository, SupporterRepository>();
+        services.AddScoped<ISiteUnitOfWork>(provider => provider.GetRequiredService<SiteDbContext>());
+
+        services.AddModule<SiteDbContext>(
+            configuration,
+            typeof(SiteModule).Assembly,
+            typeof(SiteErrors).Assembly,
+            typeof(Supporter).Assembly);
+        return services.AddEndpoints(AssemblyReference.Assembly);
     }
 }
