@@ -54,6 +54,10 @@ import {
  * SPEC-0027 — a aba "Seguindo" (`/seguindo`) é dado pessoal, como `/conta`: segue direto para o Next.js, sem consultar a
  * agenda, com `Cache-Control: no-store` (a página manda o anônimo para `/entrar`). H26-08: {@link reservedSegments}
  * tem todos os slugs reservados do backend (`City.ReservedSlugs`, SPEC-0017).
+ *
+ * SPEC-0028 — as páginas institucionais (`/apoie`, `/privacidade`, `/termos`, {@link sitePages}) também seguem direto
+ * para o Next.js, sem consultar a agenda: não são cidades, e com a API fora do ar `/apoie` sai 200 com o Pix e o aviso da
+ * lista (sem o 503 da agenda).
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -92,6 +96,9 @@ const reservedSegments = new Set([
   "seguindo",
   "offline",
 ]);
+
+/** SPEC-0028 — páginas institucionais de um segmento (slugs reservados da SPEC-0017), nunca a agenda de uma cidade. */
+const sitePages = new Set(["/apoie", "/privacidade", "/termos"]);
 
 /** Formato do slug do show (`<titulo>-<aaaa-mm-dd>`, até 80 caracteres); fora dele nem se consulta a API. */
 const showSlug = /^[a-z0-9-]{2,80}$/;
@@ -221,7 +228,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const personalPage = isAccountPage(pathname) || isFollowingPage(pathname);
   const adminPage = isAdminPage(pathname);
-  const publicPage = !personalPage && !adminPage;
+  const publicPage = !personalPage && !adminPage && !sitePages.has(pathname);
   const agenda =
     publicPage && agendaPath.test(pathname)
       ? await agendaKind(pathname)
