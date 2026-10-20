@@ -123,7 +123,7 @@ DELETE /api/v1/admin/supporters/{id}:     # admin + X-CSRF ; 204 ; 404 site.supp
 
 ### 7.5 Testes E2E
 - **E2E-01** — Dada a aplicação completa com uma chave Pix de teste configurada, nos projetos mobile-chrome e mobile-safari: o fã toca em "Apoie" (navegação) e vê o QR code e a chave; "Copiar chave" anuncia "Chave copiada."; o admin adiciona "Putridearth Zine" em `/admin/apoiadores` e o nome aparece em `/apoie`; remove e some. Sem violações do axe. [jornada: agenda]
-- **E2E-02** — No projeto mobile-chrome: com o servidor web sem chave Pix (o Next sem API da SPEC-0008 IT-04), `/apoie` mostra "O Pix do Subsolo chega em breve."; na aplicação completa, o link "Privacidade" do rodapé leva a `/privacidade` e o link "Termos" de `/entrar` leva a `/termos` (200), com as seções e o índice; axe nas duas. [jornada: agenda]
+- **E2E-02** — No projeto mobile-chrome: com o servidor web sem chave Pix (o mesmo servidor Next sem API usado nos testes da SPEC-0008), `/apoie` mostra "O Pix do Subsolo chega em breve."; na aplicação completa, o link "Privacidade" do rodapé leva a `/privacidade` e o link "Termos" de `/entrar` leva a `/termos` (200), com as seções e o índice; axe nas duas. [jornada: agenda]
 
 ### 7.6 Outros
 - Runbook `docs/runbooks/incidente-dados.md` revisado no G4.
@@ -178,7 +178,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 4936069 (árvore suja) | 2026-10-18 |
-| G1 Red | PENDING | | |
+| G1 Red | FAIL | verify G1: FAIL — testes do plano sem tag no código versionado: SPEC-0028:IT-04 — 6c22a72 | 2026-10-19 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -231,4 +231,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0028`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
-| 1 (sem mudança de contrato) | 2026-10-19 | E2E-02: "sem chave" no servidor web sem API (SPEC-0008 IT-04), pois a pilha completa do E2E tem chave de teste; `/termos` pelo link "Termos" de `/entrar`, mantendo o rodapé do Stitch (Apoie, Instagram, Privacidade); nomes das variáveis de ambiente do servidor web (`Support__PixKey`, `Support__PixName`, `Support__PixCity`, `Site__ContactEmail`). | SPEC_DEFECTs do Test-writer no G1 | — | piloto automático do Thomas (2026-10-17) |
+| 1 (sem mudança de contrato) | 2026-10-19 | E2E-02: "sem chave" no servidor web sem API (o dos testes da SPEC-0008), pois a pilha completa do E2E tem chave de teste; `/termos` pelo link "Termos" de `/entrar`, mantendo o rodapé do Stitch (Apoie, Instagram, Privacidade); nomes das variáveis de ambiente do servidor web (`Support__PixKey`, `Support__PixName`, `Support__PixCity`, `Site__ContactEmail`). | SPEC_DEFECTs do Test-writer no G1 | — | piloto automático do Thomas (2026-10-17) |
