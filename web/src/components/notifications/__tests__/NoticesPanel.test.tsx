@@ -20,6 +20,13 @@ import type { NotificationPreferences } from "@/api/notifications";
  * - sem suporte a push: sem o botão, com "Este navegador não recebe avisos." (Emenda de 2026-10-23); nada pedido nem gravado;
  * - iPhone sem instalar (`navigator.standalone` falso): "Adicione o Subsolo à tela de início para receber avisos",
  *   sem pedir permissão.
+ *
+ * SPEC-0030 UT-05 (Emenda da revisão G4, 2026-10-23) — o painel fora de sincronia com o servidor:
+ * - com uma inscrição no navegador, ao abrir ele a registra de novo (`POST /api/v1/me/push-subscriptions`, idempotente)
+ *   antes de mostrar "Avisos ativos neste aparelho";
+ * - com a permissão já `denied` ao abrir (pelo `Notification.permission` ou pela Permissions API), mostra "Os avisos
+ *   estão bloqueados no navegador." sem o botão "Ativar avisos";
+ * - durante a ativação mostra `noticeMessages.activating` ("Ativando…") e o botão fica desabilitado.
  */
 
 type Call = {
@@ -98,8 +105,14 @@ async function record(
   return { method, path: urlOf(input).pathname, headers, body };
 }
 
-/** A API: chave pública, antiforgery, inscrição (204) e preferências (o PUT devolve o corpo com `pushDevices`). */
-function stubApi(preferences: NotificationPreferences) {
+/**
+ * A API: chave pública, antiforgery, inscrição (204) e preferências (o PUT devolve o corpo com `pushDevices`). Com
+ * `holdSubscriptionPost`, o `POST` da inscrição só responde quando a promessa resolver.
+ */
+function stubApi(
+  preferences: NotificationPreferences,
+  holdSubscriptionPost?: Promise<void>,
+) {
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const call = await record(input, init);
     calls.push(call);
@@ -110,6 +123,9 @@ function stubApi(preferences: NotificationPreferences) {
       return Response.json({ publicKey });
     }
     if (call.path === "/api/v1/me/push-subscriptions") {
+      if (holdSubscriptionPost) {
+        await holdSubscriptionPost;
+      }
       return new Response(null, { status: 204 });
     }
     if (call.path === "/api/v1/me/notification-preferences") {
@@ -289,6 +305,7 @@ afterEach(() => {
     "maxTouchPoints",
     "standalone",
     "serviceWorker",
+    "permissions",
   ]) {
     const original = navigatorDefaults[name];
     if (original) {
@@ -299,8 +316,11 @@ afterEach(() => {
   }
 });
 
-async function renderPanel(preferences: NotificationPreferences) {
-  stubApi(preferences);
+async function renderPanel(
+  preferences: NotificationPreferences,
+  holdSubscriptionPost?: Promise<void>,
+) {
+  stubApi(preferences, holdSubscriptionPost);
   const { NoticesPanel } =
     await import("@/components/notifications/NoticesPanel");
   return render(<NoticesPanel initial={preferences} />);
@@ -438,13 +458,10 @@ describe("NoticesPanel — Avisos", () => {
     );
   });
 
-  it("SPEC-0030:UT-03 com a permissão negada no navegador, Ativar avisos mostra que estão bloqueados e nada é gravado", async () => {
+  it("SPEC-0030:UT-03 com a permissão negada no navegador mostra que os avisos estão bloqueados e nada é gravado", async () => {
+    // Emenda da revisão G4: com a permissão já negada, o bloqueio aparece ao abrir, sem o botão (ver UT-05).
     stubBrowser({ permission: "denied" });
     await renderPanel(initialPreferences);
-
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Ativar avisos" }),
-    );
 
     await expectAnnounced("Os avisos estão bloqueados no navegador.");
     expect(subscribe).not.toHaveBeenCalled();
@@ -489,5 +506,119 @@ describe("NoticesPanel — Avisos", () => {
     expect(screen.queryByRole("button", { name: "Ativar avisos" })).toBeNull();
     expect(requestPermission).not.toHaveBeenCalled();
     expect(posts()).toHaveLength(0);
+  });
+});
+
+/** Uma promessa que o teste resolve quando quiser. */
+function deferred<T = void>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+/** O texto está em algum lugar da tela. */
+function shown(text: string): boolean {
+  return (document.body.textContent ?? "").includes(text);
+}
+
+describe("NoticesPanel — Avisos fora de sincronia", () => {
+  it("SPEC-0030:UT-05 com uma inscrição no navegador, ao abrir registra de novo no servidor antes de mostrar os avisos ativos", async () => {
+    stubBrowser({ permission: "granted", subscribed: true });
+    const post = deferred();
+
+    await renderPanel(activePreferences, post.promise);
+
+    await waitFor(
+      () =>
+        expect(
+          posts(),
+          "a inscrição do navegador não foi registrada de novo ao abrir",
+        ).toHaveLength(1),
+      { timeout: 2000 },
+    );
+    const saved = posts()[0]!;
+    expect(saved.headers.get("X-CSRF")).toBe("csrf-token");
+    expect(JSON.parse(saved.body)).toEqual(subscriptionJson);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(
+      shown("Avisos ativos neste aparelho"),
+      "mostrou os avisos ativos antes de o servidor confirmar a inscrição",
+    ).toBe(false);
+
+    post.resolve();
+
+    await expectAnnounced("Avisos ativos neste aparelho");
+    expect(posts(), "registrou a inscrição mais de uma vez").toHaveLength(1);
+    expect(subscribe, "inscreveu de novo no navegador").not.toHaveBeenCalled();
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  it("SPEC-0030:UT-05 com a permissão já negada (Notification.permission) mostra o bloqueio ao abrir, sem o botão", async () => {
+    stubBrowser({ permission: "denied" });
+
+    await renderPanel(initialPreferences);
+
+    await expectAnnounced("Os avisos estão bloqueados no navegador.");
+    expect(screen.queryByRole("button", { name: "Ativar avisos" })).toBeNull();
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(posts()).toHaveLength(0);
+  });
+
+  it("SPEC-0030:UT-05 com a permissão já negada (Permissions API) mostra o bloqueio ao abrir, sem o botão", async () => {
+    // O Chromium sem interface responde `default` no `Notification.permission`; a Permissions API diz `denied`.
+    stubBrowser({ permission: "default" });
+    Object.defineProperty(window.navigator, "permissions", {
+      configurable: true,
+      value: {
+        query: async () => ({ state: "denied" }) as PermissionStatus,
+      },
+    });
+
+    await renderPanel(initialPreferences);
+
+    await expectAnnounced("Os avisos estão bloqueados no navegador.");
+    expect(screen.queryByRole("button", { name: "Ativar avisos" })).toBeNull();
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(posts()).toHaveLength(0);
+  });
+
+  it("SPEC-0030:UT-05 durante a ativação mostra Ativando… e o botão fica desabilitado", async () => {
+    stubBrowser({ permission: "granted" });
+    const subscribed = deferred();
+    subscribe.mockImplementation(async () => {
+      await subscribed.promise;
+      return fakeSubscription();
+    });
+    await renderPanel(initialPreferences);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Ativar avisos" }),
+    );
+
+    await waitFor(() => expect(subscribe).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        shown("Ativando…"),
+        "durante a ativação não aparece o texto activating (Ativando…)",
+      ).toBe(true),
+    );
+    const button = screen.getByRole("button");
+    expect(
+      button.hasAttribute("disabled") ||
+        button.getAttribute("aria-disabled") === "true",
+      "o botão não está desabilitado durante a ativação",
+    ).toBe(true);
+    fireEvent.click(button);
+    expect(
+      subscribe,
+      "o segundo toque inscreveu de novo",
+    ).toHaveBeenCalledTimes(1);
+
+    subscribed.resolve();
+
+    await expectAnnounced("Avisos ativos neste aparelho");
+    expect(shown("Ativando…")).toBe(false);
   });
 });
