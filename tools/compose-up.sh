@@ -40,6 +40,12 @@
 # e2e/tests/site/environment.ts) e o e-mail de contato de teste (Site__ContactEmail, de E2E_CONTACT_EMAIL). Só do servidor
 # (sem NEXT_PUBLIC_); os valores reais entram no go-live.
 #
+# SPEC-0030 — também só neste Compose local: a API recebe a chave do token de descadastro dos e-mails de aviso
+# (Notifications__Unsubscribe__SigningKey, de E2E_UNSUBSCRIBE_KEY, com o padrão de e2e/tests/avisos/avisos.ts: o E2E gera
+# links válidos com ela) e um par de chaves VAPID de teste gerado a cada subida com o openssl
+# (Notifications__WebPush__PublicKey/PrivateKey/Subject, pelo .env local). Nenhuma chave real; as de produção entram no
+# go-live.
+#
 # SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
 # entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
 #
@@ -105,6 +111,11 @@ for setting in "$E2E_PIX_KEY" "$E2E_PIX_NAME" "$E2E_PIX_CITY" "$E2E_CONTACT_EMAI
     exit 2
   fi
 done
+readonly E2E_UNSUBSCRIBE_KEY="${E2E_UNSUBSCRIBE_KEY:-chave-descadastro-e2e-subsolo-local}"
+if ! [[ "$E2E_UNSUBSCRIBE_KEY" =~ ^[A-Za-z0-9._-]{16,}$ ]]; then
+  echo "compose-up: E2E_UNSUBSCRIBE_KEY inválida: use 16 ou mais letras, números, ponto, hífen ou sublinhado" >&2
+  exit 2
+fi
 readonly DEFAULT_RATE_LIMIT="${DEFAULT_RATE_LIMIT:-10000}"
 check_rate_limit DEFAULT_RATE_LIMIT "$DEFAULT_RATE_LIMIT"
 readonly REPORT_RATE_LIMIT="${REPORT_RATE_LIMIT:-10000}"
@@ -112,7 +123,7 @@ check_rate_limit REPORT_RATE_LIMIT "$REPORT_RATE_LIMIT"
 readonly MAGIC_LINK_EMAIL_LIMIT="${MAGIC_LINK_EMAIL_LIMIT:-50}"
 check_rate_limit MAGIC_LINK_EMAIL_LIMIT "$MAGIC_LINK_EMAIL_LIMIT"
 
-for tool in docker dotnet aspire curl; do
+for tool in docker dotnet aspire curl openssl; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "compose-up: '$tool' não encontrado no PATH" >&2
     exit 2
@@ -149,6 +160,15 @@ else
   docker build -f "$OUT/web.Dockerfile" -t "subsolo-web:$tag" web
 fi
 
+# SPEC-0030 — par VAPID (P-256) de teste: a chave SEC1 em DER tem a privada (32 bytes) a partir do 8º byte e a pública
+# não comprimida (65 bytes) no fim; as duas em base64url sem preenchimento.
+base64url() { base64 | tr -d '\n=' | tr '+/' '-_'; }
+vapid_der="$(mktemp)"
+openssl ecparam -name prime256v1 -genkey -noout -outform DER -out "$vapid_der"
+VAPID_PRIVATE_KEY="$(tail -c +8 "$vapid_der" | head -c 32 | base64url)"
+VAPID_PUBLIC_KEY="$(tail -c 65 "$vapid_der" | base64url)"
+rm -f "$vapid_der"
+
 # Valores do .env gerado pelo publish (o Compose local não usa o .env de nenhum ambiente real).
 env_file="$OUT/.env.local"
 cat >"$env_file" <<ENV
@@ -160,6 +180,9 @@ CADDY_BINDMOUNT_0=$root/infra/caddy/Caddyfile
 POSTGRES_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 SMTP_SECURITY=None
 GOOGLE_CLIENT_SECRET=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY
+UNSUBSCRIBE_SIGNING_KEY=$E2E_UNSUBSCRIBE_KEY
 ENV
 
 # Override só local: o Seq acessível apenas pelo localhost (SPEC-0009), o rate limit `default` de teste
@@ -188,6 +211,10 @@ services:
       Users__Google__Authority: "$OIDC_ISSUER"
       Users__Google__ClientId: "subsolo-local"
       Users__Google__ClientSecret: "\${GOOGLE_CLIENT_SECRET}"
+      Notifications__WebPush__PublicKey: "\${VAPID_PUBLIC_KEY}"
+      Notifications__WebPush__PrivateKey: "\${VAPID_PRIVATE_KEY}"
+      Notifications__WebPush__Subject: "mailto:nao-responda@subsolo.test"
+      Notifications__Unsubscribe__SigningKey: "\${UNSUBSCRIBE_SIGNING_KEY}"
     ports:
       - "127.0.0.1:$((10#$OIDC_PORT)):$((10#$OIDC_PORT))"
   oidc:

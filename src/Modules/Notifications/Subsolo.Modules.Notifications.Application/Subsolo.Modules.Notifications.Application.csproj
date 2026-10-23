@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- O registro do módulo (Infrastructure) instancia os serviços internos; os testes trocam o canal por um dublê. -->
     <InternalsVisibleTo Include="Subsolo.Modules.Notifications.Infrastructure" />
+    <!-- SPEC-0030: os endpoints de inscrição, preferências e descadastro usam os comandos e consultas internos. -->
+    <InternalsVisibleTo Include="Subsolo.Modules.Notifications.Presentation" />
     <InternalsVisibleTo Include="Subsolo.Notifications.UnitTests" />
     <InternalsVisibleTo Include="Subsolo.Notifications.IntegrationTests" />
   </ItemGroup>

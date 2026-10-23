@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- SPEC-0018 — endpoints do módulo Notifications (ADR-0001). Ainda nenhum: o e-mail transacional só tem API interna. -->
+  <!--
+    SPEC-0018 — endpoints do módulo Notifications (ADR-0001); o e-mail transacional só tem API interna.
+    SPEC-0030 — chave pública VAPID, inscrições de push, preferências de aviso e descadastro do e-mail.
+  -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Subsolo.Modules.Notifications.Presentation</RootNamespace>

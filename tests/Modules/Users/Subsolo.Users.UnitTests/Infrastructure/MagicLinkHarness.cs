@@ -161,6 +161,16 @@ internal sealed class RecordingNotificationsApi : INotificationsApi
             ? Result.Success()
             : Result.Failure(Error.Failure(FailWith, "Falha simulada do dublê de INotificationsApi.")));
     }
+
+    /// <summary>SPEC-0030 — os avisos não são usados pelos testes do link mágico: sucesso sem efeito.</summary>
+    public Task<Result> EnqueueAsync(IReadOnlyCollection<Guid> userIds, Notice notice, CancellationToken ct) =>
+        Task.FromResult(Result.Success());
+
+    /// <summary>SPEC-0030 — sem dados de avisos neste dublê.</summary>
+    public Task ForgetUserAsync(Guid userId, CancellationToken ct) => Task.CompletedTask;
+
+    /// <summary>SPEC-0030 — sem dados de avisos neste dublê: seção omitida.</summary>
+    public Task<object?> ExportAsync(Guid userId, CancellationToken ct) => Task.FromResult<object?>(null);
 }
 
 /// <summary>Dublê de <see cref="ISignInService"/>: guarda cada entrada e devolve um usuário novo.</summary>
