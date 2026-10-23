@@ -1,11 +1,11 @@
 # Índice de Specs
 
-> Gerado por `spec_graph.py index` em 2026-10-20 — não edite manualmente.
+> Gerado por `spec_graph.py index` em 2026-10-23 — não edite manualmente.
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 3, in-progress 1, implemented 26
+- Validação (G0): **1 erro(s), 17 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 3, in-progress 2, implemented 26
 - Impedimentos: **0 aberto(s)**, 18 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,14 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0030  
+**Em andamento:** SPEC-0030, SPEC-0034  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0034 | Atualizar o Next.js para corrigir avisos de segurança | lite/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0030 |  |
 | 3 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
 | 4 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0031 | saiu da onda 3: arquivos em comum com SPEC-0032 |
@@ -59,7 +60,7 @@ Perfil: **padrao**
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 16/20 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 16/21 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -79,6 +80,7 @@ flowchart LR
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::approved
     S0032["SPEC-0032<br/>Lembrete na véspera"]:::approved
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
+    S0034["SPEC-0034<br/>Atualizar o Next.js para corrigir aviso…"]:::inprogress
   end
   S0019 --> S0021
   S0021 --> S0023
@@ -140,6 +142,7 @@ flowchart LR
 | [SPEC-0031](SPEC-0031-aviso-de-show-novo-push-imediato-e-resumo-diario-por-e-mail.md) | Aviso de show novo (push imediato e resumo diário por e-mail) | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023, SPEC-0027, SPEC-0030 | — |
 | [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
 | [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
+| [SPEC-0034](SPEC-0034-atualizar-o-next-js-para-corrigir-avisos-de-seguranca.md) | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | in-progress | 2026-10-23 | SPEC-0002 | — | — |
 
 ## ADRs
 
