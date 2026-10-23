@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,8 +21,10 @@ namespace Subsolo.Modules.Notifications.Infrastructure.Deliveries;
 /// <item>e-mail: o endereço vem do <see cref="IRecipientDirectory"/> (Users) na hora do envio, com o link de descadastro
 /// daquele tipo; SMTP fora do ar → nova tentativa.</item>
 /// </list>
-/// Depois de <see cref="MaxAttempts"/> tentativas a entrega desiste (<c>failed</c>). Uma entrega aceita nunca é
-/// enviada de novo: o estado de todo o lote é gravado numa transação depois dos envios.
+/// Depois de <see cref="MaxAttempts"/> tentativas a entrega desiste (<c>failed</c>, com o evento
+/// <c>NoticeDeliveryFailed</c>, base do alerta "Falha no envio de aviso"). Uma entrega aceita nunca é enviada de novo
+/// (§5, IT-08): uma exceção inesperada num envio vira nova tentativa só daquela entrega, e o estado do que já foi
+/// tentado é gravado numa transação depois dos envios — também quando o lote é cancelado (interrupção do job).
 /// </summary>
 internal sealed partial class DeliverySender(
     NotificationsDbContext db,
@@ -42,8 +43,6 @@ internal sealed partial class DeliverySender(
 
     /// <summary>Tentativas de cada entrega (a espera dobra a cada uma: 2, 4, 8, 16 e 32 s).</summary>
     public const int MaxAttempts = 6;
-
-    private static readonly JsonSerializerOptions PayloadJson = new(JsonSerializerDefaults.Web);
 
     private readonly INotificationChannel _push = channels.Single(channel => channel.Channel == NotificationChannel.WebPush);
     private readonly INotificationChannel _email = channels.Single(channel => channel.Channel == NotificationChannel.Email);
@@ -66,15 +65,65 @@ internal sealed partial class DeliverySender(
         var emails = emailUsers.Count > 0 ? await directory.GetEmailsAsync(emailUsers, ct) : new Dictionary<Guid, string>();
 
         var outcomes = new ConcurrentBag<Outcome>();
-        await Parallel.ForEachAsync(
-            due,
-            new ParallelOptions { MaxDegreeOfParallelism = Parallelism, CancellationToken = ct },
-            async (delivery, token) => outcomes.Add(delivery.Channel == DeliveryChannels.Push
-                ? await SendPushAsync(delivery, devices.GetValueOrDefault(delivery.UserId) ?? [], token)
-                : await SendEmailAsync(delivery, emails.GetValueOrDefault(delivery.UserId), token)));
+        try
+        {
+            await Parallel.ForEachAsync(
+                due,
+                new ParallelOptions { MaxDegreeOfParallelism = Parallelism, CancellationToken = ct },
+                async (delivery, token) =>
+                {
+                    if (await SendSafelyAsync(delivery, devices, emails, token) is { } outcome)
+                    {
+                        outcomes.Add(outcome);
+                    }
+                });
+        }
+        finally
+        {
+            // Grava o que já foi tentado mesmo com o lote cancelado: o que saiu não pode sair de novo (§5).
+            var finished = outcomes.ToList();
+            if (finished.Count > 0)
+            {
+                var now = clock.GetUtcNow();
+                await SaveAsync(connection, finished, now, CancellationToken.None);
+                foreach (var outcome in finished.Where(outcome => FinalStatus(outcome) == DeliveryStatuses.Failed))
+                {
+                    LogDeliveryFailed(logger, outcome.Delivery.Id, outcome.Delivery.Channel, outcome.Delivery.Kind, outcome.Delivery.Attempts + 1);
+                }
+            }
+        }
 
-        await SaveAsync(connection, [.. outcomes], clock.GetUtcNow(), ct);
         return due.Count;
+    }
+
+    /// <summary>
+    /// Envia uma entrega; uma exceção inesperada do canal vira nova tentativa só dela. Com o lote cancelado, a entrega
+    /// em envio fica como estava (<see langword="null"/>: pendente, sem contar a tentativa) e sai no lote seguinte.
+    /// </summary>
+    private async Task<Outcome?> SendSafelyAsync(
+        Due delivery,
+        IReadOnlyDictionary<Guid, IReadOnlyList<Device>> devices,
+        IReadOnlyDictionary<Guid, string> emails,
+        CancellationToken ct)
+    {
+        try
+        {
+            return delivery.Channel == DeliveryChannels.Push
+                ? await SendPushAsync(delivery, devices.GetValueOrDefault(delivery.UserId) ?? [], ct)
+                : await SendEmailAsync(delivery, emails.GetValueOrDefault(delivery.UserId), ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return null;
+        }
+#pragma warning disable CA1031 // Uma falha inesperada de um envio não pode descartar o resultado das outras do lote.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogUnexpectedFailure(logger, exception, delivery.Id, delivery.Channel);
+            NotificationsTelemetry.Delivered(delivery.Channel, "retry");
+            return Outcome.Retry(delivery, delivery.PendingEndpoints);
+        }
     }
 
     private async Task<Outcome> SendPushAsync(Due delivery, IReadOnlyList<Device> devices, CancellationToken ct)
@@ -88,14 +137,32 @@ internal sealed partial class DeliverySender(
             return Outcome.Done(delivery, DeliveryStatuses.Failed);
         }
 
-        var payload = JsonSerializer.Serialize(new PushPayload(delivery.Title, delivery.Body, delivery.Url), PayloadJson);
+        var payload = PushPayload.Serialize(delivery.Title, delivery.Body, delivery.Url);
         var sent = new List<string>();
         var gone = new List<string>();
         var retry = new List<string>();
-        foreach (var device in targets)
+        for (var index = 0; index < targets.Count; index++)
         {
-            var result = await _push.SendAsync(new PushNotification(device.Endpoint, device.P256dh, device.Auth, payload), ct);
-            var code = result.IsSuccess ? DeliveryStatuses.Sent : result.Error.Code;
+            var device = targets[index];
+            string code;
+            try
+            {
+                var result = await _push.SendAsync(new PushNotification(device.Endpoint, device.P256dh, device.Auth, payload), ct);
+                code = result.IsSuccess ? DeliveryStatuses.Sent : result.Error.Code;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested && sent.Count + gone.Count > 0)
+            {
+                // Lote cancelado depois de algum aparelho aceitar: grava os que já receberam; o resto fica para depois.
+                retry.AddRange(targets.Skip(index).Select(target => target.Endpoint));
+                break;
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // Falha inesperada num aparelho: só ele fica para a nova tentativa (o endpoint não vai para o log).
+                LogUnexpectedFailure(logger, exception, delivery.Id, DeliveryChannels.Push);
+                code = PushFailures.Temporary;
+            }
+
             switch (code)
             {
                 case DeliveryStatuses.Sent:
@@ -210,6 +277,15 @@ internal sealed partial class DeliverySender(
         return devices.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<Device>)pair.Value);
     }
 
+    /// <summary>O estado gravado da entrega: o do envio ou, esgotadas as tentativas, <c>sent</c> | <c>failed</c>.</summary>
+    private static string FinalStatus(Outcome outcome)
+    {
+        var givingUp = outcome.Status == DeliveryStatuses.Pending && outcome.Delivery.Attempts + 1 >= MaxAttempts;
+        return givingUp
+            ? (outcome.Succeeded.Count > 0 ? DeliveryStatuses.Sent : DeliveryStatuses.Failed)
+            : outcome.Status;
+    }
+
     private static async Task SaveAsync(NpgsqlConnection connection, IReadOnlyList<Outcome> outcomes, DateTimeOffset now, CancellationToken ct)
     {
         await using var transaction = await connection.BeginTransactionAsync(ct);
@@ -217,10 +293,7 @@ internal sealed partial class DeliverySender(
         foreach (var outcome in outcomes)
         {
             var attempts = outcome.Delivery.Attempts + 1;
-            var givingUp = outcome.Status == DeliveryStatuses.Pending && attempts >= MaxAttempts;
-            var status = givingUp
-                ? (outcome.Succeeded.Count > 0 ? DeliveryStatuses.Sent : DeliveryStatuses.Failed)
-                : outcome.Status;
+            var status = FinalStatus(outcome);
             var command = new NpgsqlBatchCommand(
                 """
                 update notifications.deliveries
@@ -273,6 +346,19 @@ internal sealed partial class DeliverySender(
         Message = "E-mail de aviso não enviado: sem Notifications:Unsubscribe:SigningKey não há link de descadastro")]
     private static partial void LogNoUnsubscribeKey(ILogger logger);
 
+    /// <summary>Um evento por entrega que termina como falha, em qualquer canal (§8, alerta "Falha no envio de aviso").</summary>
+    [LoggerMessage(
+        EventName = "NoticeDeliveryFailed",
+        Level = LogLevel.Warning,
+        Message = "Aviso não entregue: entrega {DeliveryId} ({Channel}, {Kind}) terminou como falha após {Attempts} tentativa(s)")]
+    private static partial void LogDeliveryFailed(ILogger logger, long deliveryId, string channel, string kind, int attempts);
+
+    [LoggerMessage(
+        EventName = "NoticeSendError",
+        Level = LogLevel.Error,
+        Message = "Falha inesperada ao enviar a entrega {DeliveryId} ({Channel}); nova tentativa com espera")]
+    private static partial void LogUnexpectedFailure(ILogger logger, Exception exception, long deliveryId, string channel);
+
     /// <summary>Uma entrega vencida, com o conteúdo do aviso.</summary>
     private sealed record Due(
         long Id,
@@ -287,9 +373,6 @@ internal sealed partial class DeliverySender(
 
     /// <summary>Um aparelho inscrito.</summary>
     private sealed record Device(string Endpoint, string P256dh, string Auth);
-
-    /// <summary>O conteúdo do push (§6, Emenda de 2026-10-23): nada além do aviso.</summary>
-    private sealed record PushPayload(string Title, string Body, string Url);
 
     /// <summary>
     /// O resultado de uma entrega no lote: concluída (<c>sent</c> | <c>failed</c>) ou pendente para nova tentativa

@@ -52,6 +52,6 @@ internal sealed partial class ProcessDeliveriesJob(IServiceScopeFactory scopes, 
         }
     }
 
-    [LoggerMessage(EventName = "NoticeDeliveryFailed", Level = LogLevel.Error, Message = "Falha ao enviar as entregas de avisos; nova tentativa na próxima execução")]
+    [LoggerMessage(EventName = "NoticeDeliveriesRunFailed", Level = LogLevel.Error, Message = "Falha ao processar as entregas de avisos; nova tentativa na próxima execução")]
     private static partial void LogFailure(ILogger logger, Exception exception);
 }
