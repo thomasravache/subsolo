@@ -13,7 +13,13 @@ import {
 import { buttonClasses } from "@/components/ui/Button";
 
 import { noticeMessages, switches } from "./messages";
-import { keyBytes, pushSupport, registration, type PushSupport } from "./push";
+import {
+  keyBytes,
+  notificationPermission,
+  pushSupport,
+  registration,
+  type PushSupport,
+} from "./push";
 
 /** A situação do push neste aparelho. */
 type DeviceState =
@@ -25,7 +31,7 @@ async function initialState(): Promise<DeviceState> {
   if (support !== "supported") {
     return support;
   }
-  if (Notification.permission === "granted") {
+  if ((await notificationPermission()) === "granted") {
     try {
       const existing = await (
         await registration()
@@ -89,10 +95,9 @@ export function NoticesPanel({
     }
     setMessage("");
     // ADR-0013: a permissão só é pedida aqui, depois do toque.
+    const current = await notificationPermission();
     const permission =
-      Notification.permission === "default"
-        ? await Notification.requestPermission()
-        : Notification.permission;
+      current === "default" ? await Notification.requestPermission() : current;
     if (permission !== "granted") {
       setState("blocked");
       return;

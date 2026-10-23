@@ -51,3 +51,18 @@ export function keyBytes(key: string): Uint8Array<ArrayBuffer> {
 export function registration(): Promise<ServiceWorkerRegistration> {
   return window.navigator.serviceWorker.register(serviceWorkerPath);
 }
+
+/**
+ * A permissão de notificação do site. Pergunta primeiro à Permissions API (o `Notification.permission` do Chromium sem
+ * interface responde `denied` mesmo com a permissão concedida) e, sem ela, usa o `Notification.permission`.
+ */
+export async function notificationPermission(): Promise<NotificationPermission> {
+  try {
+    const status = await window.navigator.permissions.query({
+      name: "notifications",
+    });
+    return status.state === "prompt" ? "default" : status.state;
+  } catch {
+    return Notification.permission;
+  }
+}
