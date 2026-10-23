@@ -33,6 +33,11 @@ export const texts = {
   digest: "Resumo diário por e-mail",
   reminderPush: "Lembrete na véspera (no celular)",
   reminderEmail: "Lembrete na véspera (por e-mail)",
+  unsubscribedDigest:
+    "Pronto: você não recebe mais o resumo diário por e-mail.",
+  unsubscribedReminder:
+    "Pronto: você não recebe mais o lembrete na véspera por e-mail.",
+  invalidLink: "Este link de descadastro é inválido.",
 } as const;
 
 function base64Url(bytes: Buffer): string {

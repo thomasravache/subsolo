@@ -22,8 +22,9 @@ import {
  *   por e-mail" e recarrega: as escolhas continuam. `/manifest.webmanifest` responde (`display: standalone`, nome e
  *   ícones) e o service worker `/sw.js` registra. Sem violações do axe.
  * - E2E-02 (mobile-chrome, permissão negada): "Ativar avisos" mostra "Os avisos estão bloqueados no navegador." e nada é
- *   gravado; abrindo um link de descadastro válido (gerado pelo teste) a página confirma "Pronto: você não recebe mais
- *   … por e-mail." e o resumo diário desliga; um link adulterado mostra a mensagem de link inválido.
+ *   gravado; um link de descadastro adulterado mostra "Este link de descadastro é inválido."; os válidos (gerados pelo
+ *   teste) confirmam "Pronto: você não recebe mais o resumo diário por e-mail." e "… o lembrete na véspera por e-mail."
+ *   (o tipo vem do token, Emenda de 2026-10-23), e cada um desliga só o seu tipo.
  *
  * O `pushManager.subscribe` é trocado por uma inscrição de teste (ver `avisos.ts`): o Chromium do Playwright não alcança
  * o FCM. Seletores: papéis e nomes acessíveis; cada controle só é tocado depois de a página hidratar.
@@ -145,19 +146,35 @@ test.describe("avisos: push, preferências e descadastro", () => {
     const tampered = `${unsubscribePath}?token=${encodeURIComponent(`${token.slice(0, -10)}${token.at(-10) === "A" ? "B" : "A"}${token.slice(-9)}`)}`;
     const invalid = await page.goto(tampered);
     expect(invalid?.status(), `GET ${unsubscribePath} (adulterado)`).toBe(200);
-    await expect(page.getByText(/link.*inválid/i)).toBeVisible();
+    await expect(
+      page.getByText(texts.invalidLink, { exact: true }),
+    ).toBeVisible();
     expect((await preferences(page.request)).dailyDigestEmail).toBe(true);
 
     const link = `${unsubscribePath}?token=${encodeURIComponent(token)}`;
     const response = await page.goto(link);
     expect(response?.status(), `GET ${unsubscribePath}`).toBe(200);
     await expect(
-      page.getByText(/^Pronto: você não recebe mais .+ por e-mail\.$/),
+      page.getByText(texts.unsubscribedDigest, { exact: true }),
     ).toBeVisible();
     await expect
       .poll(async () => (await preferences(page.request)).dailyDigestEmail)
       .toBe(false);
     expect((await preferences(page.request)).reminderEmail).toBe(true);
     await axe.check(page);
+
+    // Lembrete por e-mail: o tipo vem do próprio token.
+    const reminder = `${unsubscribePath}?token=${encodeURIComponent(unsubscribeToken(await myId(page.request), "reminder"))}`;
+    const reminderResponse = await page.goto(reminder);
+    expect(
+      reminderResponse?.status(),
+      `GET ${unsubscribePath} (lembrete)`,
+    ).toBe(200);
+    await expect(
+      page.getByText(texts.unsubscribedReminder, { exact: true }),
+    ).toBeVisible();
+    await expect
+      .poll(async () => (await preferences(page.request)).reminderEmail)
+      .toBe(false);
   });
 });
