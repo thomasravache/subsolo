@@ -46,6 +46,19 @@ public static partial class ModularMonolithRules
     public const string SmtpOnlyInNotifications =
         "ADR-0014: só o módulo Notifications usa bibliotecas de SMTP (MailKit, MimeKit)";
 
+    /// <summary>
+    /// SPEC-0030 — fora do módulo Notifications, nenhum tipo do Subsolo usa uma biblioteca de Web Push
+    /// (<see cref="PushLibraryNamespaces"/>, ADR-0014).
+    /// </summary>
+    public const string PushOnlyInNotifications =
+        "ADR-0014: só o módulo Notifications usa a biblioteca de Web Push";
+
+    /// <summary>
+    /// SPEC-0030 — namespaces das bibliotecas .NET de Web Push avaliadas no §3 (<c>WebPush</c>, do pacote WebPush; e
+    /// <c>Lib.Net.Http.WebPush</c>).
+    /// </summary>
+    public const string PushLibraryNamespaces = @"^(?:WebPush|Lib\.Net\.Http\.WebPush)(?:\..*)?$";
+
     /// <summary>SPEC-0022 — fora do Common.Infrastructure, nenhum tipo do Subsolo usa o NetVips (ADR-0015).</summary>
     public const string NetVipsOnlyInCommonInfrastructure =
         "ADR-0015: só o Common.Infrastructure usa o NetVips";
@@ -194,6 +207,13 @@ public static partial class ModularMonolithRules
             ForbidDependencies(
                 "^Subsolo(?!\\.Modules\\.Notifications(?:\\.|$))(?:\\..*)?$",
                 "^(?:MailKit|MimeKit)(?:\\..*)?$",
+                rule),
+        ],
+        PushOnlyInNotifications =>
+        [
+            ForbidDependencies(
+                "^Subsolo(?!\\.Modules\\.Notifications(?:\\.|$))(?:\\..*)?$",
+                PushLibraryNamespaces,
                 rule),
         ],
         NetVipsOnlyInCommonInfrastructure =>
