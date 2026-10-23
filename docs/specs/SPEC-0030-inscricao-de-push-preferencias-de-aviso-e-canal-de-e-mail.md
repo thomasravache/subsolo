@@ -219,7 +219,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 6ff18c1 | 2026-10-23 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 9s 280ms) — 6ff18c1 | 2026-10-23 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (re-revisão após a Emenda 3: o major do alerta resolvido em e48efca; achados 2, 3, 6 e 7 resolvidos; 0 bloqueadores/majors; aviso dos lockfiles de ab7a0d8 aceito como regeneração; H30-01..07 levados à SPEC-0031 §7.6; chave de descadastro na lista da SPEC-0003) — 0b6633e | 2026-10-23 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 24s 928ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 436ms) — 63fa1eb | 2026-10-23 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
