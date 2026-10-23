@@ -2,7 +2,9 @@
 // SPEC-0008 — `aspire publish -o artifacts/compose` gera o Docker Compose da mesma aplicação, com o Caddy na frente.
 // SPEC-0022 — mídia (ADR-0015): no `aspire run`, Media__Root é um diretório local (artifacts/media) servido pela API; no
 // Compose, o volume `media`, montado na API e no Caddy (que serve /media/*).
+using System.Buffers.Text;
 using System.Globalization;
+using System.Security.Cryptography;
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
 using Microsoft.Extensions.Configuration;
@@ -100,6 +102,31 @@ if (!builder.ExecutionContext.IsPublishMode)
     api.WithEnvironment("Users__Google__Authority", fakeGoogleIssuer)
         .WithEnvironment("Users__Google__ClientId", "subsolo-local")
         .WithEnvironment("Users__Google__ClientSecret", googleClientSecret);
+}
+
+// SPEC-0030 — no `aspire run`, a API recebe um par de chaves VAPID gerado a cada execução (as inscrições de push de
+// desenvolvimento valem até a próxima subida) e uma chave aleatória para o token de descadastro dos e-mails de aviso,
+// os dois como parâmetros secretos: nenhuma chave fica no repositório (ADR-0008). As de produção entram no go-live
+// (SPEC-0003). H28-05 (herança da revisão da SPEC-0028) — o web recebe a chave Pix, o recebedor e o e-mail de contato
+// de desenvolvimento, como o tools/compose-up.sh faz na pilha do Compose; só do servidor (sem NEXT_PUBLIC_).
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    using var vapid = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+    var vapidKey = vapid.ExportParameters(includePrivateParameters: true);
+    var vapidPublicKey = Base64Url.EncodeToString([0x04, .. vapidKey.Q.X!, .. vapidKey.Q.Y!]);
+    var vapidPrivateKey = builder.AddParameter("vapid-private-key", Base64Url.EncodeToString(vapidKey.D), secret: true);
+    var unsubscribeKey = builder.AddParameter(
+        "unsubscribe-signing-key",
+        new GenerateParameterDefault { MinLength = 32, Special = false },
+        secret: true);
+    api.WithEnvironment("Notifications__WebPush__PublicKey", vapidPublicKey)
+        .WithEnvironment("Notifications__WebPush__PrivateKey", vapidPrivateKey)
+        .WithEnvironment("Notifications__WebPush__Subject", "mailto:nao-responda@subsolo.local")
+        .WithEnvironment("Notifications__Unsubscribe__SigningKey", unsubscribeKey);
+    web.WithEnvironment("Support__PixKey", "chave-dev@subsolo.local")
+        .WithEnvironment("Support__PixName", "Subsolo")
+        .WithEnvironment("Support__PixCity", "Curitiba")
+        .WithEnvironment("Site__ContactEmail", "contato-dev@subsolo.local");
 }
 
 // SPEC-0009 — api e web exportam logs e traces para o Seq (ADR-0010); no local, os alertas de infra/seq/alerts.json
