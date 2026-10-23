@@ -127,14 +127,43 @@ public sealed class NoticesModuleRulesTests
     [Trait("Kind", "Integration")]
     public void TheNewEndpointValidatesWithTheCommonEndpointValidation()
     {
-        var architecture = Load();
+        var presentation = ModularMonolithRules.ModuleAssemblies()
+            .Single(assembly => assembly.GetName().Name == "Subsolo.Modules.Notifications.Presentation");
 
-        var uses = architecture.Types
-            .Where(type => type.Namespace?.FullName?.StartsWith("Subsolo.Modules.Notifications.Presentation", StringComparison.Ordinal) == true)
-            .Any(type => type.Dependencies.Any(dependency =>
-                dependency.Target?.FullName == "Subsolo.Common.Presentation.EndpointValidation"));
+        var calls = MembersCalledOn(presentation, "Subsolo.Common.Presentation", "EndpointValidation");
 
-        uses.ShouldBeTrue("H28-06: o endpoint de inscrição não usa o EndpointValidation do Common.Presentation");
+        calls.ShouldNotBeEmpty("H28-06: o endpoint de inscrição não usa o EndpointValidation do Common.Presentation");
+    }
+
+    /// <summary>
+    /// Os membros de <paramref name="typeNamespace"/>.<paramref name="typeName"/> que o IL de <paramref name="assembly"/>
+    /// referencia (tabela MemberRef dos metadados). O compilador só emite a referência de um membro usado, e a tabela
+    /// não depende de onde a chamada foi parar: num método <c>async</c> ela fica no <c>MoveNext</c> da máquina de estados,
+    /// que é classe em Debug e struct em Release (o ArchUnitNET não vê a dependência no segundo caso).
+    /// </summary>
+    private static List<string> MembersCalledOn(Assembly assembly, string typeNamespace, string typeName)
+    {
+        using var stream = File.OpenRead(assembly.Location);
+        using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
+        var metadata = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+        var members = new List<string>();
+        foreach (var handle in metadata.MemberReferences)
+        {
+            var member = metadata.GetMemberReference(handle);
+            if (member.Parent.Kind != System.Reflection.Metadata.HandleKind.TypeReference)
+            {
+                continue;
+            }
+
+            var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
+            if (metadata.StringComparer.Equals(type.Namespace, typeNamespace)
+                && metadata.StringComparer.Equals(type.Name, typeName))
+            {
+                members.Add(metadata.GetString(member.Name));
+            }
+        }
+
+        return members;
     }
 
     private static ArchUnitNET.Domain.Architecture Load()
