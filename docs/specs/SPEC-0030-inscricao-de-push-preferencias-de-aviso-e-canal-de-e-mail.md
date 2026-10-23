@@ -151,7 +151,7 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **IT-07** — Dados os testes de arquitetura, quando rodam, então o `Notifications` não referencia nenhum outro módulo, a biblioteca de push só aparece nele e `IRecipientDirectory` está no contrato dele (implementado pelo `Users`).
 
 - **IT-08** — Dado um lote de entregas push e e-mail em que um canal lança uma exceção inesperada numa delas, quando o lote é processado, então só essa entrega fica pendente com `attempts` +1 e próxima tentativa com espera; as outras ficam `sent`; processar o lote de novo não reenvia nenhuma já enviada (o resultado parcial é gravado mesmo com cancelamento).
-- **IT-09** — Dado `infra/seq/alerts.json`, então existe o alerta "Falha no envio de aviso" que seleciona `NoticeDeliveryFailed` por igualdade em `event.name` (sem texto da mensagem), janela de 1 h, `count > 20`, citando um runbook de `docs/runbooks/` que existe — no padrão do SPEC-0016:IT-10 (`tests/Observability/Subsolo.Observability.UnitTests`).
+- **IT-09** — Dado `infra/seq/alerts.json`, então existe o alerta "Falha no envio de aviso" que seleciona `NoticeDeliveryFailed` por igualdade em `event.name` (sem texto da mensagem), janela de 1 h, `count > 20`, citando um runbook de `docs/runbooks/` que existe — no padrão de `MagicLinkSendFailedAlertTests` da SPEC-0016 (`tests/Observability/Subsolo.Observability.UnitTests`).
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` e os tipos públicos, quando lidos, então os endpoints e as interfaces do §6 batem, e `(cd web && pnpm api:check)` passa.
