@@ -12,15 +12,28 @@ namespace Subsolo.Common.Presentation;
 /// </summary>
 public static class EndpointValidation
 {
-    /// <summary>Valida <paramref name="request"/>: válido → <see langword="null"/>; senão, o ProblemDetails 400. Esqueleto (G1).</summary>
-    public static Task<IResult?> ValidateAsync<T>(
+    /// <summary>Valida <paramref name="request"/>: válido → <see langword="null"/>; senão, o ProblemDetails 400.</summary>
+    public static async Task<IResult?> ValidateAsync<T>(
         IValidator<T> validator,
         T request,
         string description,
-        CancellationToken cancellationToken) =>
-        throw new NotImplementedException("SPEC-0030 (H28-06): EndpointValidation ainda não implementado.");
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(validator);
+        var validation = await validator.ValidateAsync(request, cancellationToken);
+        return validation.IsValid ? null : ApiResults.Problem(Result.Failure(ToError(validation, description)));
+    }
 
-    /// <summary>Erro de validação com o código da primeira falha e as mensagens de cada campo inválido. Esqueleto (G1).</summary>
-    public static Error ToError(ValidationResult validation, string description) =>
-        throw new NotImplementedException("SPEC-0030 (H28-06): EndpointValidation ainda não implementado.");
+    /// <summary>Erro de validação com o código da primeira falha e as mensagens de cada campo inválido (sem repetir).</summary>
+    public static Error ToError(ValidationResult validation, string description)
+    {
+        ArgumentNullException.ThrowIfNull(validation);
+        var fields = validation.Errors
+            .GroupBy(failure => failure.PropertyName, StringComparer.Ordinal)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(failure => failure.ErrorMessage).Distinct(StringComparer.Ordinal).ToArray(),
+                StringComparer.Ordinal);
+        return Error.Validation(validation.Errors[0].ErrorCode, description, fields);
+    }
 }
