@@ -216,7 +216,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 9ba0f11 | 2026-10-18 |
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0145e1a | 2026-10-23 |
-| G2 Green | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 1 (+---------+--------+--------+--------+) — 4b6cdaf | 2026-10-23 |
+| G2 Green | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 1 (+---------+--------+--------+--------+) — 5d469b0 | 2026-10-23 |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
 | G5 Integração & CI | PENDING | | |
@@ -228,6 +228,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-23 | G2 | falha | 3 FAILs seguidos no G2: o 1º pelo aviso de segurança do Next.js 16.4.0 (resolvido pela SPEC-0034); o 2º e o 3º na cobertura, porque NoticesModuleRulesTests.TheNewEndpointValidatesWithTheCommonEndpointValidation (H28-06) falha no build Release usado pelo coverage.sh: a chamada a EndpointValidation fica na máquina de estados async, que no Release é struct e o ArchUnitNET não enxerga; no Debug passa | rodar o Tooling.Tests sozinho (passa); log completo do coverage.sh (falha só esse teste de arquitetura, 78/79) | Architect (piloto automático do Thomas) | TEST_DEFECT corrigido pelo Test-writer em 5bfdbf8: o teste H28-06 lê o uso do EndpointValidation pelos metadados (MemberRef) do assembly, igual em Debug e Release (79/79 nos dois; falha nos dois sem a chamada) | 2026-10-23 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
