@@ -156,7 +156,7 @@ internal sealed partial class DeliverySender(
                 retry.AddRange(targets.Skip(index).Select(target => target.Endpoint));
                 break;
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (!ct.IsCancellationRequested)
             {
                 // Falha inesperada num aparelho: só ele fica para a nova tentativa (o endpoint não vai para o log).
                 LogUnexpectedFailure(logger, exception, delivery.Id, DeliveryChannels.Push);
