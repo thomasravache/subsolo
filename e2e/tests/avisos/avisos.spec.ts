@@ -33,10 +33,20 @@ import {
 // O `ignoreHTTPSErrors` não vale para o script do service worker: com o certificado local não confiável, o Chromium
 // recusa registrar `/sw.js` ("An SSL certificate error occurred when fetching the script"). Só neste arquivo, o
 // Chromium sobe com `--ignore-certificate-errors` (a pilha local; nada muda contra um ambiente com certificado real).
+// A opção é só do Chromium: o WebKit (mobile-safari) não abre com ela, e as jornadas daqui só rodam no mobile-chrome.
 test.use({
   baseURL: appURL,
   ignoreHTTPSErrors: true,
-  launchOptions: { args: ["--ignore-certificate-errors"] },
+  launchOptions: [
+    async ({ browserName }, use) => {
+      await use(
+        browserName === "chromium"
+          ? { args: ["--ignore-certificate-errors"] }
+          : {},
+      );
+    },
+    { scope: "worker" },
+  ],
 });
 
 test.describe("avisos: push, preferências e descadastro", () => {
