@@ -79,7 +79,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 61db63c | 2026-10-23 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — e60dd7b | 2026-10-23 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 7s 959ms) — e60dd7b | 2026-10-23 |
-| G4 Review | FAIL | verify G1+G4: PASS; revisão: reviewer independente: APROVADO — escopo nos 3 arquivos de touches, lockfile só next/@next/*/eslint-config-next 16.4.0→16.4.2, UT-01 significativo, pnpm audit --prod high limpo — fe39407 | 2026-10-23 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (0 achados; escopo nos 3 arquivos de touches, lockfile só next/@next/*/eslint-config-next 16.4.0→16.4.2, UT-01 significativo, pnpm audit --prod high limpo) — fe39407 | 2026-10-23 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
