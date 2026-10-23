@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   getNotificationPreferences,
@@ -25,23 +25,43 @@ import {
 type DeviceState =
   "checking" | PushSupport | "inactive" | "activating" | "active" | "blocked";
 
-/** Situação inicial a partir do navegador: suporte, permissão e se o aparelho já está inscrito. */
+/** Grava (de novo, é idempotente pelo endpoint) a inscrição do navegador na API. */
+async function saveSubscription(
+  subscription: PushSubscription,
+): Promise<boolean> {
+  const json = subscription.toJSON();
+  const saved = await savePushSubscription({
+    endpoint: json.endpoint ?? subscription.endpoint,
+    keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
+  });
+  return saved.ok;
+}
+
+/**
+ * Situação inicial a partir do navegador: suporte, permissão (já negada → bloqueado, sem esperar o toque) e se o
+ * aparelho já está inscrito. Uma inscrição do navegador é registrada de novo na API antes de aparecer como ativa: o
+ * servidor pode não conhecê-la (removida, conta recriada) e o aparelho ficaria "ativo" sem receber nada.
+ */
 async function initialState(): Promise<DeviceState> {
   const support = pushSupport();
   if (support !== "supported") {
     return support;
   }
-  if ((await notificationPermission()) === "granted") {
-    try {
-      const existing = await (
-        await registration()
-      ).pushManager.getSubscription();
-      return existing ? "active" : "inactive";
-    } catch {
-      return "inactive";
-    }
+  const permission = await notificationPermission();
+  if (permission === "denied") {
+    return "blocked";
   }
-  return "inactive";
+  if (permission !== "granted") {
+    return "inactive";
+  }
+  try {
+    const existing = await (await registration()).pushManager.getSubscription();
+    return existing && (await saveSubscription(existing))
+      ? "active"
+      : "inactive";
+  } catch {
+    return "inactive";
+  }
 }
 
 /** O texto anunciado (`role="status"`) para a situação. */
@@ -49,6 +69,8 @@ function statusText(state: DeviceState, failed: string): string {
   switch (state) {
     case "active":
       return noticeMessages.active;
+    case "activating":
+      return noticeMessages.activating;
     case "blocked":
       return noticeMessages.blocked;
     case "unsupported":
@@ -76,12 +98,21 @@ export function NoticesPanel({
   const [state, setState] = useState<DeviceState>("checking");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const activating = useRef(false);
 
   useEffect(() => {
     let current = true;
-    void initialState().then((found) => {
-      if (current) {
-        setState(found);
+    void initialState().then(async (found) => {
+      if (!current) {
+        return;
+      }
+      setState(found);
+      if (found === "active") {
+        // A inscrição registrada de novo pode ter mudado as preferências (o show novo liga na primeira inscrição).
+        const refreshed = await getNotificationPreferences();
+        if (current && refreshed.ok) {
+          setPreferences(refreshed.value);
+        }
       }
     });
     return () => {
@@ -90,10 +121,20 @@ export function NoticesPanel({
   }, []);
 
   async function activate() {
-    if (state === "activating") {
+    if (activating.current) {
       return;
     }
+    activating.current = true;
+    try {
+      await subscribeDevice();
+    } finally {
+      activating.current = false;
+    }
+  }
+
+  async function subscribeDevice() {
     setMessage("");
+    setState("activating");
     // ADR-0013: a permissão só é pedida aqui, depois do toque.
     const current = await notificationPermission();
     const permission =
@@ -102,7 +143,6 @@ export function NoticesPanel({
       setState("blocked");
       return;
     }
-    setState("activating");
     const publicKey = await getPushPublicKey();
     if (!publicKey.ok) {
       setState("inactive");
@@ -116,13 +156,8 @@ export function NoticesPanel({
         userVisibleOnly: true,
         applicationServerKey: keyBytes(publicKey.value),
       });
-      const json = subscription.toJSON();
-      const saved = await savePushSubscription({
-        endpoint: json.endpoint ?? subscription.endpoint,
-        keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
-      });
-      if (!saved.ok) {
-        throw new Error(saved.code);
+      if (!(await saveSubscription(subscription))) {
+        throw new Error("subscription not saved");
       }
     } catch {
       setState("inactive");
@@ -155,8 +190,8 @@ export function NoticesPanel({
     }
   }
 
-  const canActivate =
-    state === "inactive" || state === "blocked" || state === "activating";
+  // Bloqueado: sem o botão — só as configurações do navegador liberam (a dica abaixo da situação).
+  const canActivate = state === "inactive" || state === "activating";
   const status = statusText(state, message);
 
   return (
