@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
+    SPEC-0030 — IT-01..IT-06 no Subsolo.Api em memória com PostgreSQL (Testcontainers), Mailpit e um servidor de push
+    falso em processo (handler do HttpClient do canal Web Push).
     SPEC-0018 — testes de integração do módulo Notifications (IT-01, IT-03, IT-04): o módulo num host genérico com os
     ServiceDefaults (OpenTelemetry com mascaramento, como na API) envia o MagicLink a um Mailpit real em container
     (Testcontainers), devolve notifications.email_unavailable com SMTP mudo ou fechado e não exporta o destinatário em
@@ -27,12 +29,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <!-- SPEC-0030: a API inteira em memória (inscrições, preferências, avisos e descadastro). -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../../Subsolo.IntegrationTests.Common/Subsolo.IntegrationTests.Common.csproj" />
     <ProjectReference Include="../../../../src/Subsolo.ServiceDefaults/Subsolo.ServiceDefaults.csproj" />
     <ProjectReference Include="../../../../src/Modules/Notifications/Subsolo.Modules.Notifications.Infrastructure/Subsolo.Modules.Notifications.Infrastructure.csproj" />
+    <!-- SPEC-0030: o Subsolo.Api em memória (WebApplicationFactory) com PostgreSQL, Mailpit e o servidor de push falso. -->
+    <ProjectReference Include="../../../../src/Subsolo.Api/Subsolo.Api.csproj" />
   </ItemGroup>
 
 </Project>

@@ -13,10 +13,11 @@ internal interface INotificationChannel
     Task<Result> SendAsync(Notification notification, CancellationToken cancellationToken);
 }
 
-/// <summary>SPEC-0018 — canais de entrega.</summary>
+/// <summary>SPEC-0018 — canais de entrega. SPEC-0030: Web Push (VAPID, ADR-0014).</summary>
 internal enum NotificationChannel
 {
     Email,
+    WebPush,
 }
 
 /// <summary>SPEC-0018 — mensagem já renderizada, pronta para o canal.</summary>

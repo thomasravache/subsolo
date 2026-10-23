@@ -39,6 +39,18 @@ internal sealed class NotificationsApi(IEnumerable<INotificationChannel> channel
         return result;
     }
 
+    /// <summary>SPEC-0030 — esqueleto (G1): implementado no G2.</summary>
+    public Task<Result> EnqueueAsync(IReadOnlyCollection<Guid> userIds, Notice notice, CancellationToken ct) =>
+        throw new NotImplementedException("SPEC-0030: EnqueueAsync ainda não implementado.");
+
+    /// <summary>SPEC-0030 — esqueleto (G1): implementado no G2.</summary>
+    public Task ForgetUserAsync(Guid userId, CancellationToken ct) =>
+        throw new NotImplementedException("SPEC-0030: ForgetUserAsync ainda não implementado.");
+
+    /// <summary>SPEC-0030 — esqueleto (G1): implementado no G2.</summary>
+    public Task<object?> ExportAsync(Guid userId, CancellationToken ct) =>
+        throw new NotImplementedException("SPEC-0030: ExportAsync ainda não implementado.");
+
     private async Task<Result> SendAsync(EmailRequest request, CancellationToken cancellationToken)
     {
         if (!EmailRecipient.IsValid(request.To))

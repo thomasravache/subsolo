@@ -134,7 +134,10 @@ public sealed record MailpitMail(
     string Text,
     string Raw);
 
-/// <summary>Um Mailpit para todas as classes de teste que mandam e-mail de verdade.</summary>
+/// <summary>
+/// Um Mailpit para todas as classes de teste que mandam e-mail de verdade. SPEC-0030: também o PostgreSQL da API em
+/// memória (<see cref="PostgresFixture"/>), na mesma coleção, para a máquina de teste subir um container de cada.
+/// </summary>
 [CollectionDefinition(nameof(MailpitCollection))]
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Convenção de coleção do xUnit, como a PostgresCollection.")]
-public sealed class MailpitCollection : ICollectionFixture<MailpitServer>;
+public sealed class MailpitCollection : ICollectionFixture<MailpitServer>, ICollectionFixture<PostgresFixture>;
