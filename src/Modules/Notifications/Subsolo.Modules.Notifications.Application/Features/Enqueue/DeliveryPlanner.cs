@@ -11,12 +11,40 @@ namespace Subsolo.Modules.Notifications.Application.Features.Enqueue;
 /// </summary>
 internal static class DeliveryPlanner
 {
-    /// <summary>Esqueleto (G1): implementado no G2.</summary>
     public static IReadOnlyList<PlannedDelivery> Plan(
         Notice notice,
         IReadOnlyCollection<RecipientChannels> recipients,
-        IReadOnlySet<PlannedDelivery> alreadyDelivered) =>
-        throw new NotImplementedException("SPEC-0030: DeliveryPlanner ainda não implementado.");
+        IReadOnlySet<PlannedDelivery> alreadyDelivered)
+    {
+        ArgumentNullException.ThrowIfNull(notice);
+        ArgumentNullException.ThrowIfNull(recipients);
+        ArgumentNullException.ThrowIfNull(alreadyDelivered);
+
+        var planned = new List<PlannedDelivery>();
+        var seen = new HashSet<PlannedDelivery>();
+        foreach (var recipient in recipients)
+        {
+            if (recipient.HasPushSubscription && recipient.Preferences.AllowsPush(notice.Kind))
+            {
+                Add(new PlannedDelivery(recipient.UserId, NotificationChannel.WebPush));
+            }
+
+            if (recipient.HasEmail && recipient.Preferences.AllowsEmail(notice.Kind))
+            {
+                Add(new PlannedDelivery(recipient.UserId, NotificationChannel.Email));
+            }
+        }
+
+        return planned;
+
+        void Add(PlannedDelivery delivery)
+        {
+            if (!alreadyDelivered.Contains(delivery) && seen.Add(delivery))
+            {
+                planned.Add(delivery);
+            }
+        }
+    }
 }
 
 /// <summary>SPEC-0030 — o que o planejador sabe de um destinatário: preferências e canais disponíveis.</summary>

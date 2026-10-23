@@ -4,6 +4,8 @@
     SPEC-0018 — infraestrutura do módulo Notifications (ADR-0001, ADR-0014): canal de e-mail por SMTP com MailKit
     (único projeto que referencia MailKit, regra de arquitetura), configuração Notifications:Smtp e o registro do
     módulo (AddNotificationsModule).
+    SPEC-0030 — DbContext do schema `notifications` (inscrições, preferências, avisos e entregas) e migrações, o canal
+    Web Push (Lib.Net.Http.WebPush, só aqui: regra de arquitetura), o envio das entregas e o token de descadastro.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -12,6 +14,14 @@
 
   <ItemGroup>
     <PackageReference Include="MailKit" />
+    <PackageReference Include="Lib.Net.Http.WebPush" />
+    <!-- SPEC-0030: o HttpClient do Web Push sai sem o handler de resiliência padrão (as novas tentativas são das entregas). -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <!-- Só para gerar as migrações com `dotnet ef` (não vai para quem referencia o projeto). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

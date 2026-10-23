@@ -36,6 +36,15 @@ public static class NotificationsTelemetry
     private static readonly Counter<long> Emails = Meter.CreateCounter<long>(
         "subsolo.notifications.emails", unit: "{email}", description: "E-mails transacionais, por modelo e resultado.");
 
+    private static readonly Counter<long> Deliveries = Meter.CreateCounter<long>(
+        "subsolo.notifications.deliveries", unit: "{delivery}", description: "Envios de avisos, por canal e resultado (SPEC-0030).");
+
+    private static readonly Counter<long> SubscriptionsRemoved = Meter.CreateCounter<long>(
+        "subsolo.notifications.subscriptions_removed", unit: "{subscription}", description: "Inscrições de push removidas porque o serviço respondeu 404/410 (SPEC-0030).");
+
+    /// <summary>SPEC-0030 — tag com o canal da entrega (<c>push</c> | <c>email</c>).</summary>
+    public const string ChannelTag = "subsolo.notifications.channel";
+
     /// <summary>Abre o span do envio (ou <see langword="null"/> sem ouvinte), já com o modelo.</summary>
     internal static Activity? StartSend(EmailTemplate template) =>
         Source.StartActivity(SendEmailActivity)?.SetTag(TemplateTag, template.ToString());
@@ -51,4 +60,14 @@ public static class NotificationsTelemetry
 
         Emails.Add(1, new TagList { { TemplateTag, template.ToString() }, { ResultTag, result } });
     }
+
+    /// <summary>
+    /// SPEC-0030 — conta um envio de aviso: <paramref name="channel"/> (<c>push</c> | <c>email</c>) e o resultado
+    /// (<c>sent</c>, <c>retry</c>, <c>gone</c> ou <c>failed</c>). Base do alerta de taxa de falha de push (Plano de Rollout).
+    /// </summary>
+    internal static void Delivered(string channel, string result) =>
+        Deliveries.Add(1, new TagList { { ChannelTag, channel }, { ResultTag, result } });
+
+    /// <summary>SPEC-0030 — conta uma inscrição removida (o serviço de push respondeu 404/410).</summary>
+    internal static void SubscriptionRemoved() => SubscriptionsRemoved.Add(1);
 }
