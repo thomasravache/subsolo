@@ -30,7 +30,14 @@ import {
  * o FCM. Seletores: papéis e nomes acessíveis; cada controle só é tocado depois de a página hidratar.
  */
 // SPEC-0010: o Caddy do Compose serve HTTPS com o certificado local (`tls internal`), não confiável.
-test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
+// O `ignoreHTTPSErrors` não vale para o script do service worker: com o certificado local não confiável, o Chromium
+// recusa registrar `/sw.js` ("An SSL certificate error occurred when fetching the script"). Só neste arquivo, o
+// Chromium sobe com `--ignore-certificate-errors` (a pilha local; nada muda contra um ambiente com certificado real).
+test.use({
+  baseURL: appURL,
+  ignoreHTTPSErrors: true,
+  launchOptions: { args: ["--ignore-certificate-errors"] },
+});
 
 test.describe("avisos: push, preferências e descadastro", () => {
   test("SPEC-0030:E2E-01 o fã ativa os avisos, liga o resumo diário e as escolhas continuam depois de recarregar [jornada: seguir-e-avisar]", async ({
