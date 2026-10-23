@@ -138,7 +138,7 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **UT-02** — Dadas preferências variadas e um `Notice` de show novo, quando o planejador de entregas roda, então cria entregas só para os canais permitidos por usuário e ignora chaves já entregues.
 - **UT-03** — Dado o componente "Avisos" (Vitest) com `Notification.permission` em `default`, `granted`, `denied` e sem suporte, e com `navigator.standalone` falso no iOS, então mostra o botão, os interruptores ou a mensagem certa, e só pede permissão depois do toque.
 
-- **UT-04** — Dado o montador do payload do push, quando recebe título e corpo no tamanho máximo do §6 feitos só de letras acentuadas, então o JSON `{title, body, url}` não escapa as letras (`\u00e1` etc.) e, criptografado (aes128gcm), cabe em 4.096 bytes.
+- **UT-04** — Dado o montador do payload do push, quando recebe título de 120 e corpo de 1.000 caracteres (os máximos que o `EnqueueAsync` aceita, `NoticeQueue.MaxTitleLength`/`MaxBodyLength`) feitos só de letras acentuadas e uma URL de 200 caracteres, então o JSON `{title, body, url}` não escapa as letras (`\u00e1` etc.) e, criptografado (aes128gcm), cabe em 4.096 bytes.
 - **UT-05** — Dado o componente "Avisos" (Vitest): com uma inscrição no navegador, ao abrir ele a registra de novo no servidor (`POST`, idempotente) antes de mostrar "Avisos ativos neste aparelho"; com a permissão já `denied` (Permissions API ou `Notification.permission`) ao abrir, mostra "Os avisos estão bloqueados no navegador." sem o botão; durante a ativação mostra o texto `activating` do §6 e desabilita o botão.
 
 ### 7.3 Testes de Integração
