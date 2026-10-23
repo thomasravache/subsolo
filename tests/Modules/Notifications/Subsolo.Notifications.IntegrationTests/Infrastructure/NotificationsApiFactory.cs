@@ -23,10 +23,15 @@ namespace Subsolo.Notifications.IntegrationTests.Infrastructure;
 /// descadastro aleatória (<see cref="UnsubscribeKey"/>) em <c>Notifications:Unsubscribe</c>: nenhum segredo real;</item>
 /// <item>o servidor de push falso (<see cref="Push"/>) no lugar do handler do <c>HttpClient</c>
 /// <see cref="WebPushOptions.HttpClientName"/>: nenhuma chamada sai para FCM, Mozilla ou Apple;</item>
-/// <item>os limites <c>default</c> altos e a entrada de teste <see cref="NotificationsTestEndpoints.SignIn"/>.</item>
+/// <item>os limites <c>default</c> altos e a entrada de teste <see cref="NotificationsTestEndpoints.SignIn"/>;</item>
+/// <item>trocas de serviço do próprio teste (<paramref name="configureServices"/>, por último), como os canais e o
+/// diretório de destinatários falsos do IT-08.</item>
 /// </list>
 /// </summary>
-internal sealed class NotificationsApiFactory(string connectionString, MailpitServer mailpit) : WebApplicationFactory<Program>
+internal sealed class NotificationsApiFactory(
+    string connectionString,
+    MailpitServer mailpit,
+    Action<IServiceCollection>? configureServices = null) : WebApplicationFactory<Program>
 {
     public const string PublicUrl = "https://localhost";
 
@@ -123,6 +128,7 @@ internal sealed class NotificationsApiFactory(string connectionString, MailpitSe
         {
             services.AddEndpoints(typeof(NotificationsApiFactory).Assembly);
             services.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Push);
+            configureServices?.Invoke(services);
         });
     }
 }

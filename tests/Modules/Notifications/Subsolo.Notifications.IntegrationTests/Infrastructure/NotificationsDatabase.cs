@@ -48,6 +48,27 @@ internal static class NotificationsDatabase
         return rows;
     }
 
+    /// <summary>As entregas com a situação de envio: <c>status</c>, <c>attempts</c> e <c>next_attempt_at_utc</c>.</summary>
+    public static async Task<IReadOnlyList<DeliveryStateRow>> DeliveryStatesAsync(string connectionString, CancellationToken ct)
+    {
+        var rows = new List<DeliveryStateRow>();
+        await using var connection = await OpenAsync(connectionString, ct);
+        await using var command = new NpgsqlCommand(
+            "select user_id, channel, status, attempts, next_attempt_at_utc from notifications.deliveries", connection);
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            rows.Add(new DeliveryStateRow(
+                reader.GetGuid(0),
+                reader.GetString(1),
+                Convert.ToString(reader.GetValue(2), System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+                Convert.ToInt32(reader.GetValue(3), System.Globalization.CultureInfo.InvariantCulture),
+                reader.GetFieldValue<DateTimeOffset>(4)));
+        }
+
+        return rows;
+    }
+
     /// <summary>Quantas linhas de <paramref name="userId"/> há em cada tabela do schema (inscrições, preferências, entregas).</summary>
     public static async Task<(long Subscriptions, long Preferences, long Deliveries)> RowsOfAsync(
         string connectionString, Guid userId, CancellationToken ct)
@@ -127,3 +148,5 @@ internal static class NotificationsDatabase
 internal sealed record SubscriptionRow(Guid UserId, string Endpoint, string P256dh, string Auth);
 
 internal sealed record DeliveryRow(Guid UserId, string DedupeKey, string Kind, string Channel, string Status, int Attempts);
+
+internal sealed record DeliveryStateRow(Guid UserId, string Channel, string Status, int Attempts, DateTimeOffset NextAttemptAtUtc);
