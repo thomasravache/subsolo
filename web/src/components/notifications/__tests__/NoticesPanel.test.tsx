@@ -17,7 +17,7 @@ import type { NotificationPreferences } from "@/api/notifications";
  * - permissão `granted` com o aparelho inscrito: "Avisos ativos neste aparelho" e os quatro interruptores
  *   (`role="switch"`, `aria-checked`), cada mudança salva por `PUT /api/v1/me/notification-preferences`;
  * - permissão `denied` (ou negada no pedido): "Os avisos estão bloqueados no navegador.", nada gravado;
- * - sem suporte a push: sem o botão, com a mensagem de não suportado; nada pedido nem gravado;
+ * - sem suporte a push: sem o botão, com "Este navegador não recebe avisos." (Emenda de 2026-10-23); nada pedido nem gravado;
  * - iPhone sem instalar (`navigator.standalone` falso): "Adicione o Subsolo à tela de início para receber avisos",
  *   sem pedir permissão.
  */
@@ -465,12 +465,12 @@ describe("NoticesPanel — Avisos", () => {
     expect(posts()).toHaveLength(0);
   });
 
-  it("SPEC-0030:UT-03 sem suporte a push não mostra o botão, avisa que o navegador não suporta e nada é gravado", async () => {
+  it("SPEC-0030:UT-03 sem suporte a push não mostra o botão, diz que o navegador não recebe avisos e nada é gravado", async () => {
     stubBrowser({ unsupported: true });
 
     await renderPanel(initialPreferences);
 
-    await expectAnnounced(/suport/i);
+    await expectAnnounced("Este navegador não recebe avisos.");
     expect(screen.queryByRole("button", { name: "Ativar avisos" })).toBeNull();
     expect(posts()).toHaveLength(0);
   });
