@@ -1,0 +1,54 @@
+using Microsoft.Extensions.Logging;
+using Subsolo.Common.Application.Messaging;
+using Subsolo.Common.Domain;
+using Subsolo.Modules.Events.IntegrationEvents;
+using Subsolo.Modules.Moderation.Application.Diagnostics;
+using Subsolo.Modules.Moderation.Domain.Reports;
+
+namespace Subsolo.Modules.Moderation.Application.Features.ReportShow;
+
+/// <summary>
+/// SPEC-0033 — show inexistente ou oculto (o <see cref="IEventsCatalog"/> não o devolve) → <c>events.show_not_found</c>;
+/// o fã já tem denúncia pendente dele → <see cref="ModerationErrors.AlreadyReported"/>; senão grava a denúncia pendente.
+/// </summary>
+internal sealed partial class ReportShowCommandHandler(
+    IEventsCatalog catalog,
+    IReportRepository reports,
+    IModerationUnitOfWork unitOfWork,
+    TimeProvider clock,
+    ILogger<ReportShowCommandHandler> logger)
+    : ICommandHandler<ReportShowCommand, ReportCreated>
+{
+    public async Task<Result<ReportCreated>> Handle(ReportShowCommand command, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (await catalog.GetShowSummaryAsync(command.ShowId, cancellationToken) is null)
+        {
+            return Result.Failure<ReportCreated>(ModerationErrors.ShowNotFoundError());
+        }
+
+        if (await reports.HasPendingAsync(command.ShowId, command.UserId, cancellationToken))
+        {
+            return Result.Failure<ReportCreated>(ModerationErrors.AlreadyReportedError());
+        }
+
+        var report = Report.Submit(command.ShowId, command.UserId, command.Reason!, command.Details, clock.GetUtcNow());
+        reports.Add(report);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ModerationConflictException exception) when (exception.Conflict == ModerationConflict.AlreadyReported)
+        {
+            // Outro pedido do mesmo fã chegou antes (índice único parcial).
+            return Result.Failure<ReportCreated>(ModerationErrors.AlreadyReportedError());
+        }
+
+        ModerationTelemetry.Reported(report.Reason);
+        LogReported(logger, report.Id, report.ShowId, report.Reason);
+        return Result.Success(new ReportCreated(report.Id));
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Denúncia {ReportId} do show {ShowId} ({Reason})")]
+    private static partial void LogReported(ILogger logger, Guid reportId, Guid showId, string reason);
+}

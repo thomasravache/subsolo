@@ -11,6 +11,9 @@ public static class ReportReasons
 
     public const string Other = "other";
 
+    /// <summary>Os quatro motivos, na ordem da folha "Reportar show".</summary>
+    public static readonly IReadOnlyList<string> All = [Fake, CancelledUnannounced, WrongInfo, Other];
+
     /// <summary>Tamanho máximo do detalhe (§6: <c>details</c> com 0–500 caracteres).</summary>
     public const int DetailsMaxLength = 500;
 }
