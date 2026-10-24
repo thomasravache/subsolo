@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Quartz;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
+using Subsolo.Modules.Notifications.IntegrationEvents;
 using Subsolo.Modules.Users.Application;
 using Subsolo.Modules.Users.Application.Diagnostics;
 using Subsolo.Modules.Users.Application.Features.SignIn;
@@ -44,6 +45,8 @@ public static class UsersModule
     /// SPEC-0021 — <see cref="IUsersDirectory"/> (e-mails para a fila do admin do Profiles), o consumidor de
     /// <see cref="ArtistRoleGrantedIntegrationEvent"/> (papel <c>artist</c>), a conferência dos nomes das seções do export
     /// e os eventos de domínio do <c>Users.Domain</c> entre os tipos conhecidos da outbox.
+    /// SPEC-0030 — <see cref="IRecipientDirectory"/> (o e-mail dos destinatários dos avisos, contrato do Notifications) e a
+    /// seção <c>notifications</c> do export.
     /// </summary>
     public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -65,6 +68,9 @@ public static class UsersModule
         services.AddScoped<GoogleSignInCallback>();
         // SPEC-0021 (Emenda v2): os e-mails para a fila do admin do Profiles.
         services.AddScoped<IUsersDirectory, UsersDirectory>();
+        // SPEC-0030: o e-mail dos destinatários dos avisos e a seção "notifications" do export.
+        services.AddScoped<IRecipientDirectory, RecipientDirectory>();
+        services.AddScoped<IPersonalDataSection, NotificationsPersonalDataSection>();
         // SPEC-0021 (§7.6): nomes repetidos de seções do export derrubam a inicialização.
         services.AddHostedService<PersonalDataSectionsGuard>();
 

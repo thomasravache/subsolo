@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    SPEC-0018 — domínio do módulo Notifications (ADR-0001, ADR-0014). Ainda sem tipos: o schema `notifications` nasce
-    com as preferências e a inscrição de push (specs próprias do épico).
+    SPEC-0018 — domínio do módulo Notifications (ADR-0001, ADR-0014).
+    SPEC-0030 — as preferências de aviso, os tipos de aviso, os canais e a situação das entregas.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

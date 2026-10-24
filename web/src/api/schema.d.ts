@@ -424,6 +424,94 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/notification-preferences": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Minhas preferências de aviso
+     * @description Show novo por push, resumo diário por e-mail e lembrete na véspera por push e por e-mail, e quantos aparelhos recebem os avisos.
+     */
+    get: operations["GetNotificationPreferences"];
+    /**
+     * Mudar preferências de aviso
+     * @description Grava os quatro interruptores e devolve as preferências. Exige o cabeçalho X-CSRF.
+     */
+    put: operations["UpdateNotificationPreferences"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/push/public-key": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Chave pública dos avisos
+     * @description A chave pública VAPID (P-256, base64url) para inscrever o navegador nos avisos por push.
+     */
+    get: operations["GetPushPublicKey"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/push-subscriptions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ativar avisos neste aparelho
+     * @description Grava a inscrição de push do navegador (endpoint https de um serviço de push conhecido e as chaves p256dh e auth); a mesma inscrição de novo não duplica. A primeira inscrição liga o aviso de show novo. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["SubscribePush"];
+    /**
+     * Desativar avisos neste aparelho
+     * @description Remove a inscrição de push pelo endpoint (idempotente). Exige o cabeçalho X-CSRF.
+     */
+    delete: operations["UnsubscribePush"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/notifications/unsubscribe": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Descadastrar e-mail de aviso
+     * @description Desliga o tipo de e-mail de aviso (resumo diário ou lembrete na véspera) do token do link de descadastro, sem login. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["UnsubscribeNoticeEmail"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/profile-requests/{id}/approve": {
     parameters: {
       query?: never;
@@ -1008,6 +1096,20 @@ export interface components {
       /** Format: uuid */
       organizerProfileId: string;
     };
+    NotificationPreferencesRequest: {
+      newShowPush: boolean;
+      dailyDigestEmail: boolean;
+      reminderPush: boolean;
+      reminderEmail: boolean;
+    };
+    NotificationPreferencesResponse: {
+      newShowPush: boolean;
+      dailyDigestEmail: boolean;
+      reminderPush: boolean;
+      reminderEmail: boolean;
+      /** Format: int32 */
+      pushDevices: number;
+    };
     OwnerlessProfileCreated: {
       /** Format: uuid */
       profileId: string;
@@ -1140,6 +1242,20 @@ export interface components {
       city: components["schemas"]["ProfileCityResponse"];
       styles: components["schemas"]["ProfileStyleResponse"][];
       links: components["schemas"]["PublicProfileLinksResponse"];
+    };
+    PushPublicKeyResponse: {
+      publicKey: string;
+    };
+    PushSubscriptionKeys: {
+      p256dh: null | string;
+      auth: null | string;
+    };
+    PushSubscriptionRequest: {
+      endpoint: null | string;
+      keys: components["schemas"]["PushSubscriptionKeys"];
+    };
+    PushUnsubscribeRequest: {
+      endpoint: null | string;
     };
     RejectProfileRequestRequest: {
       reason: string;
@@ -1284,6 +1400,9 @@ export interface components {
       id: string;
       name: string;
       url: null | string;
+    };
+    UnsubscribeRequest: {
+      token: null | string;
     };
     UpdateCityRequest: {
       name: string;
@@ -2735,6 +2854,307 @@ export interface operations {
         };
       };
       /** @description Bad Request (code=users.magic_link_invalid) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  GetNotificationPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationPreferencesResponse"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UpdateNotificationPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NotificationPreferencesRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationPreferencesResponse"];
+        };
+      };
+      /** @description Bad Request (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  GetPushPublicKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PushPublicKeyResponse"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  SubscribePush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PushSubscriptionRequest"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) (code=notifications.invalid_subscription) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UnsubscribePush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PushUnsubscribeRequest"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UnsubscribeNoticeEmail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UnsubscribeRequest"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=notifications.invalid_token) (code=security.csrf_invalid) */
       400: {
         headers: {
           [name: string]: unknown;

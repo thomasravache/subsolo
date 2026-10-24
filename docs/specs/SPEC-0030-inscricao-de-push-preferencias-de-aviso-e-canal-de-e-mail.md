@@ -4,14 +4,14 @@ title: Inscrição de push, preferências de aviso e canal de e-mail
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0027]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/packages.lock.json, src/Subsolo.AppHost/**, Directory.Packages.props, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/avisos/**, web/src/app/manifest.ts, web/public/sw.js, web/public/icons/**, web/src/components/notifications/**, web/src/proxy.ts, web/src/proxy.test.ts, tools/compose-up.sh, e2e/tests/avisos/**, docs/design/**]
+touches: [src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, src/Subsolo.Api/packages.lock.json, src/Subsolo.AppHost/**, Directory.Packages.props, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, docs/api/**, web/src/api/**, web/src/app/(public)/seguindo/**, web/src/app/(public)/avisos/**, web/src/app/manifest.ts, web/public/sw.js, web/public/icons/**, web/src/components/notifications/**, web/src/proxy.ts, web/src/proxy.test.ts, tools/compose-up.sh, e2e/tests/avisos/**, docs/design/**, src/Common/Subsolo.Common.Presentation/**, tests/Common/Subsolo.Common.UnitTests/**, tests/Common/Subsolo.AppHost.IntegrationTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**]
 adrs: [ADR-0001, ADR-0008, ADR-0009, ADR-0013, ADR-0014]
 external: []
 size: M
@@ -123,6 +123,10 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 | Bloqueado / sem suporte / iPhone | permissão negada; navegador sem push | mensagem certa; nada gravado | UT-03, E2E-02 |
 | Arquitetura | dependências | `Notifications` não depende de módulo de domínio; só ele usa push e SMTP | IT-07 |
 | Contrato | OpenAPI e interfaces | corpos, códigos e assinaturas do §6 | CT-01 |
+| Payload do push | título e corpo no tamanho máximo, com acentos | JSON sem escapes `\uXXXX` de letras acentuadas; cabe no limite de 4 KB do Web Push | UT-04 |
+| Falha inesperada no lote | o canal lança exceção numa entrega | só ela volta para nova tentativa (`attempts` +1); as outras do lote ficam gravadas e não saem de novo | IT-08 |
+| Painel fora de sincronia | o navegador tem inscrição que o servidor não conhece; permissão já negada ao abrir | a inscrição é registrada de novo ao abrir; bloqueio mostrado sem precisar tocar; "Ativando…" durante a ativação | UT-05 |
+| Alerta | entregas que terminam em falha | alerta "Falha no envio de aviso" no Seq com runbook | IT-09 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
 
@@ -134,6 +138,9 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **UT-02** — Dadas preferências variadas e um `Notice` de show novo, quando o planejador de entregas roda, então cria entregas só para os canais permitidos por usuário e ignora chaves já entregues.
 - **UT-03** — Dado o componente "Avisos" (Vitest) com `Notification.permission` em `default`, `granted`, `denied` e sem suporte, e com `navigator.standalone` falso no iOS, então mostra o botão, os interruptores ou a mensagem certa, e só pede permissão depois do toque.
 
+- **UT-04** — Dado o montador do payload do push, quando recebe título de 120 e corpo de 1.000 caracteres (os máximos que o `EnqueueAsync` aceita, `NoticeQueue.MaxTitleLength`/`MaxBodyLength`) feitos só de letras acentuadas e uma URL de 200 caracteres, então o JSON `{title, body, url}` não escapa as letras (`\u00e1` etc.) e, criptografado (aes128gcm), cabe em 4.096 bytes.
+- **UT-05** — Dado o componente "Avisos" (Vitest): com uma inscrição no navegador, ao abrir ele a registra de novo no servidor (`POST`, idempotente) antes de mostrar "Avisos ativos neste aparelho"; com a permissão já `denied` (Permissions API ou `Notification.permission`) ao abrir, mostra "Os avisos estão bloqueados no navegador." sem o botão; durante a ativação mostra o texto `activating` do §6 e desabilita o botão.
+
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API e o PostgreSQL, quando o fã registra uma inscrição válida duas vezes e uma inválida, então 204 (um registro) e 400; `DELETE` remove.
 - **IT-02** — Dado um fã, quando lê as preferências antes e depois de ativar o push e as altera, então os padrões do §2 e as mudanças aparecem.
@@ -142,6 +149,9 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **IT-05** — Dado um aviso por e-mail com o Mailpit real, quando entregue, então o e-mail tem o link de descadastro; `POST /notifications/unsubscribe` com o token desliga aquele tipo; token adulterado dá 400.
 - **IT-06** — Dado um fã com inscrições, preferências e entregas, quando o `Users` exporta e depois exclui a conta, então a seção "notifications" aparece no export (sem chaves de criptografia) e tudo do usuário some do schema `notifications`.
 - **IT-07** — Dados os testes de arquitetura, quando rodam, então o `Notifications` não referencia nenhum outro módulo, a biblioteca de push só aparece nele e `IRecipientDirectory` está no contrato dele (implementado pelo `Users`).
+
+- **IT-08** — Dado um lote de entregas push e e-mail em que um canal lança uma exceção inesperada numa delas, quando o lote é processado, então só essa entrega fica pendente com `attempts` +1 e próxima tentativa com espera; as outras ficam `sent`; processar o lote de novo não reenvia nenhuma já enviada (o resultado parcial é gravado mesmo com cancelamento).
+- **IT-09** — Dado `infra/seq/alerts.json`, então existe o alerta "Falha no envio de aviso" que seleciona `NoticeDeliveryFailed` por igualdade em `event.name` (sem texto da mensagem), janela de 1 h, `count > 20`, citando um runbook de `docs/runbooks/` que existe — no padrão de `MagicLinkSendFailedAlertTests` da SPEC-0016 (`tests/Observability/Subsolo.Observability.UnitTests`).
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o snapshot `docs/api/openapi.v1.json` e os tipos públicos, quando lidos, então os endpoints e as interfaces do §6 batem, e `(cd web && pnpm api:check)` passa.
@@ -165,7 +175,7 @@ Tela "AVISOS": "Ativar avisos" (vermelho) ; situação ; interruptores "Show nov
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003), quando entram as chaves VAPID de produção.
 - **Dados/schema:** tabelas novas no schema `notifications` (aditivo).
 - **Compatibilidade:** `INotificationsApi` ganha métodos novos sem mudar o `SendEmailAsync` (SPEC-0018@1 continua valendo).
-- **Observabilidade:** contadores `subsolo.notifications.deliveries` (por canal e resultado) e `subsolo.notifications.subscriptions_removed`; alerta no Seq se a taxa de falha de push passar de 20% em 1 h.
+- **Observabilidade:** contadores `subsolo.notifications.deliveries` (por canal e resultado) e `subsolo.notifications.subscriptions_removed`; alerta no Seq "Falha no envio de aviso": `event.name = 'NoticeDeliveryFailed'` (um evento por entrega que termina como falha, qualquer canal), janela de 1 h, `count > 20`, com o runbook `docs/runbooks/avisos-sem-envio.md` (IT-09). A configuração do Seq como código (SPEC-0009) só dispara por contagem, por isso o limite é absoluto e não uma taxa.
 - **Rollback:** reverter o merge commit; as tabelas podem ficar.
 - **Etapas de migração/coexistência:** N/A
 
@@ -205,12 +215,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 9ba0f11 | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0145e1a | 2026-10-23 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 6ff18c1 | 2026-10-23 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 9s 280ms) — 6ff18c1 | 2026-10-23 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (re-revisão após a Emenda 3: o major do alerta resolvido em e48efca; achados 2, 3, 6 e 7 resolvidos; 0 bloqueadores/majors; aviso dos lockfiles de ab7a0d8 aceito como regeneração; H30-01..07 levados à SPEC-0031 §7.6; chave de descadastro na lista da SPEC-0003) — 0b6633e | 2026-10-23 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 24s 928ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 436ms) — 63fa1eb | 2026-10-23 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-23 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -218,6 +228,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
 | ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
 |---|---|---|---|---|---|---|---|---|
+| IMP-01 | 2026-10-23 | G2 | falha | 3 FAILs seguidos no G2: o 1º pelo aviso de segurança do Next.js 16.4.0 (resolvido pela SPEC-0034); o 2º e o 3º na cobertura, porque NoticesModuleRulesTests.TheNewEndpointValidatesWithTheCommonEndpointValidation (H28-06) falha no build Release usado pelo coverage.sh: a chamada a EndpointValidation fica na máquina de estados async, que no Release é struct e o ArchUnitNET não enxerga; no Debug passa | rodar o Tooling.Tests sozinho (passa); log completo do coverage.sh (falha só esse teste de arquitetura, 78/79) | Architect (piloto automático do Thomas) | TEST_DEFECT corrigido pelo Test-writer em 5bfdbf8: o teste H28-06 lê o uso do EndpointValidation pelos metadados (MemberRef) do assembly, igual em Debug e Release (79/79 nos dois; falha nos dois sem a chamada) | 2026-10-23 |
 
 ## 14. Relatório de Entrega
 <!-- Preenchido no CLOSE (G7). Diz o que foi feito, como, e prova que foi resolvido. Para status implemented o validate exige todas as subseções preenchidas, todo teste do plano com PASS + evidência e a Definição de Pronto toda marcada. -->
@@ -258,3 +269,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0030`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-20 | `touches` ganha `src/Common/Subsolo.Common.Presentation/**` e `tests/Common/Subsolo.Common.UnitTests/**` para o H28-06 (helper de validação de endpoint em `Common.Presentation`, com teste). | lacuna de escopo vista pelo Architect antes do G1 | — | piloto automático do Thomas (2026-10-17) |
+| 1 (sem mudança de contrato) | 2026-10-23 | `touches` ganha `tests/Common/Subsolo.AppHost.IntegrationTests/**` (teste do H28-05 e das chaves de desenvolvimento passadas pelo AppHost). Textos: sem suporte → "Este navegador não recebe avisos."; descadastro → "Pronto: você não recebe mais o resumo diário por e-mail." (`digest`) ou "Pronto: você não recebe mais o lembrete na véspera por e-mail." (`reminder`); token inválido → "Este link de descadastro é inválido.". Token de descadastro: `base64url(JSON {"u":"<userId>","k":"digest"|"reminder"}).base64url(HMAC-SHA256)`, chave `Notifications:Unsubscribe:SigningKey` (segredo; valor de teste só na pilha local, `Notifications__Unsubscribe__SigningKey`), e a página lê o tipo do próprio token. Esclarecimentos: `newShowPush` falso até a primeira inscrição, que o liga; `deliveries.channel` `push`/`email`; payload do push `{title, body, url}`; sem inscrição push ou sem e-mail não há entrega daquele canal; a parte "Avisos" fica em `/seguindo`, numa região "Avisos"; os quatro interruptores do §6. | SPEC_DEFECTs do Test-writer no G1 | — | piloto automático do Thomas (2026-10-23) |
+| 1 (sem mudança de contrato) | 2026-10-23 | Revisão G4 (CHANGES REQUESTED): `touches` ganha `infra/seq/alerts.json`, `docs/runbooks/**` e `tests/Observability/Subsolo.Observability.UnitTests/**`; o alerta do §8 vira "Falha no envio de aviso" (`NoticeDeliveryFailed`, 1 h, `count > 20`, runbook `avisos-sem-envio.md`), porque o Seq como código só dispara por contagem; novos UT-04 (payload sem escapes de acentos, cabe em 4 KB), UT-05 (painel registra de novo a inscrição do navegador, mostra o bloqueio ao abrir e o texto `activating`) e IT-08 (exceção inesperada numa entrega não descarta o lote nem reenvia — §5 "um aviso nunca sai duas vezes"), IT-09 (alerta). Aceitos sem mudança: descadastro ao abrir a página (previsto no §6); WNS (Edge no Windows) fora da lista do §5. Levados adiante: H30-01..04 na SPEC-0031 §7.6; chave de descadastro de produção no checklist da SPEC-0003. | achados 1–3, 6 e 7 do Reviewer independente (G4) | — | piloto automático do Thomas (2026-10-23) |

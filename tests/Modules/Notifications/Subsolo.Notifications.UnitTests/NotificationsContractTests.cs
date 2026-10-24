@@ -6,8 +6,8 @@ namespace Subsolo.Notifications.UnitTests;
 
 /// <summary>
 /// SPEC-0018 CT-01 — o assembly <c>Subsolo.Modules.Notifications.IntegrationEvents</c> publica o contrato do §6 que a
-/// SPEC-0016 consome: <see cref="INotificationsApi"/> só com <c>Task&lt;Result&gt; SendEmailAsync(EmailRequest request,
-/// CancellationToken cancellationToken)</c>, <see cref="EmailRequest"/> como record selado
+/// SPEC-0016 consome: <see cref="INotificationsApi"/> com <c>Task&lt;Result&gt; SendEmailAsync(EmailRequest request,
+/// CancellationToken cancellationToken)</c> (SPEC-0030 acrescenta os métodos de avisos sem mudar este), <see cref="EmailRequest"/> como record selado
 /// <c>(string To, EmailTemplate Template, IReadOnlyDictionary&lt;string, string&gt; Data)</c>,
 /// <see cref="EmailTemplate"/> só com <c>MagicLink</c> e os códigos de erro como constantes públicas.
 /// </summary>
@@ -28,12 +28,16 @@ public sealed class NotificationsContractTests
         }
     }
 
+    /// <summary>
+    /// SPEC-0030 (§8, compatibilidade): o <see cref="INotificationsApi"/> ganha os métodos de avisos (conferidos em
+    /// <c>NoticesContractTests</c>), e o <c>SendEmailAsync</c> continua com a assinatura da SPEC-0018@1.
+    /// </summary>
     [Fact]
     [Trait("Spec", "SPEC-0018:CT-01")]
-    public void NotificationsApiHasOnlySendEmailAsync()
+    public void NotificationsApiKeepsSendEmailAsync()
     {
         typeof(INotificationsApi).IsInterface.ShouldBeTrue();
-        var method = typeof(INotificationsApi).GetMethods().ShouldHaveSingleItem();
+        var method = typeof(INotificationsApi).GetMethods().Where(m => m.Name == "SendEmailAsync").ShouldHaveSingleItem();
 
         method.Name.ShouldBe("SendEmailAsync");
         method.ReturnType.ShouldBe(typeof(Task<Result>));

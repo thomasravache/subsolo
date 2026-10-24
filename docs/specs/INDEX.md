@@ -1,12 +1,12 @@
 # Índice de Specs
 
-> Gerado por `spec_graph.py index` em 2026-10-20 — não edite manualmente.
+> Gerado por `spec_graph.py index` em 2026-10-23 — não edite manualmente.
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 16 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 4, in-progress 1, implemented 25
-- Impedimentos: **0 aberto(s)**, 18 resolvido(s)
+- Validação (G0): **1 erro(s), 18 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 4, in-progress 2, implemented 26
+- Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
 
@@ -34,7 +34,7 @@ Perfil: **padrao**
 | Fã vê a agenda da cidade no celular | provada | SPEC-0008, SPEC-0008, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0024, SPEC-0025, SPEC-0025, SPEC-0028, SPEC-0028 |
 | Produtor ou banda aprovados cadastram um show em menos de 2 minutos | provada | SPEC-0023, SPEC-0023 |
 | Fã abre a página do show e compartilha com o flyer na prévia | provada | SPEC-0024, SPEC-0024, SPEC-0024, SPEC-0026, SPEC-0026 |
-| Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | provada | SPEC-0027, SPEC-0027 |
+| Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | provada | SPEC-0027, SPEC-0027, SPEC-0029, SPEC-0029 |
 | Fã entra pelo link mágico no e-mail e sai | provada | SPEC-0016, SPEC-0016, SPEC-0016, SPEC-0020, SPEC-0020 |
 | Admin cadastra cidade e estilo | provada | SPEC-0017, SPEC-0017 |
 | Fã muda o nome, baixa os dados e exclui a conta | provada | SPEC-0019, SPEC-0019 |
@@ -43,24 +43,25 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0029  
+**Em andamento:** SPEC-0030, SPEC-0034  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0029 | Vou com contagem | full/S | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0029 |
-| 3 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0030 |  |
-| 4 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0029; aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
-| 5 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0031 | saiu da onda 4: arquivos em comum com SPEC-0032 |
+| 1 | SPEC-0030 | Inscrição de push, preferências de aviso e canal de e-mail | full/M | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0034 | Atualizar o Next.js para corrigir avisos de segurança | lite/S | in-progress | 🔄 em andamento |  |
+| 2 | SPEC-0031 | Aviso de show novo (push imediato e resumo diário por e-mail) | full/M | approved | ⛔ aguarda implementação de SPEC-0030 |  |
+| 3 | SPEC-0032 | Lembrete na véspera | full/S | approved | ⛔ aguarda implementação de SPEC-0030; aguarda implementação de SPEC-0031 |  |
+| 4 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ⛔ aguarda implementação de SPEC-0031 | saiu da onda 3: arquivos em comum com SPEC-0032 |
+| 5 | SPEC-0035 | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0030; saiu da onda 2: arquivos em comum com SPEC-0031; saiu da onda 3: arquivos em comum com SPEC-0032; saiu da onda 4: arquivos em comum com SPEC-0033 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 15/20 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 16/22 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -75,11 +76,13 @@ flowchart LR
     S0023["SPEC-0023<br/>Cadastro de show, edição, cancelado e a…"]:::implemented
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::implemented
     S0027["SPEC-0027<br/>Seguir cidade, banda e casa"]:::implemented
-    S0029["SPEC-0029<br/>Vou com contagem"]:::inprogress
-    S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::approved
+    S0029["SPEC-0029<br/>Vou com contagem"]:::implemented
+    S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::inprogress
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::approved
     S0032["SPEC-0032<br/>Lembrete na véspera"]:::approved
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
+    S0034["SPEC-0034<br/>Atualizar o Next.js para corrigir aviso…"]:::inprogress
+    S0035["SPEC-0035<br/>CI no runner Ubuntu 26.04: runner fixo,…"]:::approved
   end
   S0019 --> S0021
   S0021 --> S0023
@@ -136,11 +139,13 @@ flowchart LR
 | [SPEC-0026](SPEC-0026-perfil-publico-de-banda-casa-e-produtor.md) | Perfil público de banda, casa e produtor | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0021, SPEC-0024 | — |
 | [SPEC-0027](SPEC-0027-seguir-cidade-banda-e-casa.md) | Seguir cidade, banda e casa | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0025, SPEC-0026 | — |
 | [SPEC-0028](SPEC-0028-paginas-apoie-pix-privacidade-e-termos.md) | Páginas Apoie (Pix), privacidade e termos | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0017 | — |
-| [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
-| [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
+| [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
+| [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
 | [SPEC-0031](SPEC-0031-aviso-de-show-novo-push-imediato-e-resumo-diario-por-e-mail.md) | Aviso de show novo (push imediato e resumo diário por e-mail) | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0023, SPEC-0027, SPEC-0030 | — |
 | [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
 | [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
+| [SPEC-0034](SPEC-0034-atualizar-o-next-js-para-corrigir-avisos-de-seguranca.md) | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | in-progress | 2026-10-23 | SPEC-0002 | — | — |
+| [SPEC-0035](SPEC-0035-ci-no-runner-ubuntu-26-04-runner-fixo-cache-do-playwright-po.md) | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | approved | 2026-10-23 | SPEC-0002 | — | — |
 
 ## ADRs
 

@@ -25,7 +25,7 @@ acessibilidade (WCAG 2.2 AA). Fonte da verdade do design: o **Stitch**; fonte da
 | Reivindicar Perfil (SPEC-0021) | celular | `75b72cdf03284a5998d07d0fd8ae6543` | pendente (capturada pelo Architect) |
 | Fila do Admin (SPEC-0021, só a aba "Pedidos de perfil") | desktop | `600bfe18de6e44a995790033ab0f817e` | pendente (capturada pelo Architect) |
 | Perfil da Banda — Podridão (SPEC-0026; também casa e produtor, sem foto e sem "Vou"; SPEC-0027: "Seguir" / "Seguindo" e "{n} seguidores" por extenso) | celular | `bdf4a66e751846d5a73dca2f606aac6a` | [perfil-mobile.png](stitch/perfil-mobile.png) |
-| Avisos e Seguindo (SPEC-0027: só a parte "Seguindo", em `/seguindo`, com uma seção por tipo; os avisos vêm com a spec de push; a navegação fica Agenda, Seguindo, Apoie, Conta) | celular | `35b282364c47425c9e9cfe89e7b1c1e2` | [seguindo-mobile.png](stitch/seguindo-mobile.png) |
+| Avisos e Seguindo (SPEC-0027: a parte "Seguindo", em `/seguindo`, com uma seção por tipo; a navegação fica Agenda, Seguindo, Apoie, Conta. SPEC-0030: a parte "Avisos" em cima, numa região "Avisos" — "Ativar avisos" vermelho, a situação anunciada e os interruptores; o lembrete ganha dois, no celular e por e-mail; no iPhone sem instalar, a instrução da tela de início no bloco de alerta) | celular | `35b282364c47425c9e9cfe89e7b1c1e2` | [seguindo-mobile.png](stitch/seguindo-mobile.png), [avisos-mobile.png](stitch/avisos-mobile.png) |
 | Apoie o Subsolo v2 (SPEC-0028; QR code gerado da chave real da configuração, sem a chave de exemplo; "Copiar chave"; textos do §6; lista de apoiadores sem a descrição de cada um) | celular | `eac502a950a545e481a18f8ea78d4149` | [apoie-mobile.png](stitch/apoie-mobile.png) |
 | Privacidade (SPEC-0028; também modelo de `/termos`; textos do §6, da tabela do ADR-0008) | celular | `e5fe5036928f4a29bf3c95fd51132ea3` | [privacidade-mobile.png](stitch/privacidade-mobile.png) |
 | Admin - Apoiadores (SPEC-0028; na ordem de cadastro, não alfabética; confirmação em `dialog` modal) | celular | `af1b0081f220444c893e1d85e071c1bc` | [admin-apoiadores-mobile.png](stitch/admin-apoiadores-mobile.png) |
@@ -159,6 +159,17 @@ Ajustes aprovados sobre as telas do Stitch: QR code gerado da chave da configura
 exemplo), sem a chave de exemplo, sem a descrição de cada apoiador e sem o rodapé próprio (vale o rodapé do shell);
 o admin lista na ordem de cadastro.
 
+Avisos (`web/src/components/notifications/`, SPEC-0030):
+
+| Componente | Props principais | Regras |
+|---|---|---|
+| `NoticesPanel` | `initial` | região "Avisos" (título com filete do destaque, como as seções de "Seguindo"): cartão "Avisos no celular (push)" com "Ativar avisos" (botão primário, só pede a permissão depois do toque, ADR-0013) e a situação em `role="status"` ("Avisos ativos neste aparelho", "Os avisos estão bloqueados no navegador." com a dica de liberar nas configurações, "Este navegador não recebe avisos."); no iPhone fora do app instalado, o bloco de alerta (contorno `--color-warning`) "Adicione o Subsolo à tela de início para receber avisos", sem botão; abaixo, os quatro interruptores `role="switch"` (`aria-checked`, a linha inteira é o alvo de toque ≥ 44 px; trilho `--color-accent` ligado, `--color-border` desligado), salvos na hora |
+| `UnsubscribeConfirmation` | `token` | conteúdo de `/avisos/descadastrar`: manda o token à API e confirma em `role="status"` o tipo lido do token ("Pronto: você não recebe mais o resumo diário por e-mail." / "… o lembrete na véspera por e-mail."); link inválido: "Este link de descadastro é inválido." |
+
+Ajustes aprovados sobre a tela do Stitch: sem o interruptor geral "Avisos no celular (push)" (o push é por aparelho,
+ativado pelo botão), lembrete em dois interruptores (no celular e por e-mail), textos do §6 e a instrução do iPhone no
+bloco de alerta.
+
 Minha conta (`web/src/components/account/`, SPEC-0019):
 
 | Componente | Props principais | Regras |
@@ -201,3 +212,5 @@ Cortar o flyer corta informação (data, casa, line-up) e a arte. Por isso:
 
 `web/src/app/favicon.ico` (16/32/48 px), `web/src/app/icon.png` (512 px) e `web/public/icons/` (192 e 512 px, para o
 PWA): monograma "S" em Anton, osso sobre o fundo `#0B0B0C`, com a barra em `#D7263D`, derivado do wordmark do Stitch.
+SPEC-0030: o manifest do PWA (`web/src/app/manifest.ts`, `/manifest.webmanifest`) usa os ícones de 192 e 512 px,
+`display: standalone` e fundo e tema `#0B0B0C`; a notificação de push usa o ícone de 192 px.

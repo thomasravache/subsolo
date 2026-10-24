@@ -2,6 +2,17 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Microsoft.AspNetCore.Mvc.Testing": {
+        "type": "Direct",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "AiQkwLuYCtZoWD1lm6ll/tqVf+u1GVdVJw+EEBQnCOgdofcwpMCnZ6h8HEwD04rOdmF1v+pVfGzr9HFCmq3zdw==",
+        "dependencies": {
+          "Microsoft.AspNetCore.TestHost": "10.0.13",
+          "Microsoft.Extensions.DependencyModel": "10.0.13",
+          "Microsoft.Extensions.Hosting": "10.0.13"
+        }
+      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[18.11.0, )",
@@ -116,15 +127,30 @@
         "resolved": "4.4.0",
         "contentHash": "gwJEfIGS7FhykvtZoscwXj/XwW+mJY6UbAZk+qtLKFUGWC95kfKXnj8VkxsZQnWBxJemM/q664rGLN5nf+OHZw=="
       },
+      "Lib.Net.Http.EncryptedContentEncoding": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "n+CuGyBCZ9zLT3p39sab1bSL2FRCoXHXUM/T7jXwZlibOE+mASOqXcKD9LzNjH+VZTdA0mn02EdBww06DzD9IA=="
+      },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
         "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
       },
+      "Microsoft.AspNetCore.TestHost": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "8xzbDfEOWg5GRp5byA42Axr4TbockbxCvdHTYk27ZIdst79DO0CLBp/Zw5sduK2goRii7of4EeuTjG/yPH4tsg=="
+      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "6.0.0",
         "contentHash": "UcSjPsst+DfAdJGVDsu346FX0ci0ah+lw3WRtn18NUwEqRt70HaOQ7lI72vy3+1LxtqI3T5GWwV39rQSrCzAeg=="
+      },
+      "Microsoft.Bcl.Cryptography": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "LG9Yll3B5aNpxv0+D47g6LiOiKBIlodhcHdQwcYzo8VeexFLGqx5ymetmA2aBRyo9cCcWsQWrFsdbsr8LvmWDw=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
@@ -206,13 +232,56 @@
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.13"
         }
       },
+      "Microsoft.Extensions.Configuration.CommandLine": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "RwdNZ9JdGs8eZmeL5qRe7ugp0Irk3KVkWpC/w1c8kjJwu1R4HvCXYz9kwHZxn45WiaRBG5lphQKtqnBaJOQC+Q==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.13",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13"
+        }
+      },
       "Microsoft.Extensions.Configuration.EnvironmentVariables": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "TmFegsI/uCdwMBD4yKpmO+OkjVNHQL49Dh/ep83NI5rPUEoBK9OdsJo1zURc1A2FuS/R/Pos3wsTjlyLnguBLA==",
+        "resolved": "10.0.13",
+        "contentHash": "qJK2dm9/AxyPVfqqBaZtjkUFl2hnBR/CQnMJtSO5LdEoyATMqvZjeQVY+8l0oa6PM6qlVe28iMEyXIRQ0wyZjA==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration": "10.0.0",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0"
+          "Microsoft.Extensions.Configuration": "10.0.13",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Configuration.FileExtensions": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "kwC1DY55CsqPmDtJAz+7alD3G+gJcM+XwHSZrcRO8mJGYB9hRq1qC6ZH8DL0SPW9WtJ/Bae5ikzPic8SxSv6Vw==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.13",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Physical": "10.0.13",
+          "Microsoft.Extensions.Primitives": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Configuration.Json": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "acCWM2+WR67kBAz6gAhD2zG+IZH9Q2VpKv5le7Msiu0vAMsnnLXpnV3BAzxd8/i+uOEo/dfb2XRYTynRVTDvEg==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.13",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Configuration.FileExtensions": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Configuration.UserSecrets": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "kQ/Tx972unP+ueQL8SSninthIj6w6XP2o0VnJPFC5HQIimPMwEN704MOspEgDkmm4FUL5SuxLEU0bNiW4HEZFA==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Configuration.Json": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Physical": "10.0.13"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {
@@ -238,8 +307,8 @@
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg=="
+        "resolved": "10.0.13",
+        "contentHash": "6TyllZsToy3S/Ziu67GddljRTttuVJ8bbrbVUrsdHqH5678Oax5MpaEubxLoPoWLvgUBYo4KfcAig0mkBtktXQ=="
       },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
@@ -295,6 +364,50 @@
         "contentHash": "BZDwtN3uoWRghDi5lRRZPDjMMCg2Ds7J6YEYjqka/TLjqnzquEpXyvchrIMeoubwT1ns23ow6PPeAoBHJO81Rw==",
         "dependencies": {
           "Microsoft.Extensions.Primitives": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.FileProviders.Physical": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "U7HkgGCNPICN5k7NVK6dmLsSPSPeO/EbNcuxOl/5qdC9Ahjp9UZWKOvlnUC+rYurmoxIlwyv9e5j0BaQlTOELA==",
+        "dependencies": {
+          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13",
+          "Microsoft.Extensions.FileSystemGlobbing": "10.0.13",
+          "Microsoft.Extensions.Primitives": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.FileSystemGlobbing": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "vQVzmAbnzlhXSXA2caYnlxtG9GXxEwtj5bODiWLu06A6iqeJmfBtlfKjuOSJGRy0/CFaNUrm7u9nxEUlljc2Rg=="
+      },
+      "Microsoft.Extensions.Hosting": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "Q+hmPoDqeHipHyJcY7mDCQiLDUcn9jIgjoCThcgaOgjLTTT3ApTe8p6M2+twsDyfKuuCsKhSNlnNjaaggtXxRA==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.13",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Configuration.Binder": "10.0.13",
+          "Microsoft.Extensions.Configuration.CommandLine": "10.0.13",
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.13",
+          "Microsoft.Extensions.Configuration.FileExtensions": "10.0.13",
+          "Microsoft.Extensions.Configuration.Json": "10.0.13",
+          "Microsoft.Extensions.Configuration.UserSecrets": "10.0.13",
+          "Microsoft.Extensions.DependencyInjection": "10.0.13",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Diagnostics": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13",
+          "Microsoft.Extensions.FileProviders.Physical": "10.0.13",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging.Configuration": "10.0.13",
+          "Microsoft.Extensions.Logging.Console": "10.0.13",
+          "Microsoft.Extensions.Logging.Debug": "10.0.13",
+          "Microsoft.Extensions.Logging.EventLog": "10.0.13",
+          "Microsoft.Extensions.Logging.EventSource": "10.0.13",
+          "Microsoft.Extensions.Options": "10.0.13"
         }
       },
       "Microsoft.Extensions.Hosting.Abstractions": {
@@ -362,6 +475,52 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
           "Microsoft.Extensions.Options": "10.0.13",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Logging.Console": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "i9rn0rHkiCxfNVbf4DRG7LOFcKPy/BioAxS07w6daWvIpLNRjskqDJcGGaYVFWndsq0iTRaS8Msry0t5fRYQug==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging.Configuration": "10.0.13",
+          "Microsoft.Extensions.Options": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Logging.Debug": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "yBig0DNMq+3UgliwxYlUC48dg0fPqvqI5B3ljzmLTrpR6maoKTOO5i9QnPgQUmQoaQWZMgu74fuF6oSDihb6pg==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Logging.EventLog": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "OAK40lXhgMuvyNwvzW3fxLvvucN8yr5XS7dQRcPmtnPf+Pt1lpbMgao5T4Wa6VdFagtIeDZNgPtV5Ig4xstziQ==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Options": "10.0.13",
+          "System.Diagnostics.EventLog": "10.0.13"
+        }
+      },
+      "Microsoft.Extensions.Logging.EventSource": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "SxJu3oczk+TJtHvpgAmCVzEkzx69/obA6GZCbGrbqYqc981YOAyfEprySBdFX7Yc5qatHJKHNTlpGeeBAQkZcA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Options": "10.0.13",
+          "Microsoft.Extensions.Primitives": "10.0.13"
         }
       },
       "Microsoft.Extensions.ObjectPool": {
@@ -443,6 +602,54 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
           "Microsoft.Extensions.ObjectPool": "10.0.13",
           "Microsoft.Extensions.Options": "10.0.13"
+        }
+      },
+      "Microsoft.IdentityModel.Abstractions": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "HJbo/lnSfNHUfphPRT910poQc4T2/9+8svFLvzuaYHGAOJ2Tu+oEDqpX0BVP3BJ4OuUM1kylEKyaiX2fCAK3Cw=="
+      },
+      "Microsoft.IdentityModel.JsonWebTokens": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "ui3fuBT4fs8kdKfBthI4NzLYIBIneEVS8UrL1JVBzAn80UiKmngBBi0BEByE7n/9c+EElcfFlCMFFTqpkBSLNA==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Tokens": "8.19.2"
+        }
+      },
+      "Microsoft.IdentityModel.Logging": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "r5YLDIxGOnkVJHrqXv/iD1FM1CgGrQOdriXuvuWvTPmKbnGANhEysq9XKmN6IHjf2a+9bAGEpnoRBsAQlvJU5w==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Abstractions": "8.19.2"
+        }
+      },
+      "Microsoft.IdentityModel.Protocols": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "sGxSsSrZXNmca6D+jHH2rVRyo2nNRd/g4H9CFbPmLLq0xgoH1U0orLWE5minfijw7+zq49tBs7txenbfAErRoQ==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Tokens": "8.19.2"
+        }
+      },
+      "Microsoft.IdentityModel.Protocols.OpenIdConnect": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "1XOcyY36cVymzE3qKdzKaUEZ4Pzt7ZpSa14JZoPPK1NLFUkQDs85TCqpV6XDo0YjFXj6nVK00AfOHppjghjhtw==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols": "8.19.2",
+          "System.IdentityModel.Tokens.Jwt": "8.19.2"
+        }
+      },
+      "Microsoft.IdentityModel.Tokens": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "GtPC1S02uH1gOO4fQ+zRysIicKmEXaYFP8PIkdJYXqMyruYhopre4ozVHp0XiDSA0+GJvOZH9prxCPvgBMg4Ww==",
+        "dependencies": {
+          "Microsoft.Bcl.Cryptography": "10.0.2",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+          "Microsoft.IdentityModel.Logging": "8.19.2"
         }
       },
       "Microsoft.Testing.Extensions.Telemetry": {
@@ -620,6 +827,20 @@
         "resolved": "6.0.0",
         "contentHash": "CPc6tWO1LAer3IzfZufDBRL+UZQcj5uS207NHALQzP84Vp/z6wF0Aa0YZImOQY8iStY0A2zI/e3ihKNPfUm8XA=="
       },
+      "System.Diagnostics.EventLog": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "DkNjtQyPR5Ud/zHnWHdsOuKbFRL9nIC92Q76z0NmHVDoQm40toLtsGFTIWq7toBoVa6fo/DInL3PLxY3Asixyw=="
+      },
+      "System.IdentityModel.Tokens.Jwt": {
+        "type": "Transitive",
+        "resolved": "8.19.2",
+        "contentHash": "gqhDC/icByKEutygpr+OFgAmjwTVowyzFjWB8K0q1ww8uFj5a1BQNL+QvijUl9uhq4p8OdDwcAIrjVC+eC9FVA==",
+        "dependencies": {
+          "Microsoft.IdentityModel.JsonWebTokens": "8.19.2",
+          "Microsoft.IdentityModel.Tokens": "8.19.2"
+        }
+      },
       "System.Management": {
         "type": "Transitive",
         "resolved": "6.0.1",
@@ -710,6 +931,23 @@
           "xunit.v3.runner.common": "[4.0.2]"
         }
       },
+      "subsolo.api": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "[10.0.13, )",
+          "NetVips": "[3.2.0, )",
+          "NetVips.Native": "[8.18.7, )",
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Site.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Users.Infrastructure": "[1.0.0, )",
+          "Subsolo.ServiceDefaults": "[1.0.0, )"
+        }
+      },
       "subsolo.common.application": {
         "type": "Project",
         "dependencies": {
@@ -726,8 +964,6 @@
           "FluentValidation.DependencyInjectionExtensions": "[12.2.0, )",
           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.13, )",
-          "NetVips": "[3.2.0, )",
-          "NetVips.Native": "[8.18.7, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
           "Quartz": "[4.5.1, )",
           "Scrutor": "[7.0.0, )",
@@ -749,6 +985,82 @@
           "xunit.v3.extensibility.core": "[4.0.2, )"
         }
       },
+      "subsolo.modules.engagement.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Application": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.engagement.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Engagement.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Events.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Events.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.events.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Events.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.notifications.application": {
         "type": "Project",
         "dependencies": {
@@ -766,7 +1078,9 @@
       "subsolo.modules.notifications.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Lib.Net.Http.WebPush": "[3.3.1, )",
           "MailKit": "[4.18.1, )",
+          "Microsoft.Extensions.Http.Resilience": "[10.11.0, )",
           "Subsolo.Common.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Notifications.Application": "[1.0.0, )",
           "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )",
@@ -784,6 +1098,118 @@
         "dependencies": {
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Notifications.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.Application": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.profiles.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Profiles.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Site.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Site.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Site.Application": "[1.0.0, )",
+          "Subsolo.Modules.Site.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Site.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.site.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Site.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Users.Application": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.users.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.AspNetCore.Authentication.OpenIdConnect": "[10.0.13, )",
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Users.Application": "[1.0.0, )"
         }
       },
       "subsolo.servicedefaults": {
@@ -821,6 +1247,15 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "2.1.0"
         }
       },
+      "Lib.Net.Http.WebPush": {
+        "type": "CentralTransitive",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "5ByiHRcY3lF/4LA7ZbgzBEUmX6oYlPTS1NzXEom3uvT7wFHeZ8Q9DOQcPG6awFqS8yGUuyTvxrHyBzTOwe8Fpg==",
+        "dependencies": {
+          "Lib.Net.Http.EncryptedContentEncoding": "2.1.1"
+        }
+      },
       "MailKit": {
         "type": "CentralTransitive",
         "requested": "[4.18.1, )",
@@ -828,6 +1263,24 @@
         "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
         "dependencies": {
           "MimeKit": "4.18.1"
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "dlyqhtVS6t6IeVvpxV8RuTQzrAFedkKbDoIbKbwjSmTimR4X/OxKvt+jwKLk8Qw/lqvoSQUl8iHLCO9CUCCH8A==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
+        }
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "XVuqUBGjVUVyb4DXR5BrSkrW0Br7sYKq39f723ILhQLlFHCyhAgWe1PkJBc42R/5mKBIgHiKVSY+PN5/4XtcQw==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.12.2, 3.0.0)"
         }
       },
       "Microsoft.EntityFrameworkCore": {
@@ -880,6 +1333,12 @@
         "requested": "[10.10.0, )",
         "resolved": "10.10.0",
         "contentHash": "8duZdxuO3Oo8tlyQXVq1drXee6GJC9DjUU97Pq3YaIqf92jrAHsWxbbRKwvjQI48Mer3IANwUKF0elqvHeY4Rw=="
+      },
+      "Microsoft.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[2.12.2, )",
+        "resolved": "2.12.2",
+        "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
       },
       "NetVips": {
         "type": "CentralTransitive",

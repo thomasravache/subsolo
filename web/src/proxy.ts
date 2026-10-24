@@ -58,6 +58,11 @@ import {
  * SPEC-0028 — as páginas institucionais (`/apoie`, `/privacidade`, `/termos`, {@link sitePages}) também seguem direto
  * para o Next.js, sem consultar a agenda: não são cidades, e com a API fora do ar `/apoie` sai 200 com o Pix e o aviso da
  * lista (sem o 503 da agenda).
+ *
+ * SPEC-0030 — as páginas de avisos (`/avisos/…`, {@link isNoticesPage}: o descadastro do e-mail, com o token no endereço)
+ * seguem direto para o Next.js, sem consultar a agenda nem a API do show (`avisos` é um primeiro segmento reservado),
+ * com `Cache-Control: no-store`. A CSP ganha `worker-src 'self'`: o service worker do PWA (`/sw.js`) é registrado do
+ * próprio site (sem `'self'` explícito, o `'strict-dynamic'` do `script-src` bloquearia o registro).
  */
 
 /** Formato do slug no contrato da API (`^[a-z0-9-]{2,60}$`); fora dele nem se consulta a API. */
@@ -95,7 +100,13 @@ const reservedSegments = new Set([
   "buscar",
   "seguindo",
   "offline",
+  "avisos",
 ]);
+
+/** SPEC-0030 — páginas de avisos (`/avisos/descadastrar`): nunca a agenda nem um show; sem cache (o token vai no endereço). */
+function isNoticesPage(pathname: string): boolean {
+  return /^\/avisos(?:\/|$)/.test(pathname);
+}
 
 /** SPEC-0028 — páginas institucionais de um segmento (slugs reservados da SPEC-0017), nunca a agenda de uma cidade. */
 const sitePages = new Set(["/apoie", "/privacidade", "/termos"]);
@@ -133,6 +144,7 @@ function contentSecurityPolicy(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data: blob:",
+    "worker-src 'self'",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -226,7 +238,10 @@ export async function proxy(request: NextRequest) {
   headers.delete(adminAccessHeader);
 
   const { pathname } = request.nextUrl;
-  const personalPage = isAccountPage(pathname) || isFollowingPage(pathname);
+  const personalPage =
+    isAccountPage(pathname) ||
+    isFollowingPage(pathname) ||
+    isNoticesPage(pathname);
   const adminPage = isAdminPage(pathname);
   const publicPage = !personalPage && !adminPage && !sitePages.has(pathname);
   const agenda =

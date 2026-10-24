@@ -4,7 +4,7 @@ title: Vou com contagem
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0027]
@@ -175,26 +175,26 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 0: Caracterização**
-- [ ] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
+- [x] CH-01 escrito, passando no código atual, commitado antes de qualquer mudança
 
 **Fase 1: Domínio**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0029:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0029:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: API e contrato**
-- [ ] Red: IT-01..IT-05, CT-01 falhando pelo motivo certo
-- [ ] Green: tabela, endpoints, `IAttendanceApi`, leitura do estado do show, export e exclusão, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-05, CT-01 falhando pelo motivo certo
+- [x] Green: tabela, endpoints, `IAttendanceApi`, leitura do estado do show, export e exclusão, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Botões e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: botão na página do show, contagem nos cards
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: botão na página do show, contagem nos cards
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -207,8 +207,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 bloqueadores/majors; decisões 1–11 e o aviso do verify aceitos; H29-01..03 levados à SPEC-0032 §7.6; IT-05 por testes web com a API simulada fora do ar, registrado na Verificação) — f617ab8 | 2026-10-20 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 18s 766ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 744ms) — 70147aa | 2026-10-20 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-20 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-20 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 1570c85 (árvore suja) | 2026-10-20 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -220,36 +220,59 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Botão "Vou" / "Vou ✓" (`aria-pressed`, nome "Vou ao show {título}") na página do show, com a contagem "{n} vão" anunciada; anônimo vai para o login e volta; show passado mostra "{n} foram" e cancelado ou adiado "{n} vão", sem botão.
+- Contagem "{n} vão" nos cards da agenda e do perfil, buscada em lote; sem contagem disponível, a página abre sem ela.
+- API `PUT`/`DELETE /api/v1/me/attendances/{showId}`, `GET /api/v1/me/attendances` e `GET /api/v1/attendances/counts` (pública, só números, até 100 ids); `IAttendanceApi` (contagem e ids para o lembrete); "vou" na exportação de dados e apagado ao excluir a conta. Quem vai nunca aparece (ADR-0008).
+- Pendências da SPEC-0027 (H27): acessibilidade do botão de seguir, link "Seguindo" no desktop, perfis em lote, seguidores de perfil removido fora da contagem.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (79a20fe CH-01; ce768e8 scaffold; 5f7c259, 37c2603, b7ea8ad, 58d0863, 025f357, 241087e) → Implementer (8f57620, d5830f8, 2d9a7af) → Reviewer: APPROVED WITH MINOR ITEMS em 241087e.
+- `Attendance` no módulo `Engagement` (tabela `engagement.attendances`, PK usuário+show, índice por show); o `Engagement` lê a situação do show por `IEventsCatalog.GetShowStateAsync`, sem ciclo com o `Events`; corrida resolvida pela PK; contador `subsolo.engagement.attendances`.
+- Web junta a contagem do `Engagement` com a agenda no servidor (o `attendingCount` do `Events` continua 0, CH-01); estado do botão lido no navegador.
+- Emendas sem mudança de contrato: show adiado não aceita "vou"; rótulos "foram"/"vão"; `Card.tsx` e os E2E da SPEC-0024 e da SPEC-0027 no escopo; H27-08 (tela do Stitch com "SEGUIR CURITIBA") movido para a SPEC-0003.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| CH-01 | `attendingCount` da agenda continua 0 vindo do `Events` (passou antes e depois da mudança) | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| UT-01 | só o show agendado e futuro aceita "vou"; repetir não duplica; cancelado, adiado e passado → `show_not_attendable`; inexistente → `show_not_found` | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| UT-02 | `CountAsync` e `GetAttendeesAsync` devolvem contagens e ids certos, sem repetição | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| IT-01 | marcar, listar e desmarcar com 204 e contagens certas; cancelado, adiado e passado 409; inexistente 404; "vou" anterior ao adiamento continua contando | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| IT-02 | quatro PUT iguais em paralelo: um registro; anônimo 401; sem `X-CSRF` 400 | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| IT-03 | 50 shows com contagens certas em p95 ≤ 50 ms; 101 ids ou id inválido → 400; `IAttendanceApi` no DI do host | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| IT-04 | rotas públicas sem ids nem e-mails de quem vai; exportação com a seção `attendances`; `UserDeleted` apaga os registros | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| IT-05 | contagem indisponível: agenda, página do show e perfil respondem sem a contagem e sem erro (testes do web com a API de contagens simulada fora do ar) | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| CT-01 | OpenAPI e `IAttendanceApi`/`IEventsCatalog.GetShowStateAsync` como no §6; `pnpm api:check` passa | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| E2E-01 | "Vou" vira "Vou ✓" com a contagem anunciada, card da agenda com a contagem, desmarcar volta (mobile-chrome e mobile-safari); axe | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| E2E-02 | anônimo em "Vou" vai para `/entrar?returnTo=…`; show cancelado sem botão | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
+| H27-01..07, H27-09 | dependências e `aria-disabled` no botão de seguir, contagem que acompanha a prop, nome constante "Seguir {nome}", "Seguindo" no cabeçalho do desktop, perfis em lote (`IProfilesApi.GetManyAsync`), sonda da agenda ao meio-dia UTC, seguidores de perfil removido fora da contagem | PASS | `gate G2 --run` em 241087e; `gate G5 --run` na integração (70147aa); CI do PR #41 (run 39402769947, checks verdes em 1570c85) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #41 (run 39402769947)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #41 (https://github.com/thomasravache/subsolo/pull/41), merge commit 8f66890 em 2026-10-20, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0032 §7.6: H29-01 (leitura em lote da situação dos shows em `/me/attendances`), H29-02 (documentar o contador na corrida), H29-03 (separação estrutural da contagem na página do show).
+- SPEC-0003 §8: H27-08 (botão "SEGUIR CURITIBA" na tela do Stitch e captura, com o Thomas).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0029`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

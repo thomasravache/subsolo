@@ -27,6 +27,10 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
     <!-- SPEC-0018 (ADR-0014): e-mail por SMTP no módulo Notifications (4.18.1, publicado em 2026-09-27; traz o MimeKit). -->
     <PackageVersion Include="MailKit" Version="4.18.1" />
+    <!-- SPEC-0030 (ADR-0014, ADR-0009): canal Web Push (VAPID direto, aes128gcm) no módulo Notifications.
+         Lib.Net.Http.WebPush 3.3.1 (MIT, publicado em 2025-03-09; traz o Lib.Net.Http.EncryptedContentEncoding 2.1.1,
+         MIT, sem dependências no net10.0), verificados em nuget.org em 2026-10-23. -->
+    <PackageVersion Include="Lib.Net.Http.WebPush" Version="3.3.1" />
     <!-- Transitivo do Aspire.Hosting 13.6.1 (2.5.302): fixado acima de GHSA-qhrr-8q5h-9q3h (corrigido em 2.5.303). -->
     <PackageVersion Include="MessagePack" Version="2.5.307" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />

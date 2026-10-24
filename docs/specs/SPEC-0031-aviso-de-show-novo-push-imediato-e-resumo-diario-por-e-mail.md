@@ -11,7 +11,7 @@ depends_on: [SPEC-0023, SPEC-0027, SPEC-0030]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, web/src/components/notifications/**]
 adrs: [ADR-0001, ADR-0008, ADR-0014]
 external: []
 size: M
@@ -125,6 +125,14 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 - **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do show abre a página dele e o de descadastro confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
+- **Itens herdados da revisão da SPEC-0030 (G4, tag `SPEC-0031:H30-NN`):**
+  - H30-01 — `PushSubscriptionValidator`: decidir e cobrir com teste a inclusão do WNS (`*.notify.windows.com`, Edge no Windows), hoje recusado com "Não foi possível ativar…"; recomendação do Architect: incluir, com a mesma regra de host exato.
+  - H30-02 — retenção: `notifications.deliveries` concluídas e `notifications.notices` sem entrega pendente apagadas depois de 90 dias por um job, com teste (o volume cresce com os avisos desta spec).
+  - H30-03 — `PUT /notifications/preferences`: campo ausente no corpo vira `false` em silêncio; tornar os campos obrigatórios (400 `notifications.invalid_preferences`) com Emenda do contrato da SPEC-0030.
+  - H30-04 — descadastro dispara ao abrir a página (scanners de link que rodam JavaScript podem descadastrar): avaliar o cabeçalho `List-Unsubscribe-Post` (RFC 8058) no e-mail de aviso.
+  - H30-05 — `infra/seq/alerts.json`: o job inteiro falhando (`NoticeDeliveriesRunFailed`, ex.: banco fora) não dispara alerta e os avisos param em silêncio; incluir o evento no filtro do "Falha de job" (`event.name in ['OutboxProcessingFailed','NoticeDeliveriesRunFailed']`), com teste.
+  - H30-06 — `DeliverySender`: `NoticeDeliveryFailed` também sai em situações normais (sem aparelho, usuário excluído, sem e-mail) e pode passar de 20/h sem problema real; usar um evento ou resultado próprio para "sem canal do destinatário", fora do alerta, com teste.
+  - H30-07 — `NotificationsStore` + `NoticesPanel`: o novo reenvio da inscrição ao abrir passa pela regra "primeira inscrição liga o push de show novo" e religa `newShowPush` que o fã desligou, se o servidor tinha perdido a inscrição (ex.: 410); aplicar a regra só quando o usuário ainda não tem linha de preferências, com teste.
 - **Itens herdados da revisão da SPEC-0026 (G4):**
   - H26-01 — `ListProfileShowsEndpoint.cs`: remover o `.Cast<ProfileShowResponse>()`; tipar `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` como `ProfileShowResponse`.
   - H26-02 — `IFlyerLocks` obrigatório no construtor de `UploadFlyerCommandHandler` e `CleanupFlyersCommandHandler` (fake no-op nos testes unitários).

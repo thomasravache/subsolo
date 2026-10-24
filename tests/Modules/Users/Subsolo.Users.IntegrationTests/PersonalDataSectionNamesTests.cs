@@ -15,6 +15,9 @@ public sealed class PersonalDataSectionNamesTests(PostgresFixture postgres)
 {
     private const string Duplicated = "secao-duplicada";
 
+    /// <summary>H26-09 — prazo para o host ficar pronto (migrações e jobs da outbox/inbox).</summary>
+    private static readonly TimeSpan HealthTimeout = TimeSpan.FromSeconds(30);
+
     [Fact]
     [Trait("Spec", "SPEC-0021:IT-07")]
     [Trait("Kind", "Integration")]
@@ -37,8 +40,14 @@ public sealed class PersonalDataSectionNamesTests(PostgresFixture postgres)
             $"a falha não nomeia a seção repetida: {failure}");
     }
 
+    /// <summary>
+    /// SPEC-0030 (H26-09, herança do CI da SPEC-0026) — logo depois de criar o banco isolado, o <c>/health</c> pode
+    /// responder 503 enquanto as migrações (outbox/inbox) terminam: espera o host ficar pronto (200) até um prazo, em vez
+    /// de afirmar o 200 na primeira consulta.
+    /// </summary>
     [Fact]
     [Trait("Spec", "SPEC-0021:IT-07")]
+    [Trait("Spec", "SPEC-0030:H26-09")]
     [Trait("Kind", "Integration")]
     public async Task SectionsWithDistinctNamesStartNormally()
     {
@@ -53,9 +62,21 @@ public sealed class PersonalDataSectionNamesTests(PostgresFixture postgres)
             });
 
         using var client = api.CreateUsersClient();
-        using var health = await client.GetAsync("/health", ct);
+        var deadline = DateTime.UtcNow + HealthTimeout;
+        int status;
+        while (true)
+        {
+            using var health = await client.GetAsync("/health", ct);
+            status = (int)health.StatusCode;
+            if (health.IsSuccessStatusCode || DateTime.UtcNow >= deadline)
+            {
+                break;
+            }
 
-        health.IsSuccessStatusCode.ShouldBeTrue($"/health: {(int)health.StatusCode}");
+            await Task.Delay(TimeSpan.FromMilliseconds(250), ct);
+        }
+
+        status.ShouldBe(200, $"/health não ficou pronto em {HealthTimeout.TotalSeconds:F0} s (último status: {status})");
     }
 
     private static IEnumerable<string> Flatten(Exception exception)
