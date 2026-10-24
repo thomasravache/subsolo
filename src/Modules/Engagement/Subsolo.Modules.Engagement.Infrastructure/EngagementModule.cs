@@ -36,6 +36,8 @@ public static class EngagementModule
     /// pública <see cref="IAttendanceApi"/> e a seção <c>attendances</c>). SPEC-0031: o registro dos shows publicados
     /// (<see cref="IPublishedShows"/>), o montador do resumo e o job <see cref="DailyDigestJob"/>
     /// (<c>Engagement:DigestCron</c>); o consumidor do <c>ShowPublished</c> entra pela varredura do <c>AddModule</c>.
+    /// SPEC-0032: os dias com resumo concluído (<see cref="IDigestRuns"/>, base da recuperação
+    /// <c>Engagement:DigestCatchUpCron</c>).
     /// </summary>
     public static IServiceCollection AddEngagementModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -53,6 +55,7 @@ public static class EngagementModule
         services.AddScoped<IPersonalDataSection, AttendancesPersonalDataSection>();
         services.AddScoped<IPublishedShows, PublishedShows>();
         services.AddScoped<DigestBuilder>();
+        services.AddScoped<IDigestRuns, DigestRuns>();
 
         services.AddModule<EngagementDbContext>(
             configuration,
