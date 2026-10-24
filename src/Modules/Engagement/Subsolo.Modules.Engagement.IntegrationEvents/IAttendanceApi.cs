@@ -12,4 +12,10 @@ public interface IAttendanceApi
 
     /// <summary>Os ids, sem repetição, dos usuários que marcaram "vou" no show <paramref name="showId"/>.</summary>
     Task<IReadOnlyCollection<Guid>> GetAttendeesAsync(Guid showId, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0036 (H32-04) — os ids, sem repetição, de quem marcou "vou" em cada um dos <paramref name="showIds"/>, numa
+    /// leitura só (base do lembrete na véspera).
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>> GetAttendeesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct);
 }

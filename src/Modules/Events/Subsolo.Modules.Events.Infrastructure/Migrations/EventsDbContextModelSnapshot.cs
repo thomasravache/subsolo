@@ -333,6 +333,10 @@ namespace Subsolo.Modules.Events.Infrastructure.Migrations
                     b.HasIndex("OrganizerProfileId")
                         .HasDatabaseName("ix_shows_organizer");
 
+                    b.HasIndex("StartsAtUtc")
+                        .HasDatabaseName("ix_shows_scheduled_starts_at")
+                        .HasFilter("status = 'scheduled'");
+
                     b.HasIndex("City", "Slug")
                         .IsUnique()
                         .HasDatabaseName("IX_shows_city_slug");

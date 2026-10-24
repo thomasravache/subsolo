@@ -7,9 +7,13 @@ import { ShowPage } from "@/components/shows/ShowPage";
 
 /**
  * SPEC-0032 H29-03 (item herdado da revisão da SPEC-0029) — na parte "Ingresso" da página do show, a contagem do "vou"
- * ("{n} vão" / "{n} foram") fica num bloco próprio, separada do texto seguinte pela estrutura, sem o nó de texto solto
- * `{" "}` depois dela: nenhum filho direto da seção é texto só com espaço, e a contagem é o texto inteiro do elemento
- * dela. Show cancelado ("3 vão", sem o botão) e show que já passou ("12 foram").
+ * ("{n} vão" / "{n} foram") fica num bloco próprio, separada do texto seguinte pela estrutura: nenhum filho direto da
+ * seção é texto só com espaço, e a contagem é o texto inteiro do elemento dela. Show cancelado ("3 vão", sem o botão) e
+ * show que já passou ("12 foram").
+ *
+ * SPEC-0036 UT-03 (H32-03) — o espaço que separa a contagem do texto seguinte fica dentro do parágrafo da contagem: em
+ * nenhum bloco da seção "Ingresso" (a seção e todos os elementos dentro dela) há nó de texto só com espaço, e no
+ * parágrafo da contagem "3 vão" vem seguido de espaço.
  */
 function showDetail(status: ShowDetail["status"]): ShowDetail {
   return {
@@ -76,5 +80,35 @@ describe("SPEC-0032:H29-03 contagem do vou num bloco próprio", () => {
     const section = ticketSection();
     expect(looseWhitespace(section)).toHaveLength(0);
     expect(screen.getByText("12 foram").textContent?.trim()).toBe("12 foram");
+  });
+});
+
+/** Os nós de texto só com espaço de `root` e de todos os elementos dentro dele. */
+function whitespaceOnlyTextNodes(root: HTMLElement): Node[] {
+  return [root, ...Array.from(root.querySelectorAll("*"))].flatMap((element) =>
+    looseWhitespace(element as HTMLElement),
+  );
+}
+
+describe("SPEC-0036:UT-03 espaço da contagem dentro do parágrafo", () => {
+  it('SPEC-0036:UT-03 show com 3 "vou": nenhum bloco da seção "Ingresso" tem nó de texto só com espaço e "3 vão" vem seguido de espaço no mesmo parágrafo', () => {
+    render(
+      <ShowPage
+        show={showDetail("cancelled")}
+        url="https://localhost/curitiba/noite-da-peste-ii-2026-10-24"
+        attendingCount={3}
+      />,
+    );
+
+    const section = ticketSection();
+    expect(
+      whitespaceOnlyTextNodes(section).map((node) =>
+        (node.parentElement?.outerHTML ?? "").slice(0, 120),
+      ),
+    ).toEqual([]);
+    const paragraph = screen.getByText("3 vão").closest("p");
+    expect(paragraph, "a contagem não está num parágrafo").not.toBeNull();
+    expect(section.contains(paragraph)).toBe(true);
+    expect(paragraph?.textContent ?? "").toMatch(/3 vão\s/);
   });
 });

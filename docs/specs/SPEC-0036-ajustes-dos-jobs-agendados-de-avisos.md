@@ -4,12 +4,12 @@ title: Ajustes dos jobs agendados de avisos
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0032]
 consumes_contract: []
-touches: [infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, web/src/components/shows/**, e2e/tests/avisos/**]
+touches: [infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, web/src/components/shows/**, web/src/components/engagement/AttendButton.tsx, e2e/tests/avisos/**]
 adrs: [ADR-0010, ADR-0014]
 external: []
 size: S
@@ -38,9 +38,9 @@ Achados menores da revisão G4 da SPEC-0032 (itens `H32-NN`):
 
 ## 3. Mudança Proposta
 - H32-01: renomear o alerta para "Job agendado falhou" (mesmo filtro, `count >= 1` em 1 h, eventos `DailyDigestRunFailed`, `DayBeforeReminderRunFailed`, `NoticesRetentionRunFailed`) e corrigir o runbook (três eventos, sem "uma vez por dia"). "Falha de job" fica para os jobs de alta frequência.
-- H32-02: a API não sobe se `Engagement:DigestCron` não dispara às 09h00 de São Paulo (validação na subida com `CronExpression.IsSatisfiedBy`; "0 * * * * ?" da pilha local continua válido); comentário junto de `CronSetting`.
+- H32-02: a API não sobe se `Engagement:DigestCron` não dispara às 09h00 de São Paulo (validação na subida com `CronExpression.IsSatisfiedBy` às 09h00 de São Paulo do dia corrente pelo relógio da aplicação; "0 * * * * ?" da pilha local continua válido); comentário junto de `CronSetting`.
 - H32-03: o espaço vai para dentro do `<p>` do `Attendance` (sem nó de texto só com espaço no bloco) e o comentário do teste fica exato.
-- H32-04: `IAttendanceApi.GetAttendeesAsync(IReadOnlyCollection<Guid> showIds)` em lote (contrato interno entre módulos, sem rota pública) usado pelo `ReminderSelector`; índice `ix_shows_scheduled_starts_at` em `events.shows(starts_at_utc) where status = 'scheduled'`.
+- H32-04: `IAttendanceApi.GetAttendeesAsync(IReadOnlyCollection<Guid> showIds)` em lote (contrato interno entre módulos, sem rota pública) retornando `Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>>` (show → quem vai, no molde de `GetShowStatesAsync`), usado pelo `ReminderSelector`; índice `ix_shows_scheduled_starts_at` em `events.shows(starts_at_utc) where status = 'scheduled'`.
 - H32-05: a asserção aceita o dia seguinte; o E2E-01 do lembrete espera passar a meia-noite de São Paulo se faltar menos de 3 min.
 - **Não muda:** textos dos avisos, chaves, horários padrão, rotas públicas e OpenAPI. O contador `subsolo.engagement.reminders` continua contando reexecuções (a descrição já diz isso; aceito na revisão).
 
@@ -82,12 +82,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 6e2b15d (árvore suja) | 2026-10-24 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 0eda6fc | 2026-10-24 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — beee36e | 2026-10-24 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 866ms) — beee36e | 2026-10-24 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H36-01..05 — teste do caminho agendado do botão Vou, testes do lote, cron em dias úteis, mensagem de cron inválido, margem da meia-noite no E2E; vão para a SPEC-0038) — 9844ef2 | 2026-10-24 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 08s 455ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 12s 758ms) — 7e11f2f | 2026-10-24 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -127,3 +127,5 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato público) | 2026-10-24 | H32-02: a validação checa as 09h00 de São Paulo do dia corrente (relógio da aplicação). H32-04: o lote retorna `IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>`. | retorno do Test-writer (pontos 1 e 3) | — | piloto automático do Thomas (2026-10-24) |
+| 1 (sem mudança de contrato público) | 2026-10-24 | H32-03: `touches` inclui `web/src/components/engagement/AttendButton.tsx`; com o show agendado a contagem é desenhada pelo botão "Vou", e o espaço depois dela vai para o mesmo nó de texto ali (sem o `" Entrada"` com espaço à esquerda). | retorno do Implementer | — | piloto automático do Thomas (2026-10-24) |

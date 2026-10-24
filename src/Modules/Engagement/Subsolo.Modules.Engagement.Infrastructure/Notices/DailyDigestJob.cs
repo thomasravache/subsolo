@@ -22,10 +22,15 @@ internal sealed partial class DailyDigestJob(IServiceScopeFactory scopes, ILogge
     /// <summary>Identidade do job e do gatilho no Quartz.</summary>
     public const string Name = "Engagement.DailyDigest";
 
-    /// <summary>Chave da configuração com a expressão cron do Quartz.</summary>
+    /// <summary>
+    /// Chave da configuração com a expressão cron do Quartz. SPEC-0036 (H32-02): a expressão tem de disparar às 9h de São
+    /// Paulo (<see cref="Application.Features.DailyDigest.CatchUpDailyDigestCommandHandler.DigestHour"/>, a hora em que a
+    /// recuperação fecha a janela); outra hora impede a subida (<see cref="DigestScheduleOptionsValidator"/>). Expressões
+    /// mais frequentes que também disparam às 9h (a cada minuto, na pilha local) valem.
+    /// </summary>
     public const string CronSetting = "Engagement:DigestCron";
 
-    /// <summary>Às 9h, todo dia.</summary>
+    /// <summary>Às 9h (<see cref="Application.Features.DailyDigest.CatchUpDailyDigestCommandHandler.DigestHour"/>), todo dia.</summary>
     public const string DefaultCron = "0 0 9 * * ?";
 
     /// <summary>SPEC-0032 (H31-01) — identidade do gatilho de recuperação no Quartz.</summary>
@@ -49,7 +54,7 @@ internal sealed partial class DailyDigestJob(IServiceScopeFactory scopes, ILogge
         ArgumentNullException.ThrowIfNull(quartz);
         ArgumentNullException.ThrowIfNull(configuration);
         // Uma expressão inválida faz o Quartz recusar o gatilho na subida (o host não sobe com o resumo quebrado).
-        var cron = configuration[CronSetting] is { Length: > 0 } configured ? configured : DefaultCron;
+        var cron = CronOf(configuration);
         var catchUpCron = configuration[CatchUpCronSetting] is { Length: > 0 } catchUp ? catchUp : DefaultCatchUpCron;
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
         quartz.ScheduleJob<DailyDigestJob>(
@@ -62,6 +67,10 @@ internal sealed partial class DailyDigestJob(IServiceScopeFactory scopes, ILogge
             .WithIdentity(CatchUpName)
             .WithCronSchedule(catchUpCron, schedule => schedule.InTimeZone(timeZone)));
     }
+
+    /// <summary>A expressão de <see cref="CronSetting"/>, ou <see cref="DefaultCron"/> sem ela.</summary>
+    public static string CronOf(IConfiguration configuration) =>
+        configuration[CronSetting] is { Length: > 0 } configured ? configured : DefaultCron;
 
     public async ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken)
     {

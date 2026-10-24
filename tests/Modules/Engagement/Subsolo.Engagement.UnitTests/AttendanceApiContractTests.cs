@@ -10,7 +10,9 @@ namespace Subsolo.Engagement.UnitTests;
 /// CancellationToken)</c> → <c>Task&lt;IReadOnlyDictionary&lt;Guid, int&gt;&gt;</c> e <c>GetAttendeesAsync(Guid,
 /// CancellationToken)</c> → <c>Task&lt;IReadOnlyCollection&lt;Guid&gt;&gt;</c> (só ids e números); e o
 /// <see cref="IEventsCatalog"/> com <c>GetShowStateAsync(Guid, CancellationToken)</c> → <c>Task&lt;ShowState?&gt;</c>,
-/// <see cref="ShowState"/>(Status, StartsAtUtc).
+/// <see cref="ShowState"/>(Status, StartsAtUtc). SPEC-0036 (H32-04): mais a leitura em lote <c>GetAttendeesAsync(
+/// IReadOnlyCollection&lt;Guid&gt;, CancellationToken)</c> → <c>Task&lt;IReadOnlyDictionary&lt;Guid,
+/// IReadOnlyCollection&lt;Guid&gt;&gt;&gt;</c> (contrato interno entre módulos, sem rota pública).
 /// </summary>
 public sealed class AttendanceApiContractTests
 {
@@ -23,7 +25,7 @@ public sealed class AttendanceApiContractTests
         api.IsPublic.ShouldBeTrue();
         api.Namespace.ShouldBe("Subsolo.Modules.Engagement.IntegrationEvents");
         api.Assembly.GetName().Name.ShouldBe("Subsolo.Modules.Engagement.IntegrationEvents");
-        api.GetMethods().Select(method => method.Name).ShouldBe(["CountAsync", "GetAttendeesAsync"], ignoreOrder: true);
+        api.GetMethods().Select(method => method.Name).ShouldBe(["CountAsync", "GetAttendeesAsync", "GetAttendeesAsync"], ignoreOrder: true);
 
         var count = api.GetMethod("CountAsync").ShouldNotBeNull();
         count.GetParameters().Select(parameter => (parameter.Name, parameter.ParameterType)).ShouldBe(
@@ -33,13 +35,17 @@ public sealed class AttendanceApiContractTests
         ]);
         count.ReturnType.ShouldBe(typeof(Task<IReadOnlyDictionary<Guid, int>>));
 
-        var attendees = api.GetMethod("GetAttendeesAsync").ShouldNotBeNull();
+        var attendees = api.GetMethod("GetAttendeesAsync", [typeof(Guid), typeof(CancellationToken)]).ShouldNotBeNull();
         attendees.GetParameters().Select(parameter => (parameter.Name, parameter.ParameterType)).ShouldBe(
         [
             ("showId", typeof(Guid)),
             ("ct", typeof(CancellationToken)),
         ]);
         attendees.ReturnType.ShouldBe(typeof(Task<IReadOnlyCollection<Guid>>));
+
+        var batch = api.GetMethod("GetAttendeesAsync", [typeof(IReadOnlyCollection<Guid>), typeof(CancellationToken)]).ShouldNotBeNull();
+        batch.GetParameters().Select(parameter => parameter.Name).ShouldBe(["showIds", "ct"]);
+        batch.ReturnType.ShouldBe(typeof(Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>>));
     }
 
     [Fact]

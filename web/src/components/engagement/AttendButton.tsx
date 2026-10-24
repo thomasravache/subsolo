@@ -124,7 +124,8 @@ export function AttendButton({
       </button>
       {count !== undefined && (
         <p className="font-label text-sm font-bold uppercase tracking-wider text-text-muted">
-          {goingCount(count)}
+          {/* SPEC-0036 (H32-03): o espaço que separa a contagem do texto seguinte fica no mesmo nó de texto dela. */}
+          {`${goingCount(count)} `}
         </p>
       )}
       <p role="status" className="sr-only">
