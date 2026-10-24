@@ -11,6 +11,13 @@ Sinais (SPEC-0009):
   - o job **inteiro** (`<Módulo>.ProcessOutbox` ou `<Módulo>.ProcessInbox`) termina com exceção — tipicamente o
     PostgreSQL fora do ar (um evento a cada execução, a cada 2 s).
 
+- O mesmo alerta conta também as falhas inteiras dos jobs de avisos (SPEC-0031), que entram na soma de 3 em 10 minutos:
+  - `NoticeDeliveriesRunFailed`: o job `Notifications.ProcessDeliveries` (entregas de avisos, a cada 1 s) falhou
+    inteiro — tipicamente o PostgreSQL fora do ar; as entregas pendentes saem quando ele volta;
+  - `DailyDigestRunFailed`: o job `Engagement.DailyDigest` (resumo diário por e-mail, às 9h de São Paulo,
+    `Engagement:DigestCron`) falhou. Ele roda uma vez por dia, então sozinho dá um evento só: procure-o no Seq mesmo sem
+    o alerta disparar (item 4 de "Confirmar").
+
 Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se perde), mas os efeitos assíncronos
 (avisos, integrações entre módulos) atrasam.
 
@@ -20,6 +27,8 @@ Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se p
    mensagem diz se foi uma mensagem ("Falha ao processar ... (tentativa N)") ou o job inteiro.
 3. Veja os spans `ProcessOutbox <Evento>` (fonte `Subsolo.Messaging`) com status de erro: a tag
    `subsolo.message.id` identifica a mensagem.
+4. Avisos (SPEC-0031): filtre `event.name = 'NoticeDeliveriesRunFailed' or event.name = 'DailyDigestRunFailed'` e
+   abra a exceção. Para as entregas de avisos em si (não o job inteiro), veja `docs/runbooks/avisos-sem-envio.md`.
 
 ## 2. Diagnosticar
 - **PostgreSQL fora do ar** (`entries.postgres` Unhealthy, exceções do Npgsql): é a causa mais comum; trate o banco
@@ -31,8 +40,12 @@ Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se p
 
 ## 3. Agir
 - Reiniciar a API (`docker compose restart api`) depois de corrigir a causa; o job retoma as mensagens pendentes.
+- Resumo diário que falhou (`DailyDigestRunFailed`): corrigida a causa, ele roda de novo na próxima execução do
+  `Engagement:DigestCron` (o dia seguinte). Os shows publicados ficam 7 dias em `engagement.published_shows` e o resumo
+  olha as últimas 24 h; rodar de novo no mesmo dia não duplica e-mail (chave `digest:{data}` por fã).
 - Bug num handler: corrija com uma spec `fix` (teste de regressão primeiro); as mensagens com falha são
   reprocessadas na próxima tentativa (backoff), sem duplicar handlers já executados.
 
 ## 4. Encerrar
-`/health` volta a 200 com `entries.outbox` Healthy e os eventos `OutboxProcessingFailed` param. Registre a causa.
+`/health` volta a 200 com `entries.outbox` Healthy e os eventos `OutboxProcessingFailed` (e `NoticeDeliveriesRunFailed`,
+`DailyDigestRunFailed`) param. Registre a causa.

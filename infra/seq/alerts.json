@@ -16,7 +16,7 @@
     },
     {
       "title": "Falha de job",
-      "filter": "event.name = 'OutboxProcessingFailed'",
+      "filter": "event.name = 'OutboxProcessingFailed' or event.name = 'NoticeDeliveriesRunFailed' or event.name = 'DailyDigestRunFailed'",
       "window": "00:10:00",
       "having": "count >= 3",
       "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
