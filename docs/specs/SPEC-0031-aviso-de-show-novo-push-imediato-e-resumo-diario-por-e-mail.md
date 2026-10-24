@@ -4,7 +4,7 @@ title: Aviso de show novo (push imediato e resumo diário por e-mail)
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023, SPEC-0027, SPEC-0030]
@@ -187,23 +187,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Regras**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0031:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0031:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Consumidor, job e contrato**
-- [ ] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
-- [ ] Green: `GetShowSummaryAsync`, consumidor `NotifyNewShow`, `published_shows`, job `DailyDigest`
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
+- [x] Green: `GetShowSummaryAsync`, consumidor `NotifyNewShow`, `published_shows`, job `DailyDigest`
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Jornada E2E**
-- [ ] Red: E2E-01 falhando pelo motivo certo
-- [ ] Green: cron do resumo configurável na pilha do E2E
+- [x] Red: E2E-01 falhando pelo motivo certo
+- [x] Green: cron do resumo configurável na pilha do E2E
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -216,8 +216,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 5 minor e 3 nits levados à SPEC-0032 §7.6 como H31-01..08; DKIM cobrindo List-Unsubscribe na SPEC-0003) — e72721d | 2026-10-24 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 15m 04s 794ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 940ms) — 40f68bc | 2026-10-24 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-24 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — e3b4582 (árvore suja) | 2026-10-24 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -229,36 +229,69 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Show novo publicado vira push na hora para quem segue a cidade ou um dos perfis do show ("Show novo em {cidade}", com line-up, dia e hora no fuso da cidade e casa), uma vez por fã e só para show futuro ainda `scheduled`.
+- Resumo diário por e-mail às 9h (America/Sao_Paulo, `Engagement:DigestCron`) com os shows novos das últimas 24 h de quem o fã segue, até 20 e "e mais {n} na agenda", para quem ligou o resumo.
+- Itens herdados da SPEC-0030: WNS aceito, retenção de 90 dias, campos obrigatórios no PUT de preferências, descadastro em um clique (RFC 8058), alerta de job parado, status `skipped` e reenvio da inscrição que respeita a escolha do fã.
+- Itens herdados da SPEC-0026: shows do perfil tipados e com `flyerId`, `og:image` do perfil a partir dele e `IFlyerLocks` obrigatório.
+- Alertas "Falha de job" (com `NoticeDeliveriesRunFailed` e `DailyDigestRunFailed`) e "Resumo diário falhou"; contadores `subsolo.engagement.new_show_notices` e `subsolo.engagement.digest_recipients`.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (98f789c, 8040b74, 5695b6f, b90dfe9, cdbeb15, 04ad6c0, eb8c049, 1523b25, 7e290f9; Emenda 3: 9ce7f18, 906c24e, aab0474, 080b13f; defeitos de teste: 0bf6a9f, 54fd92f, 561aae8, 5ea835e, f2eeee9, e72721d) → Implementer (084466f, 2d458ce, 0860438, e33e24e, 2b34c93, 10dbaed, 1dbd129, 0403098, 0d72369) → Reviewer: APPROVED WITH MINOR ITEMS.
+- Slice `NotifyNewShow` (consumidor da inbox de `ShowPublishedIntegrationEvent`), tabela `engagement.published_shows` (migração `20261024034906_PublishedShows`) e job `DailyDigest` no `Engagement`; `IEventsCatalog.GetShowSummaryAsync` no contrato do `Events`; o `Notifications` entrega e não conhece shows (ADR-0014, ADR-0001).
+- `Notice.Url` relativo resolvido contra `App:PublicUrl`; isenção explícita de X-CSRF com motivo no `Common.Presentation` só para o descadastro em um clique.
+- Emendas 1–3 (contrato v3): decisões dos itens herdados e respostas aos SPEC_DEFECTs do G1 e do Implementer. Um G2 FAIL (teste de contrato do perfil sem o `flyerId` aditivo) corrigido no teste.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | aviso `new_show` com título "Show novo em Curitiba", corpo "Cova Rasa + Peste Negra · sáb 14/11 22h00 · Basement" e url `/curitiba/noite-da-peste-ii` | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| UT-02 | resumo por fã só com os shows dele, sem repetir, até 20 e "e mais {n} na agenda"; cancelado, já começado e fã sem show novo ficam de fora | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-01 | 10.000 seguidores da cidade e 300 da banda: uma entrega push por fã com push ativo, em ≤ 5 s do evento | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-02 | o mesmo `ShowPublished` duas vezes na inbox não duplica entregas | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-03 | show com início no passado ou cancelado antes do processamento: nenhuma entrega | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-04 | 10.000 fãs com o resumo: entregas `digest` em ≤ 60 s e `published_shows` com mais de 7 dias apagadas | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-05 | Mailpit real: job duas vezes no dia, um e-mail por fã com os shows, o link da agenda e o descadastro | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-06 | `Engagement` só pelos contratos de `Users`, `Events`, `Profiles` e `Notifications`; `Notifications` sem referência ao `Engagement` | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| IT-07 | banco fora: `DailyDigestRunFailed` no log, no alerta "Falha de job" e no alerta próprio "Resumo diário falhou" | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| CT-01 | `GetShowSummaryAsync` e `ShowSummary` como no §6; OpenAPI muda só pelos ajustes herdados; `pnpm api:check` passa | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| E2E-01 | fã segue Curitiba e liga o resumo; artista publica; o e-mail chega ao Mailpit, o link abre a agenda e o descadastro confirma (mobile-chrome) | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-01 | WNS (`*.notify.windows.com`) aceito; hosts parecidos e `http` recusados | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-02 | job `NoticesRetention` apaga entregas concluídas e avisos sem pendência com mais de 90 dias e registra `NoticesRetentionCompleted` | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-03 | `PUT` de preferências sem um dos quatro campos → 400 `notifications.invalid_preferences`; o painel manda os quatro | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-04 | cabeçalhos `List-Unsubscribe` e `List-Unsubscribe-Post`; `POST …/unsubscribe/one-click` sem X-CSRF desliga o tipo; token adulterado → 400 | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-05 | alerta "Falha de job" inclui `NoticeDeliveriesRunFailed` | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-06 | entrega sem canal do destinatário termina `skipped` com `NoticeDeliverySkipped`, fora do alerta de falha | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H30-07 | reenvio da inscrição não religa `newShowPush` desligado; a primeira inscrição liga | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H26-01 | `ProfileShowsResponse.Shows` e `ListByProfileAsync` tipados como `ProfileShowResponse`, sem `.Cast` | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H26-02 | `IFlyerLocks` obrigatório nos handlers de upload e limpeza de flyer | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
+| H26-03b | `flyerId` nos shows do perfil e `og:image` montada a partir dele | PASS | `gate G2 --run` em e72721d; `gate G5 --run` na integração (b9ab989); CI do PR #44 (run 40072037122, checks verdes em e3b4582) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #44 (run 40072037122)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #44 (https://github.com/thomasravache/subsolo/pull/44), merge commit a6bc474 em 2026-10-24, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0032 §7.6: H31-01 (resumo perdido se a execução das 9h falhar), H31-02 (IT-04 com corpos diferentes), H31-03 (lista permitida de endpoints sem X-CSRF), H31-04 (`NoticesRetentionRunFailed`), H31-05 (contadores contando só o enfileirado), H31-06 (UT do corte de 1.000 caracteres), H31-07 (índice para a retenção), H31-08 (corte da line-up sem partir emoji).
+- SPEC-0003: DKIM do provedor de e-mail cobrindo `List-Unsubscribe` e `List-Unsubscribe-Post`.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0031`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
