@@ -63,12 +63,12 @@ internal static class ModerationRequests
     /// um produtor sem dono e um flyer novo; devolve o que a edição precisa reenviar.
     /// </summary>
     public static async Task<ModerationShow> CreateShowAsync(
-        this ModerationApiClient admin, string title, CancellationToken ct, int days = 10)
+        this ModerationApiClient admin, string title, CancellationToken ct, int days = 10, string city = ModerationApiFactory.City)
     {
         var producer = await admin.CreateApprovedProfileAsync($"Produtora {title}", ct);
         var flyerId = await admin.FlyerAsync(ct);
         var startsLocal = LocalAt(DateTimeOffset.UtcNow, days);
-        using var response = await admin.PostAsync("/api/v1/shows", ShowBody(producer, title, startsLocal, flyerId), ct);
+        using var response = await admin.PostAsync("/api/v1/shows", ShowBody(producer, title, startsLocal, flyerId, city), ct);
         var created = await response.ShouldBeJsonAsync(HttpStatusCode.Created, ct);
         return new ModerationShow(
             created.GetProperty("id").GetGuid(),
@@ -80,12 +80,13 @@ internal static class ModerationRequests
     }
 
     /// <summary>O corpo de cadastro/edição do show (§6 da SPEC-0023).</summary>
-    public static Dictionary<string, object?> ShowBody(Guid organizer, string title, string startsLocal, string flyerId) =>
+    public static Dictionary<string, object?> ShowBody(
+        Guid organizer, string title, string startsLocal, string flyerId, string city = ModerationApiFactory.City) =>
         new(StringComparer.Ordinal)
         {
             ["organizerProfileId"] = organizer,
             ["title"] = title,
-            ["city"] = ModerationApiFactory.City,
+            ["city"] = city,
             ["startsLocal"] = startsLocal,
             ["venue"] = new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = "Porão do Rock" },
             ["lineup"] = new object[] { new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = "Cova Rasa" } },
@@ -111,6 +112,18 @@ internal static class ModerationRequests
             },
             ct);
         return (await response.ShouldBeJsonAsync(HttpStatusCode.Created, ct)).GetProperty("profileId").GetGuid();
+    }
+
+    /// <summary>
+    /// SPEC-0037 — <c>POST /admin/cities</c> (nome, UF e fuso) com 201; devolve o slug gerado (copiado do
+    /// <c>ShowsApi</c> do Events).
+    /// </summary>
+    public static async Task<string> CreateCityAsync(
+        this ModerationApiClient admin, string name, string state, string timeZone, CancellationToken ct)
+    {
+        using var response = await admin.PostAsync(
+            "/api/v1/admin/cities", new { name, state, timeZone, slug = (string?)null }, ct);
+        return (await response.ShouldBeJsonAsync(HttpStatusCode.Created, ct)).GetProperty("slug").GetString().ShouldNotBeNull();
     }
 
     /// <summary>Um flyer JPEG 300×400 enviado (<c>POST /api/v1/flyers</c>, 201 ou 200); devolve o id.</summary>

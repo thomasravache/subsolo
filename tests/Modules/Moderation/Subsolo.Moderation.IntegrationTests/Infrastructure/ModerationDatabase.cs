@@ -168,6 +168,29 @@ internal static class ModerationDatabase
     }
 
     /// <summary>
+    /// SPEC-0037 (H33-05) — grava direto em <c>moderation.reports</c> uma denúncia <c>pending</c> do show, como a que foi
+    /// aceita entre a decisão de ocultar e o consumidor do Events; devolve o id.
+    /// </summary>
+    public static async Task<Guid> InsertPendingReportAsync(
+        string connectionString, Guid showId, Guid reporterUserId, string reason, CancellationToken ct)
+    {
+        var id = Guid.CreateVersion7();
+        await using var connection = await OpenAsync(connectionString, ct);
+        await using var command = new NpgsqlCommand(
+            """
+            insert into moderation.reports (id, show_id, reporter_user_id, reason, details, status, created_at_utc)
+            values (@id, @show, @reporter, @reason, null, 'pending', now())
+            """,
+            connection);
+        command.Parameters.AddWithValue("id", id);
+        command.Parameters.AddWithValue("show", showId);
+        command.Parameters.AddWithValue("reporter", reporterUserId);
+        command.Parameters.AddWithValue("reason", reason);
+        (await command.ExecuteNonQueryAsync(ct)).ShouldBe(1, "a denúncia tardia não foi gravada");
+        return id;
+    }
+
+    /// <summary>
     /// Copia <paramref name="copies"/> vezes o show <paramref name="templateId"/> em <c>events.shows</c> (id novo e slug com
     /// sufixo; o resto igual); devolve os ids das cópias (copiado do <c>ReminderRequests</c> da SPEC-0032).
     /// </summary>
