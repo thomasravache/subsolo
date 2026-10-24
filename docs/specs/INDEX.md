@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 18 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 1, in-progress 1, implemented 30
+- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 2, in-progress 1, implemented 30
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -51,13 +51,14 @@ Perfil: **padrao**
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0032 | Lembrete na véspera | full/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0032 |
+| 3 | SPEC-0036 | Ajustes dos jobs agendados de avisos | lite/S | approved | ⛔ aguarda implementação de SPEC-0032 | saiu da onda 2: arquivos em comum com SPEC-0033 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 20/22 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 20/23 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -75,6 +76,7 @@ flowchart LR
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::implemented
     S0032["SPEC-0032<br/>Lembrete na véspera"]:::inprogress
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
+    S0036["SPEC-0036<br/>Ajustes dos jobs agendados de avisos"]:::approved
   end
   S0019 --> S0021
   S0019 --> S0030
@@ -86,6 +88,7 @@ flowchart LR
   S0021 --> S0033
   S0024 --> S0033
   S0031 --> S0033
+  S0032 --> S0036
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -132,6 +135,7 @@ flowchart LR
 | [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
 | [SPEC-0034](SPEC-0034-atualizar-o-next-js-para-corrigir-avisos-de-seguranca.md) | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
 | [SPEC-0035](SPEC-0035-ci-no-runner-ubuntu-26-04-runner-fixo-cache-do-playwright-po.md) | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
+| [SPEC-0036](SPEC-0036-ajustes-dos-jobs-agendados-de-avisos.md) | Ajustes dos jobs agendados de avisos | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0032 | — |
 
 ## ADRs
 

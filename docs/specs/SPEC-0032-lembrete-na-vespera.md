@@ -158,7 +158,7 @@ Pilha local (E2E-01): tools/compose-up.sh e o AppHost passam Engagement__Reminde
 
 ## 8. Plano de Rollout
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003).
-- **Dados/schema:** nenhuma tabela nova (as entregas ficam no `notifications`).
+- **Dados/schema:** tabela `engagement.digest_runs` (Emenda 2) e índice `ix_deliveries_created_at_utc` no `notifications`; as entregas do lembrete ficam no `notifications`.
 - **Compatibilidade:** `IEventsCatalog` ganha um método.
 - **Observabilidade:** contador `subsolo.engagement.reminders`; falha do job vira alerta no Seq (ADR-0010).
 - **Rollback:** reverter o merge commit.
@@ -202,7 +202,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — bc5add1 | 2026-10-24 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 44af482 | 2026-10-24 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 570ms) — 44af482 | 2026-10-24 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 2 minor e 5 nits; H32-01..05 levados à SPEC-0036; §8 corrigido na Emenda 3) — bb4155d | 2026-10-24 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
@@ -255,3 +255,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | 1 (sem mudança de contrato) | 2026-10-24 | `touches` e §7.6 ganham os itens H31-01..08 herdados da revisão G4 da SPEC-0031 (Notifications, Common.Presentation/Security, alertas do Seq, runbooks e testes correspondentes). | revisão G4 da SPEC-0031 | — | piloto automático do Thomas (2026-10-24) |
 | 2 | 2026-10-24 | Decisões concretas dos itens herdados: `IEventsCatalog.GetShowStatesAsync` (H29-01); resumo com recuperação por `engagement.digest_runs` e gatilho `Engagement:DigestCatchUpCron` a cada 15 min (H31-01); descrição dos contadores (H31-05); `NoticesRetentionRunFailed` (H31-04); índice da retenção (H31-07); lista permitida de isenção de CSRF (H31-03); cron e hora do lembrete na pilha local; `touches` ganha `tools/compose-up.sh` e `web/src/components/notifications/**`. | despacho do Test-writer: itens herdados sem decisão concreta | SPEC-0031 (implementada; nenhum consumidor externo) | piloto automático do Thomas (2026-10-24) |
 | 3 | 2026-10-24 | Retorno do Test-writer: novo IT-04 (`DayBeforeReminderRunFailed` e alerta "Falha de job"); nomes `Engagement.DayBeforeReminder` e `ReminderSelector.SelectAsync`; recuperação do resumo observável por config e `digest_runs`; corte da line-up em ≤ 200 unidades UTF-16; texto do H31-02 sem ID solto; `touches` ganha `ProfilesHarness.cs` (implementa `IEventsCatalog`). | SD-1..SD-5 do Test-writer | — | piloto automático do Thomas (2026-10-24) |
+| 3 (sem mudança de contrato) | 2026-10-24 | §8 passa a citar a tabela `engagement.digest_runs` e o índice da retenção; achados menores da revisão G4 (H32-01..05) vão para a SPEC-0036. | revisão G4 | SPEC-0036 | piloto automático do Thomas (2026-10-24) |
