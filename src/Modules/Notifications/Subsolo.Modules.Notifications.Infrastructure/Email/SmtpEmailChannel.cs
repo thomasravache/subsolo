@@ -83,6 +83,11 @@ internal sealed partial class SmtpEmailChannel(IOptions<SmtpOptions> options, IL
         message.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
         message.To.Add(MailboxAddress.Parse(email.Recipient));
         message.Subject = email.Subject;
+        foreach (var (name, value) in email.Headers)
+        {
+            message.Headers.Add(name, value);
+        }
+
         message.Body = new BodyBuilder { HtmlBody = email.HtmlBody, TextBody = email.TextBody }.ToMessageBody();
         return message;
     }

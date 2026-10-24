@@ -22,7 +22,10 @@ namespace Subsolo.Modules.Notifications.Infrastructure.Deliveries;
 /// daquele tipo; SMTP fora do ar → nova tentativa.</item>
 /// </list>
 /// Depois de <see cref="MaxAttempts"/> tentativas a entrega desiste (<c>failed</c>, com o evento
-/// <c>NoticeDeliveryFailed</c>, base do alerta "Falha no envio de aviso"). Uma entrega aceita nunca é enviada de novo
+/// <c>NoticeDeliveryFailed</c>, base do alerta "Falha no envio de aviso"). SPEC-0031 (H30-06): a entrega cujo destinatário
+/// não tem mais o canal (sem aparelho inscrito, usuário excluído, sem e-mail) termina como <c>skipped</c>, com o evento
+/// <c>NoticeDeliverySkipped</c>, fora do alerta. SPEC-0031: o e-mail resolve a URL do aviso (caminho do site, "/…")
+/// contra <c>App:PublicUrl</c> e leva os cabeçalhos de descadastro em um clique (RFC 8058). Uma entrega aceita nunca é enviada de novo
 /// (§5, IT-08): uma exceção inesperada num envio vira nova tentativa só daquela entrega, e o estado do que já foi
 /// tentado é gravado numa transação depois dos envios — também quando o lote é cancelado (interrupção do job).
 /// </summary>
@@ -86,9 +89,17 @@ internal sealed partial class DeliverySender(
             {
                 var now = clock.GetUtcNow();
                 await SaveAsync(connection, finished, now, CancellationToken.None);
-                foreach (var outcome in finished.Where(outcome => FinalStatus(outcome) == DeliveryStatuses.Failed))
+                foreach (var outcome in finished)
                 {
-                    LogDeliveryFailed(logger, outcome.Delivery.Id, outcome.Delivery.Channel, outcome.Delivery.Kind, outcome.Delivery.Attempts + 1);
+                    var status = FinalStatus(outcome);
+                    if (status == DeliveryStatuses.Failed)
+                    {
+                        LogDeliveryFailed(logger, outcome.Delivery.Id, outcome.Delivery.Channel, outcome.Delivery.Kind, outcome.Delivery.Attempts + 1);
+                    }
+                    else if (status == DeliveryStatuses.Skipped)
+                    {
+                        LogDeliverySkipped(logger, outcome.Delivery.Id, outcome.Delivery.Channel, outcome.Delivery.Kind);
+                    }
                 }
             }
         }
@@ -133,8 +144,9 @@ internal sealed partial class DeliverySender(
             : devices;
         if (targets.Count == 0)
         {
-            NotificationsTelemetry.Delivered(DeliveryChannels.Push, DeliveryStatuses.Failed);
-            return Outcome.Done(delivery, DeliveryStatuses.Failed);
+            // Nenhum aparelho inscrito (ou nenhum dos que faltavam): o destinatário não tem mais o canal (H30-06).
+            NotificationsTelemetry.Delivered(DeliveryChannels.Push, DeliveryStatuses.Skipped);
+            return Outcome.Done(delivery, DeliveryStatuses.Skipped);
         }
 
         var payload = PushPayload.Serialize(delivery.Title, delivery.Body, delivery.Url);
@@ -188,10 +200,17 @@ internal sealed partial class DeliverySender(
 
     private async Task<Outcome> SendEmailAsync(Due delivery, string? email, CancellationToken ct)
     {
-        var token = tokens.Create(delivery.UserId, delivery.Kind);
-        if (email is null || token is null || !NoticeKinds.HasEmail(delivery.Kind))
+        if (email is null)
         {
-            // Usuário excluído, sem chave de descadastro configurada ou tipo sem e-mail: não há como enviar.
+            // Usuário excluído ou sem e-mail: o destinatário não tem mais o canal (H30-06).
+            NotificationsTelemetry.Delivered(DeliveryChannels.Email, DeliveryStatuses.Skipped);
+            return Outcome.Done(delivery, DeliveryStatuses.Skipped);
+        }
+
+        var token = tokens.Create(delivery.UserId, delivery.Kind);
+        if (token is null || !NoticeKinds.HasEmail(delivery.Kind))
+        {
+            // Sem chave de descadastro configurada ou tipo sem e-mail: não há como enviar.
             if (token is null)
             {
                 LogNoUnsubscribeKey(logger);
@@ -202,9 +221,14 @@ internal sealed partial class DeliverySender(
         }
 
         var content = NoticeEmailTemplate.Render(
-            delivery.Kind, delivery.Title, delivery.Body, delivery.Url, links.Value.UnsubscribeLink(token));
+            delivery.Kind, delivery.Title, delivery.Body, links.Value.Absolute(delivery.Url), links.Value.UnsubscribeLink(token));
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [OneClickUnsubscribe.ListUnsubscribeHeader] = $"<{links.Value.OneClickUnsubscribeLink(token)}>",
+            [OneClickUnsubscribe.ListUnsubscribePostHeader] = OneClickUnsubscribe.ListUnsubscribePostValue,
+        };
         var result = await _email.SendAsync(
-            new EmailNotification(email, content.Subject, content.HtmlBody, content.TextBody), ct);
+            new EmailNotification(email, content.Subject, content.HtmlBody, content.TextBody) { Headers = headers }, ct);
         NotificationsTelemetry.Delivered(DeliveryChannels.Email, result.IsSuccess ? DeliveryStatuses.Sent : "retry");
         return result.IsSuccess ? Outcome.Done(delivery, DeliveryStatuses.Sent) : Outcome.Retry(delivery, null);
     }
@@ -277,7 +301,10 @@ internal sealed partial class DeliverySender(
         return devices.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<Device>)pair.Value);
     }
 
-    /// <summary>O estado gravado da entrega: o do envio ou, esgotadas as tentativas, <c>sent</c> | <c>failed</c>.</summary>
+    /// <summary>
+    /// O estado gravado da entrega: o do envio (<c>sent</c> | <c>failed</c> | <c>skipped</c> | <c>pending</c>) ou,
+    /// esgotadas as tentativas, <c>sent</c> | <c>failed</c>.
+    /// </summary>
     private static string FinalStatus(Outcome outcome)
     {
         var givingUp = outcome.Status == DeliveryStatuses.Pending && outcome.Delivery.Attempts + 1 >= MaxAttempts;
@@ -353,6 +380,13 @@ internal sealed partial class DeliverySender(
         Message = "Aviso não entregue: entrega {DeliveryId} ({Channel}, {Kind}) terminou como falha após {Attempts} tentativa(s)")]
     private static partial void LogDeliveryFailed(ILogger logger, long deliveryId, string channel, string kind, int attempts);
 
+    /// <summary>SPEC-0031 (H30-06) — uma entrega sem o canal do destinatário; fora do alerta "Falha no envio de aviso".</summary>
+    [LoggerMessage(
+        EventName = "NoticeDeliverySkipped",
+        Level = LogLevel.Information,
+        Message = "Aviso não entregue: entrega {DeliveryId} ({Channel}, {Kind}) pulada porque o destinatário não tem mais o canal")]
+    private static partial void LogDeliverySkipped(ILogger logger, long deliveryId, string channel, string kind);
+
     [LoggerMessage(
         EventName = "NoticeSendError",
         Level = LogLevel.Error,
@@ -375,7 +409,7 @@ internal sealed partial class DeliverySender(
     private sealed record Device(string Endpoint, string P256dh, string Auth);
 
     /// <summary>
-    /// O resultado de uma entrega no lote: concluída (<c>sent</c> | <c>failed</c>) ou pendente para nova tentativa
+    /// O resultado de uma entrega no lote: concluída (<c>sent</c> | <c>failed</c> | <c>skipped</c>) ou pendente para nova tentativa
     /// (<see cref="RetryEndpoints"/>: os aparelhos que faltaram; <see langword="null"/> no e-mail), com os aparelhos que
     /// aceitaram e os que morreram (404/410).
     /// </summary>

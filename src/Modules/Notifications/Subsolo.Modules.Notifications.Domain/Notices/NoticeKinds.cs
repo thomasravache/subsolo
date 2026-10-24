@@ -27,7 +27,10 @@ public static class DeliveryChannels
     public const string Email = "email";
 }
 
-/// <summary>SPEC-0030 — situação de uma entrega: na fila (com novas tentativas), entregue ou desistida.</summary>
+/// <summary>
+/// SPEC-0030 — situação de uma entrega: na fila (com novas tentativas), entregue ou desistida. SPEC-0031 (H30-06): ou
+/// pulada (<see cref="Skipped"/>), quando o destinatário não tem mais o canal.
+/// </summary>
 public static class DeliveryStatuses
 {
     public const string Pending = "pending";
@@ -35,4 +38,7 @@ public static class DeliveryStatuses
     public const string Sent = "sent";
 
     public const string Failed = "failed";
+
+    /// <summary>SPEC-0031 (H30-06) — sem o canal do destinatário: sem aparelho inscrito, usuário excluído ou sem e-mail.</summary>
+    public const string Skipped = "skipped";
 }
