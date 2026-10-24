@@ -11,6 +11,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
+using Subsolo.Modules.Notifications.Infrastructure.WebPush;
 
 namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 
@@ -25,7 +26,9 @@ namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 /// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
 /// <item>logs e spans exportados em memória (<see cref="Logs"/>, <see cref="Spans"/>);</item>
 /// <item>SPEC-0029 — <c>Media:Root</c> num diretório temporário só deste host (<see cref="MediaRoot"/>, apagado no fim),
-/// para o admin enviar o flyer dos shows de teste.</item>
+/// para o admin enviar o flyer dos shows de teste;</item>
+/// <item>SPEC-0031 — o <c>HttpClient</c> do Web Push (<see cref="WebPushOptions.HttpClientName"/>) com um servidor de
+/// push falso que aceita tudo (201): nenhum aviso sai para FCM, Mozilla ou Apple.</item>
 /// </list>
 /// </summary>
 internal sealed class EngagementApiFactory(
@@ -159,6 +162,7 @@ internal sealed class EngagementApiFactory(
         builder.ConfigureTestServices(services =>
         {
             services.AddEndpoints(typeof(EngagementApiFactory).Assembly);
+            services.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new AcceptingPushService());
             services.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
             services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddInMemoryExporter(_spans));
             if (clock is not null)
@@ -167,4 +171,11 @@ internal sealed class EngagementApiFactory(
             }
         });
     }
+}
+
+/// <summary>SPEC-0031 — servidor de push falso: aceita (201) toda mensagem, sem sair da máquina.</summary>
+internal sealed class AcceptingPushService : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.Created) { RequestMessage = request });
 }
