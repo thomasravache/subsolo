@@ -16,7 +16,7 @@
     },
     {
       "title": "Falha de job",
-      "filter": "event.name = 'OutboxProcessingFailed' or event.name = 'NoticeDeliveriesRunFailed' or event.name = 'DailyDigestRunFailed'",
+      "filter": "event.name = 'OutboxProcessingFailed' or event.name = 'NoticeDeliveriesRunFailed' or event.name = 'DailyDigestRunFailed' or event.name = 'NoticesRetentionRunFailed' or event.name = 'DayBeforeReminderRunFailed'",
       "window": "00:10:00",
       "having": "count >= 3",
       "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
@@ -37,7 +37,7 @@
     },
     {
       "title": "Resumo diário falhou",
-      "filter": "event.name = 'DailyDigestRunFailed'",
+      "filter": "event.name = 'DailyDigestRunFailed' or event.name = 'NoticesRetentionRunFailed' or event.name = 'DayBeforeReminderRunFailed'",
       "window": "01:00:00",
       "having": "count >= 1",
       "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"

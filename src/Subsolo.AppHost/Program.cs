@@ -110,7 +110,8 @@ if (!builder.ExecutionContext.IsPublishMode)
 // (SPEC-0003). H28-05 (herança da revisão da SPEC-0028) — o web recebe a chave Pix, o recebedor e o e-mail de contato
 // de desenvolvimento, como o tools/compose-up.sh faz na pilha do Compose; só do servidor (sem NEXT_PUBLIC_). SPEC-0031 —
 // o resumo diário por e-mail roda a cada minuto no `aspire run` (Engagement__DigestCron), como na pilha do E2E; o padrão
-// da API (às 9h de São Paulo) e o Compose publicado não mudam.
+// da API (às 9h de São Paulo) e o Compose publicado não mudam. SPEC-0032 — o lembrete na véspera também roda a cada minuto,
+// desde a meia-noite da cidade (Engagement__ReminderCron e Engagement__ReminderHour = 0), como na pilha do E2E.
 if (!builder.ExecutionContext.IsPublishMode)
 {
     using var vapid = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -125,7 +126,9 @@ if (!builder.ExecutionContext.IsPublishMode)
         .WithEnvironment("Notifications__WebPush__PrivateKey", vapidPrivateKey)
         .WithEnvironment("Notifications__WebPush__Subject", "mailto:nao-responda@subsolo.local")
         .WithEnvironment("Notifications__Unsubscribe__SigningKey", unsubscribeKey)
-        .WithEnvironment("Engagement__DigestCron", "0 * * * * ?");
+        .WithEnvironment("Engagement__DigestCron", "0 * * * * ?")
+        .WithEnvironment("Engagement__ReminderCron", "0 * * * * ?")
+        .WithEnvironment("Engagement__ReminderHour", "0");
     web.WithEnvironment("Support__PixKey", "chave-dev@subsolo.local")
         .WithEnvironment("Support__PixName", "Subsolo")
         .WithEnvironment("Support__PixCity", "Curitiba")
