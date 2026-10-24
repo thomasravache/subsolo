@@ -6,6 +6,7 @@ using Subsolo.Common.Presentation;
 using Subsolo.Modules.Engagement.Application;
 using Subsolo.Modules.Engagement.Application.Diagnostics;
 using Subsolo.Modules.Engagement.Application.Features.DailyDigest;
+using Subsolo.Modules.Engagement.Application.Features.DayBeforeReminder;
 using Subsolo.Modules.Engagement.Application.Features.GetAttendees;
 using Subsolo.Modules.Engagement.Application.Features.GetFollowers;
 using Subsolo.Modules.Engagement.Domain.Attendances;
@@ -25,7 +26,7 @@ public static class EngagementModule
     /// <summary>
     /// Nome do <c>Meter</c> do módulo (<c>subsolo.engagement.follows</c>, <c>subsolo.engagement.unfollows</c>,
     /// <c>subsolo.engagement.attendances</c>; SPEC-0031: <c>subsolo.engagement.new_show_notices</c> e
-    /// <c>subsolo.engagement.digest_recipients</c>).
+    /// <c>subsolo.engagement.digest_recipients</c>; SPEC-0032: <c>subsolo.engagement.reminders</c>).
     /// </summary>
     public const string MeterName = EngagementTelemetry.MeterName;
 
@@ -37,7 +38,8 @@ public static class EngagementModule
     /// (<see cref="IPublishedShows"/>), o montador do resumo e o job <see cref="DailyDigestJob"/>
     /// (<c>Engagement:DigestCron</c>); o consumidor do <c>ShowPublished</c> entra pela varredura do <c>AddModule</c>.
     /// SPEC-0032: os dias com resumo concluído (<see cref="IDigestRuns"/>, base da recuperação
-    /// <c>Engagement:DigestCatchUpCron</c>).
+    /// <c>Engagement:DigestCatchUpCron</c>), o seletor do lembrete e o job <see cref="DayBeforeReminderJob"/>
+    /// (<c>Engagement:ReminderCron</c> e <c>Engagement:ReminderHour</c>).
     /// </summary>
     public static IServiceCollection AddEngagementModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -56,13 +58,18 @@ public static class EngagementModule
         services.AddScoped<IPublishedShows, PublishedShows>();
         services.AddScoped<DigestBuilder>();
         services.AddScoped<IDigestRuns, DigestRuns>();
+        services.AddScoped<ReminderSelector>();
 
         services.AddModule<EngagementDbContext>(
             configuration,
             typeof(EngagementModule).Assembly,
             typeof(EngagementErrors).Assembly,
             typeof(Follow).Assembly);
-        services.ConfigureAllQuartzSchedulers(quartz => DailyDigestJob.Schedule(quartz, configuration));
+        services.ConfigureAllQuartzSchedulers(quartz =>
+        {
+            DailyDigestJob.Schedule(quartz, configuration);
+            DayBeforeReminderJob.Schedule(quartz, configuration);
+        });
         return services.AddEndpoints(AssemblyReference.Assembly);
     }
 }
