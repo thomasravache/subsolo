@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Avisos por push e e-mail (SPEC-0030): ativar push no aparelho em `/seguindo` (Web Push com VAPID, manifest e service worker), preferências de show novo, resumo diário e lembrete por canal, entregas com novas tentativas e sem duplicar, e-mail de aviso com descadastro assinado, dados de avisos no export e na exclusão de conta, alerta "Falha no envio de aviso" com runbook.
 - Vou com contagem (SPEC-0029): botão "Vou" na página do show e contagem "X vão" nos cards da agenda e do perfil, sem revelar quem vai; "vou" na exportação de dados e apagado ao excluir a conta; botão de seguir com nome acessível constante e link "Seguindo" no cabeçalho do desktop.
 - Apoie, privacidade e termos (SPEC-0028): página `/apoie` com QR code e chave Pix (configurados só no servidor) e lista de apoiadores mantida pelo admin em `/admin/apoiadores`; páginas `/privacidade` e `/termos` com índice e canal do titular; runbook de incidente com dados pessoais.
 - Seguir cidade, banda e casa (SPEC-0027): botão "Seguir" na agenda da cidade e nos perfis, contagem pública de seguidores, aba "Seguindo" na navegação inferior; follows na exportação de dados e removidos ao apagar a conta.
@@ -34,6 +35,10 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- CI no runner fixo `ubuntu-24.04` (SPEC-0035): o `ubuntu-latest` passou para o Ubuntu 26.04 e quebrou o WebKit em cache do Playwright; a chave do cache dos navegadores agora leva a imagem do runner, e o cache das imagens Docker dos testes ignora imagens que já sumiram sem reprovar o job.
 - Título da página na navegação no cliente (SPEC-0015): metadados entregues de forma bloqueante para todo navegador (`htmlLimitedBots`).
 - Ajustes do harness e do CI (SPEC-0013): `coverage.sh` compatível com bash 3.2 e checando a base no início, servidor estático do E2E resistente a URL malformada, lint do TypeScript de `e2e/`, concorrência e cache do pnpm por lockfile no CI, `OccurredOnUtc` pelo `TimeProvider`, regra `OnlyReferences` alinhada ao ADR-0001 e guardas de CODEOWNERS, Aspire CLI e testes de contrato de comandos.
 - Ajustes do tooling (SPEC-0012): `.env.example` versionável, `.claude/` ignorado e testes dos hooks cobrindo `[no-spec]` e chave Google API.
+
+### Security
+- Next.js 16.4.2 (SPEC-0034): corrige GHSA-2464-fhr4-w9xw e GHSA-673q-mjm6-r5xr (críticos, execução remota de código) e GHSA-p3m5-59mp-jv5r (alto, negação de serviço).

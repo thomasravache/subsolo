@@ -4,7 +4,7 @@ title: Inscrição de push, preferências de aviso e canal de e-mail
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0027]
@@ -192,23 +192,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Regras**
-- [ ] Red: UT-01..UT-03 com a tag `SPEC-0030:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01..UT-03 com a tag `SPEC-0030:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Módulo, canal e contrato**
-- [ ] Red: IT-01..IT-07, CT-01 falhando pelo motivo certo
-- [ ] Green: inscrições, preferências, entregas, canal WebPush (dependência nova pelo ADR-0009), `IRecipientDirectory` no `Users`, descadastro, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-07, CT-01 falhando pelo motivo certo
+- [x] Green: inscrições, preferências, entregas, canal WebPush (dependência nova pelo ADR-0009), `IRecipientDirectory` no `Users`, descadastro, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: PWA, tela e jornada E2E**
-- [ ] Red: E2E-01, E2E-02 falhando pelo motivo certo
-- [ ] Green: manifest, service worker, tela "Avisos", página de descadastro
+- [x] Red: E2E-01, E2E-02 falhando pelo motivo certo
+- [x] Green: manifest, service worker, tela "Avisos", página de descadastro
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -221,8 +221,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (re-revisão após a Emenda 3: o major do alerta resolvido em e48efca; achados 2, 3, 6 e 7 resolvidos; 0 bloqueadores/majors; aviso dos lockfiles de ab7a0d8 aceito como regeneração; H30-01..07 levados à SPEC-0031 §7.6; chave de descadastro na lista da SPEC-0003) — 0b6633e | 2026-10-23 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 24s 928ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 436ms) — 63fa1eb | 2026-10-23 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-23 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-23 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — e62b292 (árvore suja) | 2026-10-23 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -235,36 +235,68 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Parte "Avisos" em `/seguindo`: botão "Ativar avisos", aviso de bloqueio ou de navegador sem suporte, orientação para o iPhone e quatro interruptores (show novo por push, resumo diário por e-mail, lembrete por push e por e-mail).
+- Inscrição de push com Web Push (VAPID) direto, sem serviço pago: manifest, service worker `/sw.js`, `GET /api/v1/push/public-key`, `POST`/`DELETE /api/v1/me/push-subscriptions` e preferências em `GET`/`PUT /api/v1/me/notification-preferences`.
+- Fila de entregas por canal (`EnqueueAsync`), enviada por um job a cada segundo, com novas tentativas (2 a 32 s, até 6), remoção de inscrição morta (404/410) e nenhum aviso enviado duas vezes.
+- Canal de e-mail com link de descadastro assinado (HMAC) e página `/avisos/descadastro`.
+- Export e exclusão de conta cobrem os dados de avisos (sem chaves de criptografia); contadores `subsolo.notifications.deliveries` e `subsolo.notifications.subscriptions_removed`; alerta "Falha no envio de aviso" com o runbook `docs/runbooks/avisos-sem-envio.md`.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (scaffold 60b688c, 07c7801; testes b6e7f27, 6e396f0, 2f31d56, 93c4c2e, c7fd28e, 3bf782f, 80803a5, dab9280, 615f197, 0145e1a, efd38cc; Emenda 3: 55fa928, cdda312, 0b41fcd, 42a5b9b, 5d469b0, 5bfdbf8) → Implementer (8589265, ab7a0d8, 0302d83, cf2c1ed, 4ca09a3, cefa08d, f0cea59, 292f602; Emenda 3: 92ce877, e48efca, 90eb664, bd67e4e) → Reviewer: CHANGES REQUESTED (alerta ausente) e, depois da Emenda 3, APPROVED WITH MINOR ITEMS.
+- Módulo `Notifications` com tabelas `subscriptions`, `preferences`, `notices` e `deliveries`; `Lib.Net.Http.WebPush` 3.3.1 (MIT, versão fixa pelo ADR-0009); `IRecipientDirectory` no contrato, implementado pelo `Users`; SSRF evitado com lista de hosts exatos.
+- Chaves VAPID e de descadastro de desenvolvimento geradas pelo AppHost e pelo `tools/compose-up.sh`; nenhum segredo no repositório nem variável exposta ao navegador; CSP ganha `worker-src 'self'`.
+- Emendas sem mudança de contrato: escopo do helper comum, textos e formato do token, e a Emenda 3 da revisão (alerta por contagem, lote resiliente, payload sem escapes, painel sincronizado). IMP-01 (três falhas do G2: Next.js 16.4.0 e o teste de arquitetura no build Release) resolvido.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | só endpoints `https` do FCM, Mozilla e Apple com chaves passam no validador de inscrição | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| UT-02 | o planejador cria entregas só nos canais permitidos por usuário e ignora chaves já entregues | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| UT-03 | painel "Avisos" com permissão `default`, `granted`, `denied`, sem suporte e iPhone fora da tela inicial; permissão pedida só depois do toque | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| UT-04 | payload `{title, body, url}` sem escapes de letras acentuadas; título de 120 e corpo de 1.000 caracteres cabem em 4.096 bytes cifrados | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| UT-05 | painel registra de novo a inscrição do navegador ao abrir, mostra o bloqueio ao abrir sem o botão e "Ativando…" com o botão desabilitado | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-01 | inscrição válida duas vezes → 204 e um registro; inválida → 400 `notifications.invalid_subscription`; `DELETE` remove | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-02 | preferências padrão (e-mail desligado, push de show novo ligado na primeira inscrição) e alterações salvas | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-03 | 10.000 destinatários com a mesma `DedupeKey` duas vezes: entregas criadas uma vez só, em ≤ 2 s | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-04 | 1.000 entregas push com aes128gcm e `Authorization: vapid` válidos em ≤ 60 s; 410 remove a inscrição; 500 tenta de novo | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-05 | e-mail de aviso no Mailpit com link de descadastro; o token desliga aquele tipo; token adulterado → 400 `notifications.invalid_token` | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-06 | export com a seção "notifications" sem chaves de criptografia; exclusão apaga inscrições, preferências e entregas | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-07 | `Notifications` sem dependência de módulo de domínio, biblioteca de push só nele, `IRecipientDirectory` no contrato dele e implementado pelo `Users` | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-08 | exceção inesperada numa entrega ou cancelamento do lote: só ela fica pendente, as outras ficam `sent` e nada sai duas vezes | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| IT-09 | alerta "Falha no envio de aviso" no Seq (`NoticeDeliveryFailed`, 1 h, `count > 20`) com runbook existente | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| CT-01 | OpenAPI e interfaces públicas como no §6; `pnpm api:check` passa | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| E2E-01 | fã ativa os avisos, vê "Avisos ativos neste aparelho", liga o resumo diário por e-mail e a escolha continua depois de recarregar; manifest e service worker; axe sem violações (mobile-chrome) | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| E2E-02 | permissão negada mostra "Os avisos estão bloqueados no navegador."; link de descadastro válido confirma (mobile-chrome) | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| H28-05 | o AppHost passa as variáveis do Apoie e o e-mail de contato ao web, só no servidor | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| H28-06 | `EndpointValidation` em `Common.Presentation`, usado pelo endpoint de inscrição (teste lê o uso pelos metadados, igual em Debug e Release) | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
+| H26-09 | `PersonalDataSectionNamesTests` espera o host ficar pronto antes de afirmar o 200 | PASS | `gate G2 --run` em 6ff18c1 (cobertura de 97% das linhas alteradas); `gate G5 --run` na integração (63fa1eb); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #42 (run 40051799815)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #42 (https://github.com/thomasravache/subsolo/pull/42), merge commit 3e4d99f em 2026-10-23, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0031 §7.6: H30-01 (WNS do Edge no Windows), H30-02 (retenção de entregas e avisos), H30-03 (campos obrigatórios no PUT de preferências), H30-04 (`List-Unsubscribe-Post`), H30-05 (alerta para o job inteiro parado), H30-06 (evento próprio para "sem canal do destinatário"), H30-07 (reenvio da inscrição não religa o push de show novo).
+- SPEC-0003: chaves VAPID e chave de assinatura do descadastro de produção como segredos do environment.
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0030`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
