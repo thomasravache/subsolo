@@ -30,7 +30,9 @@ public interface INotificationsApi
 
 /// <summary>
 /// SPEC-0030 — um aviso: <see cref="Kind"/> (<c>new_show</c> | <c>reminder</c> | <c>digest</c>), a chave de idempotência
-/// <see cref="DedupeKey"/>, o título, o corpo e a URL que a notificação abre.
+/// <see cref="DedupeKey"/>, o título, o corpo e a URL que a notificação abre. SPEC-0031: a URL é de preferência um
+/// caminho do site começando com "/" (como <c>/curitiba/noite-da-peste-ii</c>): o push o abre na origem do site e o
+/// e-mail o resolve contra <c>App:PublicUrl</c>; uma URL absoluta https continua aceita.
 /// </summary>
 public sealed record Notice(string Kind, string DedupeKey, string Title, string Body, string Url);
 

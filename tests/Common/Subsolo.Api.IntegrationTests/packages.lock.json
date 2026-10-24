@@ -989,6 +989,7 @@
           "Subsolo.Modules.Engagement.Domain": "[1.0.0, )",
           "Subsolo.Modules.Engagement.IntegrationEvents": "[1.0.0, )",
           "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Notifications.IntegrationEvents": "[1.0.0, )",
           "Subsolo.Modules.Profiles.IntegrationEvents": "[1.0.0, )",
           "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
         }

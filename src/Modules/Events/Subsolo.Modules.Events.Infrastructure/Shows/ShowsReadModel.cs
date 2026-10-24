@@ -87,7 +87,7 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
     /// SPEC-0026 — o perfil como organizador, casa (<c>venue_profile_id</c>) ou banda do line-up (<c>lineup @&gt;
     /// [{"profileId": …}]</c>, com o índice GIN da migração <c>ShowProfileIndexes</c>), com a cidade de cada show.
     /// </summary>
-    public async Task<IReadOnlyList<ShowSummaryResponse>> ListByProfileAsync(
+    public async Task<IReadOnlyList<ProfileShowResponse>> ListByProfileAsync(
         Guid profileId,
         DateTimeOffset boundaryUtc,
         bool upcoming,
@@ -127,7 +127,8 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
         [
             .. ids.Where(shows.ContainsKey).Select(id => shows[id]).Select(item => ProfileShowResponse.From(
                 Summary(item.Show),
-                new ProfileShowCityResponse(item.Show.City, item.Name, item.TimeZone))),
+                new ProfileShowCityResponse(item.Show.City, item.Name, item.TimeZone),
+                item.Show.FlyerId)),
         ];
     }
 

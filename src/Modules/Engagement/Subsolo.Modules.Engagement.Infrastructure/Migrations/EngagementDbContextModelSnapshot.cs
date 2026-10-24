@@ -197,6 +197,33 @@ namespace Subsolo.Modules.Engagement.Infrastructure.Migrations
                     b.ToTable("follows", "engagement");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Engagement.Infrastructure.Notices.PublishedShowRow", b =>
+                {
+                    b.Property<Guid>("ShowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("show_id");
+
+                    b.Property<string>("CitySlug")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("city_slug");
+
+                    b.PrimitiveCollection<Guid[]>("ProfileIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("profile_ids");
+
+                    b.Property<DateTimeOffset>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at_utc");
+
+                    b.HasKey("ShowId");
+
+                    b.HasIndex("PublishedAtUtc");
+
+                    b.ToTable("published_shows", "engagement");
+                });
+
             modelBuilder.Entity("Subsolo.Common.Infrastructure.Inbox.InboxMessageConsumer", b =>
                 {
                     b.HasOne("Subsolo.Common.Infrastructure.Inbox.InboxMessage", null)

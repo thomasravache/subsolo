@@ -4,14 +4,14 @@ title: Aviso de show novo (push imediato e resumo diário por e-mail)
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023, SPEC-0027, SPEC-0030]
 consumes_contract: []
-contract_version: 1
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, web/src/components/notifications/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, web/src/components/notifications/**, docs/api/openapi.v1.json, web/src/api/schema.d.ts, src/**/packages.lock.json, tests/Modules/Profiles/Subsolo.Profiles.UnitTests/Infrastructure/ProfilesHarness.cs, web/src/api/public-profile.ts, web/src/api/public-profile-contract.test.ts, tests/Security/**, src/Common/Subsolo.Common.Presentation/Security/AntiforgeryFilter.cs, tests/Modules/Profiles/**]
 adrs: [ADR-0001, ADR-0008, ADR-0014]
 external: []
 size: M
@@ -83,6 +83,24 @@ Banco (schema engagement): published_shows(show_id PK, city_slug, profile_ids uu
 Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 ```
 
+**Ajustes de contrato herdados (Emenda 1, contrato v2):**
+
+```text
+PUT /api/v1/me/notification-preferences:   # SPEC-0030; os quatro booleanos passam a ser obrigatórios
+  400: notifications.invalid_preferences    # campo ausente ou não booleano
+POST /api/v1/notifications/unsubscribe/one-click?token=…:   # RFC 8058; público, sem X-CSRF (o token assinado é a autorização), rate limit default, no-store
+  corpo application/x-www-form-urlencoded "List-Unsubscribe=One-Click" ; 204 ; 400 notifications.invalid_token
+E-mail de aviso (resumo e lembrete): cabeçalhos
+  List-Unsubscribe: <{base}/api/v1/notifications/unsubscribe/one-click?token={token}>
+  List-Unsubscribe-Post: List-Unsubscribe=One-Click
+GET /api/v1/shows?profileId=…&period=…:   # ListProfileShows (SPEC-0026); cada item ganha flyerId (string | null, o mesmo id de 64 caracteres do upload), aditivo
+Notice.Url: caminho do site começando com "/" (como "/curitiba/noite-da-peste-ii"); o Notifications o guarda assim, o push o abre na origem do site e o e-mail o resolve contra App:PublicUrl
+deliveries.status ganha skipped: entrega sem canal do destinatário (sem aparelho, usuário excluído, sem e-mail), com o evento NoticeDeliverySkipped
+Banco (schema notifications): job NoticesRetention diário apaga deliveries concluídas (sent, failed, skipped) e notices sem entrega pendente com mais de 90 dias e registra NoticesRetentionCompleted {Deliveries} {Notices}
+Falha do job DailyDigest: evento DailyDigestRunFailed, incluído no alerta "Falha de job" do Seq e num alerta próprio "Resumo diário falhou" (event.name = 'DailyDigestRunFailed', 1 h, count >= 1, runbook docs/runbooks/outbox-parada.md), porque o job roda uma vez por dia
+One-click: o endpoint sai do filtro de X-CSRF do grupo por uma marcação explícita com motivo no Common.Presentation (AntiforgeryFilter)
+```
+
 **Design:** N/A — push do sistema e e-mail no modelo da SPEC-0030; sem tela nova.
 
 **Arquivos/módulos afetados:** ver `touches` no frontmatter.
@@ -97,9 +115,12 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 | Resumo diário | shows publicados nas últimas 24 h | um e-mail por fã que ligou o resumo, com os shows dele | UT-02, IT-04, IT-05, E2E-01 |
 | Resumo repetido | job roda duas vezes no dia | um e-mail só | IT-05 |
 | Resumo sem nada | nenhum show novo para o fã | nenhum e-mail | UT-02 |
+| Falha do resumo | job `DailyDigest` falha (ex.: banco fora) | `DailyDigestRunFailed` no log e alerta "Falha de job" | IT-07 |
 | Limpeza | `published_shows` com mais de 7 dias | apagadas | IT-04 |
 | Arquitetura | dependências | `Engagement` só nas direções do ADR-0001; `Notifications` sem módulos de domínio | IT-06 |
 | Contrato | `IEventsCatalog` | assinatura do §6 | CT-01 |
+| Preferências incompletas | `PUT` sem um dos quatro campos | 400 `notifications.invalid_preferences` | H30-03, CT-01 |
+| Descadastro em um clique | `POST …/unsubscribe/one-click` do provedor de e-mail | 204 e o tipo desligado; token adulterado → 400 | H30-04, CT-01 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
 
@@ -108,7 +129,7 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 
 ### 7.2 Testes Unitários
 - **UT-01** — Dado um `ShowSummary` de "Noite da Peste II" com Lineup ["Cova Rasa", "Peste Negra"], Casa "Basement", início 2026-11-15T01:00Z e fuso America/Sao_Paulo, quando o compositor monta o aviso, então título "Show novo em Curitiba", corpo "Cova Rasa + Peste Negra · sáb 14/11 22h00 · Basement" e url "/curitiba/noite-da-peste-ii".
-- **UT-02** — Dados follows de quatro fãs e cinco shows publicados (um cancelado, um passado, 22 de uma cidade só), quando o montador do resumo roda, então cada fã recebe só os shows dele, sem repetição, até 20 com "e mais {n} na agenda", e quem não tem show novo fica de fora.
+- **UT-02** — Dados follows de quatro fãs e shows publicados (dois em Curitiba, um cancelado, um já começado e 22 em São Paulo; linha do resumo com a line-up unida por " + ", uma linha por show separada por quebra de linha e "e mais {n} na agenda" como última linha), quando o montador do resumo roda, então cada fã recebe só os shows dele, sem repetição, até 20 com "e mais {n} na agenda", e quem não tem show novo fica de fora.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API, o PostgreSQL e 10.000 seguidores de Curitiba e 300 de uma banda (parte em comum), quando um artista cria um show pela API, então o evento é consumido e o `notifications.deliveries` recebe uma entrega push por fã com push ativo e o aviso ligado, em ≤ 5 s do evento.
@@ -116,28 +137,29 @@ Config: Engagement:DigestCron (padrão "0 0 9 * * ?", fuso America/Sao_Paulo)
 - **IT-03** — Dados um evento de show com início no passado e um de show cancelado antes do processamento, quando consumidos, então nenhuma entrega é criada.
 - **IT-04** — Dados 10.000 fãs com o resumo ligado que seguem cidades com shows novos e linhas antigas em `published_shows`, quando o job roda, então as entregas `digest` são criadas em ≤ 60 s e as linhas com mais de 7 dias somem.
 - **IT-05** — Dados dois fãs com o resumo ligado e o Mailpit real, quando o job roda duas vezes no mesmo dia, então cada um recebe um e-mail com os seus shows, o link da agenda e o link de descadastro, e não recebe um segundo.
+- **IT-07** — Dado o job `DailyDigest` com o banco fora do ar, quando roda, então registra `DailyDigestRunFailed`, e o alerta "Falha de job" de `infra/seq/alerts.json` inclui esse evento, além do alerta próprio "Resumo diário falhou" (`count >= 1` em 1 h).
 - **IT-06** — Dados os testes de arquitetura, quando rodam, então o `Engagement` só depende de `Users`, `Events`, `Profiles` e `Notifications` pelos contratos, e o `Notifications` não referencia o `Engagement`.
 
 ### 7.4 Testes de Contrato
-- **CT-01** — Dado o tipo público `IEventsCatalog`, quando lido por reflexão, então `GetShowSummaryAsync` e `ShowSummary` têm a forma do §6; o snapshot OpenAPI não muda.
+- **CT-01** — Dado o tipo público `IEventsCatalog`, quando lido por reflexão, então `GetShowSummaryAsync` e `ShowSummary` têm a forma do §6; o snapshot OpenAPI muda só pelos ajustes herdados do §6 (400 `notifications.invalid_preferences` no PUT de preferências, `POST /api/v1/notifications/unsubscribe/one-click` e `flyerId` nos shows do perfil), e `pnpm api:check` passa.
 
 ### 7.5 Testes E2E
-- **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do show abre a página dele e o de descadastro confirma. [jornada: seguir-e-avisar]
+- **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do e-mail abre a agenda do site e o de descadastro confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
 - **Itens herdados da revisão da SPEC-0030 (G4, tag `SPEC-0031:H30-NN`):**
-  - H30-01 — `PushSubscriptionValidator`: decidir e cobrir com teste a inclusão do WNS (`*.notify.windows.com`, Edge no Windows), hoje recusado com "Não foi possível ativar…"; recomendação do Architect: incluir, com a mesma regra de host exato.
-  - H30-02 — retenção: `notifications.deliveries` concluídas e `notifications.notices` sem entrega pendente apagadas depois de 90 dias por um job, com teste (o volume cresce com os avisos desta spec).
-  - H30-03 — `PUT /notifications/preferences`: campo ausente no corpo vira `false` em silêncio; tornar os campos obrigatórios (400 `notifications.invalid_preferences`) com Emenda do contrato da SPEC-0030.
-  - H30-04 — descadastro dispara ao abrir a página (scanners de link que rodam JavaScript podem descadastrar): avaliar o cabeçalho `List-Unsubscribe-Post` (RFC 8058) no e-mail de aviso.
-  - H30-05 — `infra/seq/alerts.json`: o job inteiro falhando (`NoticeDeliveriesRunFailed`, ex.: banco fora) não dispara alerta e os avisos param em silêncio; incluir o evento no filtro do "Falha de job" (`event.name in ['OutboxProcessingFailed','NoticeDeliveriesRunFailed']`), com teste.
-  - H30-06 — `DeliverySender`: `NoticeDeliveryFailed` também sai em situações normais (sem aparelho, usuário excluído, sem e-mail) e pode passar de 20/h sem problema real; usar um evento ou resultado próprio para "sem canal do destinatário", fora do alerta, com teste.
-  - H30-07 — `NotificationsStore` + `NoticesPanel`: o novo reenvio da inscrição ao abrir passa pela regra "primeira inscrição liga o push de show novo" e religa `newShowPush` que o fã desligou, se o servidor tinha perdido a inscrição (ex.: 410); aplicar a regra só quando o usuário ainda não tem linha de preferências, com teste.
+  - H30-01 — Dado um endpoint `https://wns2-bl2p.notify.windows.com/w/?token=…` com chaves válidas, quando o `PushSubscriptionValidator` valida, então aceita (WNS do Edge no Windows, mesma regra de sufixo de host exato `.notify.windows.com`); `https://notify.windows.com.evil.example/…` e `http://…notify.windows.com/…` continuam recusados.
+  - H30-02 — Dadas entregas `sent`, `failed` e `skipped` e avisos sem entrega pendente com mais de 90 dias, além de uma entrega `pending` antiga e linhas recentes, quando o job `NoticesRetention` roda, então só as concluídas antigas e os avisos antigos sem pendência somem, e o log registra `NoticesRetentionCompleted` com as contagens de entregas e de avisos apagados.
+  - H30-03 — Dado `PUT /api/v1/me/notification-preferences` com um dos quatro campos ausente ou não booleano, quando enviado, então 400 `notifications.invalid_preferences` e nada muda; o painel "Avisos" do web continua mandando os quatro campos.
+  - H30-04 — Dado um e-mail de aviso (resumo ou lembrete), quando enviado ao Mailpit, então tem `List-Unsubscribe` com a URL `…/api/v1/notifications/unsubscribe/one-click?token=…` e `List-Unsubscribe-Post: List-Unsubscribe=One-Click`; um `POST` nessa URL com `List-Unsubscribe=One-Click`, sem X-CSRF, desliga aquele tipo (204); token adulterado → 400 `notifications.invalid_token`. A página `/avisos/descadastrar` não muda.
+  - H30-05 — Dado `infra/seq/alerts.json`, quando o teste lê o alerta "Falha de job", então o filtro inclui `NoticeDeliveriesRunFailed` junto de `OutboxProcessingFailed`.
+  - H30-06 — Dada uma entrega sem canal do destinatário (sem aparelho, usuário excluído ou sem e-mail), quando o `DeliverySender` processa, então ela termina com status `skipped` e o evento `NoticeDeliverySkipped` (não `NoticeDeliveryFailed`) e fica fora do alerta "Falha no envio de aviso".
+  - H30-07 — Dado um fã com linha de preferências e `newShowPush` desligado cujo aparelho o servidor perdeu (410), quando o painel reenvia a inscrição ao abrir, então `newShowPush` continua desligado; na primeira inscrição de quem não tem linha, ele liga.
 - **Itens herdados da revisão da SPEC-0026 (G4):**
-  - H26-01 — `ListProfileShowsEndpoint.cs`: remover o `.Cast<ProfileShowResponse>()`; tipar `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` como `ProfileShowResponse`.
-  - H26-02 — `IFlyerLocks` obrigatório no construtor de `UploadFlyerCommandHandler` e `CleanupFlyersCommandHandler` (fake no-op nos testes unitários).
-  - H26-03b — `profile-metadata.ts` `ogImageOf` (web): montar a URL do og a partir do id do flyer, não por regex sobre `flyerThumbUrl`; exige expor o id do flyer nos itens de show (contrato do `Events`).
-  - H26-07 — upload de flyer: não manter o advisory lock e a transação abertos durante a escrita dos três arquivos (avaliar antes do go-live).
+  - H26-01 — Dado `ListProfileShowsEndpoint`, quando o teste de arquitetura e a suíte rodam, então não há `.Cast<ProfileShowResponse>()`: `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` já são tipados como `ProfileShowResponse`, e as respostas da API não mudam.
+  - H26-02 — Dados `UploadFlyerCommandHandler` e `CleanupFlyersCommandHandler`, quando construídos, então `IFlyerLocks` é obrigatório no construtor (sem padrão nulo); os testes unitários usam um fake no-op.
+  - H26-03b — Dado um show do perfil com flyer, quando a API devolve os shows do perfil, então o item traz `flyerId`, e `ogImageOf` em `profile-metadata.ts` monta `{base}/media/flyers/{flyerId}-og.jpg` a partir dele (sem regex sobre `flyerThumbUrl`); show sem flyer → sem imagem.
+  - H26-07 — Avaliado pelo Architect (Emenda 1): fica como está. O upload é raro, os três arquivos são pequenos (≤ 2 MB no total) e o lock é por show, então não há disputa no volume do MVP; volta a ser avaliado se o painel do Seq mostrar upload lento.
 - N/A — sem superfície pública nova.
 
 **Dublês e dados de teste:** nenhum dublê de módulo; seguidores e shows criados no banco do teste; `TimeProvider` fixo nos UT e IT.
@@ -188,12 +210,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 6855548 | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 080b13f | 2026-10-24 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — e72721d | 2026-10-24 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 324ms) — e72721d | 2026-10-24 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 5 minor e 3 nits levados à SPEC-0032 §7.6 como H31-01..08; DKIM cobrindo List-Unsubscribe na SPEC-0003) — e72721d | 2026-10-24 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 15m 04s 794ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 940ms) — 40f68bc | 2026-10-24 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -241,3 +263,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0031`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-23 | Itens herdados com decisão concreta e teste: H30-01 (WNS aceito), H30-02 (retenção de 90 dias, job `NoticesRetention`), H30-03 (campos obrigatórios no PUT, 400 `notifications.invalid_preferences`), H30-04 (cabeçalhos RFC 8058 e `POST …/unsubscribe/one-click`), H30-05..07 como escritos, H26-01/02/03b como escritos (com `flyerId` nos shows do perfil) e H26-07 avaliado e mantido. CT-01 passa a esperar essas mudanças no OpenAPI. `touches` ganha `docs/api/openapi.v1.json`, `web/src/api/schema.d.ts`. | itens herdados das revisões das SPEC-0026 e SPEC-0030 sem decisão fechada antes do G1 | SPEC-0030 (contrato do PUT e do descadastro) | piloto automático do Thomas (2026-10-23) |
+| 3 | 2026-10-24 | SPEC_DEFECTs do Test-writer no G1: `Notice.Url` é caminho do site (`/…`), resolvido contra `App:PublicUrl` no e-mail; `deliveries.status` ganha `skipped` (H30-06; H30-02 apaga `sent`, `failed` e `skipped`); log `NoticesRetentionCompleted {Deliveries} {Notices}`; novo IT-07 (`DailyDigestRunFailed` no alerta "Falha de job"); `flyerId` é `string \| null` e a rota real é `GET /api/v1/shows?profileId=…`; formatos da linha do resumo no UT-02; E2E-01 abre a agenda pelo link do e-mail (o corpo do §6 não tem link por show); `touches` ganha `src/**/packages.lock.json`, o `ProfilesHarness.cs` (novo membro de `IEventsCatalog` implementado normalmente), `web/src/api/public-profile.ts` e `tests/Security/**` (one-click sem X-CSRF). | SPEC_DEFECTs 1–10 do Test-writer (G1) | SPEC-0030 (`Notice.Url` relativo, status `skipped`) | piloto automático do Thomas (2026-10-24) |
+| 3 (sem mudança de contrato) | 2026-10-24 | Achados do Implementer: `touches` ganha `AntiforgeryFilter.cs` (exceção explícita de X-CSRF para o one-click), `tests/Modules/Profiles/**`; alerta próprio "Resumo diário falhou" (o "Falha de job" pede 3 eventos em 10 min e o resumo roda uma vez por dia), coberto pelo IT-07; aceitas as escolhas do Implementer: destinatários do `new_show` = seguidores da cidade e de todos os perfis do show, entrega com todos os aparelhos em 410 fica `failed`, line-up limitada a 200 caracteres e corpo do resumo dentro de 1.000. | relatório do Implementer (G2) | — | piloto automático do Thomas (2026-10-24) |
+| 3 (sem mudança de contrato) | 2026-10-24 | `touches` ganha `web/src/api/public-profile-contract.test.ts`: o CT-01 da SPEC-0026 compara o item de show do perfil com o resumo da agenda e passa a esperar o `flyerId` aditivo (H26-03b). | G2 FAIL em 0d72369 | SPEC-0026 | piloto automático do Thomas (2026-10-24) |

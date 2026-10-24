@@ -11,7 +11,8 @@ import { describe, expect, it } from "vitest";
  * - `GET /api/v1/profiles/{type}/{slug}`: 200 `{id, type, name, slug, city: {slug, name}, styles: [{slug, name}],
  *   links: {instagram?, bandcamp?, metalArchives?}}`; 404 em ProblemDetails com `profiles.not_found`;
  * - `GET /api/v1/shows?profileId=&period=`: `profileId` (uuid) e `period` na consulta; 200 `{shows: ShowSummary[]}` (o
- *   resumo da agenda, SPEC-0008, mais `city: {slug, name, timeZone}` — Emenda v2, b); 400 em ProblemDetails com
+ *   resumo da agenda, SPEC-0008, mais `city: {slug, name, timeZone}` — Emenda v2, b — e `flyerId: string | null` —
+ *   SPEC-0031 H26-03b); 400 em ProblemDetails com
  *   `events.invalid_query`;
  * - Emenda v2 (a, H23-08): `GET /api/v1/profiles/lookup?q=&type=`: `q` e `type` na consulta; 200
  *   `[{id, type, name, slug, city: {slug, name}}]`; 400 em ProblemDetails com `profiles.invalid_query`;
@@ -180,10 +181,14 @@ describe("OpenAPI do perfil público fiel ao contrato §6", () => {
     expect(propertiesOf(body)).toEqual(["shows"]);
     const shows = property(body, "shows");
     expect([shows.type].flat()).toContain("array");
-    // O resumo da agenda (SPEC-0008) mais a cidade do show (Emenda v2, b).
+    // O resumo da agenda (SPEC-0008) mais a cidade do show (Emenda v2, b) e, pela SPEC-0031 (H26-03b, contrato v3,
+    // aditivo), o `flyerId` do flyer do show (string | null).
     expect(propertiesOf(shows.items)).toEqual(
-      [...summaryFields, "city"].sort(),
+      [...summaryFields, "city", "flyerId"].sort(),
     );
+    expect(
+      [property(nonNull(shows.items), "flyerId").type].flat().sort(),
+    ).toEqual(["null", "string"]);
     expect(propertiesOf(property(nonNull(shows.items), "city"))).toEqual([
       "name",
       "slug",

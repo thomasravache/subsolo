@@ -38,14 +38,14 @@ export function profileDescription(profile: PublicProfile): string {
 }
 
 /**
- * A URL absoluta da variante `og` do flyer do show (`{publicUrl}/media/flyers/{id}-og.jpg`, nomes do ADR-0015), a
- * partir da miniatura (`/media/flyers/{id}-thumb.webp`); sem flyer, nenhuma.
+ * A URL absoluta da variante `og` do flyer do show (`{publicUrl}/media/flyers/{flyerId}-og.jpg`, nomes do ADR-0015), a
+ * partir do `flyerId` do show (SPEC-0031, H26-03b); sem flyer, nenhuma.
  */
 function ogImageOf(show: ProfileShow, base: string): string | undefined {
-  const match = /^\/media\/flyers\/([^/]+)-thumb\.[a-z]+$/.exec(
-    show.flyerThumbUrl ?? "",
-  );
-  return match ? `${base}/media/flyers/${match[1]}-og.jpg` : undefined;
+  const flyerId = show.flyerId;
+  return flyerId
+    ? `${base}/media/flyers/${encodeURIComponent(flyerId)}-og.jpg`
+    : undefined;
 }
 
 /**

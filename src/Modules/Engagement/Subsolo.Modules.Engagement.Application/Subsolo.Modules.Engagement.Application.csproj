@@ -24,6 +24,7 @@
     <ProjectReference Include="../Subsolo.Modules.Engagement.Domain/Subsolo.Modules.Engagement.Domain.csproj" />
     <ProjectReference Include="../Subsolo.Modules.Engagement.IntegrationEvents/Subsolo.Modules.Engagement.IntegrationEvents.csproj" />
     <ProjectReference Include="../../Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
+    <ProjectReference Include="../../Notifications/Subsolo.Modules.Notifications.IntegrationEvents/Subsolo.Modules.Notifications.IntegrationEvents.csproj" />
     <ProjectReference Include="../../Profiles/Subsolo.Modules.Profiles.IntegrationEvents/Subsolo.Modules.Profiles.IntegrationEvents.csproj" />
     <ProjectReference Include="../../Users/Subsolo.Modules.Users.IntegrationEvents/Subsolo.Modules.Users.IntegrationEvents.csproj" />
   </ItemGroup>

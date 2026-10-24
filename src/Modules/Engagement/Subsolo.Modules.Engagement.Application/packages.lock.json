@@ -30,6 +30,12 @@
           "Subsolo.Common.Application": "[1.0.0, )"
         }
       },
+      "subsolo.modules.notifications.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
       "subsolo.modules.profiles.integrationevents": {
         "type": "Project",
         "dependencies": {

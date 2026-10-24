@@ -4,7 +4,7 @@ title: Atualizar o Next.js para corrigir avisos de segurança
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-23
 parent: SPEC-0002
 depends_on: []
@@ -61,15 +61,15 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Atualização do Next**
-- [ ] Red: UT-01 com a tag `SPEC-0034:UT-01`, falhando pelo motivo certo
-- [ ] Green: `next` e `eslint-config-next` 16.4.2 e lock regenerado
-- [ ] Validar: build + suíte + arquitetura (G2/G3) e `pnpm audit --prod --audit-level=high` sem achados
+- [x] Red: UT-01 com a tag `SPEC-0034:UT-01`, falhando pelo motivo certo
+- [x] Green: `next` e `eslint-config-next` 16.4.2 e lock regenerado
+- [x] Validar: build + suíte + arquitetura (G2/G3) e `pnpm audit --prod --audit-level=high` sem achados
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -82,8 +82,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (0 achados; escopo nos 3 arquivos de touches, lockfile só next/@next/*/eslint-config-next 16.4.0→16.4.2, UT-01 significativo, pnpm audit --prod high limpo) — fe39407 | 2026-10-23 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 15m 10s 270ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 228ms) — 188d707 | 2026-10-23 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-23 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-23 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — e62b292 (árvore suja) | 2026-10-23 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -94,29 +94,34 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- `next` e `eslint-config-next` atualizados de 16.4.0 para 16.4.2 (versões fixas), corrigindo GHSA-2464-fhr4-w9xw (crítico), GHSA-673q-mjm6-r5xr (crítico) e GHSA-p3m5-59mp-jv5r (alto). `pnpm audit --prod --audit-level=high` sem achados.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (61db63c, UT-01 vermelho em 16.4.0) → Implementer (e60dd7b, `pnpm add -E`, lockfile só com `next`, `@next/*` e `eslint-config-next`) → Reviewer: APPROVED, sem achados. Sem codemod nem `next upgrade`.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: UT-01 falhava com "next@16.4.0 está abaixo de 16.4.1" e o `next build` parava com `SecurityFatalError`. Depois: UT-01 passa, o build roda na primeira tentativa e o audit sai limpo.
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | `next` ≥ 16.4.1 e `eslint-config-next` igual ao `next` | PASS | `gate G2 --run` em e60dd7b; `gate G5 --run` na integração (188d707); CI do PR #42 (run 40051799815, checks verdes em e62b292) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #42 (https://github.com/thomasravache/subsolo/pull/42), merge commit 3e4d99f em 2026-10-23, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- Nenhuma (a 16.4.3 fica para o Dependabot).
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

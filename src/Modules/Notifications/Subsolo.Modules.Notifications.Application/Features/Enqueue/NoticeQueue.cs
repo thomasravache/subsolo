@@ -30,7 +30,7 @@ internal sealed partial class NoticeQueue(
         "O aviso é inválido.",
         new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            ["notice"] = ["Tipo desconhecido, chave, título ou corpo vazios ou longos demais, ou URL inválida."],
+            ["notice"] = ["Tipo desconhecido, chave, título ou corpo vazios ou longos demais, ou URL inválida (caminho do site começando com \"/\" ou URL https)."],
         });
 
     public async Task<Result> EnqueueAsync(IReadOnlyCollection<Guid> userIds, Notice notice, CancellationToken ct)
@@ -76,7 +76,22 @@ internal sealed partial class NoticeQueue(
         && !string.IsNullOrWhiteSpace(notice.Title) && notice.Title.Length <= MaxTitleLength
         && !string.IsNullOrWhiteSpace(notice.Body) && notice.Body.Length <= MaxBodyLength
         && notice.Url is { Length: > 0 and <= MaxUrlLength }
-        && Uri.TryCreate(notice.Url, UriKind.Absolute, out var url)
+        && (IsSitePath(notice.Url) || IsAbsoluteUrl(notice.Url));
+
+    /// <summary>
+    /// SPEC-0031 — um caminho do site (<c>/curitiba/noite-da-peste-ii</c>): começa com uma barra só (nada de <c>//host</c>
+    /// nem barra invertida), sem espaços nem caracteres de controle; o push o abre na origem do site e o e-mail o resolve
+    /// contra <c>App:PublicUrl</c>.
+    /// </summary>
+    private static bool IsSitePath(string url) =>
+        url.StartsWith('/')
+        && !url.StartsWith("//", StringComparison.Ordinal)
+        && !url.Contains('\\', StringComparison.Ordinal)
+        && !url.Any(c => char.IsWhiteSpace(c) || char.IsControl(c))
+        && Uri.TryCreate(url, UriKind.Relative, out _);
+
+    private bool IsAbsoluteUrl(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var url)
         && !string.IsNullOrEmpty(url.Host)
         && (url.Scheme == Uri.UriSchemeHttps || (environment.IsDevelopment() && url.Scheme == Uri.UriSchemeHttp));
 

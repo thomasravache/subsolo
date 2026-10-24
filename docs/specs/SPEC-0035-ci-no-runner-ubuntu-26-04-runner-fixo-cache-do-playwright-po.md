@@ -4,7 +4,7 @@ title: "CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: implemented
 created: 2026-10-23
 parent: SPEC-0002
 depends_on: []
@@ -66,15 +66,15 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Preenchido na fase PLAN, após a aprovação. -->
 
 **Fase 1: Runner fixo e caches**
-- [ ] Red: UT-01, UT-02 e UT-03 com a tag `SPEC-0035:<ID>`, falhando pelo motivo certo
-- [ ] Green: `runs-on: ubuntu-24.04`, chave do cache do Playwright com a imagem, salvamento de imagens tolerante
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: UT-01, UT-02 e UT-03 com a tag `SPEC-0035:<ID>`, falhando pelo motivo certo
+- [x] Green: `runs-on: ubuntu-24.04`, chave do cache do Playwright com a imagem, salvamento de imagens tolerante
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -87,8 +87,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 2 minor aceitos: ImageVersion renova o cache do Playwright a cada imagem nova, \|\| true engole falha do docker image ls — o cache é só otimização; 3 nits) — 2a45f95 | 2026-10-23 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 14m 21s 900ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 9s 034ms) — 903c8cd | 2026-10-23 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-23 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-23 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — e62b292 (árvore suja) | 2026-10-23 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -99,29 +99,38 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- Os 8 jobs do `.github/workflows/ci.yml` rodam no `ubuntu-24.04` fixo, não mais no `ubuntu-latest`.
+- O cache `~/.cache/ms-playwright` tem na chave a imagem do runner (`ImageOS`-`ImageVersion`), lida no passo "Imagem do runner".
+- O passo "Salva imagens Docker usadas pelos testes" salva só as imagens que o `docker image inspect` ainda encontra e tem `continue-on-error: true`.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (6eb045d, `CiWorkflowRunnerImageTests` com UT-01..03 vermelhos) → Implementer (2a45f95, só o `ci.yml`) → Reviewer: APPROVED WITH MINOR ITEMS (2 minor aceitos: o `ImageVersion` renova o cache do Playwright a cada imagem nova; o `|| true` engole falha do `docker image ls`, aceitável porque o cache é só otimização; 3 nits).
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: o run 40033852786 do PR #42 (imagem `ubuntu-26.04`) falhou no e2e (`libicudata.so.74` ausente para o WebKit em cache) e no integration (`No such image: testcontainers/ryuk:0.14.0`, saída 123); UT-01..03 falhavam em 6eb045d. Depois: UT-01..03 passam em 2a45f95 e o CI do PR #42 (run 40051799815) fica verde.
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | todo job com `runs-on: ubuntu-24.04`, nenhum com `ubuntu-latest` | PASS | `gate G2 --run` em 2a45f95; `gate G5 --run` na integração; CI do PR #42 (run 40051799815, e2e e integration verdes no `ubuntu-24.04` em e62b292) |
+| UT-02 | chave do cache do Playwright com o hash do `e2e/pnpm-lock.yaml` e a saída de um passo anterior que lê `ImageOS` e `ImageVersion` | PASS | `gate G2 --run` em 2a45f95; `gate G5 --run` na integração; CI do PR #42 (run 40051799815, e2e e integration verdes no `ubuntu-24.04` em e62b292) |
+| UT-03 | salvamento das imagens Docker com `continue-on-error: true` e `docker image inspect` antes do `docker image save` | PASS | `gate G2 --run` em 2a45f95; `gate G5 --run` na integração; CI do PR #42 (run 40051799815, e2e e integration verdes no `ubuntu-24.04` em e62b292) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #42 (https://github.com/thomasravache/subsolo/pull/42), merge commit 3e4d99f em 2026-10-23, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- Nenhuma. A ida para o Ubuntu 26.04 fica para quando o Playwright tiver os navegadores dessa versão; vira spec própria quando for o caso.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

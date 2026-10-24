@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Time.Testing;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
+using Subsolo.Modules.Notifications.Infrastructure.WebPush;
 
 namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 
@@ -22,15 +22,18 @@ namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 /// <item><c>Users:AdminEmails</c> = [<see cref="AdminEmail"/>] e a entrada de teste <see cref="EngagementTestEndpoints.SignIn"/>;</item>
 /// <item>os limites <c>default</c> e <c>report</c> altos (a menos que <paramref name="productionRateLimits"/>), para os
 /// testes de volume, e as configurações extras de <paramref name="settings"/>;</item>
-/// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/>;</item>
+/// <item>opcionalmente, o <see cref="TimeProvider"/> trocado por <paramref name="clock"/> (que também move o Quartz: um
+/// relógio parado para outbox, inbox e jobs; use <see cref="RunningClock"/> quando eles precisam rodar);</item>
 /// <item>logs e spans exportados em memória (<see cref="Logs"/>, <see cref="Spans"/>);</item>
 /// <item>SPEC-0029 — <c>Media:Root</c> num diretório temporário só deste host (<see cref="MediaRoot"/>, apagado no fim),
-/// para o admin enviar o flyer dos shows de teste.</item>
+/// para o admin enviar o flyer dos shows de teste;</item>
+/// <item>SPEC-0031 — o <c>HttpClient</c> do Web Push (<see cref="WebPushOptions.HttpClientName"/>) com um servidor de
+/// push falso que aceita tudo (201): nenhum aviso sai para FCM, Mozilla ou Apple.</item>
 /// </list>
 /// </summary>
 internal sealed class EngagementApiFactory(
     string connectionString,
-    FakeTimeProvider? clock = null,
+    TimeProvider? clock = null,
     IReadOnlyDictionary<string, string>? settings = null,
     bool productionRateLimits = false)
     : WebApplicationFactory<Program>
@@ -159,6 +162,7 @@ internal sealed class EngagementApiFactory(
         builder.ConfigureTestServices(services =>
         {
             services.AddEndpoints(typeof(EngagementApiFactory).Assembly);
+            services.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new AcceptingPushService());
             services.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
             services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddInMemoryExporter(_spans));
             if (clock is not null)
@@ -167,4 +171,11 @@ internal sealed class EngagementApiFactory(
             }
         });
     }
+}
+
+/// <summary>SPEC-0031 — servidor de push falso: aceita (201) toda mensagem, sem sair da máquina.</summary>
+internal sealed class AcceptingPushService : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.Created) { RequestMessage = request });
 }

@@ -88,6 +88,7 @@ Os IDs de teste são definidos quando as filhas forem criadas.
 - [ ] Com o Thomas no Stitch: pôr o botão "SEGUIR CURITIBA" na tela "Agenda Curitiba - Subsolo" (5d1946463ad9484b83c67cc2e6d78fd3) e atualizar a captura `docs/design/stitch/agenda-mobile.png` (herdado H27-08, movido da SPEC-0029)
 - [ ] Chaves VAPID de produção para o Web Push (SPEC-0030), como segredo do environment (Thomas)
 - [ ] Chave de assinatura do descadastro (`Notifications__Unsubscribe__SigningKey`, SPEC-0030) como segredo do environment — sem ela, nenhum e-mail de aviso sai em produção (Thomas)
+- [ ] Provedor de e-mail de produção com DKIM cobrindo os cabeçalhos `List-Unsubscribe` e `List-Unsubscribe-Post` (RFC 8058, SPEC-0031) (Thomas)
 - [ ] `SUBSOLO_PUBLIC_URL` do web definida no ambiente publicado (o Compose de publicação não a define) e validada na partida do web (`instrumentation.ts`), como a API faz com `App:PublicUrl` — herdado H24-04 da revisão da SPEC-0024
 - [ ] Endereço definitivo do Instagram do Subsolo (perfil ainda não criado; hoje o rodapé aponta para o provisório `https://www.instagram.com/subsolo.app` em `web/src/components/ui/Footer.tsx`, SPEC-0011) — trocar antes do lançamento (Thomas)
 

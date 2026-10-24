@@ -87,6 +87,8 @@ Apoie, privacidade e termos (SPEC-0028): https://localhost:8443/apoie (QR e chav
 
 Vou (SPEC-0029): logado, toque em "Vou" na página do show; a contagem "{n} vão" aparece na página, nos cards da agenda e no perfil, mas quem vai nunca aparece. A API fica em `/api/v1/me/attendances` (CSRF) e a contagem pública em `GET /api/v1/attendances/counts?showIds=…` (até 100 ids).
 
+Avisos (SPEC-0030): logado, abra https://localhost:8443/seguindo e toque em "Ativar avisos" na região "Avisos" para receber push neste aparelho; os interruptores escolhem push de show novo, resumo diário por e-mail e lembrete na véspera (por push ou e-mail). As chaves VAPID e a de descadastro de desenvolvimento são geradas pelo AppHost e pelo `tools/compose-up.sh`; em produção entram como segredos no go-live (SPEC-0003). Os e-mails de aviso trazem link de descadastro (`/avisos/descadastro`). Runbook: `docs/runbooks/avisos-sem-envio.md`.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções
