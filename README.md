@@ -91,6 +91,8 @@ Avisos (SPEC-0030): logado, abra https://localhost:8443/seguindo e toque em "Ati
 
 Show novo e resumo diário (SPEC-0031): quem segue a cidade ou um perfil do show recebe push na hora quando o show é publicado; quem ligou "Resumo diário por e-mail" recebe às 9h (America/Sao_Paulo) os shows novos de quem segue. Na pilha local (`tools/compose-up.sh` e AppHost) o resumo roda a cada minuto (`Engagement__DigestCron`) e chega ao Mailpit; o horário de produção fica em `appsettings.json`. Os e-mails de aviso trazem descadastro em um clique (RFC 8058).
 
+Lembrete na véspera (SPEC-0032): a partir das 10h no fuso da cidade, quem marcou "vou" recebe "Amanhã: …" por push e/ou e-mail; cancelados ficam de fora e adiados ganham lembrete na nova véspera. Se o resumo das 9h falhar, a recuperação a cada 15 min envia o resumo do dia. Na pilha local o lembrete roda a cada minuto com hora 0 (`Engagement__ReminderCron`, `Engagement__ReminderHour`).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

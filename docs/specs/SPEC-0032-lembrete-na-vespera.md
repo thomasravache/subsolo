@@ -4,7 +4,7 @@ title: Lembrete na véspera
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0029, SPEC-0030, SPEC-0031]
@@ -176,23 +176,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Regras**
-- [ ] Red: UT-01 com a tag `SPEC-0032:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01 com a tag `SPEC-0032:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Job e contrato**
-- [ ] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
-- [ ] Green: `ListScheduledShowsStartingAsync` e job `DayBeforeReminder`
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-03, CT-01 falhando pelo motivo certo
+- [x] Green: `ListScheduledShowsStartingAsync` e job `DayBeforeReminder`
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Jornada E2E**
-- [ ] Red: E2E-01 falhando pelo motivo certo
-- [ ] Green: cron e hora do lembrete configuráveis na pilha do E2E
+- [x] Red: E2E-01 falhando pelo motivo certo
+- [x] Green: cron e hora do lembrete configuráveis na pilha do E2E
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -205,8 +205,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 2 minor e 5 nits; H32-01..05 levados à SPEC-0036; §8 corrigido na Emenda 3) — bb4155d | 2026-10-24 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 16m 09s 234ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 10s 595ms) — 3bd5f34 | 2026-10-24 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-24 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 8439c9d (árvore suja) | 2026-10-24 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -218,36 +218,65 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- Lembrete na véspera: a partir das 10h no fuso da cidade, quem marcou "vou" recebe "Amanhã: {line-up}" com hora, casa e cidade, por push e/ou e-mail conforme as preferências. Cancelados não geram lembrete; adiados ganham lembrete na véspera da nova data; reexecuções não duplicam.
+- Resumo diário que se recupera: se a execução das 9h falha ou a API está fora, um gatilho a cada 15 min envia o resumo do dia (`engagement.digest_runs`).
+- Itens herdados das SPEC-0029 e 0031: status dos shows em lote, contagem de "vou" num bloco próprio, falha da retenção com alerta, índice da retenção, lista permitida da isenção de CSRF, contadores descritos com exatidão e corte da line-up sem partir emoji.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (96872a7 scaffold, dabb259, 7dd834c, 0b73420, 8412146, 54d2fa8, 29f4c35, f078fdf; Emenda 3: 804d3a8 scaffold, 35d85dd, bc5add1) → Implementer (4725b41, 8249e38, a340c9c, a25a0bd, 0e85006, 66341c7, cc3a009, 44af482) → Reviewer: APPROVED WITH MINOR ITEMS.
+- Job Quartz `Engagement.DayBeforeReminder` (`Engagement:ReminderCron` de hora em hora, `Engagement:ReminderHour` = 10) com `ReminderSelector` e `SendDayBeforeRemindersCommand`; `IEventsCatalog` ganha `ListScheduledShowsStartingAsync` e `GetShowStatesAsync` (contrato v3).
+- `DailyDigestJob` com segundo gatilho `Engagement.DailyDigest.CatchUp` no mesmo job (sem execução simultânea); migrações `20261024083320_DigestRuns` (Engagement) e `20261024083352_DeliveriesCreatedAtIndex` (Notifications).
+- Pilha local (`tools/compose-up.sh` e AppHost fora do modo publish) com lembrete a cada minuto e hora 0 para o E2E; padrões de produção em `appsettings.json`.
+- Desvio menor (H29-03): o espaço depois da contagem ficou dentro do bloco da contagem, porque um teste da SPEC-0029 lê o `textContent`; ajuste final na SPEC-0036.
+- Emendas 2 e 3 (contrato v3): decisões dos itens herdados e respostas aos SPEC_DEFECTs do Test-writer.
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | seleção só depois das 10h no fuso de cada cidade (Curitiba e Manaus), show sem "vou" ignorado, texto e chave do §6, show adiado com a chave da nova data | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| IT-01 | show amanhã com três "vou": entregas `reminder` pelos canais ligados; show cancelado sem entrega | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| IT-02 | job às 10h e às 11h e depois o show adiado uma semana: uma entrega por fã em cada véspera, nenhuma a mais | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| IT-03 | 200 shows na janela e 5.000 "vou": termina em ≤ 30 s com uma entrega por fã e show | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| IT-04 | banco fora: `DayBeforeReminderRunFailed` (Error) sem propagar ao Quartz, e o evento no filtro de alerta do Seq | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| CT-01 | `ListScheduledShowsStartingAsync` e `GetShowStatesAsync` com a forma do §6; snapshot OpenAPI sem mudança | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| E2E-01 | artista publica show para amanhã, fã marca "vou" e liga o lembrete por e-mail; o e-mail "Amanhã: …" chega ao Mailpit e o link abre o show | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H29-01 | `ListMyAttendances` com uma chamada `GetShowStatesAsync` em lote, numa consulta só | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H29-02 | comentário no `AttendShowCommandHandler` sobre o PUT que perde a corrida e não incrementa o contador | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H29-03 | contagem de "vou" num bloco próprio, sem nó de texto solto na seção "Ingresso" | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-01 | resumo com recuperação: `engagement.digest_runs` e gatilho `DigestCatchUpCron` a cada 15 min, janela até as 9h de hoje, nada antes das 9h; runbook atualizado | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-02 | 10.000 fãs com 1.023 corpos de resumo diferentes em ≤ 60 s | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-03 | endpoints com `CsrfExemptMetadata` iguais à lista permitida (`UnsubscribeNoticeEmailOneClick`), todos `AllowAnonymous`; ramo isento do filtro testado | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-04 | `NoticesRetentionRunFailed` (Error) no job de retenção, no filtro de alerta e no runbook | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-05 | descrição dos contadores "seguidores considerados (inclui reexecuções)" e log "fã(s) considerado(s)" | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-06 | corte do resumo em 1.000 caracteres com "e mais {n}" | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-07 | índice `ix_deliveries_created_at_utc` em `notifications.deliveries` | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
+| H31-08 | line-up cortada em ≤ 200 unidades UTF-16 em limite de elemento de texto, sem partir emoji | PASS | `gate G2 --run` em 44af482; `gate G5 --run` na integração (f7d598a); CI do PR #45 (run 40087944823, checks verdes em 8439c9d) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #45 (run 40087944823)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #45 (https://github.com/thomasravache/subsolo/pull/45), merge commit d04cdec em 2026-10-24, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0036: H32-01 (alerta "Resumo diário falhou" renomeado para cobrir os três jobs e runbook), H32-02 (hora fixa da recuperação vs. `DigestCron` configurável), H32-03 (espaço da contagem dentro do parágrafo), H32-04 (`GetAttendeesAsync` em lote e índice dos shows agendados), H32-05 (testes perto da meia-noite).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0032`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
