@@ -77,4 +77,13 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
                 found.Show.StartsAtUtc,
                 found.Show.Status);
     }
+
+    /// <summary>SPEC-0032 — esqueleto do Test-writer; o comportamento entra na fase Green.</summary>
+    public Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct) =>
+        throw new NotImplementedException("SPEC-0032: shows agendados por início");
+
+    /// <summary>SPEC-0032 (H29-01) — esqueleto do Test-writer; o comportamento entra na fase Green.</summary>
+    public Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct) =>
+        throw new NotImplementedException("SPEC-0032: situações dos shows em lote");
 }
