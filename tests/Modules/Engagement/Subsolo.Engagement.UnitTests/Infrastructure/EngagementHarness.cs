@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Domain;
 using Subsolo.Modules.Engagement.Application;
+using Subsolo.Modules.Engagement.Application.Features.GetAttendees;
 using Subsolo.Modules.Engagement.Application.Features.GetFollowers;
 using Subsolo.Modules.Engagement.Domain.Attendances;
 using Subsolo.Modules.Engagement.Domain.Follows;
@@ -25,7 +26,10 @@ namespace Subsolo.Engagement.UnitTests.Infrastructure;
 /// (<see cref="IEventsCatalogNames"/>). SPEC-0031: o resumo dos shows do catálogo (<see cref="TestEventsCatalog.AddSummary"/>),
 /// o <see cref="IEngagementApi"/> do módulo sobre esses follows e perfis, o registro dos shows publicados em memória
 /// (<see cref="PublishedShows"/>) e o <see cref="INotificationsApi"/> que só guarda os avisos enfileirados
-/// (<see cref="Notifications"/>).
+/// (<see cref="Notifications"/>). SPEC-0032: os "vou" também servem de read model (<see cref="IAttendancesReadModel"/>), o
+/// <see cref="IAttendanceApi"/> do módulo sobre eles, e o catálogo lista os shows agendados por início
+/// (<see cref="TestEventsCatalog.ListScheduledShowsStartingAsync"/>) e lê situações em lote
+/// (<see cref="TestEventsCatalog.GetShowStatesAsync"/>).
 /// </summary>
 internal sealed class EngagementHarness
 {
@@ -40,6 +44,8 @@ internal sealed class EngagementHarness
             .AddSingleton<IFollowRepository>(Follows)
             .AddSingleton<IFollowsReadModel>(Follows)
             .AddSingleton<IAttendanceRepository>(Attendances)
+            .AddSingleton<IAttendancesReadModel>(Attendances)
+            .AddSingleton<IAttendanceApi>(provider => ActivatorUtilities.CreateInstance<AttendanceApi>(provider))
             .AddSingleton<IEventsCatalogNames>(Catalog)
             .AddSingleton<IEngagementUnitOfWork>(UnitOfWork)
             .AddSingleton<IEventsCatalog>(Catalog)
@@ -141,7 +147,7 @@ internal sealed class InMemoryFollows : IFollowRepository, IFollowsReadModel
 /// SPEC-0029 — "vou" em memória: <see cref="Add"/> só entra em <see cref="All"/> depois do <c>SaveChangesAsync</c>
 /// (como o EF); um segundo "vou" do mesmo usuário no mesmo show violaria a chave primária.
 /// </summary>
-internal sealed class InMemoryAttendances : IAttendanceRepository
+internal sealed class InMemoryAttendances : IAttendanceRepository, IAttendancesReadModel
 {
     private readonly List<Attendance> _saved = [];
     private readonly List<Attendance> _pending = [];
@@ -163,6 +169,11 @@ internal sealed class InMemoryAttendances : IAttendanceRepository
         Task.FromResult<IReadOnlyList<Guid>>([.. _saved.Where(attendance => attendance.ShowId == showId).Select(attendance => attendance.UserId)]);
 
     public void AddSaved(Attendance attendance) => _saved.Add(attendance);
+
+    /// <summary>SPEC-0032 — os "vou" de <paramref name="userId"/>, do mais antigo para o mais novo.</summary>
+    public Task<IReadOnlyList<Attendance>> ListOfAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Attendance>>(
+            [.. _saved.Where(attendance => attendance.UserId == userId).OrderBy(attendance => attendance.CreatedAtUtc)]);
 
     /// <summary>Grava os pendentes; um segundo "vou" do mesmo usuário e show violaria a chave primária.</summary>
     public void Commit()
@@ -254,6 +265,36 @@ internal sealed class TestEventsCatalog : IEventsCatalog, IEventsCatalogNames
     {
         ShowQueries.Add(showId);
         return Task.FromResult(_summaries.GetValueOrDefault(showId));
+    }
+
+    /// <summary>SPEC-0032 (H29-01) — cada leitura em lote de <see cref="GetShowStatesAsync"/> (os ids pedidos).</summary>
+    public List<IReadOnlyCollection<Guid>> StatesQueries { get; } = [];
+
+    /// <summary>SPEC-0032 — cada janela pedida a <see cref="ListScheduledShowsStartingAsync"/>.</summary>
+    public List<(DateTimeOffset FromUtc, DateTimeOffset ToUtc)> WindowQueries { get; } = [];
+
+    /// <summary>SPEC-0032 (H29-01) — a situação e o início dos shows pedidos, só dos encontrados.</summary>
+    public Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(showIds);
+        StatesQueries.Add([.. showIds]);
+        return Task.FromResult<IReadOnlyDictionary<Guid, ShowState>>(
+            showIds.Distinct().Where(_shows.ContainsKey).ToDictionary(id => id, id => _shows[id]));
+    }
+
+    /// <summary>
+    /// SPEC-0032 — os resumos dos shows <c>scheduled</c> com início em [<paramref name="fromUtc"/>, <paramref name="toUtc"/>).
+    /// </summary>
+    public Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
+    {
+        WindowQueries.Add((fromUtc, toUtc));
+        return Task.FromResult<IReadOnlyList<ShowSummary>>(
+        [
+            .. _summaries.Values
+                .Where(show => show.Status == "scheduled" && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc)
+                .OrderBy(show => show.StartsAtUtc),
+        ]);
     }
 }
 
