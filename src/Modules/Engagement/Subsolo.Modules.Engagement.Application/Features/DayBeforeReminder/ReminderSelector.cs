@@ -9,7 +9,7 @@ namespace Subsolo.Modules.Engagement.Application.Features.DayBeforeReminder;
 /// <summary>
 /// SPEC-0032 — o seletor do lembrete na véspera (§6): dos shows <c>scheduled</c> que começam entre agora e agora + 48 h
 /// (<see cref="IEventsCatalog"/>), os que começam "amanhã" no fuso da cidade, numa cidade em que já passou de
-/// <c>reminderHour</c> hoje; para cada um com "vou" (<see cref="IAttendanceApi.GetAttendeesAsync"/>), o aviso
+/// <c>reminderHour</c> hoje; para cada um com "vou" (<see cref="IAttendanceApi"/>, em lote — SPEC-0036), o aviso
 /// <c>reminder</c> com título "Amanhã: {Lineup}", corpo "{HH'h'mm} · {VenueName}, {CityName}", url
 /// "/{CitySlug}/{Slug}" e chave "reminder:{ShowId}:{StartsAtUtc yyyyMMddHHmm}".
 /// </summary>
@@ -25,21 +25,21 @@ internal sealed class ReminderSelector(IEventsCatalog catalog, IAttendanceApi at
     {
         var now = clock.GetUtcNow();
         var shows = await catalog.ListScheduledShowsStartingAsync(now, now + Window, cancellationToken);
-        var notices = new List<ReminderNotice>();
-        foreach (var show in shows)
+        var eve = shows.Where(show => IsEve(show, now, reminderHour)).ToList();
+        if (eve.Count == 0)
         {
-            if (!IsEve(show, now, reminderHour))
-            {
-                continue;
-            }
+            return [];
+        }
 
-            var attendees = await attendances.GetAttendeesAsync(show.ShowId, cancellationToken);
-            if (attendees.Count == 0)
+        // SPEC-0036 (H32-04): quem vai a todos os shows da véspera numa leitura só.
+        var attendees = await attendances.GetAttendeesAsync([.. eve.Select(show => show.ShowId)], cancellationToken);
+        var notices = new List<ReminderNotice>();
+        foreach (var show in eve)
+        {
+            if (attendees.TryGetValue(show.ShowId, out var users) && users.Count > 0)
             {
-                continue;
+                notices.Add(new ReminderNotice(users, NoticeOf(show)));
             }
-
-            notices.Add(new ReminderNotice(attendees, NoticeOf(show)));
         }
 
         return notices;

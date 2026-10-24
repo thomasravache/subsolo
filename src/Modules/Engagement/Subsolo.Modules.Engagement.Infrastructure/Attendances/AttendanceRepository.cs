@@ -34,4 +34,24 @@ internal sealed class AttendanceRepository(EngagementDbContext db) : IAttendance
             .Where(attendance => attendance.ShowId == showId)
             .Select(attendance => attendance.UserId)
             .ToListAsync(cancellationToken);
+
+    /// <summary>SPEC-0036 (H32-04) — uma consulta pelo índice do show: <c>show_id = any(@ids)</c>.</summary>
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> GetAttendeeIdsAsync(
+        IReadOnlyCollection<Guid> showIds, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(showIds);
+        var ids = showIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<Guid>>();
+        }
+
+        var rows = await db.Attendances.AsNoTracking()
+            .Where(attendance => ids.Contains(attendance.ShowId))
+            .Select(attendance => new { attendance.ShowId, attendance.UserId })
+            .ToListAsync(cancellationToken);
+        return rows
+            .GroupBy(row => row.ShowId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<Guid>)[.. group.Select(row => row.UserId)]);
+    }
 }

@@ -21,7 +21,10 @@ internal sealed partial class CatchUpDailyDigestCommandHandler(
     ILogger<CatchUpDailyDigestCommandHandler> logger)
     : ICommandHandler<CatchUpDailyDigestCommand>
 {
-    /// <summary>A hora (São Paulo) do resumo regular e do fim da janela da recuperação.</summary>
+    /// <summary>
+    /// A hora (São Paulo) do resumo regular e do fim da janela da recuperação. SPEC-0036 (H32-02): o
+    /// <c>Engagement:DigestCron</c> configurado tem de disparar nela (validado na subida da API).
+    /// </summary>
     public const int DigestHour = 9;
 
     public async Task<Result> Handle(CatchUpDailyDigestCommand command, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Quartz;
 using Subsolo.Engagement.IntegrationTests.Infrastructure;
 using Subsolo.IntegrationTests.Common;
 
@@ -26,6 +27,9 @@ public sealed class DailyDigestCatchUpTests(PostgresFixture postgres)
 {
     private const string EveryFiveSeconds = "0/5 * * * * ?";
 
+    /// <summary>O <c>Engagement:DigestCron</c> padrão: às 9h de São Paulo.</summary>
+    private const string DigestAtNine = "0 0 9 * * ?";
+
     private static readonly TimeSpan Arrival = TimeSpan.FromSeconds(60);
 
     [Fact]
@@ -41,7 +45,9 @@ public sealed class DailyDigestCatchUpTests(PostgresFixture postgres)
             clock,
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                ["Engagement:DigestCron"] = ReminderRequests.NeverCron,
+                // SPEC-0036 (H32-02): a API só sobe com um DigestCron que dispara às 9h de São Paulo; o gatilho regular é
+                // pausado logo depois da subida (com o relógio ainda às 8h), então só a recuperação roda.
+                ["Engagement:DigestCron"] = DigestAtNine,
                 ["Engagement:DigestCatchUpCron"] = EveryFiveSeconds,
                 ["Engagement:ReminderCron"] = ReminderRequests.NeverCron,
             });
@@ -49,6 +55,7 @@ public sealed class DailyDigestCatchUpTests(PostgresFixture postgres)
         var (fan, _) = await api.SignedInAsync($"fa.recuperacao-{Guid.NewGuid():N}@subsolo.test", ct);
         using var a = admin;
         using var f = fan;
+        await (await QuartzJobs.SchedulerAsync(api, ct)).PauseTrigger(new TriggerKey(QuartzJobs.DailyDigest.Name), ct);
         await QuartzJobs.PauseAsync(api, QuartzJobs.EngagementInbox, ct);
         await QuartzJobs.PauseAsync(api, QuartzJobs.NoticeDeliveries, ct);
         await fan.PutAsync(EngagementRequests.FollowCity(EngagementApiFactory.City), ct).ShouldSucceedAsync(ct);
@@ -115,14 +122,17 @@ public sealed class DailyDigestCatchUpTests(PostgresFixture postgres)
             });
         api.CreateEngagementClient().Dispose();
 
+        // SPEC-0036:H32-05 — o gatilho regular grava o dia pelo relógio de parede do Quartz: perto da meia-noite de São
+        // Paulo, a execução pode cair já no dia seguinte a `today` (calculado antes da subida). Os dois dias valem.
+        DateOnly[] accepted = [DateOnly.FromDateTime(today), DateOnly.FromDateTime(today.AddDays(1))];
         var ran = await Timing.EventuallyAsync(
-            async () => (await ReminderRequests.DigestRunsAsync(api.ConnectionString, ct)).Any(row => row.DigestDate == DateOnly.FromDateTime(today)),
+            async () => (await ReminderRequests.DigestRunsAsync(api.ConnectionString, ct)).Any(row => accepted.Contains(row.DigestDate)),
             Arrival,
             ct);
 
-        ran.ShouldBeTrue($"o gatilho regular do resumo não gravou digest_runs de {today:yyyy-MM-dd}");
+        ran.ShouldBeTrue($"o gatilho regular do resumo não gravou digest_runs de {today:yyyy-MM-dd} (nem do dia seguinte)");
         (await ReminderRequests.DigestRunsAsync(api.ConnectionString, ct))
-            .Single(row => row.DigestDate == DateOnly.FromDateTime(today))
+            .First(row => accepted.Contains(row.DigestDate))
             .CompletedAtUtc.ShouldNotBeNull("digest_runs sem completed_at_utc");
     }
 

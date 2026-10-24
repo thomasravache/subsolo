@@ -1,7 +1,7 @@
 namespace Subsolo.Observability.UnitTests;
 
 /// <summary>
-/// SPEC-0032 H31-01 (contrato v2: resumo diário com recuperação) — o runbook do alerta "Resumo diário falhou"
+/// SPEC-0032 H31-01 (contrato v2: resumo diário com recuperação) — o runbook do alerta "Job agendado falhou" (SPEC-0036 H32-01; antes "Resumo diário falhou")
 /// (<c>docs/runbooks/outbox-parada.md</c>) descreve a recuperação: cita o gatilho <c>Engagement:DigestCatchUpCron</c> e a
 /// tabela <c>engagement.digest_runs</c> que diz se o resumo do dia já saiu.
 /// </summary>

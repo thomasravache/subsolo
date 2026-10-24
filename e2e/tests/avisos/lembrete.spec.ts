@@ -10,7 +10,13 @@ import {
   uploadFlyer,
 } from "../shows/journey";
 import { followingPath, preferences, texts } from "./avisos";
-import { reminderCount, reminderSubject, waitForReminder } from "./lembrete";
+import {
+  reminderCount,
+  reminderSubject,
+  untilSaoPauloMidnight,
+  waitForReminder,
+  waitPastSaoPauloMidnight,
+} from "./lembrete";
 import { linkPath } from "./resumo";
 
 /**
@@ -36,6 +42,13 @@ test.describe("avisos: lembrete na véspera por e-mail", () => {
       "verificação em um projeto (mobile-chrome)",
     );
     test.setTimeout(360_000);
+
+    // SPEC-0036:H32-05 — perto da meia-noite de São Paulo o show "de amanhã" viraria "de hoje" antes do lembrete: com
+    // menos de 3 min para ela, espera passar (e o tempo do teste cresce na mesma medida).
+    if (untilSaoPauloMidnight() < 180_000) {
+      test.setTimeout(360_000 + untilSaoPauloMidnight() + 10_000);
+      await waitPastSaoPauloMidnight();
+    }
 
     // O artista e a cidade "Curitiba <sufixo>" (num contexto só dele).
     const artist = await browser.newContext({

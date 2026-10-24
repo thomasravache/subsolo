@@ -15,16 +15,18 @@ Sinais (SPEC-0009):
   - `NoticeDeliveriesRunFailed`: o job `Notifications.ProcessDeliveries` (entregas de avisos, a cada 1 s) falhou
     inteiro — tipicamente o PostgreSQL fora do ar; as entregas pendentes saem quando ele volta;
   - `DailyDigestRunFailed`: o job `Engagement.DailyDigest` (resumo diário por e-mail, às 9h de São Paulo,
-    `Engagement:DigestCron`, ou o gatilho de recuperação `Engagement:DigestCatchUpCron`, a cada 15 min) falhou. Tem
-    também o alerta próprio abaixo.
+    `Engagement:DigestCron`, ou o gatilho de recuperação `Engagement:DigestCatchUpCron`, a cada 15 min) falhou. Entra
+    também no alerta "Job agendado falhou" abaixo.
   - `NoticesRetentionRunFailed` (SPEC-0032): o job `Notifications.NoticesRetention` (limpeza diária das entregas e
     avisos com mais de 90 dias) falhou inteiro — tipicamente o PostgreSQL fora do ar; a próxima execução (no dia
     seguinte) faz a limpeza inteira, nada se perde.
   - `DayBeforeReminderRunFailed` (SPEC-0032): o job `Engagement.DayBeforeReminder` (lembrete na véspera, de hora em hora,
     `Engagement:ReminderCron`) falhou inteiro; a execução da hora seguinte tenta de novo e a chave
     `reminder:{show}:{início}` por fã evita lembrete duplicado.
-- Alerta do Seq **"Resumo diário falhou"** (`infra/seq/alerts.json`, SPEC-0031): 1 evento `DailyDigestRunFailed` em
-  1 hora basta, porque o job roda uma vez por dia.
+- Alerta do Seq **"Job agendado falhou"** (`infra/seq/alerts.json`, SPEC-0031; renomeado na SPEC-0036): 1 evento
+  `DailyDigestRunFailed`, `DayBeforeReminderRunFailed` ou `NoticesRetentionRunFailed` em 1 hora basta, porque esses
+  jobs rodam poucas vezes (o resumo às 9h, com a recuperação a cada 15 min; o lembrete de hora em hora; a retenção
+  diária) e o "Falha de job" (3 em 10 minutos) fica para os jobs de alta frequência.
 
 Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se perde), mas os efeitos assíncronos
 (avisos, integrações entre módulos) atrasam.
@@ -46,7 +48,7 @@ Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se p
 - **Uma mensagem falhando sempre** (erro por mensagem, com novas tentativas): veja as colunas `error` e `attempts` da tabela
   `outbox_messages` do schema do módulo; o handler que falha está no log "Falha ao processar ...".
 
-### Resumo diário falhou
+### Job agendado falhou: resumo diário
 1. No Seq, filtre `event.name = 'DailyDigestRunFailed'` e abra a exceção: banco fora do ar (`entries.postgres` do
    `/health`) é a causa mais comum; erro do Notifications ou de configuração (`Engagement:DigestCron` inválido impede a
    API de subir) aparece na pilha.

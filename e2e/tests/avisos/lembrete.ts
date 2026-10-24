@@ -76,3 +76,30 @@ export async function reminderCount(
 ): Promise<number> {
   return (await mailTexts(email, subject)).length;
 }
+
+/**
+ * SPEC-0036:H32-05 — quanto falta (ms) para a próxima meia-noite de São Paulo a partir de `now`. O fuso de São Paulo não
+ * tem horário de verão desde 2019 (UTC-3 fixo).
+ */
+export function untilSaoPauloMidnight(now = Date.now()): number {
+  const offset = 3 * 60 * 60 * 1000;
+  const day = 24 * 60 * 60 * 1000;
+  const local = now - offset;
+  return day - (((local % day) + day) % day);
+}
+
+/**
+ * SPEC-0036:H32-05 — se faltar menos de `margin` (3 min) para a meia-noite de São Paulo, espera passar dela (com 5 s de
+ * folga), para o show "de amanhã" não virar "de hoje" no meio da jornada. Devolve quanto esperou (ms).
+ */
+export async function waitPastSaoPauloMidnight(
+  margin = 180_000,
+): Promise<number> {
+  const remaining = untilSaoPauloMidnight();
+  if (remaining >= margin) {
+    return 0;
+  }
+  const wait = remaining + 5_000;
+  await new Promise((resolve) => setTimeout(resolve, wait));
+  return wait;
+}

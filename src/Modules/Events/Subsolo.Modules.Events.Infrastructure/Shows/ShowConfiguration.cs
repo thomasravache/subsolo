@@ -69,6 +69,10 @@ internal sealed class ShowConfiguration : IEntityTypeConfiguration<Show>
         builder.HasOne<Flyer>().WithMany().HasForeignKey(show => show.FlyerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(show => new { show.City, show.Slug }).IsUnique().HasDatabaseName(CitySlugIndex);
         builder.HasIndex(show => new { show.City, show.StartsAtUtc }).HasDatabaseName("ix_shows_city_starts_at");
+        // SPEC-0036 (H32-04): a consulta de hora em hora do lembrete (shows agendados por início, sem cidade).
+        builder.HasIndex(show => show.StartsAtUtc)
+            .HasDatabaseName("ix_shows_scheduled_starts_at")
+            .HasFilter($"status = '{ShowStatuses.Scheduled}'");
         builder.HasIndex(show => show.OrganizerProfileId).HasDatabaseName("ix_shows_organizer");
         builder.HasIndex(show => show.CreatedBy).HasDatabaseName("ix_shows_created_by");
     }
