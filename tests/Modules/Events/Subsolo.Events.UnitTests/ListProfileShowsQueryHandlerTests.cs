@@ -106,6 +106,8 @@ public sealed class ListProfileShowsQueryHandlerTests
     /// </summary>
     public class RecordingShows : DispatchProxy
     {
+        private static readonly ProfileShowCityResponse City = new("curitiba", "Curitiba", "America/Sao_Paulo");
+
         private IReadOnlyList<ShowSummaryResponse> _shows = [];
 
         internal List<ProfileCall> Calls { get; } = [];
@@ -129,7 +131,9 @@ public sealed class ListProfileShowsQueryHandlerTests
 
             var limit = (int)args[3]!;
             Calls.Add(new ProfileCall((Guid)args[0]!, (DateTimeOffset)args[1]!, (bool)args[2]!, limit));
-            return Task.FromResult<IReadOnlyList<ShowSummaryResponse>>([.. _shows.Take(limit)]);
+            // SPEC-0031 (H26-01): a leitura devolve ProfileShowResponse (o resumo, a cidade e o flyerId, nulo aqui).
+            return Task.FromResult<IReadOnlyList<ProfileShowResponse>>(
+                [.. _shows.Take(limit).Select(show => ProfileShowResponse.From(show, City, flyerId: null))]);
         }
     }
 
