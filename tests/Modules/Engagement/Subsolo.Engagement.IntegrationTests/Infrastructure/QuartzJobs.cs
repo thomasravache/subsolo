@@ -57,6 +57,13 @@ internal static class QuartzJobs
         /// <summary>Dispara uma execução e espera o fim; uma exceção do job reprova o teste.</summary>
         public async Task RunOnceAsync(CancellationToken ct)
         {
+            var failure = await RunAndReportAsync(ct);
+            failure.ShouldBeNull($"o job {job} falhou: {failure}");
+        }
+
+        /// <summary>Dispara uma execução, espera o fim e devolve a exceção que o job deixou escapar (ou nula).</summary>
+        public async Task<JobExecutionException?> RunAndReportAsync(CancellationToken ct)
+        {
             (await Timing.EventuallyAsync(() => Task.FromResult(_running.IsEmpty), Budget, ct))
                 .ShouldBeTrue($"o job {job} não terminou a execução anterior");
             Task<JobExecutionException?> finished;
@@ -67,8 +74,7 @@ internal static class QuartzJobs
             }
 
             await scheduler.TriggerJob(job, new JobDataMap(), ct);
-            var failure = await finished.WaitAsync(Budget, ct);
-            failure.ShouldBeNull($"o job {job} falhou: {failure}");
+            return await finished.WaitAsync(Budget, ct);
         }
 
         public ValueTask JobToBeExecuted(IJobExecutionContext context, CancellationToken cancellationToken = default)

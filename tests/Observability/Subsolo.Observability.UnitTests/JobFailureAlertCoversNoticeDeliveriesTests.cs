@@ -6,7 +6,8 @@ namespace Subsolo.Observability.UnitTests;
 /// <summary>
 /// SPEC-0031 H30-05 (item herdado da revisão da SPEC-0030) — o alerta "Falha de job" de <c>infra/seq/alerts.json</c> também
 /// seleciona a falha do job de entregas de avisos: o filtro compara <c>event.name</c> com <c>'NoticeDeliveriesRunFailed'</c>
-/// por igualdade, junto de <c>'OutboxProcessingFailed'</c> (a forma do filtro continua a do SPEC-0009:UT-05).
+/// por igualdade, junto de <c>'OutboxProcessingFailed'</c> (a forma do filtro continua a do SPEC-0009:UT-05). SPEC-0031
+/// IT-07 (Emenda 3): e a falha do job do resumo diário, <c>'DailyDigestRunFailed'</c>.
 /// </summary>
 public sealed partial class JobFailureAlertCoversNoticeDeliveriesTests
 {
@@ -22,6 +23,20 @@ public sealed partial class JobFailureAlertCoversNoticeDeliveriesTests
             .ShouldBeTrue($"o filtro \"{filter}\" não compara event.name com 'NoticeDeliveriesRunFailed'");
         AndBetweenEventNames().IsMatch(filter)
             .ShouldBeFalse($"o filtro \"{filter}\" exige os dois eventos ao mesmo tempo (use or)");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0031:IT-07")]
+    public void JobFailureAlertSelectsDailyDigestRunFailed()
+    {
+        var filter = JobFailureFilter();
+
+        EventNameEquals("DailyDigestRunFailed").IsMatch(filter)
+            .ShouldBeTrue($"o filtro \"{filter}\" não compara event.name com 'DailyDigestRunFailed'");
+        EventNameEquals("OutboxProcessingFailed").IsMatch(filter)
+            .ShouldBeTrue($"o filtro \"{filter}\" perdeu event.name = 'OutboxProcessingFailed'");
+        AndBetweenEventNames().IsMatch(filter)
+            .ShouldBeFalse($"o filtro \"{filter}\" exige os eventos ao mesmo tempo (use or)");
     }
 
     [Fact]
