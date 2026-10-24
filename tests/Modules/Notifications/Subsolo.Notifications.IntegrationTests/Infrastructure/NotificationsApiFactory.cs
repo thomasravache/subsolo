@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 using Subsolo.Common.Domain;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
@@ -25,7 +27,8 @@ namespace Subsolo.Notifications.IntegrationTests.Infrastructure;
 /// <see cref="WebPushOptions.HttpClientName"/>: nenhuma chamada sai para FCM, Mozilla ou Apple;</item>
 /// <item>os limites <c>default</c> altos e a entrada de teste <see cref="NotificationsTestEndpoints.SignIn"/>;</item>
 /// <item>trocas de serviço do próprio teste (<paramref name="configureServices"/>, por último), como os canais e o
-/// diretório de destinatários falsos do IT-08.</item>
+/// diretório de destinatários falsos do IT-08;</item>
+/// <item>SPEC-0031 — os logs exportados em memória (<see cref="Logs"/>).</item>
 /// </list>
 /// </summary>
 internal sealed class NotificationsApiFactory(
@@ -45,7 +48,22 @@ internal sealed class NotificationsApiFactory(
         ["Security:RateLimiting:auth:Window"] = "00:01:00",
     };
 
+    private readonly List<LogRecord> _logs = [];
+
     public string ConnectionString => connectionString;
+
+    /// <summary>SPEC-0031 — os logs do host (OpenTelemetry, em memória).</summary>
+    public IReadOnlyList<LogRecord> Logs
+    {
+        get
+        {
+            Services.GetRequiredService<LoggerProvider>().ForceFlush();
+            lock (_logs)
+            {
+                return [.. _logs];
+            }
+        }
+    }
 
     /// <summary>Par de chaves VAPID deste host (gerado no teste).</summary>
     public VapidKeys Vapid { get; } = VapidKeys.Generate();
@@ -128,6 +146,7 @@ internal sealed class NotificationsApiFactory(
         {
             services.AddEndpoints(typeof(NotificationsApiFactory).Assembly);
             services.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Push);
+            services.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
             configureServices?.Invoke(services);
         });
     }
