@@ -7,8 +7,10 @@ namespace Subsolo.Modules.Engagement.Application.Diagnostics;
 /// SPEC-0027 — métricas do módulo Engagement (Plano de Rollout): <c>subsolo.engagement.follows</c> e
 /// <c>subsolo.engagement.unfollows</c>, por tipo de alvo (<c>city</c> | <c>profile</c>). SPEC-0029:
 /// <c>subsolo.engagement.attendances</c>, por ação (<c>attend</c> | <c>unattend</c>). SPEC-0031:
-/// <c>subsolo.engagement.new_show_notices</c> (avisos de show novo enfileirados, um por seguidor) e
-/// <c>subsolo.engagement.digest_recipients</c> (fãs com resumo diário enfileirado). Sem dados pessoais nas tags.
+/// <c>subsolo.engagement.new_show_notices</c> (avisos de show novo, um por seguidor) e
+/// <c>subsolo.engagement.digest_recipients</c> (fãs com resumo diário); SPEC-0032 (H31-05): os dois contam seguidores
+/// considerados, inclusive em reexecuções. SPEC-0032: <c>subsolo.engagement.reminders</c> (fãs considerados no lembrete na
+/// véspera, por show). Sem dados pessoais nas tags.
 /// </summary>
 public static class EngagementTelemetry
 {
@@ -33,10 +35,13 @@ public static class EngagementTelemetry
         "subsolo.engagement.attendances", unit: "{attendance}", description: "\"Vou\" marcados e desmarcados, por ação.");
 
     private static readonly Counter<long> NewShowNoticesCounter = Meter.CreateCounter<long>(
-        "subsolo.engagement.new_show_notices", unit: "{notice}", description: "Avisos de show novo enfileirados, um por seguidor (SPEC-0031).");
+        "subsolo.engagement.new_show_notices", unit: "{notice}", description: "Avisos de show novo: seguidores considerados (inclui reexecuções) (SPEC-0031).");
 
     private static readonly Counter<long> DigestRecipientsCounter = Meter.CreateCounter<long>(
-        "subsolo.engagement.digest_recipients", unit: "{recipient}", description: "Fãs com o resumo diário enfileirado (SPEC-0031).");
+        "subsolo.engagement.digest_recipients", unit: "{recipient}", description: "Resumo diário: seguidores considerados (inclui reexecuções) (SPEC-0031).");
+
+    private static readonly Counter<long> RemindersCounter = Meter.CreateCounter<long>(
+        "subsolo.engagement.reminders", unit: "{recipient}", description: "Lembretes na véspera: fãs considerados por show (inclui reexecuções) (SPEC-0032).");
 
     internal static void Followed(string targetKind) =>
         Follows.Add(1, new TagList { { TargetKindTag, targetKind } });
@@ -53,4 +58,6 @@ public static class EngagementTelemetry
     internal static void NewShowNotices(int recipients) => NewShowNoticesCounter.Add(recipients);
 
     internal static void DigestRecipients(int recipients) => DigestRecipientsCounter.Add(recipients);
+
+    internal static void Reminders(int recipients) => RemindersCounter.Add(recipients);
 }
