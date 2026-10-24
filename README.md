@@ -93,6 +93,8 @@ Show novo e resumo diário (SPEC-0031): quem segue a cidade ou um perfil do show
 
 Lembrete na véspera (SPEC-0032): a partir das 10h no fuso da cidade, quem marcou "vou" recebe "Amanhã: …" por push e/ou e-mail; cancelados ficam de fora e adiados ganham lembrete na nova véspera. Se o resumo das 9h falhar, a recuperação a cada 15 min envia o resumo do dia. Na pilha local o lembrete roda a cada minuto com hora 0 (`Engagement__ReminderCron`, `Engagement__ReminderHour`).
 
+Denúncia e moderação (SPEC-0033): o fã logado denuncia um show pela página dele (até 10 por dia); o admin decide na aba "Denúncias" de `/admin/fila` entre manter e ocultar. O show oculto some da agenda, das páginas públicas, dos avisos e do lembrete, e o dono o vê como "Oculto pela moderação". A fila não mostra quem denunciou; o módulo `Moderation` tem schema próprio.
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

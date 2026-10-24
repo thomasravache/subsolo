@@ -4,7 +4,7 @@ title: Denúncia de show e fila de moderação
 tier: full
 type: feature
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031]
@@ -192,23 +192,23 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Preenchido na fase PLAN, após a aprovação. Cada fase começa pelos testes. -->
 
 **Fase 1: Regras**
-- [ ] Red: UT-01, UT-02 com a tag `SPEC-0033:<ID>`, falhando pelo motivo certo
-- [ ] Green e Refactor
+- [x] Red: UT-01, UT-02 com a tag `SPEC-0033:<ID>`, falhando pelo motivo certo
+- [x] Green e Refactor
 
 **Fase 2: Módulo, ocultar e contrato**
-- [ ] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
-- [ ] Green: módulo `Moderation`, endpoints, limite, evento `ShowHiddenByModeration`, filtro de ocultos no `Events`, export e anonimização, OpenAPI e cliente TS
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Red: IT-01..IT-06, CT-01 falhando pelo motivo certo
+- [x] Green: módulo `Moderation`, endpoints, limite, evento `ShowHiddenByModeration`, filtro de ocultos no `Events`, export e anonimização, OpenAPI e cliente TS
+- [x] Validar: build + suíte + arquitetura (G2/G3)
 
 **Fase 3: Telas e jornada E2E**
-- [ ] Red: E2E-01 falhando pelo motivo certo
-- [ ] Green: folha "Reportar show", aba "Denúncias" e selo em "Meus shows"
+- [x] Red: E2E-01 falhando pelo motivo certo
+- [x] Green: folha "Reportar show", aba "Denúncias" e selo em "Meus shows"
 
 **Fase final: Integração, entrega e documentação**
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 12. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência (comando + resultado, SHA, execução de CI, veredito). -->
@@ -221,8 +221,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 3 minor e 5 nits; aviso dos lock files aceito — só referências de projeto do Moderation; H33-01..07 levados à SPEC-0037) — cadda8e | 2026-10-24 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 16m 50s 507ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 905ms) — d0189b9 | 2026-10-24 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-24 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 3d16fa1 (árvore suja) | 2026-10-24 |
 
 ## 13. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -234,36 +234,57 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 
 ### O que foi entregue
 <!-- comportamento entregue do ponto de vista do usuário/sistema -->
+- O fã logado denuncia um show pela página dele ("Reportar show falso ou cancelado"): show falso, cancelado ou adiado sem aviso, informação errada ou outro, com detalhe opcional; uma denúncia pendente por show e até 10 por dia.
+- A "Fila do admin" ganha a aba "DENÚNCIAS (n)": um cartão por show com as contagens por motivo e os detalhes, sem mostrar quem denunciou; "Manter" arquiva as denúncias e "Ocultar show" (com confirmação e nota interna opcional) tira o show da agenda, das páginas públicas, dos avisos e do lembrete.
+- O dono vê "Oculto pela moderação" em "Meus shows" e não pode editar o show oculto.
+- Conta: a exportação traz as denúncias do próprio fã e, na exclusão, as denúncias ficam sem autor.
 
 ### Como foi feito
 <!-- decisões de implementação, módulos/arquivos principais, desvios e emendas (com versão), dívidas assumidas -->
+- TDD com papéis separados: Test-writer (fdcdaff scaffold, 2341cb2, 26eeced, 13d5fac, da85cbf, 1aa241c, 3922e9a, db73c9b; Emenda 2: b5b8d35 scaffold, e6fb9ea, 7dab32e; contrato v3 nos testes antigos: e277f7f) → Implementer (5ac0823, 16f7e3b, 35552f1, 7f9783e; lock files 0712bdf) → Reviewer: APPROVED WITH MINOR ITEMS. O primeiro G5 (b6b1a42) falhou no axe do E2E-01 por contraste das etiquetas de motivo da fila; corrigido em 772bd82 (texto sobre o par "chip ativo" do DESIGN.md, 4,96:1) e o G5 seguinte passou. O job `test` do CI passou a levar ~51 min e o limite subiu de 50 para 75 min (221ff85, Emenda sem mudança de contrato).
+- Módulo novo `Moderation` (schema `moderation`, slices `ReportShow`, `ListReports`, `KeepShow`, `HideShow`, export e `UserDeleted`) seguindo o `Profiles` (SPEC-0021); evento `ShowHiddenByModerationIntegrationEvent` no contrato do `Events` (consumidor dono do contrato, ADR-0001), pela outbox, com consumidor idempotente e coluna `events.shows.hidden_at_utc`.
+- `IShowHeadlines` em lote no contrato do `Events` para a fila; limite `moderation-report` com a chave do usuário lida do ticket do cookie de sessão (o limitador roda antes da autenticação).
+- Telas pelo Stitch ("Denunciar Show" e "Fila do Admin"), com os ajustes do §6; desvios aceitos na revisão: texto "Reportar…", estado de resultado na folha, abas sublinhadas como as existentes (`AdminQueueTabs`) e selo reaproveitando `Badge`.
+- Emendas 1–4 (contrato v4): show oculto como inexistente nas leituras públicas e no catálogo, respostas aos SPEC_DEFECTs do Test-writer e decisões do Implementer (400 `moderation.invalid_note`).
 
 ### Prova de Correção
 <!-- type fix: o teste de regressão falhou antes da correção (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 <!-- Uma linha por teste do plano (todos os IDs da seção 7). Resultado: PASS. Evidência: execução de CI, commit ou relatório. -->
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | validador da denúncia: os quatro motivos, `other` sem detalhe (inclusive só espaços), detalhe com 500 e 501 caracteres e motivo desconhecido | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| UT-02 | agrupador da fila: um item por show, contagem por motivo, até três detalhes mais recentes, ordem pela primeira denúncia | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-01 | denunciar, repetir, motivo inválido e id inexistente: 201, 409 `moderation.already_reported`, 400 `moderation.invalid_report` e 404 | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-02 | 11ª denúncia do dia → 429 com a chave do usuário; anônimo 401; fã na fila 403; mutação sem X-CSRF recusada | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-03 | manter e ocultar: status das denúncias, show oculto fora da agenda, da página (404), das listas dos perfis, do `IEventsCatalog` e do `IShowHeadlines`; `hidden` em "Meus shows" e no formulário; edição → 409 `events.show_hidden`; nota interna guardada e não exposta; decidir de novo → 404; consumidor idempotente | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-04 | 500 shows denunciados: fila em ≤ 300 ms p95 sem identificar quem denunciou | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-05 | export com a seção `reports` só do fã, no formato do §6; depois da exclusão as denúncias ficam com `reporter_user_id` nulo | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| IT-06 | `Moderation` só depende de `Users` e `Events` pelos contratos; `Events` não referencia `Moderation`; regras do ADR-0001 | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| CT-01 | endpoints e evento `ShowHiddenByModerationIntegrationEvent` e `IShowHeadlines` como no §6; snapshot OpenAPI e `pnpm api:check` | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
+| E2E-01 | fã denuncia "Cancelado ou adiado e não avisaram", vê o agradecimento e o aviso de repetida; admin oculta pela aba "Denúncias"; página do show vira não encontrado e o show some da agenda; axe sem violações (mobile-chrome) | PASS | `gate G2 --run` em 70ec8c4; `gate G5 --run` na integração (8d9be27); CI do PR #46 (run 40123772828, checks verdes em 3d16fa1) |
 
 ### Definição de Pronto
-- [ ] Todos os testes do plano passando e listados na Verificação
-- [ ] Todo comportamento do Mapa de Comportamentos coberto e verificado
-- [ ] Suíte completa, arquitetura e CI verdes no resultado integrado (G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
-- [ ] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
-- [ ] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6)
-- [ ] Observabilidade e rollback prontos conforme o Plano de Rollout
-- [ ] Documentação raiz e CHANGELOG atualizados (G7)
-- [ ] Pendências registradas como novas specs (ou nenhuma)
+- [x] Todos os testes do plano passando e listados na Verificação
+- [x] Todo comportamento do Mapa de Comportamentos coberto e verificado
+- [x] Suíte completa, arquitetura e CI verdes no resultado integrado (G5) — CI verde no PR #46 (run 40123772828)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão arquitetural existente mantido, ou desvio coberto por ADR aprovado
+- [x] Requisitos não-funcionais medidos com evidência (ou N/A justificado)
+- [x] Disponível no ambiente-alvo via pipeline, com smoke/E2E passando no ambiente (G6) — G6 N/A até a SPEC-0003
+- [x] Observabilidade e rollback prontos conforme o Plano de Rollout
+- [x] Documentação raiz e CHANGELOG atualizados (G7) — CHANGELOG atualizado
+- [x] Pendências registradas como novas specs (ou nenhuma) — ver Pendências
 
 ### Deploy
 <!-- ambiente(s), versão/tag, data, estratégia, estado da feature flag, execução do pipeline -->
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #46 (https://github.com/thomasravache/subsolo/pull/46), merge commit cd65d7d em 2026-10-24, com H2 pela política auto-on-green.
 
 ### Pendências
 <!-- specs criadas para o que ficou de fora, ou "Nenhuma" -->
-
+- SPEC-0037: H33-01 (IT da corrida e da nota longa), H33-02 (foco depois da decisão), H33-03 (falha da fila de denúncias isolada da aba de perfis), H33-04 (código de CSRF repetido no OpenAPI), H33-05 (denúncia tardia de show já oculto), H33-06 (fuso da cidade na fila), H33-07 (enum do motivo no OpenAPI).
 ## 15. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0033`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
