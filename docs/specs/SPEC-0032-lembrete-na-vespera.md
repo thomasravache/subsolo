@@ -4,14 +4,14 @@ title: Lembrete na véspera
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0029, SPEC-0030, SPEC-0031]
 consumes_contract: []
-contract_version: 1
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Common/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Common/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, tools/compose-up.sh, web/src/components/notifications/**, tests/Modules/Profiles/Subsolo.Profiles.UnitTests/Infrastructure/ProfilesHarness.cs]
 adrs: [ADR-0001, ADR-0014]
 external: []
 size: S
@@ -78,6 +78,27 @@ Aviso reminder: título "Amanhã: {Lineup separado por ' + '}" ; corpo "{HH'h'mm
 Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHour (padrão 10)
 ```
 
+**Ajustes de contrato (Emenda 2, contrato v2):**
+```csharp
+// IEventsCatalog ganha também (H29-01): estados em lote, só dos ids encontrados
+Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct);
+```
+```text
+Resumo diário com recuperação (H31-01):
+  tabela engagement.digest_runs (digest_date date PK, completed_at_utc timestamptz) — uma linha por dia (America/Sao_Paulo) com resumo concluído
+  gatilho DigestCron (padrão "0 0 9 * * ?"): janela (horário agendado − 24 h, horário agendado]; ao concluir grava digest_runs do dia
+  gatilho de recuperação Engagement:DigestCatchUpCron (padrão "0 0/15 * * * ?"): se a hora em São Paulo ≥ 9 e não há digest_runs do dia,
+    roda com a janela (9h de hoje − 24 h, 9h de hoje]; senão não faz nada. A chave digest:{data} por fã evita e-mail duplicado.
+  falha em qualquer gatilho: DailyDigestRunFailed (como hoje); a recuperação seguinte tenta de novo. Runbook outbox-parada.md descreve a recuperação.
+Contadores (H31-05): subsolo.engagement.digest_recipients e subsolo.engagement.new_show_notices passam a ter a descrição "seguidores considerados (inclui reexecuções)"; o log DailyDigestCompleted diz "fã(s) considerado(s)".
+NoticesRetention (H31-04): falha vira NoticesRetentionRunFailed (Error), incluído no filtro do alerta "Falha de job" e no runbook.
+Retenção (H31-07): índice ix_deliveries_created_at_utc em notifications.deliveries(created_at_utc), por migração do Notifications.
+CSRF (H31-03): lista permitida de endpoints com CsrfExemptMetadata = { UnsubscribeNoticeEmailOneClick }, todos AllowAnonymous.
+Nomes (Emenda 3): job Quartz Engagement.DayBeforeReminder; seletor ReminderSelector.SelectAsync(reminderHour, ct); falha do job → DayBeforeReminderRunFailed (Error), no filtro do alerta "Falha de job" e no runbook.
+Recuperação (Emenda 3): o gatilho de recuperação é observável só pela config (DigestCron, DigestCatchUpCron) e pela tabela digest_runs; antes das 9h em São Paulo não faz nada. Corte da line-up (H31-08): no máximo 200 unidades UTF-16, em limite de elemento de texto.
+Pilha local (E2E-01): tools/compose-up.sh e o AppHost passam Engagement__ReminderCron="0 * * * * ?" e Engagement__ReminderHour="0"; os padrões de produção não mudam.
+```
+
 **Design:** N/A — push do sistema e e-mail no modelo da SPEC-0030; sem tela nova.
 
 **Arquivos/módulos afetados:** ver `touches` no frontmatter.
@@ -93,6 +114,7 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
 | Adiado | data muda depois do lembrete | lembrete novo na véspera da nova data; nenhum na data antiga | UT-01, IT-02 |
 | Ninguém vai | nenhum "vou" | nada enfileirado | UT-01 |
 | Escala | 200 shows, 5.000 "vou" | ≤ 30 s | IT-03 |
+| Falha do job | banco fora durante a execução | `DayBeforeReminderRunFailed` (Error), alerta "Falha de job"; a próxima hora tenta de novo | IT-04 |
 | Contrato | `IEventsCatalog` | assinatura do §6 | CT-01 |
 
 ## 7. Artefato B — Plano de Testes (TDD)
@@ -107,6 +129,7 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
 - **IT-01** — Dados a API, o PostgreSQL, um show amanhã com três fãs que marcaram "vou" e outro show cancelado com "vou", quando o job roda depois das 10h locais, então há entregas `reminder` para os três fãs (pelos canais que ligaram) e nenhuma do cancelado.
 - **IT-02** — Dado o mesmo cenário, quando o job roda às 10h e às 11h e depois o show é adiado uma semana e o job roda na nova véspera, então cada fã tem uma entrega na primeira véspera e uma na nova, nenhuma a mais.
 - **IT-03** — Dados 200 shows na janela e 5.000 "vou", quando o job roda, então termina em ≤ 30 s com uma entrega por fã e show.
+- **IT-04** — Dado o job `DayBeforeReminder` com o banco indisponível durante a execução, quando roda, então registra `DayBeforeReminderRunFailed` (Error) sem propagar a exceção ao Quartz, e o filtro do alerta "Falha de job" em `infra/seq/alerts.json` inclui o evento.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o tipo público `IEventsCatalog`, quando lido por reflexão, então `ListScheduledShowsStartingAsync` tem a forma do §6; o snapshot OpenAPI não muda.
@@ -122,7 +145,7 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
 
 - **Itens herdados da revisão da SPEC-0031 (G4, tag `SPEC-0032:H31-NN`):**
   - H31-01 — `SendDailyDigestCommand`: a janela fixa de 24 h perde os shows do dia se a execução das 9h falhar ou a API estiver fora às 9h (Quartz em memória, sem recuperação); usar a janela desde a última execução com sucesso (limitada a 7 dias) ou repetir a cada 15 min até dar certo no dia (a chave `digest:{data}` evita duplicar), com teste, e ajustar o runbook `outbox-parada.md`.
-  - H31-02 — `SendDailyDigestCommand`: um `EnqueueAsync` por corpo distinto de resumo; o IT-04 só mede o melhor caso (todos com o mesmo corpo). Acrescentar a variante com corpos diferentes (fãs espalhados por N bandas) dentro de ≤ 60 s, ou agrupar os avisos numa ida ao banco.
+  - H31-02 — `SendDailyDigestCommand`: um `EnqueueAsync` por corpo distinto de resumo; o teste de volume do resumo da SPEC-0031 só mede o melhor caso (todos com o mesmo corpo). Acrescentar a variante com corpos diferentes (fãs espalhados por N bandas) dentro de ≤ 60 s, ou agrupar os avisos numa ida ao banco.
   - H31-03 — `AntiforgeryFilter.ExemptFromCsrf`: teste de arquitetura ou segurança que lista os endpoints com `CsrfExemptMetadata`, compara com a lista permitida (hoje só `UnsubscribeNoticeEmailOneClick`) e exige `AllowAnonymous`; teste unitário do ramo isento.
   - H31-04 — `NoticesRetentionJob`: try/catch com o evento `NoticesRetentionRunFailed`, incluído no alerta "Falha de job" e no runbook, com teste.
   - H31-05 — contadores `subsolo.engagement.digest_recipients` e `subsolo.engagement.new_show_notices` (e o log `DailyDigestCompleted`): contar só o que foi enfileirado com sucesso, sem recontar reexecuções do dia, ou renomear a descrição para "seguidores considerados", com teste.
@@ -135,7 +158,7 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
 
 ## 8. Plano de Rollout
 - **Estratégia:** deploy direto — sem produção até o go-live (SPEC-0003).
-- **Dados/schema:** nenhuma tabela nova (as entregas ficam no `notifications`).
+- **Dados/schema:** tabela `engagement.digest_runs` (Emenda 2) e índice `ix_deliveries_created_at_utc` no `notifications`; as entregas do lembrete ficam no `notifications`.
 - **Compatibilidade:** `IEventsCatalog` ganha um método.
 - **Observabilidade:** contador `subsolo.engagement.reminders`; falha do job vira alerta no Seq (ADR-0010).
 - **Rollback:** reverter o merge commit.
@@ -176,12 +199,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 6855548 | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — bc5add1 | 2026-10-24 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 44af482 | 2026-10-24 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 570ms) — 44af482 | 2026-10-24 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 2 minor e 5 nits; H32-01..05 levados à SPEC-0036; §8 corrigido na Emenda 3) — bb4155d | 2026-10-24 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 16m 09s 234ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 10s 595ms) — 3bd5f34 | 2026-10-24 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -230,3 +253,6 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 1 (sem mudança de contrato) | 2026-10-24 | `touches` e §7.6 ganham os itens H31-01..08 herdados da revisão G4 da SPEC-0031 (Notifications, Common.Presentation/Security, alertas do Seq, runbooks e testes correspondentes). | revisão G4 da SPEC-0031 | — | piloto automático do Thomas (2026-10-24) |
+| 2 | 2026-10-24 | Decisões concretas dos itens herdados: `IEventsCatalog.GetShowStatesAsync` (H29-01); resumo com recuperação por `engagement.digest_runs` e gatilho `Engagement:DigestCatchUpCron` a cada 15 min (H31-01); descrição dos contadores (H31-05); `NoticesRetentionRunFailed` (H31-04); índice da retenção (H31-07); lista permitida de isenção de CSRF (H31-03); cron e hora do lembrete na pilha local; `touches` ganha `tools/compose-up.sh` e `web/src/components/notifications/**`. | despacho do Test-writer: itens herdados sem decisão concreta | SPEC-0031 (implementada; nenhum consumidor externo) | piloto automático do Thomas (2026-10-24) |
+| 3 | 2026-10-24 | Retorno do Test-writer: novo IT-04 (`DayBeforeReminderRunFailed` e alerta "Falha de job"); nomes `Engagement.DayBeforeReminder` e `ReminderSelector.SelectAsync`; recuperação do resumo observável por config e `digest_runs`; corte da line-up em ≤ 200 unidades UTF-16; texto do H31-02 sem ID solto; `touches` ganha `ProfilesHarness.cs` (implementa `IEventsCatalog`). | SD-1..SD-5 do Test-writer | — | piloto automático do Thomas (2026-10-24) |
+| 3 (sem mudança de contrato) | 2026-10-24 | §8 passa a citar a tabela `engagement.digest_runs` e o índice da retenção; achados menores da revisão G4 (H32-01..05) vão para a SPEC-0036. | revisão G4 | SPEC-0036 | piloto automático do Thomas (2026-10-24) |

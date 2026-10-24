@@ -209,6 +209,9 @@ namespace Subsolo.Modules.Notifications.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_deliveries_created_at_utc");
+
                     b.HasIndex("NextAttemptAtUtc")
                         .HasDatabaseName("IX_deliveries_pending")
                         .HasFilter("status = 'pending'");

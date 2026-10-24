@@ -89,6 +89,8 @@ Vou (SPEC-0029): logado, toque em "Vou" na página do show; a contagem "{n} vão
 
 Avisos (SPEC-0030): logado, abra https://localhost:8443/seguindo e toque em "Ativar avisos" na região "Avisos" para receber push neste aparelho; os interruptores escolhem push de show novo, resumo diário por e-mail e lembrete na véspera (por push ou e-mail). As chaves VAPID e a de descadastro de desenvolvimento são geradas pelo AppHost e pelo `tools/compose-up.sh`; em produção entram como segredos no go-live (SPEC-0003). Os e-mails de aviso trazem link de descadastro (`/avisos/descadastro`). Runbook: `docs/runbooks/avisos-sem-envio.md`.
 
+Show novo e resumo diário (SPEC-0031): quem segue a cidade ou um perfil do show recebe push na hora quando o show é publicado; quem ligou "Resumo diário por e-mail" recebe às 9h (America/Sao_Paulo) os shows novos de quem segue. Na pilha local (`tools/compose-up.sh` e AppHost) o resumo roda a cada minuto (`Engagement__DigestCron`) e chega ao Mailpit; o horário de produção fica em `appsettings.json`. Os e-mails de aviso trazem descadastro em um clique (RFC 8058).
+
 Os comandos oficiais ficam em `docs/specs/sdd-config.yml`; o guia de testes (traits, fixtures, como escrever cada tipo de teste) está em [`tests/README.md`](tests/README.md). Todo PR roda o CI do GitHub Actions (`.github/workflows/ci.yml`), cujos jobs são checks obrigatórios para o merge na `main`.
 
 ## Convenções

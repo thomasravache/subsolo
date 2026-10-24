@@ -5,8 +5,8 @@ using Subsolo.Modules.Events.IntegrationEvents;
 namespace Subsolo.Modules.Engagement.Application.Features.ListMyAttendances;
 
 /// <summary>
-/// SPEC-0029 — os "vou" do fã cujo show ainda existe e não começou (pelo <see cref="IEventsCatalog.GetShowStateAsync"/>;
-/// cancelado ou adiado futuro continua na lista). <c>period</c> diferente de <c>upcoming</c> →
+/// SPEC-0029 — os "vou" do fã cujo show ainda existe e não começou (cancelado ou adiado futuro continua na lista), na
+/// ordem do "vou"; SPEC-0032 (H29-01): as situações vêm numa leitura em lote (<see cref="IEventsCatalog.GetShowStatesAsync"/>). <c>period</c> diferente de <c>upcoming</c> →
 /// <see cref="EngagementErrors.InvalidQuery"/>.
 /// </summary>
 internal sealed class ListMyAttendancesQueryHandler(
@@ -26,16 +26,20 @@ internal sealed class ListMyAttendancesQueryHandler(
         }
 
         var mine = await attendances.ListOfAsync(query.UserId, cancellationToken);
-        var now = clock.GetUtcNow();
-        List<Guid> upcoming = [];
-        // Um fã marca poucos shows; o Events é lido show a show pela interface pública (ADR-0001).
-        foreach (var attendance in mine)
+        if (mine.Count == 0)
         {
-            if (await catalog.GetShowStateAsync(attendance.ShowId, cancellationToken) is { } show && show.StartsAtUtc > now)
-            {
-                upcoming.Add(attendance.ShowId);
-            }
+            return Result.Success(new MyAttendancesResponse([]));
         }
+
+        var now = clock.GetUtcNow();
+        // SPEC-0032 (H29-01): as situações vêm do Events numa leitura em lote (ADR-0001: pela interface pública).
+        var states = await catalog.GetShowStatesAsync([.. mine.Select(attendance => attendance.ShowId)], cancellationToken);
+        List<Guid> upcoming =
+        [
+            .. mine
+                .Where(attendance => states.TryGetValue(attendance.ShowId, out var show) && show.StartsAtUtc > now)
+                .Select(attendance => attendance.ShowId),
+        ];
 
         return Result.Success(new MyAttendancesResponse(upcoming));
     }

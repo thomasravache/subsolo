@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Aviso de show novo e resumo diário (SPEC-0031): push imediato para quem segue a cidade ou um perfil do show, resumo diário por e-mail às 9h com os shows novos, descadastro em um clique (RFC 8058), WNS do Edge no Windows, retenção de 90 dias de entregas e avisos, alertas "Falha de job" e "Resumo diário falhou", e `og:image` do perfil a partir do flyer.
 - Avisos por push e e-mail (SPEC-0030): ativar push no aparelho em `/seguindo` (Web Push com VAPID, manifest e service worker), preferências de show novo, resumo diário e lembrete por canal, entregas com novas tentativas e sem duplicar, e-mail de aviso com descadastro assinado, dados de avisos no export e na exclusão de conta, alerta "Falha no envio de aviso" com runbook.
 - Vou com contagem (SPEC-0029): botão "Vou" na página do show e contagem "X vão" nos cards da agenda e do perfil, sem revelar quem vai; "vou" na exportação de dados e apagado ao excluir a conta; botão de seguir com nome acessível constante e link "Seguindo" no cabeçalho do desktop.
 - Apoie, privacidade e termos (SPEC-0028): página `/apoie` com QR code e chave Pix (configurados só no servidor) e lista de apoiadores mantida pelo admin em `/admin/apoiadores`; páginas `/privacidade` e `/termos` com índice e canal do titular; runbook de incidente com dados pessoais.

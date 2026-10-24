@@ -32,6 +32,9 @@ public sealed class EngagementDbContext(DbContextOptions<EngagementDbContext> op
     /// <summary>SPEC-0031 — os shows publicados, base do resumo diário.</summary>
     internal DbSet<PublishedShowRow> PublishedShows => Set<PublishedShowRow>();
 
+    /// <summary>SPEC-0032 (H31-01) — os dias com resumo diário concluído (base da recuperação).</summary>
+    internal DbSet<DigestRunRow> DigestRuns => Set<DigestRunRow>();
+
     async Task IEngagementUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         try

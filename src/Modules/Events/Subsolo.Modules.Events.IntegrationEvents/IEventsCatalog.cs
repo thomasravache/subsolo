@@ -23,6 +23,18 @@ public interface IEventsCatalog
     /// novo e o resumo diário), ou <see langword="null"/> se o show não existe.
     /// </summary>
     Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0032 — os resumos dos shows <c>scheduled</c> com início entre <paramref name="fromUtc"/> e
+    /// <paramref name="toUtc"/> (o <c>Engagement</c> escolhe com eles os lembretes na véspera).
+    /// </summary>
+    Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0032 (H29-01) — a situação e o início dos shows <paramref name="showIds"/> numa leitura só, apenas dos
+    /// encontrados.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct);
 }
 
 /// <summary>
