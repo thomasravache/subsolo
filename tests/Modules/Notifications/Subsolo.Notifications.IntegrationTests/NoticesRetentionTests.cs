@@ -8,8 +8,9 @@ namespace Subsolo.Notifications.IntegrationTests;
 /// <summary>
 /// SPEC-0031 H30-02 (Emenda 1, contrato v2: job <c>NoticesRetention</c> diário) — com avisos e entregas gravados direto
 /// em <c>notifications.notices</c>/<c>deliveries</c>: entregas concluídas (<c>sent</c>, <c>failed</c>,
-/// <c>discarded</c>) com mais de 90 dias somem; uma entrega <c>pending</c> antiga fica, e o aviso dela também; avisos com
-/// mais de 90 dias sem entrega pendente somem; as linhas recentes ficam. A contagem apagada sai no log do job. O job de
+/// <c>skipped</c>) com mais de 90 dias somem; uma entrega <c>pending</c> antiga fica, e o aviso dela também; avisos com
+/// mais de 90 dias sem entrega pendente somem; as linhas recentes ficam. O job registra
+/// <c>NoticesRetentionCompleted</c> com as contagens apagadas (<c>Deliveries</c> e <c>Notices</c>, Emenda 3). O job de
 /// entregas fica pausado (a entrega pendente não é enviada).
 /// </summary>
 [Collection(nameof(MailpitCollection))]
@@ -32,7 +33,7 @@ public sealed class NoticesRetentionTests(MailpitServer mailpit, PostgresFixture
         var oldFinished = await NoticeAsync(api, "antigo-concluido", old, ct);
         var oldSent = await DeliveryAsync(api, oldFinished, "sent", old, ct);
         var oldFailed = await DeliveryAsync(api, oldFinished, "failed", old, ct);
-        var oldDiscarded = await DeliveryAsync(api, oldFinished, "discarded", old, ct);
+        var oldSkipped = await DeliveryAsync(api, oldFinished, "skipped", old, ct);
         var oldWithPending = await NoticeAsync(api, "antigo-pendente", old, ct);
         var oldPending = await DeliveryAsync(api, oldWithPending, "pending", old, ct);
         var oldSentBesidePending = await DeliveryAsync(api, oldWithPending, "sent", old, ct);
@@ -48,18 +49,22 @@ public sealed class NoticesRetentionTests(MailpitServer mailpit, PostgresFixture
         deliveries.ShouldBe(
             [oldPending.ToString(CultureInfo.InvariantCulture), recentSent.ToString(CultureInfo.InvariantCulture), recentFailed.ToString(CultureInfo.InvariantCulture)],
             ignoreOrder: true,
-            $"apagadas: sent {oldSent}, failed {oldFailed}, discarded {oldDiscarded} e sent {oldSentBesidePending} (antigas); ficam a pendente e as recentes");
+            $"apagadas: sent {oldSent}, failed {oldFailed}, skipped {oldSkipped} e sent {oldSentBesidePending} (antigas); ficam a pendente e as recentes");
         var notices = await IdsAsync(api, "select id::text from notifications.notices", ct);
         notices.ShouldBe(
             [oldWithPending.ToString(), recentNotice.ToString()],
             ignoreOrder: true,
             $"apagados os avisos antigos sem pendência ({oldFinished}, {oldEmpty}); ficam o com entrega pendente e o recente");
 
-        api.Logs.Where(log => (log.CategoryName ?? string.Empty).Contains("Retention", StringComparison.Ordinal)
-                || (log.EventId.Name ?? string.Empty).Contains("Retention", StringComparison.Ordinal))
-            .Any(log => (log.Attributes ?? []).Any(attribute => IsCount(attribute.Value, 4)))
-            .ShouldBeTrue("o job de retenção não registrou no log a contagem de entregas apagadas (4)");
+        var completed = api.Logs.Where(log => log.EventId.Name == "NoticesRetentionCompleted").ToList();
+        completed.ShouldNotBeEmpty("o job de retenção não registrou NoticesRetentionCompleted");
+        completed.ShouldContain(
+            log => IsCount(Attribute(log, "Deliveries"), 4) && IsCount(Attribute(log, "Notices"), 2),
+            "NoticesRetentionCompleted sem Deliveries = 4 e Notices = 2");
     }
+
+    private static object? Attribute(OpenTelemetry.Logs.LogRecord log, string name) =>
+        (log.Attributes ?? []).FirstOrDefault(attribute => attribute.Key == name).Value;
 
     private static bool IsCount(object? value, long expected) =>
         value is int or long or short && Convert.ToInt64(value, CultureInfo.InvariantCulture) == expected;

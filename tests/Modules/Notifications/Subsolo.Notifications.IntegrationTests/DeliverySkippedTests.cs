@@ -7,10 +7,9 @@ using Subsolo.Notifications.IntegrationTests.Infrastructure;
 namespace Subsolo.Notifications.IntegrationTests;
 
 /// <summary>
-/// SPEC-0031 H30-06 — uma entrega cujo destinatário não tem mais o canal (o aparelho foi removido; o usuário foi
-/// excluído e não há e-mail) termina, quando o job de entregas a processa, com o evento <c>NoticeDeliverySkipped</c> — não
-/// <c>NoticeDeliveryFailed</c>, que é a base do alerta "Falha no envio de aviso" — e sai da fila (não fica
-/// <c>pending</c>). O job de entregas fica pausado até o canal sumir e é disparado pelo teste.
+/// SPEC-0031 H30-06 (Emenda 3) — uma entrega cujo destinatário não tem mais o canal (o aparelho foi removido; o usuário
+/// foi excluído e não há e-mail) termina, quando o job de entregas a processa, com o status <c>skipped</c> e o evento
+/// <c>NoticeDeliverySkipped</c> — não <c>NoticeDeliveryFailed</c>, que é a base do alerta "Falha no envio de aviso". O job de entregas fica pausado até o canal sumir e é disparado pelo teste.
 /// </summary>
 [Collection(nameof(MailpitCollection))]
 public sealed class DeliverySkippedTests(MailpitServer mailpit, PostgresFixture postgres)
@@ -70,7 +69,7 @@ public sealed class DeliverySkippedTests(MailpitServer mailpit, PostgresFixture 
     {
         var delivery = (await NotificationsDatabase.DeliveryStatesAsync(api.ConnectionString, ct))
             .Single(row => row.UserId == fan && row.Channel == channel);
-        delivery.Status.ShouldNotBe("pending", "a entrega sem canal ficou na fila");
+        delivery.Status.ShouldBe("skipped", "a entrega sem canal não terminou como skipped");
         var events = api.Logs.Select(log => log.EventId.Name).Where(name => name is Skipped or Failed).ToList();
         events.ShouldContain(Skipped, $"a entrega {channel} sem canal não registrou {Skipped}");
         events.ShouldNotContain(Failed, $"a entrega {channel} sem canal registrou {Failed} (entra no alerta \"Falha no envio de aviso\")");
