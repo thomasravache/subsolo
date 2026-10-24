@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 20 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 1, in-progress 1, implemented 32
+- Validação (G0): **1 erro(s), 21 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 2, in-progress 1, implemented 32
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -51,13 +51,14 @@ Perfil: **padrao**
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0036 | Ajustes dos jobs agendados de avisos | lite/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0037 | Ajustes da fila de moderação | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0036 |
+| 2 | SPEC-0038 | Ajustes da validação do resumo e do lembrete em lote | lite/S | approved | ⛔ aguarda implementação de SPEC-0036 |  |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 22/24 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 22/25 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -71,9 +72,11 @@ flowchart LR
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::implemented
     S0036["SPEC-0036<br/>Ajustes dos jobs agendados de avisos"]:::inprogress
     S0037["SPEC-0037<br/>Ajustes da fila de moderação"]:::approved
+    S0038["SPEC-0038<br/>Ajustes da validação do resumo e do lem…"]:::approved
   end
   S0032 --> S0036
   S0033 --> S0037
+  S0036 --> S0038
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -122,6 +125,7 @@ flowchart LR
 | [SPEC-0035](SPEC-0035-ci-no-runner-ubuntu-26-04-runner-fixo-cache-do-playwright-po.md) | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
 | [SPEC-0036](SPEC-0036-ajustes-dos-jobs-agendados-de-avisos.md) | Ajustes dos jobs agendados de avisos | lite | fix | in-progress | 2026-10-24 | SPEC-0002 | SPEC-0032 | — |
 | [SPEC-0037](SPEC-0037-ajustes-da-fila-de-moderacao.md) | Ajustes da fila de moderação | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0033 | — |
+| [SPEC-0038](SPEC-0038-ajustes-da-validacao-do-resumo-e-do-lembrete-em-lote.md) | Ajustes da validação do resumo e do lembrete em lote | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0036 | — |
 
 ## ADRs
 
