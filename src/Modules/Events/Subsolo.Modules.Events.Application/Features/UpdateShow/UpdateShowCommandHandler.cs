@@ -10,7 +10,7 @@ namespace Subsolo.Modules.Events.Application.Features.UpdateShow;
 
 /// <summary>
 /// SPEC-0023 — show inexistente → <c>events.show_not_found</c>; usuário que não é dono do organizador (salvo o admin) →
-/// <c>auth.forbidden</c>; senão grava os dados novos (slug igual) com o <c>ShowChanged</c> na outbox.
+/// <c>auth.forbidden</c>; oculto pela moderação → <c>events.show_hidden</c> (SPEC-0033); senão grava os dados novos (slug igual) com o <c>ShowChanged</c> na outbox.
 /// </summary>
 internal sealed partial class UpdateShowCommandHandler(
     IShowRepository shows,
@@ -38,6 +38,12 @@ internal sealed partial class UpdateShowCommandHandler(
         if (current.IsFailure)
         {
             return Result.Failure<ShowSaved>(current.Error);
+        }
+
+        // SPEC-0033: show oculto pela moderação não muda mais (nem o flyer).
+        if (show.IsHidden)
+        {
+            return Result.Failure<ShowSaved>(EventsErrors.ShowHiddenError());
         }
 
         var flyerChanged = !string.Equals(show.FlyerId, command.FlyerId, StringComparison.Ordinal);

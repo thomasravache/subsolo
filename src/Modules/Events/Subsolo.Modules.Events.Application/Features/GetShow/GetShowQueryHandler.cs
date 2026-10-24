@@ -47,6 +47,9 @@ internal sealed class GetShowQueryHandler(IShowsReadModel shows, ICityRepository
             show.TicketUrl,
             show.FlyerId,
             MediaPaths.PublicUrl(Flyer.VariantPath(show.FlyerId, Flyer.Thumb)),
-            ShowStatusMapping.ToResponse(show.Status)));
+            ShowStatusMapping.ToResponse(show.Status))
+        {
+            Hidden = show.Hidden,
+        });
     }
 }

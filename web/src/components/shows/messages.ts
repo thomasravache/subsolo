@@ -24,6 +24,9 @@ export const showMessages = {
   flyerNotFound: "O flyer expirou. Envie de novo.",
   slugTaken: "Já existe um show com esse nome nessa data nessa cidade.",
   notFound: "Esse show não existe mais.",
+  /** SPEC-0033 — selo e erro do show oculto pela moderação. */
+  hiddenBadge: "Oculto pela moderação",
+  hidden: "Este show foi ocultado pela moderação e não pode mais ser alterado.",
   noProfile:
     "Para cadastrar shows você precisa de um perfil aprovado de banda, casa ou produtor.",
   rateLimited: "Muitos pedidos seguidos. Espere um pouco e tente de novo.",
@@ -63,6 +66,8 @@ export function showErrorMessage(
       return showMessages.notFound;
     case "events.flyer_not_found":
       return showMessages.flyerNotFound;
+    case "events.show_hidden":
+      return showMessages.hidden;
     default:
       if (result.status === 429) {
         return showMessages.rateLimited;

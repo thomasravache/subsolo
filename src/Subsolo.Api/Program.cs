@@ -13,6 +13,7 @@ using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Engagement.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure;
 using Subsolo.Modules.Events.Infrastructure.Cities;
+using Subsolo.Modules.Moderation.Infrastructure;
 using Subsolo.Modules.Notifications.Infrastructure;
 using Subsolo.Modules.Profiles.Infrastructure;
 using Subsolo.Modules.Site.Infrastructure;
@@ -38,17 +39,19 @@ builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddProfilesModule(builder.Configuration);
 builder.Services.AddEngagementModule(builder.Configuration);
 builder.Services.AddSiteModule(builder.Configuration);
+builder.Services.AddModerationModule(builder.Configuration);
 
 // Métricas dos módulos: SPEC-0014 (subsolo.users.sign_ins e subsolo.users.sessions_revoked), SPEC-0018
 // (subsolo.notifications.emails), SPEC-0021 (subsolo.profiles.requests e subsolo.profiles.decisions), SPEC-0022
-// (subsolo.flyers.uploads e subsolo.flyers.processing_duration) e SPEC-0027 (subsolo.engagement.follows e
-// subsolo.engagement.unfollows).
+// (subsolo.flyers.uploads e subsolo.flyers.processing_duration), SPEC-0027 (subsolo.engagement.follows e
+// subsolo.engagement.unfollows) e SPEC-0033 (subsolo.moderation.reports e subsolo.moderation.decisions).
 builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(
     UsersModule.MeterName,
     NotificationsModule.MeterName,
     ProfilesModule.MeterName,
     EventsModule.MeterName,
-    EngagementModule.MeterName));
+    EngagementModule.MeterName,
+    ModerationModule.MeterName));
 
 var app = builder.Build();
 

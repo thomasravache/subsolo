@@ -220,7 +220,7 @@
           "Shows"
         ],
         "summary": "Mudar a situação do show",
-        "description": "Marca o show como agendado (scheduled), cancelado (cancelled) ou adiado (postponed); cancelado e adiado continuam na agenda com o selo. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.",
+        "description": "Marca o show como agendado (scheduled), cancelado (cancelled) ou adiado (postponed); cancelado e adiado continuam na agenda com o selo. Só o dono do perfil organizador ou o admin; show oculto pela moderação não muda de situação. Exige o cabeçalho X-CSRF.",
         "operationId": "ChangeShowStatus",
         "parameters": [
           {
@@ -299,6 +299,16 @@
           },
           "404": {
             "description": "Not Found (code=events.show_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=events.show_hidden)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -546,7 +556,7 @@
           "Shows"
         ],
         "summary": "Editar show",
-        "description": "Troca os dados do show (as mesmas regras do cadastro); o endereço (slug) não muda. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.",
+        "description": "Troca os dados do show (as mesmas regras do cadastro); o endereço (slug) não muda. Só o dono do perfil organizador ou o admin; show oculto pela moderação não pode ser editado. Exige o cabeçalho X-CSRF.",
         "operationId": "UpdateShow",
         "parameters": [
           {
@@ -641,7 +651,7 @@
             }
           },
           "409": {
-            "description": "Conflict (code=events.show_slug_taken)",
+            "description": "Conflict (code=events.show_slug_taken) (code=events.show_hidden)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3900,6 +3910,356 @@
           }
         }
       }
+    },
+    "/api/v1/admin/reports/{showId}/hide": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Ocultar show denunciado",
+        "description": "Oculta o show: ele sai da agenda, das páginas públicas e dos avisos; o dono o vê em Meus shows com o selo, sem poder editar. Resolve todas as denúncias pendentes dele. A nota (até 200 caracteres) é interna e não sai pela API. Exige o cabeçalho X-CSRF.",
+        "operationId": "HideReportedShow",
+        "parameters": [
+          {
+            "name": "showId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideShowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=moderation.invalid_note)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=moderation.no_pending_reports)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports/{showId}/keep": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Manter show denunciado",
+        "description": "Mantém o show na agenda e arquiva todas as denúncias pendentes dele (saem da fila). Exige o cabeçalho X-CSRF.",
+        "operationId": "KeepReportedShow",
+        "parameters": [
+          {
+            "name": "showId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=security.csrf_invalid)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=moderation.no_pending_reports)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Fila de denúncias",
+        "description": "Shows com denúncias pendentes, mais antigos primeiro (pela primeira denúncia): título, data, casa, a quantidade por motivo e até três detalhes mais recentes. Não identifica quem denunciou.",
+        "operationId": "ListReports",
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (code=auth.forbidden)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportQueueItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shows/{id}/reports": {
+      "post": {
+        "tags": [
+          "Denúncias"
+        ],
+        "summary": "Denunciar show",
+        "description": "Denuncia o show com o motivo (fake, cancelled_unannounced, wrong_info ou other) e o detalhe opcional (até 500 caracteres; obrigatório em other). Uma denúncia pendente por fã e show; até 10 denúncias por fã por dia. Exige o cabeçalho X-CSRF.",
+        "operationId": "ReportShow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportShowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized (code=auth.required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable (code=service.unavailable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (code=security.csrf_invalid) (code=moderation.invalid_report)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found (code=events.show_not_found)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (code=moderation.already_reported)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4268,6 +4628,20 @@
           }
         }
       },
+      "HideShowRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
@@ -4438,7 +4812,8 @@
           "venueName",
           "status",
           "flyerThumbUrl",
-          "organizerProfileId"
+          "organizerProfileId",
+          "hidden"
         ],
         "type": "object",
         "properties": {
@@ -4474,6 +4849,9 @@
           "organizerProfileId": {
             "type": "string",
             "format": "uuid"
+          },
+          "hidden": {
+            "type": "boolean"
           }
         }
       },
@@ -5137,6 +5515,115 @@
           }
         }
       },
+      "ReportCountsResponse": {
+        "required": [
+          "fake",
+          "cancelled_unannounced",
+          "wrong_info",
+          "other"
+        ],
+        "type": "object",
+        "properties": {
+          "fake": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancelled_unannounced": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "wrong_info": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "other": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReportCreated": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ReportQueueItem": {
+        "required": [
+          "showId",
+          "title",
+          "citySlug",
+          "slug",
+          "startsAtUtc",
+          "venueName",
+          "counts",
+          "latestDetails",
+          "firstReportedAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "citySlug": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "startsAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venueName": {
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ReportCountsResponse"
+          },
+          "latestDetails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "firstReportedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReportShowRequest": {
+        "required": [
+          "reason",
+          "details"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "details": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RequestMagicLinkRequest": {
         "required": [
           "email",
@@ -5436,6 +5923,9 @@
           },
           "status": {
             "$ref": "#/components/schemas/ShowStatus"
+          },
+          "hidden": {
+            "type": "boolean"
           }
         }
       },
@@ -5844,6 +6334,9 @@
     },
     {
       "name": "Apoiadores"
+    },
+    {
+      "name": "Denúncias"
     }
   ]
 }

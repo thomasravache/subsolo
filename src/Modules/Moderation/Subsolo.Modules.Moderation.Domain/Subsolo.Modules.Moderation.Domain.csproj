@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0033 — domínio do módulo Moderation (ADR-0001): a denúncia de show (Report: motivo, detalhe e situação
+    pending | kept | hidden).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Moderation.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Domain/Subsolo.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

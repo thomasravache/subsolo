@@ -45,9 +45,12 @@ internal interface IShowsReadModel
         int limit,
         CancellationToken cancellationToken);
 
-    /// <summary>O show para a tela de edição, ou <see langword="null"/>.</summary>
+    /// <summary>O show para a tela de edição (inclusive o oculto pela moderação, com <c>Hidden</c>), ou <see langword="null"/>.</summary>
     Task<ShowDetails?> GetAsync(Guid showId, CancellationToken cancellationToken);
 
-    /// <summary>SPEC-0024 — o show <paramref name="slug"/> da cidade <paramref name="city"/> com as medidas do flyer, ou <see langword="null"/>.</summary>
+    /// <summary>
+    /// SPEC-0024 — o show <paramref name="slug"/> da cidade <paramref name="city"/> com as medidas do flyer, ou
+    /// <see langword="null"/> (SPEC-0033: também se oculto pela moderação).
+    /// </summary>
     Task<PublicShowDetails?> GetBySlugAsync(string city, string slug, CancellationToken cancellationToken);
 }
