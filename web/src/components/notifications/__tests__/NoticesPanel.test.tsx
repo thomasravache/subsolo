@@ -622,3 +622,32 @@ describe("NoticesPanel — Avisos fora de sincronia", () => {
     expect(shown("Ativando…")).toBe(false);
   });
 });
+
+/**
+ * SPEC-0031 H30-03 — com os quatro campos obrigatórios no `PUT /api/v1/me/notification-preferences` (400
+ * `notifications.invalid_preferences` sem algum), cada interruptor do painel "Avisos" continua mandando os quatro
+ * booleanos, com só o tocado invertido.
+ */
+describe("NoticesPanel — os quatro campos no PUT", () => {
+  it.each(switchNames)(
+    "SPEC-0031:H30-03 tocar em %s manda os quatro campos booleanos",
+    async (name) => {
+      stubBrowser({ permission: "granted", subscribed: true });
+      await renderPanel(activePreferences);
+
+      fireEvent.click(await screen.findByRole("switch", { name }));
+
+      await waitFor(() => expect(puts()).toHaveLength(1));
+      const body = JSON.parse(puts()[0]!.body) as Record<string, unknown>;
+      expect(Object.keys(body).sort()).toEqual([
+        "dailyDigestEmail",
+        "newShowPush",
+        "reminderEmail",
+        "reminderPush",
+      ]);
+      for (const value of Object.values(body)) {
+        expect(typeof value).toBe("boolean");
+      }
+    },
+  );
+});
