@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Subsolo.Modules.Events.Domain.Shows;
 using Subsolo.Modules.Events.IntegrationEvents;
 
 namespace Subsolo.Modules.Events.Infrastructure.Catalog;
@@ -6,6 +7,7 @@ namespace Subsolo.Modules.Events.Infrastructure.Catalog;
 /// <summary>
 /// SPEC-0021 — implementação de <see cref="IEventsCatalog"/> sobre as cidades e estilos do schema <c>events</c>. SPEC-0026:
 /// e de <see cref="IEventsCatalogNames"/> (os nomes). SPEC-0031: e o resumo público de um show, para os avisos.
+/// SPEC-0032: e os shows agendados por início (lembrete na véspera) e as situações em lote.
 /// </summary>
 internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEventsCatalogNames
 {
@@ -78,12 +80,50 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
                 found.Show.Status);
     }
 
-    /// <summary>SPEC-0032 — esqueleto do Test-writer; o comportamento entra na fase Green.</summary>
-    public Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(
-        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct) =>
-        throw new NotImplementedException("SPEC-0032: shows agendados por início");
+    /// <summary>
+    /// SPEC-0032 — os resumos dos shows <see cref="ShowStatuses.Scheduled"/> com início em [<paramref name="fromUtc"/>,
+    /// <paramref name="toUtc"/>), pelo início, numa consulta só (com o nome e o fuso da cidade).
+    /// </summary>
+    public async Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
+    {
+        var found = await db.Shows.AsNoTracking()
+            .Where(show => show.Status == ShowStatuses.Scheduled && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc)
+            .Join(db.Cities.AsNoTracking(), show => show.City, city => city.Slug, (show, city) => new { Show = show, city.Name, city.TimeZone })
+            .OrderBy(row => row.Show.StartsAtUtc)
+            .ThenBy(row => row.Show.Id)
+            .ToListAsync(ct);
+        return
+        [
+            .. found.Select(row => new ShowSummary(
+                row.Show.Id,
+                row.Show.Slug,
+                row.Show.City,
+                row.Name,
+                row.TimeZone,
+                [.. row.Show.Lineup.Select(item => item.Name)],
+                row.Show.Venue.Name,
+                row.Show.StartsAtUtc,
+                row.Show.Status)),
+        ];
+    }
 
-    /// <summary>SPEC-0032 (H29-01) — esqueleto do Test-writer; o comportamento entra na fase Green.</summary>
-    public Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct) =>
-        throw new NotImplementedException("SPEC-0032: situações dos shows em lote");
+    /// <summary>
+    /// SPEC-0032 (H29-01) — a situação e o início dos shows <paramref name="showIds"/> numa consulta só (só essas colunas),
+    /// apenas dos encontrados; ids repetidos contam uma vez.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(showIds);
+        var wanted = showIds.Distinct().ToList();
+        if (wanted.Count == 0)
+        {
+            return new Dictionary<Guid, ShowState>();
+        }
+
+        return await db.Shows.AsNoTracking()
+            .Where(show => wanted.Contains(show.Id))
+            .Select(show => new { show.Id, show.Status, show.StartsAtUtc })
+            .ToDictionaryAsync(show => show.Id, show => new ShowState(show.Status, show.StartsAtUtc), ct);
+    }
 }
