@@ -35,8 +35,10 @@ env:
 
 jobs:
   # ------------------------------------------------------------------------------------------------
+  # Todo job usa imagem de runner fixa (ADR-0009: versão fixa, SPEC-0035): o `ubuntu-latest` passou para o 26.04 sem
+  # aviso e quebrou o WebKit restaurado do cache. Trocar de imagem é uma mudança explícita, revisada em PR.
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -71,7 +73,7 @@ jobs:
 
   # ------------------------------------------------------------------------------------------------
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -114,7 +116,7 @@ jobs:
 
   # ------------------------------------------------------------------------------------------------
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -187,7 +189,7 @@ jobs:
 
   # ------------------------------------------------------------------------------------------------
   integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -248,13 +250,19 @@ jobs:
       - name: test_integration (sdd-config)
         run: dotnet test Subsolo.slnx --filter "Kind=Integration" --max-parallel-test-modules 1
 
+      # O cache das imagens é só uma otimização: falhar aqui não reprova o job. Imagens listadas pelo `docker image ls`
+      # podem ter sido removidas no fim dos testes (ex.: testcontainers/ryuk); só as que o `docker image inspect` ainda
+      # encontra vão para o `docker image save` (SPEC-0035).
       - name: Salva imagens Docker usadas pelos testes
         id: save-images
         if: ${{ !cancelled() && steps.docker-images.outputs.cache-hit != 'true' }}
+        continue-on-error: true
         run: |
           mkdir -p "$RUNNER_TEMP/docker-images"
           docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort \
-            | comm -13 "$RUNNER_TEMP/images-before.txt" - > "$RUNNER_TEMP/images-new.txt"
+            | comm -13 "$RUNNER_TEMP/images-before.txt" - \
+            | while read -r image; do docker image inspect "$image" > /dev/null 2>&1 && echo "$image"; done \
+            > "$RUNNER_TEMP/images-new.txt" || true
           if [ -s "$RUNNER_TEMP/images-new.txt" ]; then
             xargs docker image save --output "$RUNNER_TEMP/docker-images/images.tar" < "$RUNNER_TEMP/images-new.txt"
             echo "saved=true" >> "$GITHUB_OUTPUT"
@@ -278,7 +286,7 @@ jobs:
 
   # ------------------------------------------------------------------------------------------------
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # O webServer do Playwright monta as imagens e sobe a pilha do Compose gerado pelo Aspire (SPEC-0008).
     timeout-minutes: 30
     steps:
@@ -324,11 +332,16 @@ jobs:
       - name: Dependências do front (lockfile)
         working-directory: web
         run: pnpm install --frozen-lockfile
+      # Os navegadores do Playwright dependem das bibliotecas da imagem do runner: a chave do cache inclui a imagem
+      # (ImageOS-ImageVersion), senão um WebKit montado para outra imagem é restaurado e não abre (SPEC-0035).
+      - name: Imagem do runner
+        id: runner-image
+        run: echo "image=${ImageOS}-${ImageVersion}" >> "$GITHUB_OUTPUT"
       - name: Cache dos navegadores do Playwright
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ steps.runner-image.outputs.image }}-${{ hashFiles('e2e/pnpm-lock.yaml') }}
       - name: Dependências e navegadores do Playwright
         working-directory: e2e
         run: |
@@ -352,7 +365,7 @@ jobs:
   # ------------------------------------------------------------------------------------------------
   # Todas as varreduras rodam mesmo depois de uma falha (como o lint.sh): o autor vê todos os achados de uma vez.
   security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       GITLEAKS_IMAGE: zricethezav/gitleaks:v8.24.3@sha256:e1b35e12a8c6fa8901f060459cfb6b2fc4c484d3afbe3b029733a3bbfab07055
@@ -499,7 +512,7 @@ jobs:
   # (ADR-0006). O comentário `// codeql[<id da query>] <motivo>` NÃO suprime o alerta neste pipeline: verificado em
   # 2026-10-17 num PR descartável (SPEC-0013, item 8) — `cs/sql-injection` continuou reprovando o job.
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -571,7 +584,7 @@ jobs:
   # SDD (gerado a partir de `spec_graph.py vendor --ci github`): specs/ADRs válidos e, no PR, spec aprovada,
   # gates G0–G4, TDD e escopo. Em GitHub Actions o spec_graph.py emite as falhas como anotações ::error.
   sdd:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
