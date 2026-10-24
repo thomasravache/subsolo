@@ -20,8 +20,8 @@ import { dayMonth, digestCount, linkPath, waitForDigest } from "./resumo";
  * - um artista (produtor aprovado) publica um show nessa cidade;
  * - em até 2 minutos chega ao Mailpit um e-mail só, "Shows novos de quem você segue", com a linha
  *   "{dd/MM} · {atrações} · {casa}, {cidade}" do show;
- * - o link do show (`/{cidade}/{show}`) abre a página dele, e o link de descadastro confirma "Pronto: você não recebe
- *   mais o resumo diário por e-mail." e desliga o resumo.
+ * - o link do e-mail (Emenda 3: a url "/" do aviso, sem link por show) abre a agenda do site, e o link de descadastro
+ *   confirma "Pronto: você não recebe mais o resumo diário por e-mail." e desliga o resumo.
  */
 // SPEC-0010: o Caddy do Compose serve HTTPS com o certificado local (`tls internal`), não confiável.
 test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
@@ -73,7 +73,7 @@ test.describe("avisos: resumo diário por e-mail", () => {
       const venue = "Porão do Rock";
       const day = localDate(5);
       const flyer = await uploadFlyer(artistPage, title);
-      const show = (await mutate(artistPage.request, "post", "/api/v1/shows", {
+      await mutate(artistPage.request, "post", "/api/v1/shows", {
         organizerProfileId: producer.profileId,
         title,
         city: city.slug,
@@ -84,7 +84,7 @@ test.describe("avisos: resumo diário por e-mail", () => {
         price: "R$ 30",
         ticketUrl: null,
         flyerId: flyer.flyerId,
-      })) as { id: string; slug: string };
+      });
 
       // O resumo chega em até 2 minutos, um só, com o show.
       const text = await waitForDigest(
@@ -93,16 +93,14 @@ test.describe("avisos: resumo diário por e-mail", () => {
       );
       expect(await digestCount(fanEmail), "mais de um resumo no dia").toBe(1);
 
-      // O link do show abre a página dele.
-      const showPath = linkPath(
-        text,
-        new RegExp(
-          `https?://[^\\s"<>]+/${city.slug}/${show.slug}(?=[\\s"<>]|$)`,
-        ),
-      );
-      const opened = await page.goto(showPath);
-      expect(opened?.status(), `GET ${showPath}`).toBe(200);
-      await expect(page.getByRole("heading", { name: title })).toBeVisible();
+      // O link do e-mail (url "/" do aviso, absoluta pelo App:PublicUrl) abre a agenda do site.
+      const agendaPath = linkPath(text, /https?:\/\/[^\s"<>/]+\/(?=\s|$)/m);
+      expect(agendaPath).toBe("/");
+      const opened = await page.goto(agendaPath);
+      expect(opened?.status(), `GET ${agendaPath}`).toBe(200);
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Subsolo" }),
+      ).toBeVisible();
       await axe.check(page);
 
       // O link de descadastro confirma e desliga o resumo.
