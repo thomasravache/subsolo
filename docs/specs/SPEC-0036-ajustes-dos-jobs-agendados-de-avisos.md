@@ -9,7 +9,7 @@ created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0032]
 consumes_contract: []
-touches: [infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, web/src/components/shows/**, e2e/tests/avisos/**]
+touches: [infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, web/src/components/shows/**, web/src/components/engagement/AttendButton.tsx, e2e/tests/avisos/**]
 adrs: [ADR-0010, ADR-0014]
 external: []
 size: S
@@ -128,3 +128,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 1 (sem mudança de contrato público) | 2026-10-24 | H32-02: a validação checa as 09h00 de São Paulo do dia corrente (relógio da aplicação). H32-04: o lote retorna `IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>`. | retorno do Test-writer (pontos 1 e 3) | — | piloto automático do Thomas (2026-10-24) |
+| 1 (sem mudança de contrato público) | 2026-10-24 | H32-03: `touches` inclui `web/src/components/engagement/AttendButton.tsx`; com o show agendado a contagem é desenhada pelo botão "Vou", e o espaço depois dela vai para o mesmo nó de texto ali (sem o `" Entrada"` com espaço à esquerda). | retorno do Implementer | — | piloto automático do Thomas (2026-10-24) |
