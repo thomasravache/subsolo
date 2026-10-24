@@ -12,7 +12,9 @@ namespace Subsolo.Modules.Notifications.Infrastructure.Deliveries;
 /// SPEC-0031 (H30-02, ADR-0008) — job Quartz <see cref="Name"/>, diário: apaga as entregas concluídas (<c>sent</c>,
 /// <c>failed</c>, <c>skipped</c>) e os avisos sem entrega pendente com mais de <see cref="Retention"/>, e registra
 /// <c>NoticesRetentionCompleted</c> com as contagens. Uma entrega <c>pending</c> antiga fica (e o aviso dela também): ainda
-/// vai sair. Execuções perdidas não são recuperadas (a próxima já faz a limpeza inteira).
+/// vai sair. Execuções perdidas não são recuperadas (a próxima já faz a limpeza inteira). SPEC-0032 (H31-04): uma falha
+/// (banco fora, por exemplo) não escapa para o Quartz: vira o evento <c>NoticesRetentionRunFailed</c> (alerta "Falha de job"
+/// do Seq, ADR-0010) e a próxima execução tenta de novo.
 /// </summary>
 [DisallowConcurrentExecution]
 internal sealed partial class NoticesRetentionJob(
@@ -45,6 +47,18 @@ internal sealed partial class NoticesRetentionJob(
     }
 
     public async ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await PurgeAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogFailure(logger, exception);
+        }
+    }
+
+    private async Task PurgeAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopes.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
@@ -87,4 +101,10 @@ internal sealed partial class NoticesRetentionJob(
         Level = LogLevel.Information,
         Message = "Retenção dos avisos: {Deliveries} entrega(s) concluída(s) e {Notices} aviso(s) com mais de 90 dias apagados")]
     private static partial void LogCompleted(ILogger logger, int deliveries, int notices);
+
+    [LoggerMessage(
+        EventName = "NoticesRetentionRunFailed",
+        Level = LogLevel.Error,
+        Message = "Falha na retenção dos avisos; nova tentativa na próxima execução")]
+    private static partial void LogFailure(ILogger logger, Exception exception);
 }
