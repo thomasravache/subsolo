@@ -29,13 +29,15 @@ namespace Subsolo.Engagement.IntegrationTests.Infrastructure;
 /// para o admin enviar o flyer dos shows de teste;</item>
 /// <item>SPEC-0031 — o <c>HttpClient</c> do Web Push (<see cref="WebPushOptions.HttpClientName"/>) com um servidor de
 /// push falso que aceita tudo (201): nenhum aviso sai para FCM, Mozilla ou Apple.</item>
+/// <item>SPEC-0036 — opcionalmente, trocas de serviços do teste (<paramref name="services"/>), aplicadas por último.</item>
 /// </list>
 /// </summary>
 internal sealed class EngagementApiFactory(
     string connectionString,
     TimeProvider? clock = null,
     IReadOnlyDictionary<string, string>? settings = null,
-    bool productionRateLimits = false)
+    bool productionRateLimits = false,
+    Action<IServiceCollection>? services = null)
     : WebApplicationFactory<Program>
 {
     public const string AdminEmail = "admin@subsolo.test";
@@ -159,16 +161,18 @@ internal sealed class EngagementApiFactory(
             builder.UseSetting(key, value);
         }
 
-        builder.ConfigureTestServices(services =>
+        builder.ConfigureTestServices(testServices =>
         {
-            services.AddEndpoints(typeof(EngagementApiFactory).Assembly);
-            services.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new AcceptingPushService());
-            services.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
-            services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddInMemoryExporter(_spans));
+            testServices.AddEndpoints(typeof(EngagementApiFactory).Assembly);
+            testServices.AddHttpClient(WebPushOptions.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new AcceptingPushService());
+            testServices.ConfigureOpenTelemetryLoggerProvider(logging => logging.AddInMemoryExporter(_logs));
+            testServices.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddInMemoryExporter(_spans));
             if (clock is not null)
             {
-                services.Replace(ServiceDescriptor.Singleton<TimeProvider>(clock));
+                testServices.Replace(ServiceDescriptor.Singleton<TimeProvider>(clock));
             }
+
+            services?.Invoke(testServices);
         });
     }
 }
