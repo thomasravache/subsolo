@@ -5,7 +5,7 @@ namespace Subsolo.Modules.Events.Infrastructure.Catalog;
 
 /// <summary>
 /// SPEC-0021 — implementação de <see cref="IEventsCatalog"/> sobre as cidades e estilos do schema <c>events</c>. SPEC-0026:
-/// e de <see cref="IEventsCatalogNames"/> (os nomes).
+/// e de <see cref="IEventsCatalogNames"/> (os nomes). SPEC-0031: e o resumo público de um show, para os avisos.
 /// </summary>
 internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEventsCatalogNames
 {
@@ -54,7 +54,27 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
             .Select(show => new ShowState(show.Status, show.StartsAtUtc))
             .SingleOrDefaultAsync(ct);
 
-    /// <summary>SPEC-0031 — o resumo público do show, ou <see langword="null"/> se não existe.</summary>
-    // TODO(SPEC-0031): esqueleto do G1 (Test-writer); o Implementer implementa a consulta.
-    public Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct) => throw new NotImplementedException();
+    /// <summary>
+    /// SPEC-0031 — o resumo público do show (com o nome e o fuso da cidade e os nomes do line-up), ou
+    /// <see langword="null"/> se não existe.
+    /// </summary>
+    public async Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct)
+    {
+        var found = await db.Shows.AsNoTracking()
+            .Where(show => show.Id == showId)
+            .Join(db.Cities.AsNoTracking(), show => show.City, city => city.Slug, (show, city) => new { Show = show, city.Name, city.TimeZone })
+            .SingleOrDefaultAsync(ct);
+        return found is null
+            ? null
+            : new ShowSummary(
+                found.Show.Id,
+                found.Show.Slug,
+                found.Show.City,
+                found.Name,
+                found.TimeZone,
+                [.. found.Show.Lineup.Select(item => item.Name)],
+                found.Show.Venue.Name,
+                found.Show.StartsAtUtc,
+                found.Show.Status);
+    }
 }

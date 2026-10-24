@@ -2,6 +2,7 @@ using Subsolo.Modules.Events.Application.Features.GetCityAgenda;
 using Subsolo.Modules.Events.Application.Features.GetShow;
 using Subsolo.Modules.Events.Application.Features.GetShowDetail;
 using Subsolo.Modules.Events.Application.Features.ListMyShows;
+using Subsolo.Modules.Events.Application.Features.ListProfileShows;
 
 namespace Subsolo.Modules.Events.Application;
 
@@ -37,7 +38,7 @@ internal interface IShowsReadModel
     /// line-up: os próximos (início a partir de <paramref name="boundaryUtc"/>, por data) ou os passados (antes dele, mais
     /// recentes primeiro).
     /// </summary>
-    Task<IReadOnlyList<ShowSummaryResponse>> ListByProfileAsync(
+    Task<IReadOnlyList<ProfileShowResponse>> ListByProfileAsync(
         Guid profileId,
         DateTimeOffset boundaryUtc,
         bool upcoming,

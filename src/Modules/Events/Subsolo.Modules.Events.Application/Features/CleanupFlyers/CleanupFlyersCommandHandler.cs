@@ -21,7 +21,7 @@ internal sealed partial class CleanupFlyersCommandHandler(
     IFileStorage storage,
     TimeProvider clock,
     ILogger<CleanupFlyersCommandHandler> logger,
-    IFlyerLocks? locks = null)
+    IFlyerLocks locks)
     : ICommandHandler<CleanupFlyersCommand>
 {
     /// <summary>Por quanto tempo um flyer sem show fica guardado.</summary>
@@ -47,7 +47,7 @@ internal sealed partial class CleanupFlyersCommandHandler(
     /// <summary>Sob a trava do id: apaga os arquivos, a menos que a linha tenha voltado (o mesmo arquivo reenviado).</summary>
     private async Task DeleteFilesUnlessBackAsync(string id, CancellationToken cancellationToken)
     {
-        await using var held = locks is null ? null : await locks.AcquireAsync(id, cancellationToken);
+        await using var held = await locks.AcquireAsync(id, cancellationToken);
         if (await flyers.ExistsAsync(id, cancellationToken))
         {
             // Reenviado depois da exclusão da linha: os arquivos voltaram a ter dono.
@@ -59,10 +59,7 @@ internal sealed partial class CleanupFlyersCommandHandler(
             await storage.DeleteAsync(path, cancellationToken);
         }
 
-        if (held is not null)
-        {
-            await held.CommitAsync(cancellationToken);
-        }
+        await held.CommitAsync(cancellationToken);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Limpeza dos flyers sem show: {Deleted} apagados")]

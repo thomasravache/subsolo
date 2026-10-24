@@ -28,7 +28,7 @@ internal sealed partial class UploadFlyerCommandHandler(
     IEventsUnitOfWork unitOfWork,
     TimeProvider clock,
     ILogger<UploadFlyerCommandHandler> logger,
-    IFlyerLocks? locks = null)
+    IFlyerLocks locks)
     : ICommandHandler<UploadFlyerCommand, FlyerUploadResult>
 {
     public async Task<Result<FlyerUploadResult>> Handle(UploadFlyerCommand command, CancellationToken cancellationToken)
@@ -84,7 +84,7 @@ internal sealed partial class UploadFlyerCommandHandler(
         var size = images.FullSize;
         var saved = new List<string>();
         var created = existing is null;
-        await using var held = locks is null ? null : await locks.AcquireAsync(id, cancellationToken);
+        await using var held = await locks.AcquireAsync(id, cancellationToken);
         try
         {
             foreach (var (path, bytes) in new[]
@@ -119,10 +119,7 @@ internal sealed partial class UploadFlyerCommandHandler(
                 await AddAsync(id, command.UploadedBy, size, cancellationToken);
             }
 
-            if (held is not null)
-            {
-                await held.CommitAsync(cancellationToken);
-            }
+            await held.CommitAsync(cancellationToken);
         }
         catch (DuplicateFlyerException)
         {

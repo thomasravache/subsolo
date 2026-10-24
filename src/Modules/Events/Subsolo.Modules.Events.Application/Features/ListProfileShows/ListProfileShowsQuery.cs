@@ -23,13 +23,15 @@ public sealed record ListProfileShowsQuery(Guid ProfileId, string? Period) : IQu
 
 /// <summary>
 /// SPEC-0026 — os shows do perfil, na ordem e no limite do período. A leitura (<see cref="IShowsReadModel"/>) devolve
-/// cada item como <see cref="ProfileShowResponse"/> (o resumo mais a cidade); o endpoint publica essa forma.
+/// cada item como <see cref="ProfileShowResponse"/> (o resumo mais a cidade); o endpoint publica essa forma. SPEC-0031
+/// (H26-01): tipado como <see cref="ProfileShowResponse"/> de ponta a ponta, sem conversão no endpoint.
 /// </summary>
-public sealed record ProfileShowsResponse(IReadOnlyList<ShowSummaryResponse> Shows);
+public sealed record ProfileShowsResponse(IReadOnlyList<ProfileShowResponse> Shows);
 
 /// <summary>
 /// SPEC-0026 (Emenda v2, b) — um show da lista do perfil: o resumo da agenda (SPEC-0008) mais a cidade do show, para o
-/// link <c>/{cidade}/{show}</c> e a data no fuso dela.
+/// link <c>/{cidade}/{show}</c> e a data no fuso dela. SPEC-0031 (H26-03b): mais o <see cref="FlyerId"/> (o id de 64
+/// caracteres do envio; nulo sem flyer), com que a página do perfil monta a imagem Open Graph.
 /// </summary>
 public sealed record ProfileShowResponse(
     Guid Id,
@@ -42,11 +44,12 @@ public sealed record ProfileShowResponse(
     ShowStatus Status,
     string? FlyerThumbUrl,
     int AttendingCount,
-    ProfileShowCityResponse City)
+    ProfileShowCityResponse City,
+    string? FlyerId)
     : ShowSummaryResponse(Id, Slug, Title, StartsAt, VenueName, Lineup, Styles, Status, FlyerThumbUrl, AttendingCount)
 {
-    /// <summary>O resumo <paramref name="summary"/> com a cidade <paramref name="city"/>.</summary>
-    public static ProfileShowResponse From(ShowSummaryResponse summary, ProfileShowCityResponse city)
+    /// <summary>O resumo <paramref name="summary"/> com a cidade <paramref name="city"/> e o flyer <paramref name="flyerId"/>.</summary>
+    public static ProfileShowResponse From(ShowSummaryResponse summary, ProfileShowCityResponse city, string? flyerId)
     {
         ArgumentNullException.ThrowIfNull(summary);
         return new ProfileShowResponse(
@@ -60,7 +63,8 @@ public sealed record ProfileShowResponse(
             summary.Status,
             summary.FlyerThumbUrl,
             summary.AttendingCount,
-            city);
+            city,
+            string.IsNullOrEmpty(flyerId) ? null : flyerId);
     }
 }
 
