@@ -38,9 +38,9 @@ Achados menores da revisão G4 da SPEC-0032 (itens `H32-NN`):
 
 ## 3. Mudança Proposta
 - H32-01: renomear o alerta para "Job agendado falhou" (mesmo filtro, `count >= 1` em 1 h, eventos `DailyDigestRunFailed`, `DayBeforeReminderRunFailed`, `NoticesRetentionRunFailed`) e corrigir o runbook (três eventos, sem "uma vez por dia"). "Falha de job" fica para os jobs de alta frequência.
-- H32-02: a API não sobe se `Engagement:DigestCron` não dispara às 09h00 de São Paulo (validação na subida com `CronExpression.IsSatisfiedBy`; "0 * * * * ?" da pilha local continua válido); comentário junto de `CronSetting`.
+- H32-02: a API não sobe se `Engagement:DigestCron` não dispara às 09h00 de São Paulo (validação na subida com `CronExpression.IsSatisfiedBy` às 09h00 de São Paulo do dia corrente pelo relógio da aplicação; "0 * * * * ?" da pilha local continua válido); comentário junto de `CronSetting`.
 - H32-03: o espaço vai para dentro do `<p>` do `Attendance` (sem nó de texto só com espaço no bloco) e o comentário do teste fica exato.
-- H32-04: `IAttendanceApi.GetAttendeesAsync(IReadOnlyCollection<Guid> showIds)` em lote (contrato interno entre módulos, sem rota pública) usado pelo `ReminderSelector`; índice `ix_shows_scheduled_starts_at` em `events.shows(starts_at_utc) where status = 'scheduled'`.
+- H32-04: `IAttendanceApi.GetAttendeesAsync(IReadOnlyCollection<Guid> showIds)` em lote (contrato interno entre módulos, sem rota pública) retornando `Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>>` (show → quem vai, no molde de `GetShowStatesAsync`), usado pelo `ReminderSelector`; índice `ix_shows_scheduled_starts_at` em `events.shows(starts_at_utc) where status = 'scheduled'`.
 - H32-05: a asserção aceita o dia seguinte; o E2E-01 do lembrete espera passar a meia-noite de São Paulo se faltar menos de 3 min.
 - **Não muda:** textos dos avisos, chaves, horários padrão, rotas públicas e OpenAPI. O contador `subsolo.engagement.reminders` continua contando reexecuções (a descrição já diz isso; aceito na revisão).
 
@@ -127,3 +127,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato público) | 2026-10-24 | H32-02: a validação checa as 09h00 de São Paulo do dia corrente (relógio da aplicação). H32-04: o lote retorna `IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>`. | retorno do Test-writer (pontos 1 e 3) | — | piloto automático do Thomas (2026-10-24) |
