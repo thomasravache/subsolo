@@ -273,7 +273,7 @@ export function ReportsQueue({
                   className="flex h-full flex-col gap-4 rounded-md border border-border bg-surface p-4"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="rounded-xs border border-accent bg-accent/20 px-2 py-0.5 font-label text-[10px] font-bold uppercase tracking-wider text-accent">
+                    <span className="rounded-xs bg-accent px-2 py-0.5 font-label text-[10px] font-bold uppercase tracking-wider text-text-on-accent">
                       Denúncia
                     </span>
                     <span className="font-label text-xs uppercase text-text-muted">

@@ -68,7 +68,7 @@ export function ReportShowButton({
         aria-haspopup="dialog"
         aria-disabled={busy}
         onClick={() => void start()}
-        className="inline-flex min-h-11 items-center gap-1.5 px-2 font-label text-xs uppercase tracking-wider text-text-muted transition-colors hover:text-accent aria-disabled:opacity-50"
+        className="inline-flex min-h-11 items-center gap-1.5 px-2 font-label text-xs uppercase tracking-wider text-text-muted transition-colors hover:text-text aria-disabled:opacity-50"
       >
         <svg
           viewBox="0 0 24 24"
