@@ -219,7 +219,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 70ec8c4 | 2026-10-24 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 820ms) — 0712bdf | 2026-10-24 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 3 minor e 5 nits; aviso dos lock files aceito — só referências de projeto do Moderation; H33-01..07 levados à SPEC-0037) — cadda8e | 2026-10-24 |
-| G5 Integração & CI | FAIL | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 32s 911ms); test_e2e exit 1 ([ELIFECYCLE] Test failed. See above for more details.); arch_test exit 0 (duration: 11s 773ms) — b6b1a42 | 2026-10-24 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 16m 50s 507ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 905ms) — d0189b9 | 2026-10-24 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
