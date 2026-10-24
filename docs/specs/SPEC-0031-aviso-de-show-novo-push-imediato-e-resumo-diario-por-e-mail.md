@@ -9,9 +9,9 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0023, SPEC-0027, SPEC-0030]
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, web/src/components/notifications/**, docs/api/openapi.v1.json, web/src/api/schema.d.ts]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tools/compose-up.sh, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/profiles/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, web/src/components/notifications/**, docs/api/openapi.v1.json, web/src/api/schema.d.ts, src/**/packages.lock.json, tests/Modules/Profiles/Subsolo.Profiles.UnitTests/Infrastructure/ProfilesHarness.cs, web/src/api/public-profile.ts, tests/Security/**]
 adrs: [ADR-0001, ADR-0008, ADR-0014]
 external: []
 size: M
@@ -93,8 +93,11 @@ POST /api/v1/notifications/unsubscribe/one-click?token=…:   # RFC 8058; públi
 E-mail de aviso (resumo e lembrete): cabeçalhos
   List-Unsubscribe: <{base}/api/v1/notifications/unsubscribe/one-click?token={token}>
   List-Unsubscribe-Post: List-Unsubscribe=One-Click
-GET /api/v1/profiles/{type}/{slug}/shows:   # SPEC-0026; cada item ganha flyerId (uuid | null), aditivo
-Banco (schema notifications): job NoticesRetention diário apaga deliveries concluídas (sent, failed, discarded) e notices sem entrega pendente com mais de 90 dias
+GET /api/v1/shows?profileId=…&period=…:   # ListProfileShows (SPEC-0026); cada item ganha flyerId (string | null, o mesmo id de 64 caracteres do upload), aditivo
+Notice.Url: caminho do site começando com "/" (como "/curitiba/noite-da-peste-ii"); o Notifications o guarda assim, o push o abre na origem do site e o e-mail o resolve contra App:PublicUrl
+deliveries.status ganha skipped: entrega sem canal do destinatário (sem aparelho, usuário excluído, sem e-mail), com o evento NoticeDeliverySkipped
+Banco (schema notifications): job NoticesRetention diário apaga deliveries concluídas (sent, failed, skipped) e notices sem entrega pendente com mais de 90 dias e registra NoticesRetentionCompleted {Deliveries} {Notices}
+Falha do job DailyDigest: evento DailyDigestRunFailed, incluído no alerta "Falha de job" do Seq
 ```
 
 **Design:** N/A — push do sistema e e-mail no modelo da SPEC-0030; sem tela nova.
@@ -111,6 +114,7 @@ Banco (schema notifications): job NoticesRetention diário apaga deliveries conc
 | Resumo diário | shows publicados nas últimas 24 h | um e-mail por fã que ligou o resumo, com os shows dele | UT-02, IT-04, IT-05, E2E-01 |
 | Resumo repetido | job roda duas vezes no dia | um e-mail só | IT-05 |
 | Resumo sem nada | nenhum show novo para o fã | nenhum e-mail | UT-02 |
+| Falha do resumo | job `DailyDigest` falha (ex.: banco fora) | `DailyDigestRunFailed` no log e alerta "Falha de job" | IT-07 |
 | Limpeza | `published_shows` com mais de 7 dias | apagadas | IT-04 |
 | Arquitetura | dependências | `Engagement` só nas direções do ADR-0001; `Notifications` sem módulos de domínio | IT-06 |
 | Contrato | `IEventsCatalog` | assinatura do §6 | CT-01 |
@@ -124,7 +128,7 @@ Banco (schema notifications): job NoticesRetention diário apaga deliveries conc
 
 ### 7.2 Testes Unitários
 - **UT-01** — Dado um `ShowSummary` de "Noite da Peste II" com Lineup ["Cova Rasa", "Peste Negra"], Casa "Basement", início 2026-11-15T01:00Z e fuso America/Sao_Paulo, quando o compositor monta o aviso, então título "Show novo em Curitiba", corpo "Cova Rasa + Peste Negra · sáb 14/11 22h00 · Basement" e url "/curitiba/noite-da-peste-ii".
-- **UT-02** — Dados follows de quatro fãs e cinco shows publicados (um cancelado, um passado, 22 de uma cidade só), quando o montador do resumo roda, então cada fã recebe só os shows dele, sem repetição, até 20 com "e mais {n} na agenda", e quem não tem show novo fica de fora.
+- **UT-02** — Dados follows de quatro fãs e shows publicados (dois em Curitiba, um cancelado, um já começado e 22 em São Paulo; linha do resumo com a line-up unida por " + ", uma linha por show separada por quebra de linha e "e mais {n} na agenda" como última linha), quando o montador do resumo roda, então cada fã recebe só os shows dele, sem repetição, até 20 com "e mais {n} na agenda", e quem não tem show novo fica de fora.
 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API, o PostgreSQL e 10.000 seguidores de Curitiba e 300 de uma banda (parte em comum), quando um artista cria um show pela API, então o evento é consumido e o `notifications.deliveries` recebe uma entrega push por fã com push ativo e o aviso ligado, em ≤ 5 s do evento.
@@ -132,22 +136,23 @@ Banco (schema notifications): job NoticesRetention diário apaga deliveries conc
 - **IT-03** — Dados um evento de show com início no passado e um de show cancelado antes do processamento, quando consumidos, então nenhuma entrega é criada.
 - **IT-04** — Dados 10.000 fãs com o resumo ligado que seguem cidades com shows novos e linhas antigas em `published_shows`, quando o job roda, então as entregas `digest` são criadas em ≤ 60 s e as linhas com mais de 7 dias somem.
 - **IT-05** — Dados dois fãs com o resumo ligado e o Mailpit real, quando o job roda duas vezes no mesmo dia, então cada um recebe um e-mail com os seus shows, o link da agenda e o link de descadastro, e não recebe um segundo.
+- **IT-07** — Dado o job `DailyDigest` com o banco fora do ar, quando roda, então registra `DailyDigestRunFailed`, e o alerta "Falha de job" de `infra/seq/alerts.json` inclui esse evento.
 - **IT-06** — Dados os testes de arquitetura, quando rodam, então o `Engagement` só depende de `Users`, `Events`, `Profiles` e `Notifications` pelos contratos, e o `Notifications` não referencia o `Engagement`.
 
 ### 7.4 Testes de Contrato
 - **CT-01** — Dado o tipo público `IEventsCatalog`, quando lido por reflexão, então `GetShowSummaryAsync` e `ShowSummary` têm a forma do §6; o snapshot OpenAPI muda só pelos ajustes herdados do §6 (400 `notifications.invalid_preferences` no PUT de preferências, `POST /api/v1/notifications/unsubscribe/one-click` e `flyerId` nos shows do perfil), e `pnpm api:check` passa.
 
 ### 7.5 Testes E2E
-- **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do show abre a página dele e o de descadastro confirma. [jornada: seguir-e-avisar]
+- **E2E-01** — Dada a pilha do Compose com `Engagement:DigestCron` a cada minuto: o fã logado segue Curitiba e liga "Resumo diário por e-mail"; um artista publica um show em Curitiba; em até 2 minutos chega ao Mailpit o e-mail "Shows novos de quem você segue" com o show; o link do e-mail abre a agenda do site e o de descadastro confirma. [jornada: seguir-e-avisar]
 
 ### 7.6 Outros
 - **Itens herdados da revisão da SPEC-0030 (G4, tag `SPEC-0031:H30-NN`):**
   - H30-01 — Dado um endpoint `https://wns2-bl2p.notify.windows.com/w/?token=…` com chaves válidas, quando o `PushSubscriptionValidator` valida, então aceita (WNS do Edge no Windows, mesma regra de sufixo de host exato `.notify.windows.com`); `https://notify.windows.com.evil.example/…` e `http://…notify.windows.com/…` continuam recusados.
-  - H30-02 — Dadas entregas `sent`, `failed` e `discarded` e avisos sem entrega pendente com mais de 90 dias, além de uma entrega `pending` antiga e linhas recentes, quando o job `NoticesRetention` roda, então só as concluídas antigas e os avisos antigos sem pendência somem, e a contagem apagada sai no log.
+  - H30-02 — Dadas entregas `sent`, `failed` e `skipped` e avisos sem entrega pendente com mais de 90 dias, além de uma entrega `pending` antiga e linhas recentes, quando o job `NoticesRetention` roda, então só as concluídas antigas e os avisos antigos sem pendência somem, e o log registra `NoticesRetentionCompleted` com as contagens de entregas e de avisos apagados.
   - H30-03 — Dado `PUT /api/v1/me/notification-preferences` com um dos quatro campos ausente ou não booleano, quando enviado, então 400 `notifications.invalid_preferences` e nada muda; o painel "Avisos" do web continua mandando os quatro campos.
   - H30-04 — Dado um e-mail de aviso (resumo ou lembrete), quando enviado ao Mailpit, então tem `List-Unsubscribe` com a URL `…/api/v1/notifications/unsubscribe/one-click?token=…` e `List-Unsubscribe-Post: List-Unsubscribe=One-Click`; um `POST` nessa URL com `List-Unsubscribe=One-Click`, sem X-CSRF, desliga aquele tipo (204); token adulterado → 400 `notifications.invalid_token`. A página `/avisos/descadastrar` não muda.
   - H30-05 — Dado `infra/seq/alerts.json`, quando o teste lê o alerta "Falha de job", então o filtro inclui `NoticeDeliveriesRunFailed` junto de `OutboxProcessingFailed`.
-  - H30-06 — Dada uma entrega sem canal do destinatário (sem aparelho, usuário excluído ou sem e-mail), quando o `DeliverySender` processa, então ela termina com o evento `NoticeDeliverySkipped` (não `NoticeDeliveryFailed`) e fica fora do alerta "Falha no envio de aviso".
+  - H30-06 — Dada uma entrega sem canal do destinatário (sem aparelho, usuário excluído ou sem e-mail), quando o `DeliverySender` processa, então ela termina com status `skipped` e o evento `NoticeDeliverySkipped` (não `NoticeDeliveryFailed`) e fica fora do alerta "Falha no envio de aviso".
   - H30-07 — Dado um fã com linha de preferências e `newShowPush` desligado cujo aparelho o servidor perdeu (410), quando o painel reenvia a inscrição ao abrir, então `newShowPush` continua desligado; na primeira inscrição de quem não tem linha, ele liga.
 - **Itens herdados da revisão da SPEC-0026 (G4):**
   - H26-01 — Dado `ListProfileShowsEndpoint`, quando o teste de arquitetura e a suíte rodam, então não há `.Cast<ProfileShowResponse>()`: `ProfileShowsResponse.Shows` e `IShowsReadModel.ListByProfileAsync` já são tipados como `ProfileShowResponse`, e as respostas da API não mudam.
@@ -258,3 +263,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 2 | 2026-10-23 | Itens herdados com decisão concreta e teste: H30-01 (WNS aceito), H30-02 (retenção de 90 dias, job `NoticesRetention`), H30-03 (campos obrigatórios no PUT, 400 `notifications.invalid_preferences`), H30-04 (cabeçalhos RFC 8058 e `POST …/unsubscribe/one-click`), H30-05..07 como escritos, H26-01/02/03b como escritos (com `flyerId` nos shows do perfil) e H26-07 avaliado e mantido. CT-01 passa a esperar essas mudanças no OpenAPI. `touches` ganha `docs/api/openapi.v1.json`, `web/src/api/schema.d.ts`. | itens herdados das revisões das SPEC-0026 e SPEC-0030 sem decisão fechada antes do G1 | SPEC-0030 (contrato do PUT e do descadastro) | piloto automático do Thomas (2026-10-23) |
+| 3 | 2026-10-24 | SPEC_DEFECTs do Test-writer no G1: `Notice.Url` é caminho do site (`/…`), resolvido contra `App:PublicUrl` no e-mail; `deliveries.status` ganha `skipped` (H30-06; H30-02 apaga `sent`, `failed` e `skipped`); log `NoticesRetentionCompleted {Deliveries} {Notices}`; novo IT-07 (`DailyDigestRunFailed` no alerta "Falha de job"); `flyerId` é `string \| null` e a rota real é `GET /api/v1/shows?profileId=…`; formatos da linha do resumo no UT-02; E2E-01 abre a agenda pelo link do e-mail (o corpo do §6 não tem link por show); `touches` ganha `src/**/packages.lock.json`, o `ProfilesHarness.cs` (novo membro de `IEventsCatalog` implementado normalmente), `web/src/api/public-profile.ts` e `tests/Security/**` (one-click sem X-CSRF). | SPEC_DEFECTs 1–10 do Test-writer (G1) | SPEC-0030 (`Notice.Url` relativo, status `skipped`) | piloto automático do Thomas (2026-10-24) |
