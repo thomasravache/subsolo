@@ -34,6 +34,13 @@
       "window": "01:00:00",
       "having": "count > 20",
       "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/avisos-sem-envio.md"
+    },
+    {
+      "title": "Resumo diário falhou",
+      "filter": "event.name = 'DailyDigestRunFailed'",
+      "window": "01:00:00",
+      "having": "count >= 1",
+      "runbook": "https://github.com/thomasravache/subsolo/blob/main/docs/runbooks/outbox-parada.md"
     }
   ]
 }

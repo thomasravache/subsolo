@@ -15,8 +15,9 @@ Sinais (SPEC-0009):
   - `NoticeDeliveriesRunFailed`: o job `Notifications.ProcessDeliveries` (entregas de avisos, a cada 1 s) falhou
     inteiro — tipicamente o PostgreSQL fora do ar; as entregas pendentes saem quando ele volta;
   - `DailyDigestRunFailed`: o job `Engagement.DailyDigest` (resumo diário por e-mail, às 9h de São Paulo,
-    `Engagement:DigestCron`) falhou. Ele roda uma vez por dia, então sozinho dá um evento só: procure-o no Seq mesmo sem
-    o alerta disparar (item 4 de "Confirmar").
+    `Engagement:DigestCron`) falhou. Como ele roda uma vez por dia, tem também o alerta próprio abaixo.
+- Alerta do Seq **"Resumo diário falhou"** (`infra/seq/alerts.json`, SPEC-0031): 1 evento `DailyDigestRunFailed` em
+  1 hora basta, porque o job roda uma vez por dia.
 
 Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se perde), mas os efeitos assíncronos
 (avisos, integrações entre módulos) atrasam.
@@ -37,6 +38,13 @@ Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se p
   Quartz parou ou está travado numa execução longa — veja os logs da categoria `Quartz` e reinicie a API.
 - **Uma mensagem falhando sempre** (erro por mensagem, com novas tentativas): veja as colunas `error` e `attempts` da tabela
   `outbox_messages` do schema do módulo; o handler que falha está no log "Falha ao processar ...".
+
+### Resumo diário falhou
+1. No Seq, filtre `event.name = 'DailyDigestRunFailed'` e abra a exceção: banco fora do ar (`entries.postgres` do
+   `/health`) é a causa mais comum; erro do Notifications ou de configuração (`Engagement:DigestCron` inválido impede a
+   API de subir) aparece na pilha.
+2. Veja se o resumo do dia saiu para parte dos fãs: `select count(*) from notifications.deliveries where dedupe_key =
+   'digest:<aaaa-mm-dd>'`.
 
 ## 3. Agir
 - Reiniciar a API (`docker compose restart api`) depois de corrigir a causa; o job retoma as mensagens pendentes.
