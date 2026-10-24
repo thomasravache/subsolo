@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPEC-0033 — infraestrutura do módulo Moderation (ADR-0001, ADR-0002): DbContext do schema `moderation`, migrações e
+    o registro do módulo (AddModerationModule).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Subsolo.Modules.Moderation.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Common/Subsolo.Common.Infrastructure/Subsolo.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Moderation.Application/Subsolo.Modules.Moderation.Application.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Moderation.Presentation/Subsolo.Modules.Moderation.Presentation.csproj" />
+    <ProjectReference Include="../Subsolo.Modules.Moderation.IntegrationEvents/Subsolo.Modules.Moderation.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+</Project>

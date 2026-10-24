@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 
 import type { CitySummary } from "@/api/client";
 import {
@@ -22,6 +22,8 @@ import { fieldMessage } from "./messages";
 export interface ProfileRequestsQueueProps {
   initialItems: QueueItem[];
   cities: CitySummary[];
+  /** SPEC-0033 — avisa a quantidade de pedidos na fila (o rótulo da aba "Pedidos de perfil (n)"). */
+  onCountChange?: (count: number) => void;
 }
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
@@ -43,7 +45,8 @@ function linksOf(item: QueueItem): { label: string; href: string }[] {
 }
 
 /**
- * SPEC-0021 — aba "PEDIDOS DE PERFIL (n)" da "Fila do admin" (tela do Stitch, só com a aba de pedidos): cada pedido
+ * SPEC-0021 — aba "PEDIDOS DE PERFIL (n)" da "Fila do admin" (tela do Stitch; SPEC-0033: as abas ficam no
+ * `AdminQueueTabs`, que recebe a contagem por `onCountChange`): cada pedido
  * pendente num cartão, mais antigo primeiro, com os dados do perfil, o contato ou a prova e o e-mail de quem pediu;
  * "Aprovar" decide na hora e "Recusar" abre o campo "Motivo" e "Confirmar recusa". O cartão decidido sai da fila e a
  * decisão é anunciada.
@@ -51,6 +54,7 @@ function linksOf(item: QueueItem): { label: string; href: string }[] {
 export function ProfileRequestsQueue({
   initialItems,
   cities,
+  onCountChange,
 }: ProfileRequestsQueueProps) {
   const id = useId();
   const [items, setItems] = useState(initialItems);
@@ -64,9 +68,11 @@ export function ProfileRequestsQueue({
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState("");
 
-  const tabId = `${id}-aba`;
-  const panelId = `${id}-painel`;
   const reasonId = (requestId: string) => `${id}-motivo-${requestId}`;
+
+  useEffect(() => {
+    onCountChange?.(items.length);
+  }, [items.length, onCountChange]);
 
   function decided(requestId: string, message: string) {
     setItems((current) =>
@@ -125,31 +131,10 @@ export function ProfileRequestsQueue({
 
   return (
     <div className="flex flex-col gap-4">
-      <div
-        role="tablist"
-        aria-label="Fila do admin"
-        className="flex gap-2 border-b border-border"
-      >
-        <button
-          id={tabId}
-          type="button"
-          role="tab"
-          aria-selected="true"
-          aria-controls={panelId}
-          className="inline-flex min-h-11 items-center border-b-2 border-accent px-3 font-label text-xs font-bold uppercase tracking-wider text-text"
-        >
-          Pedidos de perfil ({items.length})
-        </button>
-      </div>
       <p role="status" className="text-sm text-text empty:hidden">
         {status}
       </p>
-      <div
-        id={panelId}
-        role="tabpanel"
-        aria-labelledby={tabId}
-        className="flex flex-col gap-3"
-      >
+      <div className="flex flex-col gap-3">
         {items.length === 0 ? (
           <p className="rounded-md border border-dashed border-border px-4 py-10 text-center text-base text-text-muted">
             Nenhum pedido de perfil em análise.

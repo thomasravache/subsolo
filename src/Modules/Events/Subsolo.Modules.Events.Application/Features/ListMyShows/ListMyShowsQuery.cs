@@ -16,7 +16,8 @@ public sealed record ListMyShowsQuery(Guid UserId, bool IsAdmin, string? Period)
 
 /// <summary>
 /// SPEC-0023 — um show em "Meus shows" (§6); <see cref="StartsAt"/> em UTC (serializado com <c>Z</c>). SPEC-0024 (H23-06):
-/// <see cref="TimeZone"/> é o fuso (IANA) da cidade, para a tela mostrar a hora local.
+/// <see cref="TimeZone"/> é o fuso (IANA) da cidade, para a tela mostrar a hora local. SPEC-0033: <see cref="Hidden"/> =
+/// ocultado pela moderação (o dono ainda o vê aqui, com o selo e sem as ações).
 /// </summary>
 public sealed record MyShowResponse(
     Guid Id,
@@ -28,4 +29,5 @@ public sealed record MyShowResponse(
     string VenueName,
     ShowStatus Status,
     string FlyerThumbUrl,
-    Guid OrganizerProfileId);
+    Guid OrganizerProfileId,
+    bool Hidden);

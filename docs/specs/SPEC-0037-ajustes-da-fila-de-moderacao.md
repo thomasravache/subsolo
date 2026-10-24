@@ -1,0 +1,135 @@
+---
+id: SPEC-0037
+title: Ajustes da fila de moderação
+tier: lite
+type: fix
+user_facing: false
+status: approved
+created: 2026-10-24
+parent: SPEC-0002
+depends_on: [SPEC-0033]
+consumes_contract: []
+touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/moderacao/**]
+adrs: [ADR-0001, ADR-0003]
+external: []
+size: S
+approved_by: thomas
+approved_at: 2026-10-24
+---
+
+# SPEC-0037 — Ajustes da fila de moderação
+
+<!-- Tier lite: bug fix ou mudança pequena, um módulo, sem mudança de contrato público, tamanho S. type: fix | feature | refactor. user_facing: true se o defeito aparece numa jornada do usuário (o teste de regressão deveria ser E2E). Se qualquer condição falhar, use o tier full. Substitua todos os marcadores com chaves duplas. -->
+
+## 1. Problema
+Achados menores da revisão G4 da SPEC-0033 (itens `H33-NN`):
+- **H33-01** — sem IT para a corrida no índice único parcial (duas denúncias simultâneas do mesmo fã e show) nem para `/hide` com nota de 201 caracteres (400 `moderation.invalid_note`), comportamentos das Emendas 1 e 4.
+- **H33-02** — `ReportsQueue.tsx`: depois de "Manter" ou "Ocultar show" o cartão some com o foco no botão dele e o foco cai no `<body>`.
+- **H33-03** — `/admin/fila`: falha em `GET /api/v1/admin/reports` derruba a página inteira, inclusive a aba "Pedidos de perfil" (SPEC-0021).
+- **H33-04** — `KeepShowEndpoint.cs:29`: `ProducesProblemCode(400, CsrfInvalid)` repetido; o snapshot mostra o código duas vezes.
+- **H33-05** — denúncia aceita entre a decisão de ocultar e o consumidor do `Events` fica `pending` para sempre (some da fila, mas o histórico fica sujo).
+- **H33-06** — a fila formata a data do show em `America/Sao_Paulo`, não no fuso da cidade (`ShowHeadline` não traz o fuso).
+- **H33-07** — `ReportShowRequest.reason` sai no OpenAPI como `string|null`, sem o enum do §6.
+
+## 2. Causa Raiz
+- H33-01: o plano da SPEC-0033 não ganhou IDs para as regras acrescentadas nas Emendas 1 e 4.
+- H33-02: `decided()` remove o cartão sem decidir para onde o foco vai.
+- H33-03: `web/src/app/admin/fila/page.tsx:49` trata as duas leituras como uma só.
+- H33-04: `RequireModerationAdmin(mutation: true)` já declara o código.
+- H33-05: `HideShow` resolve só as pendentes existentes no momento da decisão; o `ListReports` descarta shows que o `IShowHeadlines` não devolve.
+- H33-06/07: `ShowHeadline` sem `TimeZone`; o esquema do pedido não anota o enum.
+
+## 3. Mudança Proposta
+- H33-01: IT com 3 POSTs simultâneos (uma 201, as outras 409, uma linha) e IT de nota com 201 caracteres.
+- H33-02: depois da decisão o foco vai para o título do próximo cartão; sem cartões, para a mensagem de fila vazia.
+- H33-03: a página renderiza a aba "Pedidos de perfil" e mostra "indisponível" só dentro do painel de denúncias.
+- H33-04: remover a declaração repetida e regenerar o snapshot.
+- H33-05: ao receber denúncia de show já oculto (`GetShowSummaryAsync` nulo) a resposta já é 404; e o `HideShow` marca como `hidden` as pendentes que chegarem depois, numa decisão nova sobre o mesmo show (`no_pending_reports` continua para o show sem pendentes).
+- H33-06: `ShowHeadline` ganha `TimeZone` (contrato interno do `Events`, sem rota pública) e a fila formata no fuso da cidade.
+- H33-07: anotar o enum de `reason` no OpenAPI e regenerar o cliente.
+- **Não muda:** o limite por tentativa (ADR-0003; aceito na revisão), rotas, códigos e textos das telas.
+
+**Padrão seguido:** testes e endpoints da SPEC-0033; `MyShowResponse.timeZone` (SPEC-0024, H23-06); foco após remover item como no `ProfileRequestsQueue` (SPEC-0021).
+
+**Rollback:** reverter o merge commit.
+
+**Outras ocorrências:** Nenhuma.
+
+## 4. Plano de Testes (TDD)
+- Caracterização: N/A — área coberta pelos testes da SPEC-0033.
+- **UT-01** — Dada a fila com dois cartões, quando o admin mantém o primeiro, então o foco vai para o título do segundo; quando decide o último, para a mensagem de fila vazia. (H33-02)
+- **UT-02** — Dada a página `/admin/fila` com a leitura de denúncias falhando, quando renderizada, então a aba "Pedidos de perfil" aparece com os pedidos e o painel de denúncias mostra o aviso de indisponível. (H33-03)
+- **IT-01** — Dado um fã e um show, quando três denúncias chegam ao mesmo tempo, então uma resposta é 201, as outras 409 `moderation.already_reported`, e há uma linha; e `/hide` com nota de 201 caracteres dá 400 `moderation.invalid_note`. (H33-01)
+- **IT-02** — Dado um show oculto com uma denúncia pendente que chegou depois da decisão, quando o admin decide de novo, então a pendente vira `hidden`; e `IShowHeadlines` devolve o fuso da cidade. (H33-05, H33-06)
+- **CT-01** — Dado o snapshot OpenAPI, quando lido, então `ReportShowRequest.reason` é o enum dos quatro motivos e o `security.csrf_invalid` do `keep` aparece uma vez. (H33-04, H33-07)
+- E2E: N/A — sem jornada nova; a E2E-01 da SPEC-0033 segue cobrindo a fila.
+
+## 5. Questões em Aberto
+<!-- Dúvidas que impedem fechar a spec, respondidas ANTES do H1. Aberta: `- [ ] pergunta (quem responde)`. Respondida: `- [x] pergunta — resposta (quem, data)`. Com alguma aberta o G0 reprova. Sem dúvidas: escreva "Nenhuma". Dúvida que surge depois da aprovação vira impedimento (seção Registro de Impedimentos). -->
+Nenhuma
+
+## 6. Aprovação (H1)
+Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o humano responder "Aprovado".
+
+H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode seguir no piloto automático com o recomendado").
+
+## 7. Checklist de Implementação
+<!-- Preenchido na fase PLAN, após a aprovação. -->
+- [ ] Red: UT-01, UT-02, IT-01, IT-02 e CT-01 com a tag `SPEC-0037:<ID>`, falhando pelo motivo certo
+- [ ] Green: testes de corrida e nota, foco, painel isolado, declaração única, pendentes tardias, fuso e enum
+- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+
+## 8. Registro de Gates
+<!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
+| Gate | Status | Evidência | Data |
+|---|---|---|---|
+| G0 Spec | PASS | validate: 0 erro(s) — d74b734 (árvore suja) | 2026-10-24 |
+| G1 Red | PENDING | | |
+| G2 Green | PENDING | | |
+| G3 Arquitetura | PENDING | | |
+| G4 Review | PENDING | | |
+| G5 Integração & CI | PENDING | | |
+| H2 Integração aprovada | PENDING | | |
+| G6 Deploy | PENDING | | |
+| G7 Pronto & Docs | PENDING | | |
+
+## 9. Registro de Impedimentos
+<!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
+| ID | Aberto em | Fase/Gate | Tipo | Descrição | Tentativas | Responsável | Resolução | Fechado em |
+|---|---|---|---|---|---|---|---|---|
+
+## 10. Relatório de Entrega
+<!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
+
+### O que foi entregue
+
+### Como foi feito
+
+### Prova de Correção
+<!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+
+### Verificação
+| Teste | Comportamento | Resultado | Evidência |
+|---|---|---|---|
+
+### Definição de Pronto
+- [ ] Teste de regressão falhou antes e passa depois da correção
+- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
+- [ ] Review independente sem achados blocker/major (G4)
+- [ ] Padrão existente mantido
+- [ ] Disponível no ambiente-alvo via pipeline (G6)
+- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
+- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+
+### Deploy
+
+### Pendências
+
+## 11. Emendas
+<!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
+| Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
+|---|---|---|---|---|---|

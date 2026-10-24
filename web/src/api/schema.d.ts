@@ -55,7 +55,7 @@ export interface paths {
     put?: never;
     /**
      * Mudar a situação do show
-     * @description Marca o show como agendado (scheduled), cancelado (cancelled) ou adiado (postponed); cancelado e adiado continuam na agenda com o selo. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.
+     * @description Marca o show como agendado (scheduled), cancelado (cancelled) ou adiado (postponed); cancelado e adiado continuam na agenda com o selo. Só o dono do perfil organizador ou o admin; show oculto pela moderação não muda de situação. Exige o cabeçalho X-CSRF.
      */
     post: operations["ChangeShowStatus"];
     delete?: never;
@@ -102,7 +102,7 @@ export interface paths {
     get: operations["GetShowForEdit"];
     /**
      * Editar show
-     * @description Troca os dados do show (as mesmas regras do cadastro); o endereço (slug) não muda. Só o dono do perfil organizador ou o admin. Exige o cabeçalho X-CSRF.
+     * @description Troca os dados do show (as mesmas regras do cadastro); o endereço (slug) não muda. Só o dono do perfil organizador ou o admin; show oculto pela moderação não pode ser editado. Exige o cabeçalho X-CSRF.
      */
     put: operations["UpdateShow"];
     post?: never;
@@ -964,6 +964,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/reports/{showId}/hide": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ocultar show denunciado
+     * @description Oculta o show: ele sai da agenda, das páginas públicas e dos avisos; o dono o vê em Meus shows com o selo, sem poder editar. Resolve todas as denúncias pendentes dele. A nota (até 200 caracteres) é interna e não sai pela API. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["HideReportedShow"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/{showId}/keep": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Manter show denunciado
+     * @description Mantém o show na agenda e arquiva todas as denúncias pendentes dele (saem da fila). Exige o cabeçalho X-CSRF.
+     */
+    post: operations["KeepReportedShow"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Fila de denúncias
+     * @description Shows com denúncias pendentes, mais antigos primeiro (pela primeira denúncia): título, data, casa, a quantidade por motivo e até três detalhes mais recentes. Não identifica quem denunciou.
+     */
+    get: operations["ListReports"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shows/{id}/reports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Denunciar show
+     * @description Denuncia o show com o motivo (fake, cancelled_unannounced, wrong_info ou other) e o detalhe opcional (até 500 caracteres; obrigatório em other). Uma denúncia pendente por fã e show; até 10 denúncias por fã por dia. Exige o cabeçalho X-CSRF.
+     */
+    post: operations["ReportShow"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1062,6 +1142,9 @@ export interface components {
       /** Format: int32 */
       count: number;
     };
+    HideShowRequest: {
+      note: null | string;
+    };
     /** Format: binary */
     IFormFile: string;
     MeResponse: {
@@ -1115,6 +1198,7 @@ export interface components {
       flyerThumbUrl: string;
       /** Format: uuid */
       organizerProfileId: string;
+      hidden: boolean;
     };
     NotificationPreferencesRequest: {
       newShowPush: boolean;
@@ -1284,6 +1368,38 @@ export interface components {
     RejectProfileRequestRequest: {
       reason: string;
     };
+    ReportCountsResponse: {
+      /** Format: int32 */
+      fake: number;
+      /** Format: int32 */
+      cancelled_unannounced: number;
+      /** Format: int32 */
+      wrong_info: number;
+      /** Format: int32 */
+      other: number;
+    };
+    ReportCreated: {
+      /** Format: uuid */
+      id: string;
+    };
+    ReportQueueItem: {
+      /** Format: uuid */
+      showId: string;
+      title: string;
+      citySlug: string;
+      slug: string;
+      /** Format: date-time */
+      startsAtUtc: string;
+      venueName: string;
+      counts: components["schemas"]["ReportCountsResponse"];
+      latestDetails: string[];
+      /** Format: date-time */
+      firstReportedAtUtc: string;
+    };
+    ReportShowRequest: {
+      reason: null | string;
+      details: null | string;
+    };
     RequestMagicLinkRequest: {
       email: string;
       returnTo: null | string;
@@ -1353,6 +1469,7 @@ export interface components {
       flyerId: string;
       flyerThumbUrl: string;
       status: components["schemas"]["ShowStatus"];
+      hidden?: boolean;
     };
     ShowLineupItemRequest: {
       /** Format: uuid */
@@ -1673,6 +1790,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
+      /** @description Conflict (code=events.show_hidden) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
       /** @description Too Many Requests (code=security.rate_limited) */
       429: {
         headers: {
@@ -1939,7 +2065,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
-      /** @description Conflict (code=events.show_slug_taken) */
+      /** @description Conflict (code=events.show_slug_taken) (code=events.show_hidden) */
       409: {
         headers: {
           [name: string]: unknown;
@@ -4661,6 +4787,294 @@ export interface operations {
       };
       /** @description Too Many Requests (code=security.rate_limited) */
       429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  HideReportedShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        showId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["HideShowRequest"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) (code=moderation.invalid_note) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Forbidden (code=auth.forbidden) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not Found (code=moderation.no_pending_reports) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  KeepReportedShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        showId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=security.csrf_invalid) (code=security.csrf_invalid) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Forbidden (code=auth.forbidden) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not Found (code=moderation.no_pending_reports) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ListReports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportQueueItem"][];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Forbidden (code=auth.forbidden) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ReportShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReportShowRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportCreated"];
+        };
+      };
+      /** @description Bad Request (code=security.csrf_invalid) (code=moderation.invalid_report) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unauthorized (code=auth.required) */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not Found (code=events.show_not_found) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Conflict (code=moderation.already_reported) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Service Unavailable (code=service.unavailable) */
+      503: {
         headers: {
           [name: string]: unknown;
         };

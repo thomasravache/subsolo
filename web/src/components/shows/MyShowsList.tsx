@@ -40,7 +40,8 @@ const actionClass = buttonClasses("secondary", "md", "flex-1 px-2");
  * SPEC-0023 — "Meus shows" (tela "Meus Shows - Produtor - Subsolo" do Stitch, sem o selo "produtor verificado"): abas
  * "Próximos" e "Passados" (padrão de abas da WAI-ARIA, setas trocam a aba), cada show num cartão (`article`) com o
  * flyer, a data em bloco no fuso da cidade, o nome, a casa e a cidade e o selo ADIADO/CANCELADO, e as ações "Editar",
- * "Adiar" e "Cancelar show" (com a confirmação em diálogo). Vazio → "Nenhum show cadastrado ainda.".
+ * "Adiar" e "Cancelar show" (com a confirmação em diálogo). Vazio → "Nenhum show cadastrado ainda.". SPEC-0033: o show
+ * oculto pela moderação (`hidden`) leva o selo "Oculto pela moderação" e fica sem as ações (o Events as recusa).
  */
 export function MyShowsList({ upcoming, past, cities }: MyShowsListProps) {
   const router = useRouter();
@@ -153,6 +154,7 @@ export function MyShowsList({ upcoming, past, cities }: MyShowsListProps) {
               // SPEC-0024 (H23-06): o fuso da cidade vem em cada item de GET /api/v1/me/shows.
               const when = showDateParts(show.startsAt, show.timeZone);
               const cancelled = current === "cancelled";
+              const hidden = show.hidden;
               const titleId = `${id}-show-${show.id}`;
               return (
                 <li key={show.id} className="flex flex-col">
@@ -177,6 +179,13 @@ export function MyShowsList({ upcoming, past, cities }: MyShowsListProps) {
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
                         <div className="flex flex-col gap-1">
+                          {hidden && (
+                            <span className="self-start">
+                              <Badge kind="cancelled">
+                                {showMessages.hiddenBadge}
+                              </Badge>
+                            </span>
+                          )}
                           {current !== "scheduled" && (
                             <span className="self-start">
                               <Badge
@@ -213,46 +222,52 @@ export function MyShowsList({ upcoming, past, cities }: MyShowsListProps) {
                         </time>
                       </div>
                     </div>
-                    <div className="flex gap-2 border-t border-border pt-3">
-                      <Link
-                        href={editShowPath(show.id)}
-                        className={actionClass}
-                      >
-                        Editar
-                      </Link>
-                      {current === "scheduled" && (
-                        <button
-                          type="button"
-                          disabled={busy === show.id}
-                          onClick={() => void change(show, "postponed")}
+                    {!hidden && (
+                      <div className="flex gap-2 border-t border-border pt-3">
+                        <Link
+                          href={editShowPath(show.id)}
                           className={actionClass}
                         >
-                          Adiar
-                        </button>
-                      )}
-                      {!cancelled && (
-                        <button
-                          type="button"
-                          disabled={busy === show.id}
-                          onClick={(event) =>
-                            dialogs.current[show.id]?.open(event.currentTarget)
-                          }
-                          className={actionClass}
-                        >
-                          Cancelar show
-                        </button>
-                      )}
-                    </div>
+                          Editar
+                        </Link>
+                        {current === "scheduled" && (
+                          <button
+                            type="button"
+                            disabled={busy === show.id}
+                            onClick={() => void change(show, "postponed")}
+                            className={actionClass}
+                          >
+                            Adiar
+                          </button>
+                        )}
+                        {!cancelled && (
+                          <button
+                            type="button"
+                            disabled={busy === show.id}
+                            onClick={(event) =>
+                              dialogs.current[show.id]?.open(
+                                event.currentTarget,
+                              )
+                            }
+                            className={actionClass}
+                          >
+                            Cancelar show
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </article>
-                  <CancelShowDialog
-                    ref={(handle) => {
-                      dialogs.current[show.id] = handle;
-                    }}
-                    id={`${id}-cancelar-${show.id}`}
-                    title={show.title}
-                    busy={busy === show.id}
-                    onConfirm={() => change(show, "cancelled")}
-                  />
+                  {!hidden && (
+                    <CancelShowDialog
+                      ref={(handle) => {
+                        dialogs.current[show.id] = handle;
+                      }}
+                      id={`${id}-cancelar-${show.id}`}
+                      title={show.title}
+                      busy={busy === show.id}
+                      onConfirm={() => change(show, "cancelled")}
+                    />
+                  )}
                 </li>
               );
             })}

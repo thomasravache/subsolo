@@ -24,6 +24,13 @@
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.IntegrationEvents/Subsolo.Modules.Events.IntegrationEvents.csproj" />
     <Project Path="src/Modules/Events/Subsolo.Modules.Events.Presentation/Subsolo.Modules.Events.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Moderation/">
+    <Project Path="src/Modules/Moderation/Subsolo.Modules.Moderation.Application/Subsolo.Modules.Moderation.Application.csproj" />
+    <Project Path="src/Modules/Moderation/Subsolo.Modules.Moderation.Domain/Subsolo.Modules.Moderation.Domain.csproj" />
+    <Project Path="src/Modules/Moderation/Subsolo.Modules.Moderation.Infrastructure/Subsolo.Modules.Moderation.Infrastructure.csproj" />
+    <Project Path="src/Modules/Moderation/Subsolo.Modules.Moderation.IntegrationEvents/Subsolo.Modules.Moderation.IntegrationEvents.csproj" />
+    <Project Path="src/Modules/Moderation/Subsolo.Modules.Moderation.Presentation/Subsolo.Modules.Moderation.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Notifications/">
     <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Application/Subsolo.Modules.Notifications.Application.csproj" />
     <Project Path="src/Modules/Notifications/Subsolo.Modules.Notifications.Domain/Subsolo.Modules.Notifications.Domain.csproj" />
@@ -84,6 +91,10 @@
   <Folder Name="/tests/Modules/Events/">
     <Project Path="tests/Modules/Events/Subsolo.Events.IntegrationTests/Subsolo.Events.IntegrationTests.csproj" />
     <Project Path="tests/Modules/Events/Subsolo.Events.UnitTests/Subsolo.Events.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Moderation/">
+    <Project Path="tests/Modules/Moderation/Subsolo.Moderation.IntegrationTests/Subsolo.Moderation.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Moderation/Subsolo.Moderation.UnitTests/Subsolo.Moderation.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Notifications/">
     <Project Path="tests/Modules/Notifications/Subsolo.Notifications.IntegrationTests/Subsolo.Notifications.IntegrationTests.csproj" />

@@ -38,6 +38,8 @@ public static class EventsModule
         services.AddScoped<EventsCatalog>();
         services.AddScoped<IEventsCatalog>(provider => provider.GetRequiredService<EventsCatalog>());
         services.AddScoped<IEventsCatalogNames>(provider => provider.GetRequiredService<EventsCatalog>());
+        // SPEC-0033 (Emenda 2): os dados de exibição dos shows em lote, para a fila de denúncias.
+        services.AddScoped<IShowHeadlines, ShowHeadlines>();
         services.AddScoped<IEventsUnitOfWork>(provider => provider.GetRequiredService<EventsDbContext>());
         // SPEC-0022: flyers (upload, catálogo interno para o cadastro de show e limpeza de hora em hora).
         services.AddScoped<IFlyerRepository, FlyerRepository>();

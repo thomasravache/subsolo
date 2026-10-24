@@ -932,6 +932,7 @@
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Engagement.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Events.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Notifications.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Profiles.Infrastructure": "[1.0.0, )",
           "Subsolo.Modules.Site.Infrastructure": "[1.0.0, )",
@@ -1051,6 +1052,44 @@
         "dependencies": {
           "Subsolo.Common.Presentation": "[1.0.0, )",
           "Subsolo.Modules.Events.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.moderation.application": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )",
+          "Subsolo.Modules.Events.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.Domain": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Users.IntegrationEvents": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.moderation.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Domain": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.moderation.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Infrastructure": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.Application": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.IntegrationEvents": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.Presentation": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.moderation.integrationevents": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Application": "[1.0.0, )"
+        }
+      },
+      "subsolo.modules.moderation.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "Subsolo.Common.Presentation": "[1.0.0, )",
+          "Subsolo.Modules.Moderation.Application": "[1.0.0, )"
         }
       },
       "subsolo.modules.notifications.application": {

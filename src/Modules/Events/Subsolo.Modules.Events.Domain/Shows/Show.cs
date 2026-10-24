@@ -81,6 +81,15 @@ public sealed class Show : Entity
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
     /// <summary>
+    /// SPEC-0033 — quando a moderação ocultou o show (<see langword="null"/> = visível). Oculto, o show sai de toda leitura
+    /// pública e não pode mais ser editado nem mudar de situação.
+    /// </summary>
+    public DateTimeOffset? HiddenAtUtc { get; private set; }
+
+    /// <summary>SPEC-0033 — o show foi ocultado pela moderação.</summary>
+    public bool IsHidden => HiddenAtUtc is not null;
+
+    /// <summary>
     /// Os perfis envolvidos no show: o organizador, a casa (se tiver perfil) e as bandas do line-up com perfil, sem
     /// repetir.
     /// </summary>
@@ -139,6 +148,21 @@ public sealed class Show : Entity
         Status = status;
         UpdatedAtUtc = nowUtc;
         Raise(new ShowChangedDomainEvent(Id, Status, StartsAtUtc));
+    }
+
+    /// <summary>
+    /// SPEC-0033 — a moderação ocultou o show em <paramref name="hiddenAtUtc"/>. Idempotente: ocultar de novo mantém o
+    /// primeiro instante e devolve <see langword="false"/>.
+    /// </summary>
+    public bool HideByModeration(DateTimeOffset hiddenAtUtc)
+    {
+        if (IsHidden)
+        {
+            return false;
+        }
+
+        HiddenAtUtc = hiddenAtUtc.ToUniversalTime();
+        return true;
     }
 
     private void Apply(ShowData data, DateTimeOffset nowUtc)

@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 2, in-progress 1, implemented 30
+- Validação (G0): **1 erro(s), 20 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 2, in-progress 1, implemented 31
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -34,7 +34,7 @@ Perfil: **padrao**
 | Fã vê a agenda da cidade no celular | provada | SPEC-0008, SPEC-0008, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0024, SPEC-0025, SPEC-0025, SPEC-0028, SPEC-0028 |
 | Produtor ou banda aprovados cadastram um show em menos de 2 minutos | provada | SPEC-0023, SPEC-0023 |
 | Fã abre a página do show e compartilha com o flyer na prévia | provada | SPEC-0024, SPEC-0024, SPEC-0024, SPEC-0026, SPEC-0026 |
-| Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | provada | SPEC-0027, SPEC-0027, SPEC-0029, SPEC-0029, SPEC-0030, SPEC-0030, SPEC-0031 |
+| Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | provada | SPEC-0027, SPEC-0027, SPEC-0029, SPEC-0029, SPEC-0030, SPEC-0030, SPEC-0031, SPEC-0032 |
 | Fã entra pelo link mágico no e-mail e sai | provada | SPEC-0016, SPEC-0016, SPEC-0016, SPEC-0020, SPEC-0020 |
 | Admin cadastra cidade e estilo | provada | SPEC-0017, SPEC-0017 |
 | Fã muda o nome, baixa os dados e exclui a conta | provada | SPEC-0019, SPEC-0019 |
@@ -43,22 +43,22 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0032  
+**Em andamento:** SPEC-0033  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0032 | Lembrete na véspera | full/S | in-progress | 🔄 em andamento |  |
-| 2 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0032 |
-| 3 | SPEC-0036 | Ajustes dos jobs agendados de avisos | lite/S | approved | ⛔ aguarda implementação de SPEC-0032 | saiu da onda 2: arquivos em comum com SPEC-0033 |
+| 1 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | in-progress | 🔄 em andamento |  |
+| 2 | SPEC-0036 | Ajustes dos jobs agendados de avisos | lite/S | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0033 |
+| 3 | SPEC-0037 | Ajustes da fila de moderação | lite/S | approved | ⛔ aguarda implementação de SPEC-0033 | saiu da onda 2: arquivos em comum com SPEC-0036 |
 
 ## Épicos
 
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 20/23 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 21/24 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Grafo de Dependências
@@ -71,24 +71,20 @@ flowchart LR
     S0019["SPEC-0019<br/>Minha conta: nome, exportar dados e exc…"]:::implemented
     S0021["SPEC-0021<br/>Perfis: pedido, aprovação pelo admin, p…"]:::implemented
     S0024["SPEC-0024<br/>Página do show com Open Graph e compart…"]:::implemented
-    S0029["SPEC-0029<br/>Vou com contagem"]:::implemented
-    S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::implemented
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::implemented
-    S0032["SPEC-0032<br/>Lembrete na véspera"]:::inprogress
-    S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
+    S0032["SPEC-0032<br/>Lembrete na véspera"]:::implemented
+    S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::inprogress
     S0036["SPEC-0036<br/>Ajustes dos jobs agendados de avisos"]:::approved
+    S0037["SPEC-0037<br/>Ajustes da fila de moderação"]:::approved
   end
   S0019 --> S0021
-  S0019 --> S0030
-  S0030 --> S0031
-  S0029 --> S0032
-  S0030 --> S0032
   S0031 --> S0032
   S0019 --> S0033
   S0021 --> S0033
   S0024 --> S0033
   S0031 --> S0033
   S0032 --> S0036
+  S0033 --> S0037
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -131,11 +127,12 @@ flowchart LR
 | [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
 | [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
 | [SPEC-0031](SPEC-0031-aviso-de-show-novo-push-imediato-e-resumo-diario-por-e-mail.md) | Aviso de show novo (push imediato e resumo diário por e-mail) | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0023, SPEC-0027, SPEC-0030 | — |
-| [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
-| [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
+| [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
+| [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
 | [SPEC-0034](SPEC-0034-atualizar-o-next-js-para-corrigir-avisos-de-seguranca.md) | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
 | [SPEC-0035](SPEC-0035-ci-no-runner-ubuntu-26-04-runner-fixo-cache-do-playwright-po.md) | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
 | [SPEC-0036](SPEC-0036-ajustes-dos-jobs-agendados-de-avisos.md) | Ajustes dos jobs agendados de avisos | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0032 | — |
+| [SPEC-0037](SPEC-0037-ajustes-da-fila-de-moderacao.md) | Ajustes da fila de moderação | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0033 | — |
 
 ## ADRs
 

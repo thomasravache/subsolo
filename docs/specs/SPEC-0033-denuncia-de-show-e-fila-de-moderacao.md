@@ -4,14 +4,14 @@ title: Denúncia de show e fila de moderação
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031]
 consumes_contract: []
-contract_version: 1
+contract_version: 4
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/moderation/**, web/src/app/admin/**, web/src/components/admin/**, web/src/app/(public)/conta/**, e2e/tests/moderacao/**, e2e/tests/fixtures.ts, docs/design/**]
+touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/moderation/**, web/src/app/admin/**, web/src/components/admin/**, web/src/app/(public)/conta/**, e2e/tests/moderacao/**, e2e/tests/fixtures.ts, docs/design/**, .github/workflows/ci.yml]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0016]
 external: []
 size: M
@@ -76,7 +76,7 @@ POST /api/v1/shows/{id}/reports:            # fan + X-CSRF + limite moderation-r
 GET /api/v1/admin/reports:                  # admin + default ; no-store
   200: [{ showId, title, citySlug, slug, startsAtUtc, venueName, counts: { fake, cancelled_unannounced, wrong_info, other }, latestDetails: [string] (até 3), firstReportedAtUtc }]
 POST /api/v1/admin/reports/{showId}/keep:   # admin + X-CSRF ; 204 ; 404 moderation.no_pending_reports
-POST /api/v1/admin/reports/{showId}/hide:   # admin + X-CSRF ; body { note: string(0–200)|null } ; 204 ; 404 moderation.no_pending_reports
+POST /api/v1/admin/reports/{showId}/hide:   # admin + X-CSRF ; body { note: string(0–200)|null } (corpo obrigatório) ; 204 ; 400 moderation.invalid_note ; 404 moderation.no_pending_reports
 ```
 
 ```csharp
@@ -93,6 +93,31 @@ Folha "Reportar show": "Ajude a manter a agenda do Subsolo correta." ; rádios "
   "Conte mais (opcional)" ; "Cancelar" e "Enviar denúncia" → "Obrigado. A moderação vai olhar."; repetida → "Você já denunciou este show."
 /admin/fila: aba "DENÚNCIAS (n)": cartão por show (título, data • casa, "{n} denúncias" com os motivos, detalhes) e "Manter" / "Ocultar show" (confirmação)
 "Meus shows": selo "Oculto pela moderação", sem "Editar"
+```
+
+**Ajustes de contrato (Emenda 1, contrato v2):**
+```text
+Show oculto (hidden_at_utc não nulo) é tratado como inexistente em toda leitura pública do Events: agenda da cidade, página do show (404 events.show_not_found),
+  listas de shows dos perfis, imagem/metadados do show, e no IEventsCatalog (GetShowSummaryAsync → null; GetShowStateAsync/GetShowStatesAsync sem o id;
+  ListScheduledShowsStartingAsync sem o show) — por isso resumo diário, aviso de show novo e lembrete da véspera também o ignoram, sem mudar o Engagement.
+Só "Meus shows" do dono (GET autenticado do próprio dono) devolve o show, com hidden: true; PUT/cancelar/flyer de show oculto → 409 events.show_hidden.
+Consumidor ShowHiddenByModeration no Events: idempotente (ocultar de novo mantém o primeiro hidden_at_utc).
+Limite moderation-report: política nomeada no padrão do ADR-0003, 10 por fã por janela fixa de 24 h, chave = id do usuário.
+Export: seção "reports" com { showId, reason, details, status, createdAtUtc } das denúncias do próprio fã.
+Fila sem pendentes: 200 []. Contagem da aba "DENÚNCIAS (n)" = número de shows na fila.
+```
+
+**Ajustes de contrato (Emenda 2, contrato v3):**
+```csharp
+// Subsolo.Modules.Events.IntegrationEvents — interface própria (como IEventsCatalogNames), leitura em lote para a fila; ignora shows ocultos
+public interface IShowHeadlines { Task<IReadOnlyDictionary<Guid, ShowHeadline>> GetAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct); }
+public sealed record ShowHeadline(Guid ShowId, string Title, string CitySlug, string Slug, DateTimeOffset StartsAtUtc, string VenueName);
+```
+```text
+moderation.reports ganha decision_note varchar(200) NULL (nota interna do /hide; nunca sai pela API nem pelo export).
+GET /api/v1/shows/{id} do dono (formulário de edição) devolve o show oculto com hidden: true.
+Export: sections.reports = [{ showId, reason, details, status, createdAtUtc }].
+Testes de componente web (vitest) levam o ID do comportamento que sustentam: UT-01 (validação de "Outro" na folha), IT-01 (mensagens de 201/409), UT-02 (cartões agrupados), IT-03 (Manter/Ocultar e selo).
 ```
 
 **Design:** Stitch, projeto 15194126668426659178: "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e "Fila do Admin - Subsolo" (600bfe18de6e44a995790033ab0f817e, aba "Denúncias"). Ajustes: o cartão agrupa as denúncias do show (contagem por motivo) em vez de um cartão por denúncia; "Ocultar show" pede confirmação; a fila não mostra quem denunciou.
@@ -128,7 +153,7 @@ Folha "Reportar show": "Ajude a manter a agenda do Subsolo correta." ; rádios "
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API, o PostgreSQL e um show publicado, quando o fã denuncia, denuncia de novo, manda motivo inválido e denuncia um id inexistente, então 201, 409, 400 e 404.
 - **IT-02** — Dado um fã, quando envia 11 denúncias de shows diferentes no mesmo dia, então a 11ª dá 429; anônimo dá 401 e fã na fila dá 403.
-- **IT-03** — Dados dois shows denunciados, quando o admin mantém um e oculta o outro, então as denúncias mudam de status, o mantido segue na agenda, o oculto some da agenda e de `GET /api/v1/shows/{cidade}/{slug}` (404) e de `IEventsCatalog.GetShowSummaryAsync`, "Meus shows" do dono traz `hidden: true`, e decidir de novo dá 404.
+- **IT-03** — Dados dois shows denunciados, quando o admin mantém um e oculta o outro, então as denúncias mudam de status, o mantido segue na agenda, o oculto some da agenda e de `GET /api/v1/cities/{city}/shows/{slug}` (404) e de `IEventsCatalog.GetShowSummaryAsync`, "Meus shows" do dono traz `hidden: true`, editar o oculto dá 409 `events.show_hidden`, o `IEventsCatalog` não o devolve em `GetShowStatesAsync` nem em `ListScheduledShowsStartingAsync`, e decidir de novo dá 404.
 - **IT-04** — Dados 500 shows com denúncias pendentes, quando o admin lista a fila, então responde em ≤ 300 ms p95 sem identificar quem denunciou.
 - **IT-05** — Dado um fã com denúncias, quando o `Users` exporta e depois exclui a conta, então o export traz a seção "reports" só com as dele e, depois da exclusão, as denúncias continuam com `reporter_user_id` nulo.
 - **IT-06** — Dados os testes de arquitetura, quando rodam com o `Moderation`, então as regras do ADR-0001 valem, o `Moderation` só depende de `Users` e `Events` pelos contratos e o `Events` não referencia o `Moderation`.
@@ -190,12 +215,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — e6fa00a (árvore suja) | 2026-10-18 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 7dab32e | 2026-10-24 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 70ec8c4 | 2026-10-24 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 820ms) — 0712bdf | 2026-10-24 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (0 blocker/major; 3 minor e 5 nits; aviso dos lock files aceito — só referências de projeto do Moderation; H33-01..07 levados à SPEC-0037) — cadda8e | 2026-10-24 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 16m 50s 507ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 905ms) — d0189b9 | 2026-10-24 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-24 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -243,3 +268,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0033`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 2 | 2026-10-24 | Show oculto tratado como inexistente em toda leitura pública do `Events` e em todos os métodos do `IEventsCatalog` (resumo, aviso e lembrete o ignoram); `hidden: true` só em "Meus shows"; edição de show oculto → 409 `events.show_hidden`; consumidor idempotente; forma do limite, do export e da fila vazia. | despacho do Test-writer: pontos sem decisão concreta | — | piloto automático do Thomas (2026-10-24) |
+| 3 | 2026-10-24 | Retorno do Test-writer: `IShowHeadlines` em lote no contrato do `Events` para os títulos da fila; coluna `decision_note`; rota real da página no IT-03; `GET /api/v1/shows/{id}` do dono com `hidden: true`; forma da seção `reports` do export; IDs dos testes de componente. | SPEC_DEFECTs 1–6 do Test-writer | — | piloto automático do Thomas (2026-10-24) |
+| 4 | 2026-10-24 | Retorno do Implementer: `/hide` com corpo obrigatório e 400 `moderation.invalid_note` (nota > 200); `hidden` obrigatório em "Meus shows" e opcional no esquema do formulário de edição; limite `moderation-report` com a chave do usuário lida do ticket do cookie de sessão (o rate limiter roda antes da autenticação); testes `SPEC-0024:H23-06` e `EveryModuleAssemblyBesideTheTestsIsEvaluated` acompanham o contrato. | relatório do Implementer | — | piloto automático do Thomas (2026-10-24) |
+| 4 (sem mudança de contrato) | 2026-10-24 | Achados menores da revisão G4 (H33-01..07) vão para a SPEC-0037. | revisão G4 | SPEC-0037 | piloto automático do Thomas (2026-10-24) |
+| 4 (sem mudança de contrato) | 2026-10-24 | `touches` inclui `.github/workflows/ci.yml`: os testes desta spec levaram o job `test` a ~51 min e o limite de 50 min cancelou o CI do PR #46; o limite sobe para 75 min (commit 221ff85). | CI do PR #46 (run 40113362896) | — | piloto automático do Thomas (2026-10-24) |

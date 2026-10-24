@@ -7,7 +7,8 @@ namespace Subsolo.Modules.Events.Infrastructure.Catalog;
 /// <summary>
 /// SPEC-0021 — implementação de <see cref="IEventsCatalog"/> sobre as cidades e estilos do schema <c>events</c>. SPEC-0026:
 /// e de <see cref="IEventsCatalogNames"/> (os nomes). SPEC-0031: e o resumo público de um show, para os avisos.
-/// SPEC-0032: e os shows agendados por início (lembrete na véspera) e as situações em lote.
+/// SPEC-0032: e os shows agendados por início (lembrete na véspera) e as situações em lote. SPEC-0033 (Emenda 1): o show
+/// oculto pela moderação é tratado como inexistente em todas as leituras de show (sem aviso, resumo nem lembrete).
 /// </summary>
 internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEventsCatalogNames
 {
@@ -52,7 +53,7 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
     /// <summary>SPEC-0029 — a situação e o início do show (só essas duas colunas), ou <see langword="null"/> se não existe.</summary>
     public async Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) =>
         await db.Shows.AsNoTracking()
-            .Where(show => show.Id == showId)
+            .Where(show => show.Id == showId && show.HiddenAtUtc == null)
             .Select(show => new ShowState(show.Status, show.StartsAtUtc))
             .SingleOrDefaultAsync(ct);
 
@@ -63,7 +64,7 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
     public async Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct)
     {
         var found = await db.Shows.AsNoTracking()
-            .Where(show => show.Id == showId)
+            .Where(show => show.Id == showId && show.HiddenAtUtc == null)
             .Join(db.Cities.AsNoTracking(), show => show.City, city => city.Slug, (show, city) => new { Show = show, city.Name, city.TimeZone })
             .SingleOrDefaultAsync(ct);
         return found is null
@@ -88,7 +89,8 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
         DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
     {
         var found = await db.Shows.AsNoTracking()
-            .Where(show => show.Status == ShowStatuses.Scheduled && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc)
+            .Where(show => show.Status == ShowStatuses.Scheduled && show.HiddenAtUtc == null)
+            .Where(show => show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc)
             .Join(db.Cities.AsNoTracking(), show => show.City, city => city.Slug, (show, city) => new { Show = show, city.Name, city.TimeZone })
             .OrderBy(row => row.Show.StartsAtUtc)
             .ThenBy(row => row.Show.Id)
@@ -122,7 +124,7 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
         }
 
         return await db.Shows.AsNoTracking()
-            .Where(show => wanted.Contains(show.Id))
+            .Where(show => wanted.Contains(show.Id) && show.HiddenAtUtc == null)
             .Select(show => new { show.Id, show.Status, show.StartsAtUtc })
             .ToDictionaryAsync(show => show.Id, show => new ShowState(show.Status, show.StartsAtUtc), ct);
     }

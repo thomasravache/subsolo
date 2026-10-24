@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 
 import { getProfileFormData, getProfileQueue } from "@/api/profiles-data";
+import { getReportQueue } from "@/api/reports-data";
+import { AdminQueueTabs } from "@/components/admin/AdminQueueTabs";
 import {
   AdminForbidden,
   AdminPage,
   AdminUnavailable,
 } from "@/components/admin/AdminPage";
-import { ProfileRequestsQueue } from "@/components/admin/ProfileRequestsQueue";
 
 import { adminAccess } from "../admin-access";
 
 /**
- * SPEC-0021 — `/admin/fila` (tela "Fila do Admin - Subsolo" do Stitch, só com a aba "Pedidos de perfil"; a de denúncias
- * entra com a spec dela): os pedidos de perfil e as reivindicações pendentes, com "Aprovar" e "Recusar". O `proxy`
+ * SPEC-0021 — `/admin/fila` (tela "Fila do Admin - Subsolo" do Stitch): os pedidos de perfil e as reivindicações
+ * pendentes, com "Aprovar" e "Recusar". SPEC-0033: a aba "Denúncias (n)", com os shows denunciados, "Manter" e "Ocultar
+ * show" (a fila sai de `GET /api/v1/admin/reports`, `no-store`). O `proxy`
  * decide o status (anônimo → 307 para `/entrar`, sem o papel admin → 403, API fora do ar → 503) e serve com
  * `no-store`; as decisões saem do navegador, com o cookie de sessão e o X-CSRF.
  */
@@ -36,17 +38,25 @@ export default async function QueuePage() {
   if (access === "forbidden") {
     return <AdminForbidden />;
   }
-  const [queue, form] =
+  const [queue, form, reports] =
     access === "ok"
-      ? await Promise.all([getProfileQueue(), getProfileFormData()])
-      : [undefined, undefined];
-  if (!queue || !form) {
+      ? await Promise.all([
+          getProfileQueue(),
+          getProfileFormData(),
+          getReportQueue(),
+        ])
+      : [undefined, undefined, undefined];
+  if (!queue || !form || !reports) {
     return <AdminUnavailable />;
   }
 
   return (
     <AdminPage current={path} title="Fila do admin">
-      <ProfileRequestsQueue initialItems={queue} cities={form.cities} />
+      <AdminQueueTabs
+        profileRequests={queue}
+        cities={form.cities}
+        reports={reports}
+      />
     </AdminPage>
   );
 }
