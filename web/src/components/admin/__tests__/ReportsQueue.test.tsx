@@ -14,6 +14,7 @@ import {
   type ReportQueueItem,
 } from "@/api/reports";
 import { ReportsQueue } from "@/components/admin/ReportsQueue";
+import { reportMessages } from "@/components/moderation/messages";
 
 vi.mock("@/api/reports", () => ({
   keepReportedShow: vi.fn(),
@@ -143,5 +144,64 @@ describe("aba Denúncias da fila do admin", () => {
         (note: unknown) => note === null || typeof note === "string",
       ),
     );
+  });
+});
+
+/**
+ * SPEC-0037 UT-01 (H33-02) — depois de "Manter" ou "Ocultar show" o cartão decidido some; o foco vai para o título do
+ * próximo cartão e, sem cartões, para a mensagem de fila vazia (nunca cai no `<body>`).
+ */
+describe("foco depois de decidir na aba Denúncias", () => {
+  it("SPEC-0037:UT-01 o foco vai para o título do próximo cartão e, no último, para a fila vazia", async () => {
+    vi.mocked(keepReportedShow).mockResolvedValue({
+      ok: true,
+      value: undefined,
+    });
+    vi.mocked(hideReportedShow).mockResolvedValue({
+      ok: true,
+      value: undefined,
+    });
+    render(<ReportsQueue initialItems={items} />);
+
+    const keep = within(cardOf("Festival Ruína Total")).getByRole("button", {
+      name: /manter/i,
+    });
+    keep.focus();
+    fireEvent.click(keep);
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("article", { name: /Festival Ruína Total/ }),
+      ).toBeNull(),
+    );
+    const next = within(cardOf("Necroculto Deathfest")).getByRole("heading", {
+      name: /Necroculto Deathfest/,
+    });
+    await waitFor(() => {
+      const active = document.activeElement;
+      expect(
+        active !== null && active !== document.body && next.contains(active),
+        `o foco foi para ${active?.outerHTML.slice(0, 120)}`,
+      ).toBe(true);
+    });
+
+    const last = cardOf("Necroculto Deathfest");
+    const hide = within(last).getByRole("button", { name: /^ocultar show$/i });
+    hide.focus();
+    fireEvent.click(hide);
+    const confirm = screen
+      .getAllByRole("button", { name: /ocultar|confirmar/i })
+      .find((button) => !last.contains(button));
+    expect(confirm, "sem o botão de confirmação").toBeDefined();
+    fireEvent.click(confirm!);
+
+    await waitFor(() =>
+      expect(screen.queryAllByRole("article")).toHaveLength(0),
+    );
+    await waitFor(() => {
+      const active = document.activeElement;
+      expect(active, "o foco caiu no body").not.toBe(document.body);
+      expect(active?.textContent ?? "").toContain(reportMessages.empty);
+    });
   });
 });
