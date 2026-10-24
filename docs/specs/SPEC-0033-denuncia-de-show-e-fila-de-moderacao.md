@@ -9,7 +9,7 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031]
 consumes_contract: []
-contract_version: 2
+contract_version: 3
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/moderation/**, web/src/app/admin/**, web/src/components/admin/**, web/src/app/(public)/conta/**, e2e/tests/moderacao/**, e2e/tests/fixtures.ts, docs/design/**]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0016]
@@ -107,6 +107,19 @@ Export: seção "reports" com { showId, reason, details, status, createdAtUtc } 
 Fila sem pendentes: 200 []. Contagem da aba "DENÚNCIAS (n)" = número de shows na fila.
 ```
 
+**Ajustes de contrato (Emenda 2, contrato v3):**
+```csharp
+// Subsolo.Modules.Events.IntegrationEvents — interface própria (como IEventsCatalogNames), leitura em lote para a fila; ignora shows ocultos
+public interface IShowHeadlines { Task<IReadOnlyDictionary<Guid, ShowHeadline>> GetAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct); }
+public sealed record ShowHeadline(Guid ShowId, string Title, string CitySlug, string Slug, DateTimeOffset StartsAtUtc, string VenueName);
+```
+```text
+moderation.reports ganha decision_note varchar(200) NULL (nota interna do /hide; nunca sai pela API nem pelo export).
+GET /api/v1/shows/{id} do dono (formulário de edição) devolve o show oculto com hidden: true.
+Export: sections.reports = [{ showId, reason, details, status, createdAtUtc }].
+Testes de componente web (vitest) levam o ID do comportamento que sustentam: UT-01 (validação de "Outro" na folha), IT-01 (mensagens de 201/409), UT-02 (cartões agrupados), IT-03 (Manter/Ocultar e selo).
+```
+
 **Design:** Stitch, projeto 15194126668426659178: "Denunciar Show - Subsolo" (9d6f88a63299478789478394c15bdd56) e "Fila do Admin - Subsolo" (600bfe18de6e44a995790033ab0f817e, aba "Denúncias"). Ajustes: o cartão agrupa as denúncias do show (contagem por motivo) em vez de um cartão por denúncia; "Ocultar show" pede confirmação; a fila não mostra quem denunciou.
 
 **Arquivos/módulos afetados:** ver `touches` no frontmatter.
@@ -140,7 +153,7 @@ Fila sem pendentes: 200 []. Contagem da aba "DENÚNCIAS (n)" = número de shows 
 ### 7.3 Testes de Integração
 - **IT-01** — Dados a API, o PostgreSQL e um show publicado, quando o fã denuncia, denuncia de novo, manda motivo inválido e denuncia um id inexistente, então 201, 409, 400 e 404.
 - **IT-02** — Dado um fã, quando envia 11 denúncias de shows diferentes no mesmo dia, então a 11ª dá 429; anônimo dá 401 e fã na fila dá 403.
-- **IT-03** — Dados dois shows denunciados, quando o admin mantém um e oculta o outro, então as denúncias mudam de status, o mantido segue na agenda, o oculto some da agenda e de `GET /api/v1/shows/{cidade}/{slug}` (404) e de `IEventsCatalog.GetShowSummaryAsync`, "Meus shows" do dono traz `hidden: true`, editar o oculto dá 409 `events.show_hidden`, o `IEventsCatalog` não o devolve em `GetShowStatesAsync` nem em `ListScheduledShowsStartingAsync`, e decidir de novo dá 404.
+- **IT-03** — Dados dois shows denunciados, quando o admin mantém um e oculta o outro, então as denúncias mudam de status, o mantido segue na agenda, o oculto some da agenda e de `GET /api/v1/cities/{city}/shows/{slug}` (404) e de `IEventsCatalog.GetShowSummaryAsync`, "Meus shows" do dono traz `hidden: true`, editar o oculto dá 409 `events.show_hidden`, o `IEventsCatalog` não o devolve em `GetShowStatesAsync` nem em `ListScheduledShowsStartingAsync`, e decidir de novo dá 404.
 - **IT-04** — Dados 500 shows com denúncias pendentes, quando o admin lista a fila, então responde em ≤ 300 ms p95 sem identificar quem denunciou.
 - **IT-05** — Dado um fã com denúncias, quando o `Users` exporta e depois exclui a conta, então o export traz a seção "reports" só com as dele e, depois da exclusão, as denúncias continuam com `reporter_user_id` nulo.
 - **IT-06** — Dados os testes de arquitetura, quando rodam com o `Moderation`, então as regras do ADR-0001 valem, o `Moderation` só depende de `Users` e `Events` pelos contratos e o `Events` não referencia o `Moderation`.
@@ -256,3 +269,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 2 | 2026-10-24 | Show oculto tratado como inexistente em toda leitura pública do `Events` e em todos os métodos do `IEventsCatalog` (resumo, aviso e lembrete o ignoram); `hidden: true` só em "Meus shows"; edição de show oculto → 409 `events.show_hidden`; consumidor idempotente; forma do limite, do export e da fila vazia. | despacho do Test-writer: pontos sem decisão concreta | — | piloto automático do Thomas (2026-10-24) |
+| 3 | 2026-10-24 | Retorno do Test-writer: `IShowHeadlines` em lote no contrato do `Events` para os títulos da fila; coluna `decision_note`; rota real da página no IT-03; `GET /api/v1/shows/{id}` do dono com `hidden: true`; forma da seção `reports` do export; IDs dos testes de componente. | SPEC_DEFECTs 1–6 do Test-writer | — | piloto automático do Thomas (2026-10-24) |
