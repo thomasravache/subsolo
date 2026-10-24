@@ -17,6 +17,13 @@ public interface IEventsCatalog
     /// <see langword="null"/> se o show não existe.
     /// </summary>
     Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct);
+
+    /// <summary>
+    /// SPEC-0031 — o resumo público do show <paramref name="showId"/> (o <c>Engagement</c> monta com ele os avisos de show
+    /// novo e o resumo diário), ou <see langword="null"/> se o show não existe.
+    /// </summary>
+    // TODO(SPEC-0031): esqueleto do G1 (Test-writer); o Implementer implementa no EventsCatalog.
+    Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct) => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -24,3 +31,18 @@ public interface IEventsCatalog
 /// módulos.
 /// </summary>
 public sealed record ShowState(string Status, DateTimeOffset StartsAtUtc);
+
+/// <summary>
+/// SPEC-0031 — resumo público de um show para os avisos: slug, cidade (slug, nome e fuso), atrações do line-up, nome da
+/// casa, início (UTC) e situação (<c>scheduled</c> | <c>cancelled</c> | <c>postponed</c>).
+/// </summary>
+public sealed record ShowSummary(
+    Guid ShowId,
+    string Slug,
+    string CitySlug,
+    string CityName,
+    string CityTimeZone,
+    IReadOnlyList<string> Lineup,
+    string VenueName,
+    DateTimeOffset StartsAtUtc,
+    string Status);
