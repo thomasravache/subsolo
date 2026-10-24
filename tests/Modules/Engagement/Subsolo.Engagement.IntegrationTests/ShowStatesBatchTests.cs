@@ -1,5 +1,3 @@
-using System.Reflection;
-using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using Subsolo.Engagement.IntegrationTests.Infrastructure;
 using Subsolo.IntegrationTests.Common;
@@ -11,8 +9,7 @@ namespace Subsolo.Engagement.IntegrationTests;
 /// SPEC-0032 H29-01 (contrato v2) — <c>IEventsCatalog.GetShowStatesAsync(ids)</c> do host, sobre o PostgreSQL real: com um
 /// show agendado e um cancelado cadastrados pela API e um id que não existe, devolve a situação e o início só dos dois
 /// encontrados (ids repetidos contam uma vez); com a lista vazia, nada. E "meus vou" (<c>GET /me/attendances</c>) continua
-/// listando o agendado e o cancelado futuros. O método é chamado por reflexão até o contrato v2 entrar no
-/// <see cref="IEventsCatalog"/> (a falta dele reprova o teste, sem quebrar a compilação).
+/// listando o agendado e o cancelado futuros.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class ShowStatesBatchTests(PostgresFixture postgres)
@@ -49,18 +46,7 @@ public sealed class ShowStatesBatchTests(PostgresFixture postgres)
     private static async Task<IReadOnlyDictionary<Guid, ShowState>> StatesAsync(
         EngagementApiFactory api, IReadOnlyCollection<Guid> ids, CancellationToken ct)
     {
-        var method = typeof(IEventsCatalog).GetMethod("GetShowStatesAsync")
-            .ShouldNotBeNull("IEventsCatalog sem GetShowStatesAsync (contrato v2, H29-01)");
         await using var scope = api.Services.CreateAsyncScope();
-        var catalog = scope.ServiceProvider.GetRequiredService<IEventsCatalog>();
-        try
-        {
-            return await (Task<IReadOnlyDictionary<Guid, ShowState>>)method.Invoke(catalog, [ids, ct])!;
-        }
-        catch (TargetInvocationException exception) when (exception.InnerException is not null)
-        {
-            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
-            throw;
-        }
+        return await scope.ServiceProvider.GetRequiredService<IEventsCatalog>().GetShowStatesAsync(ids, ct);
     }
 }
