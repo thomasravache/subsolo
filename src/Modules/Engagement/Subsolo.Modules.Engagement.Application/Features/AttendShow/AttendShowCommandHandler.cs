@@ -49,7 +49,9 @@ internal sealed partial class AttendShowCommandHandler(
         }
         catch (AttendanceAlreadyExistsException)
         {
-            // Outro PUT igual gravou antes: o fã já vai (idempotente).
+            // Outro PUT igual gravou antes: o fã já vai (idempotente). SPEC-0032 (H29-02): de propósito, quem perde a
+            // corrida não incrementa subsolo.engagement.attendances nem registra o log — o "vou" foi contado uma vez, pelo
+            // PUT que gravou.
             return Result.Success();
         }
 

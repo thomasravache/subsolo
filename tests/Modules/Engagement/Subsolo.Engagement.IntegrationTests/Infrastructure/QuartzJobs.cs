@@ -13,6 +13,9 @@ internal static class QuartzJobs
     /// <summary>O job do resumo diário (§6, <c>DailyDigest</c> do Engagement).</summary>
     public static readonly JobKey DailyDigest = new("Engagement.DailyDigest");
 
+    /// <summary>SPEC-0032 — o job do lembrete na véspera (§6, <c>DayBeforeReminder</c> do Engagement).</summary>
+    public static readonly JobKey DayBeforeReminder = new("Engagement.DayBeforeReminder");
+
     /// <summary>O job de entregas dos avisos (SPEC-0030).</summary>
     public static readonly JobKey NoticeDeliveries = new("Notifications.ProcessDeliveries");
 

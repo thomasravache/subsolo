@@ -28,17 +28,40 @@ internal static class NoticeText
         return show.Status == Scheduled && show.StartsAtUtc > now;
     }
 
-    /// <summary>"Cova Rasa + Peste Negra" (cortado com "…" além de <see cref="MaxLineupLength"/>).</summary>
+    /// <summary>
+    /// "Cova Rasa + Peste Negra" (cortado com "…" além de <see cref="MaxLineupLength"/> unidades UTF-16). SPEC-0032 (H31-08):
+    /// o corte cai num limite de elemento de texto (<see cref="StringInfo"/>), sem partir um emoji ou uma bandeira.
+    /// </summary>
     public static string Lineup(IReadOnlyList<string> lineup)
     {
         ArgumentNullException.ThrowIfNull(lineup);
         var text = string.Join(" + ", lineup);
-        return text.Length <= MaxLineupLength ? text : string.Concat(text.AsSpan(0, MaxLineupLength - 1), "…");
+        if (text.Length <= MaxLineupLength)
+        {
+            return text;
+        }
+
+        var cut = 0;
+        foreach (var start in StringInfo.ParseCombiningCharacters(text))
+        {
+            if (start > MaxLineupLength - 1)
+            {
+                break;
+            }
+
+            cut = start;
+        }
+
+        return string.Concat(text.AsSpan(0, cut), "…");
     }
 
     /// <summary>O instante <paramref name="utc"/> no fuso IANA <paramref name="timeZone"/>.</summary>
     public static DateTime Local(DateTimeOffset utc, string timeZone) =>
         TimeZoneInfo.ConvertTime(utc, TimeZoneInfo.FindSystemTimeZoneById(timeZone)).DateTime;
+
+    /// <summary>SPEC-0032 — o horário local <paramref name="local"/> do fuso IANA <paramref name="timeZone"/> em UTC.</summary>
+    public static DateTimeOffset Utc(DateTime local, string timeZone) =>
+        new(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById(timeZone)), TimeSpan.Zero);
 
     /// <summary>"sáb 14/11 22h00".</summary>
     public static string DayAndTime(DateTime local) =>

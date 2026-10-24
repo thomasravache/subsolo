@@ -57,7 +57,8 @@ internal sealed class NoticeConfiguration : IEntityTypeConfiguration<NoticeRow>
 
 /// <summary>
 /// SPEC-0030 — <c>deliveries</c>: única por (usuário, chave, canal) — a idempotência do <c>EnqueueAsync</c> — com o
-/// índice parcial das pendentes (o job de entregas lê por <c>next_attempt_at_utc</c>).
+/// índice parcial das pendentes (o job de entregas lê por <c>next_attempt_at_utc</c>); SPEC-0032 (H31-07): e o índice por
+/// <c>created_at_utc</c> (a retenção apaga por ele).
 /// </summary>
 internal sealed class DeliveryConfiguration : IEntityTypeConfiguration<DeliveryRow>
 {
@@ -83,6 +84,8 @@ internal sealed class DeliveryConfiguration : IEntityTypeConfiguration<DeliveryR
         builder.HasIndex(row => row.NextAttemptAtUtc)
             .HasDatabaseName("IX_deliveries_pending")
             .HasFilter($"status = '{DeliveryStatuses.Pending}'");
+        // SPEC-0032 (H31-07): o delete da retenção filtra por created_at_utc sem varrer a tabela.
+        builder.HasIndex(row => row.CreatedAtUtc).HasDatabaseName("ix_deliveries_created_at_utc");
         builder.HasOne<NoticeRow>().WithMany().HasForeignKey(row => row.NoticeId).OnDelete(DeleteBehavior.Cascade);
     }
 }

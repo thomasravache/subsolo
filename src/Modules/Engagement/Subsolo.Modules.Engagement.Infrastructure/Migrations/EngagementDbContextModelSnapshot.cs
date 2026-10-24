@@ -197,6 +197,21 @@ namespace Subsolo.Modules.Engagement.Infrastructure.Migrations
                     b.ToTable("follows", "engagement");
                 });
 
+            modelBuilder.Entity("Subsolo.Modules.Engagement.Infrastructure.Notices.DigestRunRow", b =>
+                {
+                    b.Property<DateOnly>("DigestDate")
+                        .HasColumnType("date")
+                        .HasColumnName("digest_date");
+
+                    b.Property<DateTimeOffset>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.HasKey("DigestDate");
+
+                    b.ToTable("digest_runs", "engagement");
+                });
+
             modelBuilder.Entity("Subsolo.Modules.Engagement.Infrastructure.Notices.PublishedShowRow", b =>
                 {
                     b.Property<Guid>("ShowId")
