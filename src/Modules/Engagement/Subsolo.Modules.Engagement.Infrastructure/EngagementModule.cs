@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Quartz;
 using Subsolo.Common.Infrastructure;
 using Subsolo.Common.Presentation;
@@ -39,7 +41,8 @@ public static class EngagementModule
     /// (<c>Engagement:DigestCron</c>); o consumidor do <c>ShowPublished</c> entra pela varredura do <c>AddModule</c>.
     /// SPEC-0032: os dias com resumo concluído (<see cref="IDigestRuns"/>, base da recuperação
     /// <c>Engagement:DigestCatchUpCron</c>), o seletor do lembrete e o job <see cref="DayBeforeReminderJob"/>
-    /// (<c>Engagement:ReminderCron</c> e <c>Engagement:ReminderHour</c>).
+    /// (<c>Engagement:ReminderCron</c> e <c>Engagement:ReminderHour</c>). SPEC-0036 (H32-02): <c>Engagement:DigestCron</c>
+    /// validado na subida (<see cref="DigestScheduleOptionsValidator"/>: tem de disparar às 9h de São Paulo).
     /// </summary>
     public static IServiceCollection AddEngagementModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -65,6 +68,12 @@ public static class EngagementModule
             typeof(EngagementModule).Assembly,
             typeof(EngagementErrors).Assembly,
             typeof(Follow).Assembly);
+        // SPEC-0036 (H32-02): a API não sobe com um Engagement:DigestCron que não dispara às 9h de São Paulo.
+        services.AddOptions<DigestScheduleOptions>()
+            .Configure(options => options.Cron = DailyDigestJob.CronOf(configuration))
+            .ValidateOnStart();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<DigestScheduleOptions>, DigestScheduleOptionsValidator>());
         services.ConfigureAllQuartzSchedulers(quartz =>
         {
             DailyDigestJob.Schedule(quartz, configuration);
