@@ -83,10 +83,10 @@ public sealed partial class OneClickUnsubscribeTests(MailpitServer mailpit, Post
     }
 
     /// <summary>O <c>POST</c> do provedor de e-mail (RFC 8058): sem cookie, sem <c>X-CSRF</c>, corpo de formulário.</summary>
-    private static Task<HttpResponseMessage> PostOneClickAsync(HttpClient provider, string token, CancellationToken ct)
+    private static async Task<HttpResponseMessage> PostOneClickAsync(HttpClient provider, string token, CancellationToken ct)
     {
         using var body = new FormUrlEncodedContent([new KeyValuePair<string, string>("List-Unsubscribe", "One-Click")]);
-        return provider.PostAsync(new Uri($"{OneClickPath}?token={Uri.EscapeDataString(token)}", UriKind.Relative), body, ct);
+        return await provider.PostAsync(new Uri($"{OneClickPath}?token={Uri.EscapeDataString(token)}", UriKind.Relative), body, ct);
     }
 
     private static async Task EnqueueAsync(NotificationsApiFactory api, Guid userId, Notice notice, CancellationToken ct)
