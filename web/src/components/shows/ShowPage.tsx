@@ -4,6 +4,7 @@ import type { ShowDetail } from "@/api/show-detail";
 import { AttendButton } from "@/components/engagement/AttendButton";
 import { FlameIcon } from "@/components/engagement/icons";
 import { goingCount, wentCount } from "@/components/engagement/messages";
+import { ReportShowButton } from "@/components/moderation/ReportShowButton";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { mainContentId } from "@/components/ui/shell";
@@ -91,7 +92,8 @@ function Attendance({
  * adiado, o título, os estilos, o line-up, a casa, o preço, "Ingresso" (nova aba, `noopener noreferrer`) e
  * "Compartilhar". Ajustes do §6: sem "Vou", "Quem vai", "Seguir" e "Denunciar" (specs próprias). SPEC-0026: a casa e as
  * bandas com perfil levam às páginas `/casa/{slug}` e `/banda/{slug}`. SPEC-0029: o "Vou" com a contagem "{n} vão" (ou
- * "{n} foram" no show que já passou), nunca "Quem vai" (ADR-0008).
+ * "{n} foram" no show que já passou), nunca "Quem vai" (ADR-0008). SPEC-0033: o "Reportar" no rodapé, que abre a folha
+ * "Reportar show" (anônimo vai para `/entrar`).
  */
 export function ShowPage({
   show,
@@ -280,6 +282,14 @@ export function ShowPage({
           </section>
         </div>
       </div>
+
+      <footer className="mt-4 border-t border-border pt-4">
+        <ReportShowButton
+          showId={show.id}
+          title={show.title}
+          returnTo={`/${show.city.slug}/${show.slug}`}
+        />
+      </footer>
     </main>
   );
 }
