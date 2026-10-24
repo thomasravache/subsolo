@@ -80,7 +80,7 @@ function Attendance({
   return (
     <p className="flex items-center gap-2 font-label text-sm font-bold uppercase tracking-wider text-text-muted">
       <FlameIcon className="shrink-0 text-accent" />
-      {past ? wentCount(count) : goingCount(count)}
+      <span>{past ? wentCount(count) : goingCount(count)}</span>
     </p>
   );
 }
@@ -192,8 +192,14 @@ export function ShowPage({
             <h2 id={ids.ticket} className="sr-only">
               Ingresso
             </h2>
-            <Attendance show={show} count={attendingCount} past={past} />
-            {/* Separa a contagem ("3 vão") do texto seguinte no conteúdo textual da página (leitores e buscas). */}{" "}
+            {/*
+              SPEC-0032 (H29-03): a contagem ("3 vão") fica num bloco próprio, separada do texto seguinte pela estrutura.
+              O espaço no fim do bloco mantém "3 vão" e "Entrada" separados no conteúdo textual da página (leitores,
+              buscas e o textContent), sem nó de texto solto na seção.
+            */}
+            <div>
+              <Attendance show={show} count={attendingCount} past={past} />{" "}
+            </div>
             <div className="flex items-start gap-3">
               <TicketIcon className="mt-1 shrink-0 text-accent" />
               <div className="flex flex-col gap-1">
