@@ -9,7 +9,7 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031]
 consumes_contract: []
-contract_version: 3
+contract_version: 4
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/moderation/**, web/src/app/admin/**, web/src/components/admin/**, web/src/app/(public)/conta/**, e2e/tests/moderacao/**, e2e/tests/fixtures.ts, docs/design/**]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0016]
@@ -76,7 +76,7 @@ POST /api/v1/shows/{id}/reports:            # fan + X-CSRF + limite moderation-r
 GET /api/v1/admin/reports:                  # admin + default ; no-store
   200: [{ showId, title, citySlug, slug, startsAtUtc, venueName, counts: { fake, cancelled_unannounced, wrong_info, other }, latestDetails: [string] (até 3), firstReportedAtUtc }]
 POST /api/v1/admin/reports/{showId}/keep:   # admin + X-CSRF ; 204 ; 404 moderation.no_pending_reports
-POST /api/v1/admin/reports/{showId}/hide:   # admin + X-CSRF ; body { note: string(0–200)|null } ; 204 ; 404 moderation.no_pending_reports
+POST /api/v1/admin/reports/{showId}/hide:   # admin + X-CSRF ; body { note: string(0–200)|null } (corpo obrigatório) ; 204 ; 400 moderation.invalid_note ; 404 moderation.no_pending_reports
 ```
 
 ```csharp
@@ -270,3 +270,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 |---|---|---|---|---|---|
 | 2 | 2026-10-24 | Show oculto tratado como inexistente em toda leitura pública do `Events` e em todos os métodos do `IEventsCatalog` (resumo, aviso e lembrete o ignoram); `hidden: true` só em "Meus shows"; edição de show oculto → 409 `events.show_hidden`; consumidor idempotente; forma do limite, do export e da fila vazia. | despacho do Test-writer: pontos sem decisão concreta | — | piloto automático do Thomas (2026-10-24) |
 | 3 | 2026-10-24 | Retorno do Test-writer: `IShowHeadlines` em lote no contrato do `Events` para os títulos da fila; coluna `decision_note`; rota real da página no IT-03; `GET /api/v1/shows/{id}` do dono com `hidden: true`; forma da seção `reports` do export; IDs dos testes de componente. | SPEC_DEFECTs 1–6 do Test-writer | — | piloto automático do Thomas (2026-10-24) |
+| 4 | 2026-10-24 | Retorno do Implementer: `/hide` com corpo obrigatório e 400 `moderation.invalid_note` (nota > 200); `hidden` obrigatório em "Meus shows" e opcional no esquema do formulário de edição; limite `moderation-report` com a chave do usuário lida do ticket do cookie de sessão (o rate limiter roda antes da autenticação); testes `SPEC-0024:H23-06` e `EveryModuleAssemblyBesideTheTestsIsEvaluated` acompanham o contrato. | relatório do Implementer | — | piloto automático do Thomas (2026-10-24) |
