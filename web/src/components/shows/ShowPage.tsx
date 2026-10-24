@@ -198,8 +198,8 @@ export function ShowPage({
             {/*
               SPEC-0032 (H29-03): a contagem ("3 vão") fica num bloco próprio, separada do texto seguinte pela estrutura.
               SPEC-0036 (H32-03): o espaço que mantém "3 vão" e "Entrada" separados no conteúdo textual da página
-              (leitores, buscas e o textContent) fica dentro do parágrafo da contagem, sem nó de texto só com espaço
-              nos blocos da seção; com o botão "Vou" (cuja contagem não é desta página), no início do rótulo "Entrada".
+              (leitores, buscas e o textContent) fica dentro do parágrafo da contagem (aqui ou no botão "Vou"), sem nó
+              de texto só com espaço nos blocos da seção.
             */}
             <div>
               <Attendance show={show} count={attendingCount} past={past} />
@@ -208,7 +208,7 @@ export function ShowPage({
               <TicketIcon className="mt-1 shrink-0 text-accent" />
               <div className="flex flex-col gap-1">
                 <p className="font-label text-xs font-bold uppercase tracking-wider text-text-muted">
-                  {" Entrada"}
+                  Entrada
                 </p>
                 <p className="font-display text-2xl leading-tight text-text">
                   {show.price}
