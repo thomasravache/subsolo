@@ -155,6 +155,9 @@ internal sealed class TestEventsCatalog : IEventsCatalog
     /// <summary>SPEC-0029 — o Profiles não lê shows: nenhum existe aqui.</summary>
     public Task<ShowState?> GetShowStateAsync(Guid showId, CancellationToken ct) => Task.FromResult<ShowState?>(null);
 
+    /// <summary>SPEC-0031 — o Profiles não lê resumo de show: nenhum.</summary>
+    public Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct) => Task.FromResult<ShowSummary?>(null);
+
     public Task<bool> CityExistsAsync(string slug, CancellationToken ct)
     {
         CityQueries.Add(slug);

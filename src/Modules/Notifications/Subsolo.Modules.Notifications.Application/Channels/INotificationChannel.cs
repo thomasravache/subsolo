@@ -23,9 +23,16 @@ internal enum NotificationChannel
 /// <summary>SPEC-0018 — mensagem já renderizada, pronta para o canal.</summary>
 internal abstract record Notification(string Recipient);
 
-/// <summary>SPEC-0018 — e-mail renderizado pelo modelo: assunto, HTML (dados escapados) e texto puro.</summary>
+/// <summary>
+/// SPEC-0018 — e-mail renderizado pelo modelo: assunto, HTML (dados escapados) e texto puro. SPEC-0031 (H30-04): e os
+/// cabeçalhos extras (<see cref="Headers"/>, como os de descadastro em um clique da RFC 8058).
+/// </summary>
 internal sealed record EmailNotification(string Recipient, string Subject, string HtmlBody, string TextBody)
-    : Notification(Recipient);
+    : Notification(Recipient)
+{
+    /// <summary>Cabeçalhos extras da mensagem (nome → valor), além dos de endereço e assunto.</summary>
+    public IReadOnlyDictionary<string, string> Headers { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+}
 
 /// <summary>
 /// SPEC-0030 — mensagem de Web Push para uma inscrição: o endpoint (no <see cref="Notification.Recipient"/>), as chaves

@@ -17,11 +17,11 @@ export type PublicProfile = components["schemas"]["PublicProfileResponse"];
 export type ProfileShowItem = components["schemas"]["ProfileShowResponse"];
 
 /**
- * O que os metadados precisam de um show do perfil: o resumo da agenda (a cidade, que só a lista traz, é opcional
- * aqui).
+ * O que os metadados precisam de um show do perfil: o resumo da agenda (a cidade e o `flyerId`, que só a lista traz,
+ * são opcionais aqui; SPEC-0031, H26-03b: a imagem Open Graph vem do `flyerId`).
  */
 export type ProfileShow = components["schemas"]["ShowSummaryResponse"] &
-  Partial<Pick<ProfileShowItem, "city">>;
+  Partial<Pick<ProfileShowItem, "city" | "flyerId">>;
 
 /**
  * - `ok`: o perfil aprovado;

@@ -4,6 +4,7 @@ using Subsolo.Common.Infrastructure.Database;
 using Subsolo.Modules.Engagement.Application;
 using Subsolo.Modules.Engagement.Domain.Attendances;
 using Subsolo.Modules.Engagement.Domain.Follows;
+using Subsolo.Modules.Engagement.Infrastructure.Notices;
 
 namespace Subsolo.Modules.Engagement.Infrastructure;
 
@@ -27,6 +28,9 @@ public sealed class EngagementDbContext(DbContextOptions<EngagementDbContext> op
     public DbSet<Follow> Follows => Set<Follow>();
 
     public DbSet<Attendance> Attendances => Set<Attendance>();
+
+    /// <summary>SPEC-0031 — os shows publicados, base do resumo diário.</summary>
+    internal DbSet<PublishedShowRow> PublishedShows => Set<PublishedShowRow>();
 
     async Task IEngagementUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {

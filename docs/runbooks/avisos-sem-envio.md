@@ -4,7 +4,9 @@ Sinal (SPEC-0030):
 - Alerta do Seq **"Falha no envio de aviso"** (`infra/seq/alerts.json`): mais de 20 eventos `NoticeDeliveryFailed` em
   1 hora. O evento (nome do evento de log, `EventId.Name`; no Seq, o atributo `event.name`) é emitido pelo envio de
   entregas do módulo Notifications (`DeliverySender`) uma vez por entrega que termina como falha, em qualquer canal
-  (`push` ou `email`): esgotou as tentativas, não tem mais aparelho inscrito ou e-mail, ou não tem link de descadastro.
+  (`push` ou `email`): esgotou as tentativas ou não tem link de descadastro. SPEC-0031 (H30-06): a entrega cujo
+  destinatário não tem mais o canal (sem aparelho inscrito, usuário excluído, sem e-mail) não é falha: termina como
+  `skipped`, com o evento `NoticeDeliverySkipped`, fora deste alerta.
   A mensagem traz o número da entrega, o canal, o tipo do aviso (`new_show`, `reminder`, `digest`) e as tentativas;
   nunca o endpoint do aparelho, o e-mail ou o conteúdo do aviso.
 

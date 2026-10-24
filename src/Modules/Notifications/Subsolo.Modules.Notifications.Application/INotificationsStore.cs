@@ -13,7 +13,8 @@ internal interface INotificationsStore
 {
     /// <summary>
     /// Grava (ou atualiza, pelo endpoint) a inscrição de <paramref name="userId"/>; a primeira inscrição do usuário liga o
-    /// show novo por push (§2, Emenda de 2026-10-23) e grava as preferências.
+    /// show novo por push (§2, Emenda de 2026-10-23) e grava as preferências. SPEC-0031 (H30-07): só sem a linha de
+    /// preferências — com ela, as escolhas do fã não mudam.
     /// </summary>
     Task SubscribeAsync(Guid userId, string endpoint, string p256dh, string auth, DateTimeOffset now, CancellationToken ct);
 

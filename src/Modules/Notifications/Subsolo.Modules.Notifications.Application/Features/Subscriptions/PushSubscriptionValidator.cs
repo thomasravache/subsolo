@@ -5,8 +5,10 @@ namespace Subsolo.Modules.Notifications.Application.Features.Subscriptions;
 /// <summary>
 /// SPEC-0030 — validação da inscrição de push (§5, contra SSRF): o endpoint é uma URL absoluta <c>https</c> de um
 /// serviço de push conhecido (FCM, Mozilla, Apple) e as chaves <c>p256dh</c> e <c>auth</c> estão presentes; senão,
-/// <c>notifications.invalid_subscription</c>. A comparação é pelo host exato (nada de sufixo, usuário na URL, porta
-/// fora da padrão ou endereço IP), então o canal só chama esses serviços.
+/// <c>notifications.invalid_subscription</c>. A comparação é pelo host exato (nada de usuário na URL, porta fora da
+/// padrão ou endereço IP), então o canal só chama esses serviços. SPEC-0031 (H30-01): o WNS do Edge no Windows tem um
+/// host por região (<c>wns2-bl2p.notify.windows.com</c>), aceito pelo sufixo exato <see cref="WnsHostSuffix"/> (com o
+/// ponto: <c>evilnotify.windows.com</c> e <c>notify.windows.com.evil.example</c> continuam recusados).
 /// </summary>
 internal static class PushSubscriptionValidator
 {
@@ -26,6 +28,9 @@ internal static class PushSubscriptionValidator
         "updates.push.services.mozilla.com",
         "web.push.apple.com",
     };
+
+    /// <summary>SPEC-0031 (H30-01) — sufixo dos hosts do WNS (Windows Push Notification Services), com o ponto.</summary>
+    public const string WnsHostSuffix = ".notify.windows.com";
 
     public static readonly Error Invalid = Error.Validation(
         InvalidSubscription,
@@ -47,7 +52,11 @@ internal static class PushSubscriptionValidator
         && string.IsNullOrEmpty(uri.UserInfo)
         && string.IsNullOrEmpty(uri.Fragment)
         && uri.HostNameType == UriHostNameType.Dns
-        && KnownHosts.Contains(uri.Host);
+        && IsKnownHost(uri.Host);
+
+    private static bool IsKnownHost(string host) =>
+        KnownHosts.Contains(host)
+        || (host.Length > WnsHostSuffix.Length && host.EndsWith(WnsHostSuffix, StringComparison.OrdinalIgnoreCase));
 
     private static bool IsKey(string? key) =>
         key is { Length: > 0 and <= MaxKeyLength } && key.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '=');

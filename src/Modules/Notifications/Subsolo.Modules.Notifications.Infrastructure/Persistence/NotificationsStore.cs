@@ -25,13 +25,10 @@ internal sealed class NotificationsStore(NotificationsDbContext db) : INotificat
         await using (var subscribe = Command(
             connection,
             """
-            with before as (
-                select count(*) as devices from notifications.push_subscriptions where user_id = @user)
             insert into notifications.push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at_utc)
             values (@id, @user, @endpoint, @p256dh, @auth, @now)
             on conflict (endpoint) do update
                 set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth
-            returning (select devices from before)
             """))
         {
             subscribe.Transaction = transaction;
@@ -41,24 +38,26 @@ internal sealed class NotificationsStore(NotificationsDbContext db) : INotificat
             subscribe.Parameters.AddWithValue("p256dh", p256dh);
             subscribe.Parameters.AddWithValue("auth", auth);
             subscribe.Parameters.AddWithValue("now", now);
-            var before = Convert.ToInt64(await subscribe.ExecuteScalarAsync(ct), System.Globalization.CultureInfo.InvariantCulture);
-            if (before == 0)
-            {
-                // Ativar o push (a primeira inscrição) liga o show novo (§2, Emenda de 2026-10-23) e grava as preferências.
-                await using var turnOn = Command(
-                    connection,
-                    """
-                    insert into notifications.preferences (user_id, new_show_push, daily_digest_email, reminder_push, reminder_email)
-                    values (@user, true, @digest, @reminderPush, @reminderEmail)
-                    on conflict (user_id) do update set new_show_push = true
-                    """);
-                turnOn.Transaction = transaction;
-                turnOn.Parameters.AddWithValue("user", userId);
-                turnOn.Parameters.AddWithValue("digest", NotificationPreferences.Default.DailyDigestEmail);
-                turnOn.Parameters.AddWithValue("reminderPush", NotificationPreferences.Default.ReminderPush);
-                turnOn.Parameters.AddWithValue("reminderEmail", NotificationPreferences.Default.ReminderEmail);
-                await turnOn.ExecuteNonQueryAsync(ct);
-            }
+            await subscribe.ExecuteNonQueryAsync(ct);
+        }
+
+        // Ativar o push pela primeira vez liga o show novo (§2, Emenda de 2026-10-23) e grava as preferências. SPEC-0031
+        // (H30-07): só para quem ainda não tem a linha de preferências; quem já escolheu (por exemplo, desligou o show
+        // novo) e reinscreve o aparelho que o servidor perdeu (410) mantém as escolhas.
+        await using (var turnOn = Command(
+            connection,
+            """
+            insert into notifications.preferences (user_id, new_show_push, daily_digest_email, reminder_push, reminder_email)
+            values (@user, true, @digest, @reminderPush, @reminderEmail)
+            on conflict (user_id) do nothing
+            """))
+        {
+            turnOn.Transaction = transaction;
+            turnOn.Parameters.AddWithValue("user", userId);
+            turnOn.Parameters.AddWithValue("digest", NotificationPreferences.Default.DailyDigestEmail);
+            turnOn.Parameters.AddWithValue("reminderPush", NotificationPreferences.Default.ReminderPush);
+            turnOn.Parameters.AddWithValue("reminderEmail", NotificationPreferences.Default.ReminderEmail);
+            await turnOn.ExecuteNonQueryAsync(ct);
         }
 
         await transaction.CommitAsync(ct);

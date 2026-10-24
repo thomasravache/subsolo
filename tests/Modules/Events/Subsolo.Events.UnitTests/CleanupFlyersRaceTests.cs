@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Application.Media;
+using Subsolo.Events.UnitTests.Infrastructure;
 using Subsolo.Modules.Events.Application.Features.CleanupFlyers;
 using Subsolo.Modules.Events.Domain.Flyers;
 
@@ -31,7 +32,8 @@ public sealed class CleanupFlyersRaceTests
             flyers,
             storage,
             new FakeTimeProvider(Now),
-            NullLogger<CleanupFlyersCommandHandler>.Instance);
+            NullLogger<CleanupFlyersCommandHandler>.Instance,
+            new NoOpFlyerLocks());
 
         var result = await handler.Handle(new CleanupFlyersCommand(), TestContext.Current.CancellationToken);
 

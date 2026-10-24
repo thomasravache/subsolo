@@ -51,7 +51,7 @@ internal sealed class ListProfileShowsEndpoint : IEndpoint
 
         var result = await handler.Handle(new ListProfileShowsQuery(id, period), cancellationToken);
         return result.IsSuccess
-            ? Results.Ok(new ProfileShowsBody([.. result.Value.Shows.Cast<ProfileShowResponse>()]))
+            ? Results.Ok(new ProfileShowsBody(result.Value.Shows))
             : ApiResults.Problem(result);
     }
 

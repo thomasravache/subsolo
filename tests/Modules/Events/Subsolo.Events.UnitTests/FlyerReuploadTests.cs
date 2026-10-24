@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Application.Media;
 using Subsolo.Common.Domain;
+using Subsolo.Events.UnitTests.Infrastructure;
 using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Application.Features.CleanupFlyers;
 using Subsolo.Modules.Events.Application.Features.UploadFlyer;
@@ -42,7 +43,7 @@ public sealed class FlyerReuploadTests
         }
 
         var handler = new CleanupFlyersCommandHandler(
-            flyers, storage, new FakeTimeProvider(Now), NullLogger<CleanupFlyersCommandHandler>.Instance);
+            flyers, storage, new FakeTimeProvider(Now), NullLogger<CleanupFlyersCommandHandler>.Instance, new NoOpFlyerLocks());
 
         var result = await handler.Handle(new CleanupFlyersCommand(), TestContext.Current.CancellationToken);
 
@@ -110,7 +111,8 @@ public sealed class FlyerReuploadTests
             flyers,
             new NoOpUnitOfWork(),
             new FakeTimeProvider(Now),
-            NullLogger<UploadFlyerCommandHandler>.Instance);
+            NullLogger<UploadFlyerCommandHandler>.Instance,
+            new NoOpFlyerLocks());
 
     /// <summary>
     /// Flyers em memória: a exclusão condicional apaga as linhas e, logo depois, o mesmo arquivo de

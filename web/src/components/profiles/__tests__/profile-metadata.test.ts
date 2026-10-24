@@ -44,7 +44,8 @@ const producer: PublicProfile = {
   slug: "peste-producoes",
 };
 
-const nextShow: ProfileShow = {
+// SPEC-0031 (H26-03b): o item traz o `flyerId` (aditivo no contrato); o cast cobre o tipo gerado antes do snapshot novo.
+const nextShow = {
   id: "3f1c2b8e-6a4d-4e7f-9b21-8d5c0e9a1f42",
   slug: "noite-da-peste-ii-2026-11-14",
   title: "Noite da Peste II",
@@ -54,8 +55,9 @@ const nextShow: ProfileShow = {
   styles: ["death"],
   status: "scheduled",
   flyerThumbUrl: "/media/flyers/abc-thumb.webp",
+  flyerId: "abc",
   attendingCount: 0,
-};
+} as ProfileShow;
 
 type Loose = Record<string, unknown>;
 
@@ -122,5 +124,52 @@ describe("metadados da página do perfil", () => {
 
     expect(titleOf(metadata)).toBe("Peste Produções · Produtor · Subsolo");
     expect(String(metadata["description"] ?? "")).toBe("Produtor de Curitiba");
+  });
+});
+
+/**
+ * SPEC-0031 H26-03b — a imagem Open Graph vem do `flyerId` do show (`{base}/media/flyers/{flyerId}-og.jpg`), não de uma
+ * expressão regular sobre `flyerThumbUrl`; show sem flyer (`flyerId` nulo) → nenhuma imagem de flyer.
+ */
+describe("metadados da página do perfil: imagem pelo flyerId", () => {
+  const flyerId =
+    "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+
+  it("SPEC-0031:H26-03b a og:image é montada pelo flyerId do show, mesmo com outra miniatura", () => {
+    const show = {
+      ...nextShow,
+      flyerId,
+      flyerThumbUrl: "/media/flyers/outro-thumb.webp",
+    } as ProfileShow;
+
+    const metadata = profileMetadata(band, show, publicUrl) as Loose;
+
+    expect(ogImageUrls(metadata)).toEqual([
+      `${publicUrl}/media/flyers/${flyerId}-og.jpg`,
+    ]);
+  });
+
+  it("SPEC-0031:H26-03b com o flyerId e sem miniatura, a og:image continua", () => {
+    const show = { ...nextShow, flyerId, flyerThumbUrl: null } as ProfileShow;
+
+    const metadata = profileMetadata(band, show, `${publicUrl}/`) as Loose;
+
+    expect(ogImageUrls(metadata)).toEqual([
+      `${publicUrl}/media/flyers/${flyerId}-og.jpg`,
+    ]);
+  });
+
+  it("SPEC-0031:H26-03b show sem flyer (flyerId nulo) não tem imagem de flyer, mesmo com uma miniatura", () => {
+    const show = {
+      ...nextShow,
+      flyerId: null,
+      flyerThumbUrl: "/media/flyers/abc-thumb.webp",
+    } as ProfileShow;
+
+    const metadata = profileMetadata(band, show, publicUrl) as Loose;
+
+    expect(
+      ogImageUrls(metadata).filter((url) => url.includes("/media/flyers/")),
+    ).toEqual([]);
   });
 });

@@ -2,10 +2,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using Subsolo.Common.Domain;
 using Subsolo.Modules.Engagement.Application;
+using Subsolo.Modules.Engagement.Application.Features.GetFollowers;
 using Subsolo.Modules.Engagement.Domain.Attendances;
 using Subsolo.Modules.Engagement.Domain.Follows;
+using Subsolo.Modules.Engagement.IntegrationEvents;
 using Subsolo.Modules.Events.IntegrationEvents;
+using Subsolo.Modules.Notifications.IntegrationEvents;
 using Subsolo.Modules.Profiles.IntegrationEvents;
 
 namespace Subsolo.Engagement.UnitTests.Infrastructure;
@@ -18,7 +22,10 @@ namespace Subsolo.Engagement.UnitTests.Infrastructure;
 /// pelo contêiner (<see cref="Create{T}"/>), com essas dependências e logs nulos. SPEC-0029: os "vou" em memória
 /// (<see cref="Attendances"/>) e os shows de teste do catálogo (<see cref="TestEventsCatalog.AddShow"/>); os follows
 /// também servem de read model (<see cref="IFollowsReadModel"/>) e o catálogo dá os nomes das cidades
-/// (<see cref="IEventsCatalogNames"/>).
+/// (<see cref="IEventsCatalogNames"/>). SPEC-0031: o resumo dos shows do catálogo (<see cref="TestEventsCatalog.AddSummary"/>),
+/// o <see cref="IEngagementApi"/> do módulo sobre esses follows e perfis, o registro dos shows publicados em memória
+/// (<see cref="PublishedShows"/>) e o <see cref="INotificationsApi"/> que só guarda os avisos enfileirados
+/// (<see cref="Notifications"/>).
 /// </summary>
 internal sealed class EngagementHarness
 {
@@ -38,6 +45,9 @@ internal sealed class EngagementHarness
             .AddSingleton<IEventsCatalog>(Catalog)
             .AddSingleton<IProfilesApi>(Profiles)
             .AddSingleton<TimeProvider>(Clock)
+            .AddSingleton<IPublishedShows>(PublishedShows)
+            .AddSingleton<INotificationsApi>(Notifications)
+            .AddSingleton<IEngagementApi>(provider => ActivatorUtilities.CreateInstance<EngagementApi>(provider))
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .AddSingleton(typeof(ILogger<>), typeof(NullLogger<>))
             .BuildServiceProvider();
@@ -54,6 +64,12 @@ internal sealed class EngagementHarness
     public TestEventsCatalog Catalog { get; } = new();
 
     public TestProfilesApi Profiles { get; } = new();
+
+    /// <summary>SPEC-0031 — <c>engagement.published_shows</c> em memória.</summary>
+    public InMemoryPublishedShows PublishedShows { get; } = new();
+
+    /// <summary>SPEC-0031 — os avisos enfileirados no Notifications.</summary>
+    public CapturingNotificationsApi Notifications { get; } = new();
 
     /// <summary>Um handler (ou a implementação do <c>IEngagementApi</c>) do módulo com as dependências do harness.</summary>
     public T Create<T>() => ActivatorUtilities.CreateInstance<T>(_services);
@@ -189,6 +205,7 @@ internal sealed class TestEventsCatalog : IEventsCatalog, IEventsCatalogNames
     private readonly HashSet<string> _cities = new(["curitiba", "sao-paulo"], StringComparer.Ordinal);
     private readonly Dictionary<string, string> _names = new(StringComparer.Ordinal) { ["curitiba"] = "Curitiba", ["sao-paulo"] = "São Paulo" };
     private readonly Dictionary<Guid, ShowState> _shows = [];
+    private readonly Dictionary<Guid, ShowSummary> _summaries = [];
 
     public List<Guid> ShowQueries { get; } = [];
 
@@ -222,6 +239,75 @@ internal sealed class TestEventsCatalog : IEventsCatalog, IEventsCatalogNames
         ShowQueries.Add(showId);
         return Task.FromResult(_shows.GetValueOrDefault(showId));
     }
+
+    /// <summary>SPEC-0031 — um show de teste com o resumo <paramref name="summary"/> (e a situação e o início dele).</summary>
+    public ShowSummary AddSummary(ShowSummary summary)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+        _summaries[summary.ShowId] = summary;
+        _shows[summary.ShowId] = new ShowState(summary.Status, summary.StartsAtUtc);
+        return summary;
+    }
+
+    /// <summary>SPEC-0031 — o resumo do show, ou <see langword="null"/>.</summary>
+    public Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct)
+    {
+        ShowQueries.Add(showId);
+        return Task.FromResult(_summaries.GetValueOrDefault(showId));
+    }
+}
+
+/// <summary>SPEC-0031 — <c>engagement.published_shows</c> em memória (uma linha por show).</summary>
+internal sealed class InMemoryPublishedShows : IPublishedShows
+{
+    private readonly Dictionary<Guid, PublishedShow> _rows = [];
+
+    public IReadOnlyCollection<PublishedShow> All => _rows.Values;
+
+    public Task AddAsync(PublishedShow show, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(show);
+        _rows.TryAdd(show.ShowId, show);
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<PublishedShow>> PublishedSinceAsync(DateTimeOffset sinceUtc, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<PublishedShow>>([.. _rows.Values.Where(row => row.PublishedAtUtc >= sinceUtc)]);
+
+    public Task<int> DeletePublishedBeforeAsync(DateTimeOffset beforeUtc, CancellationToken cancellationToken)
+    {
+        var old = _rows.Values.Where(row => row.PublishedAtUtc < beforeUtc).Select(row => row.ShowId).ToList();
+        foreach (var id in old)
+        {
+            _rows.Remove(id);
+        }
+
+        return Task.FromResult(old.Count);
+    }
+}
+
+/// <summary>
+/// SPEC-0031 — dublê do <see cref="INotificationsApi"/> que só guarda cada <see cref="INotificationsApi.EnqueueAsync"/>
+/// (destinatários e aviso); o envio é do Notifications (SPEC-0030).
+/// </summary>
+internal sealed class CapturingNotificationsApi : INotificationsApi
+{
+    public List<(IReadOnlyCollection<Guid> UserIds, Notice Notice)> Enqueued { get; } = [];
+
+    public Task<Result> EnqueueAsync(IReadOnlyCollection<Guid> userIds, Notice notice, CancellationToken ct)
+    {
+        Enqueued.Add(([.. userIds], notice));
+        return Task.FromResult(Result.Success());
+    }
+
+    public Task<Result> SendEmailAsync(EmailRequest request, CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("o Engagement não manda e-mail transacional");
+
+    public Task ForgetUserAsync(Guid userId, CancellationToken ct) =>
+        throw new InvalidOperationException("o Engagement não apaga dados do Notifications");
+
+    public Task<object?> ExportAsync(Guid userId, CancellationToken ct) =>
+        throw new InvalidOperationException("o Engagement não exporta dados do Notifications");
 }
 
 /// <summary>

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Subsolo.Common.Application.Media;
 using Subsolo.Common.Domain;
+using Subsolo.Events.UnitTests.Infrastructure;
 using Subsolo.Modules.Events.Application;
 using Subsolo.Modules.Events.Application.Features.UploadFlyer;
 using Subsolo.Modules.Events.Domain.Flyers;
@@ -31,7 +32,8 @@ public sealed class FlyerFullSizeTests
             flyers,
             new NoOpUnitOfWork(),
             new FakeTimeProvider(new DateTimeOffset(2026, 10, 18, 12, 0, 0, TimeSpan.Zero)),
-            NullLogger<UploadFlyerCommandHandler>.Instance);
+            NullLogger<UploadFlyerCommandHandler>.Instance,
+            new NoOpFlyerLocks());
         using var content = new MemoryStream(Original);
 
         var result = await handler.Handle(new UploadFlyerCommand(content, Original.Length, Guid.CreateVersion7()), TestContext.Current.CancellationToken);

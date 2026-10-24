@@ -108,7 +108,9 @@ if (!builder.ExecutionContext.IsPublishMode)
 // desenvolvimento valem até a próxima subida) e uma chave aleatória para o token de descadastro dos e-mails de aviso,
 // os dois como parâmetros secretos: nenhuma chave fica no repositório (ADR-0008). As de produção entram no go-live
 // (SPEC-0003). H28-05 (herança da revisão da SPEC-0028) — o web recebe a chave Pix, o recebedor e o e-mail de contato
-// de desenvolvimento, como o tools/compose-up.sh faz na pilha do Compose; só do servidor (sem NEXT_PUBLIC_).
+// de desenvolvimento, como o tools/compose-up.sh faz na pilha do Compose; só do servidor (sem NEXT_PUBLIC_). SPEC-0031 —
+// o resumo diário por e-mail roda a cada minuto no `aspire run` (Engagement__DigestCron), como na pilha do E2E; o padrão
+// da API (às 9h de São Paulo) e o Compose publicado não mudam.
 if (!builder.ExecutionContext.IsPublishMode)
 {
     using var vapid = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -122,7 +124,8 @@ if (!builder.ExecutionContext.IsPublishMode)
     api.WithEnvironment("Notifications__WebPush__PublicKey", vapidPublicKey)
         .WithEnvironment("Notifications__WebPush__PrivateKey", vapidPrivateKey)
         .WithEnvironment("Notifications__WebPush__Subject", "mailto:nao-responda@subsolo.local")
-        .WithEnvironment("Notifications__Unsubscribe__SigningKey", unsubscribeKey);
+        .WithEnvironment("Notifications__Unsubscribe__SigningKey", unsubscribeKey)
+        .WithEnvironment("Engagement__DigestCron", "0 * * * * ?");
     web.WithEnvironment("Support__PixKey", "chave-dev@subsolo.local")
         .WithEnvironment("Support__PixName", "Subsolo")
         .WithEnvironment("Support__PixCity", "Curitiba")

@@ -46,6 +46,10 @@
 # (Notifications__WebPush__PublicKey/PrivateKey/Subject, pelo .env local). Nenhuma chave real; as de produção entram no
 # go-live.
 #
+# SPEC-0031 — também só neste Compose local: o resumo diário por e-mail roda a cada minuto
+# (Engagement__DigestCron="0 * * * * ?"; o padrão da API é às 9h de São Paulo), para o E2E-01 receber o resumo em até
+# 2 minutos. O artefato publicado e os padrões da API não mudam.
+#
 # SPEC-0017 — também só neste Compose local: `admin@subsolo.test` tem o papel admin (Users__AdminEmails__0), para o E2E
 # entrar no painel do admin pelo link mágico. O artefato publicado e os padrões da API não mudam.
 #
@@ -215,6 +219,7 @@ services:
       Notifications__WebPush__PrivateKey: "\${VAPID_PRIVATE_KEY}"
       Notifications__WebPush__Subject: "mailto:nao-responda@subsolo.test"
       Notifications__Unsubscribe__SigningKey: "\${UNSUBSCRIBE_SIGNING_KEY}"
+      Engagement__DigestCron: "0 * * * * ?"
     ports:
       - "127.0.0.1:$((10#$OIDC_PORT)):$((10#$OIDC_PORT))"
   oidc:

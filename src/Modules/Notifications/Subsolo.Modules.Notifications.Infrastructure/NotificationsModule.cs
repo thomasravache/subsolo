@@ -39,7 +39,8 @@ public static class NotificationsModule
     /// (<c>Notifications:WebPush</c>, validada na inicialização quando configurada; o <c>HttpClient</c>
     /// <see cref="WebPushOptions.HttpClientName"/> sem o handler de resiliência padrão: as novas tentativas são das
     /// entregas), o token de descadastro (<c>Notifications:Unsubscribe</c>) e o job de entregas
-    /// (<see cref="ProcessDeliveriesJob"/>).
+    /// (<see cref="ProcessDeliveriesJob"/>). SPEC-0031: o job de retenção dos avisos (<see cref="NoticesRetentionJob"/>,
+    /// 90 dias).
     /// </summary>
     public static IServiceCollection AddNotificationsModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -78,7 +79,11 @@ public static class NotificationsModule
             typeof(NotificationsModule).Assembly,
             typeof(NotificationsApi).Assembly,
             typeof(NotificationPreferences).Assembly);
-        services.ConfigureAllQuartzSchedulers(ProcessDeliveriesJob.Schedule);
+        services.ConfigureAllQuartzSchedulers(quartz =>
+        {
+            ProcessDeliveriesJob.Schedule(quartz);
+            NoticesRetentionJob.Schedule(quartz);
+        });
         return services.AddEndpoints(AssemblyReference.Assembly);
     }
 }
