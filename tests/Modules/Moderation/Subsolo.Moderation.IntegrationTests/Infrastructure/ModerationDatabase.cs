@@ -44,6 +44,37 @@ internal static class ModerationDatabase
         return rows;
     }
 
+    /// <summary>
+    /// SPEC-0033 (Emenda 2) — <c>moderation.reports.decision_note</c> das denúncias do show (vazio se a tabela ou a coluna
+    /// ainda não existem).
+    /// </summary>
+    public static async Task<IReadOnlyList<string?>> DecisionNotesAsync(string connectionString, Guid showId, CancellationToken ct)
+    {
+        await using var connection = await OpenAsync(connectionString, ct);
+        if (!await ExistsAsync(
+                connection,
+                """
+                select exists (select 1 from information_schema.columns
+                               where table_schema = 'moderation' and table_name = 'reports' and column_name = 'decision_note')
+                """,
+                ct))
+        {
+            return [];
+        }
+
+        await using var command = new NpgsqlCommand(
+            "select decision_note from moderation.reports where show_id = @show order by created_at_utc, id", connection);
+        command.Parameters.AddWithValue("show", showId);
+        var notes = new List<string?>();
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            notes.Add(await reader.IsDBNullAsync(0, ct) ? null : reader.GetString(0));
+        }
+
+        return notes;
+    }
+
     /// <summary><c>events.shows.hidden_at_utc</c> do show (nulo se visível ou se a coluna ainda não existe).</summary>
     public static async Task<DateTimeOffset?> HiddenAtAsync(string connectionString, Guid showId, CancellationToken ct)
     {
