@@ -239,7 +239,9 @@ describe("OpenAPI do cadastro de show fiel ao contrato §6", () => {
   it("SPEC-0024:H23-06 cada item de GET /api/v1/me/shows traz o timeZone da cidade (campo aditivo)", () => {
     const list = jsonResponse(myShowsPath, "get", "200");
     const item = resolve(list.items ?? {});
-    expect(properties(item).sort()).toEqual([...myShow, "timeZone"].sort());
+    expect(properties(item).sort()).toEqual(
+      [...myShow, "timeZone", "hidden"].sort(),
+    );
     expect(item.required ?? [], "timeZone opcional no item").toContain(
       "timeZone",
     );
