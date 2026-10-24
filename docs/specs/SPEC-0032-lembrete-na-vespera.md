@@ -11,7 +11,7 @@ depends_on: [SPEC-0029, SPEC-0030, SPEC-0031]
 consumes_contract: []
 contract_version: 1
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Common/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**]
 adrs: [ADR-0001, ADR-0014]
 external: []
 size: S
@@ -120,6 +120,15 @@ Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHou
   - H29-02 — `AttendShowCommandHandler`: o PUT que perde a corrida não incrementa o contador `subsolo.engagement.attendances`; documentar no código (sem mudança de comportamento).
   - H29-03 — `ShowPage.tsx`: trocar o nó de texto `{" "}` depois da contagem por separação estrutural (contagem num bloco próprio).
 
+- **Itens herdados da revisão da SPEC-0031 (G4, tag `SPEC-0032:H31-NN`):**
+  - H31-01 — `SendDailyDigestCommand`: a janela fixa de 24 h perde os shows do dia se a execução das 9h falhar ou a API estiver fora às 9h (Quartz em memória, sem recuperação); usar a janela desde a última execução com sucesso (limitada a 7 dias) ou repetir a cada 15 min até dar certo no dia (a chave `digest:{data}` evita duplicar), com teste, e ajustar o runbook `outbox-parada.md`.
+  - H31-02 — `SendDailyDigestCommand`: um `EnqueueAsync` por corpo distinto de resumo; o IT-04 só mede o melhor caso (todos com o mesmo corpo). Acrescentar a variante com corpos diferentes (fãs espalhados por N bandas) dentro de ≤ 60 s, ou agrupar os avisos numa ida ao banco.
+  - H31-03 — `AntiforgeryFilter.ExemptFromCsrf`: teste de arquitetura ou segurança que lista os endpoints com `CsrfExemptMetadata`, compara com a lista permitida (hoje só `UnsubscribeNoticeEmailOneClick`) e exige `AllowAnonymous`; teste unitário do ramo isento.
+  - H31-04 — `NoticesRetentionJob`: try/catch com o evento `NoticesRetentionRunFailed`, incluído no alerta "Falha de job" e no runbook, com teste.
+  - H31-05 — contadores `subsolo.engagement.digest_recipients` e `subsolo.engagement.new_show_notices` (e o log `DailyDigestCompleted`): contar só o que foi enfileirado com sucesso, sem recontar reexecuções do dia, ou renomear a descrição para "seguidores considerados", com teste.
+  - H31-06 — `DigestBuilder`: caso de UT para o corte de 1.000 caracteres (linhas que não cabem vão para "e mais {n}").
+  - H31-07 — `NoticesRetentionJob`: índice em `deliveries.created_at_utc` (ou exclusão em lotes) para o `delete` da retenção não varrer a tabela.
+  - H31-08 — `NoticeText`: cortar a line-up em limite de elemento de texto (`StringInfo`), sem partir par substituto (emoji no nome da banda), com teste.
 **Dublês e dados de teste:** `TimeProvider` fixo nos UT e IT; dados criados no banco do teste.
 
 **Ambiente de execução:** IT com Testcontainers (PostgreSQL, Mailpit); E2E contra a pilha do Compose; Playwright com um worker.
@@ -220,3 +229,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 <!-- Mudança em spec aprovada: uma linha por emenda. Mudou o contrato? Incremente `contract_version` e rode `spec_graph.py impacted SPEC-0032`. -->
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-24 | `touches` e §7.6 ganham os itens H31-01..08 herdados da revisão G4 da SPEC-0031 (Notifications, Common.Presentation/Security, alertas do Seq, runbooks e testes correspondentes). | revisão G4 da SPEC-0031 | — | piloto automático do Thomas (2026-10-24) |
