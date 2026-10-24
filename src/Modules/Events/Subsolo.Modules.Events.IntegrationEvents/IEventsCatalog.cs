@@ -22,8 +22,7 @@ public interface IEventsCatalog
     /// SPEC-0031 — o resumo público do show <paramref name="showId"/> (o <c>Engagement</c> monta com ele os avisos de show
     /// novo e o resumo diário), ou <see langword="null"/> se o show não existe.
     /// </summary>
-    // TODO(SPEC-0031): esqueleto do G1 (Test-writer); o Implementer implementa no EventsCatalog.
-    Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct) => throw new NotImplementedException();
+    Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct);
 }
 
 /// <summary>

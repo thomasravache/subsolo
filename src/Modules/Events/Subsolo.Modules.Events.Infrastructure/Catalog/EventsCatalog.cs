@@ -53,4 +53,8 @@ internal sealed class EventsCatalog(EventsDbContext db) : IEventsCatalog, IEvent
             .Where(show => show.Id == showId)
             .Select(show => new ShowState(show.Status, show.StartsAtUtc))
             .SingleOrDefaultAsync(ct);
+
+    /// <summary>SPEC-0031 — o resumo público do show, ou <see langword="null"/> se não existe.</summary>
+    // TODO(SPEC-0031): esqueleto do G1 (Test-writer); o Implementer implementa a consulta.
+    public Task<ShowSummary?> GetShowSummaryAsync(Guid showId, CancellationToken ct) => throw new NotImplementedException();
 }
