@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Time.Testing;
 using Subsolo.Engagement.IntegrationTests.Infrastructure;
 using Subsolo.IntegrationTests.Common;
 
@@ -36,7 +35,7 @@ public sealed class NewShowNoticeDeliveryTests(PostgresFixture postgres)
     public async Task ANewShowReachesEveryFollowerWithPushOnWithinFiveSeconds()
     {
         var ct = TestContext.Current.CancellationToken;
-        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var clock = new RunningClock(DateTimeOffset.UtcNow);
         await using var api = new EngagementApiFactory(await EngagementApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct), clock);
         var (admin, _) = await api.SignedInAsync(EngagementApiFactory.AdminEmail, ct);
         using var __ = admin;

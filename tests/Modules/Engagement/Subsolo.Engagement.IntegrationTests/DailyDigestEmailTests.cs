@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Time.Testing;
 using Subsolo.Engagement.IntegrationTests.Infrastructure;
 using Subsolo.IntegrationTests.Common;
 
@@ -26,7 +25,7 @@ public sealed partial class DailyDigestEmailTests(PostgresFixture postgres, Mail
     public async Task EachFanGetsOneDigestEmailWithTheirShowsEvenIfTheJobRunsTwice()
     {
         var ct = TestContext.Current.CancellationToken;
-        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var clock = new RunningClock(DateTimeOffset.UtcNow);
         await using var api = new EngagementApiFactory(
             await EngagementApiFactory.IsolatedDatabaseAsync(postgres.ConnectionString, ct),
             clock,
