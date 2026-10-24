@@ -24,7 +24,8 @@ internal sealed class ShowHeadlines(EventsDbContext db) : IShowHeadlines
             .Select(show => new { show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, VenueName = show.Venue.Name })
             .ToDictionaryAsync(
                 show => show.Id,
-                show => new ShowHeadline(show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, show.VenueName),
+                // SPEC-0037 (H33-06) — esqueleto: o fuso da cidade chega na fase Green.
+                show => new ShowHeadline(show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, show.VenueName, string.Empty),
                 ct);
     }
 }
