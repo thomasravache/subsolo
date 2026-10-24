@@ -17,4 +17,11 @@ public interface IAttendanceRepository
 
     /// <summary>Os ids dos usuários que marcaram "vou" em <paramref name="showId"/>.</summary>
     Task<IReadOnlyList<Guid>> GetAttendeeIdsAsync(Guid showId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// SPEC-0036 (H32-04) — os ids dos usuários que marcaram "vou" em cada show de <paramref name="showIds"/>, numa consulta
+    /// só (shows sem nenhum podem ficar de fora).
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> GetAttendeeIdsAsync(
+        IReadOnlyCollection<Guid> showIds, CancellationToken cancellationToken);
 }
