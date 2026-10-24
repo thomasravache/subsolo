@@ -44,12 +44,12 @@ Achados menores da revisão G4 da SPEC-0033 (itens `H33-NN`):
 - H33-02: depois da decisão o foco vai para o título do próximo cartão; sem cartões, para a mensagem de fila vazia.
 - H33-03: a página renderiza a aba "Pedidos de perfil" e mostra "indisponível" só dentro do painel de denúncias.
 - H33-04: remover a declaração repetida e regenerar o snapshot.
-- H33-05: ao receber denúncia de show já oculto (`GetShowSummaryAsync` nulo) a resposta já é 404; e o `HideShow` marca como `hidden` as pendentes que chegarem depois, numa decisão nova sobre o mesmo show (`no_pending_reports` continua para o show sem pendentes).
-- H33-06: `ShowHeadline` ganha `TimeZone` (contrato interno do `Events`, sem rota pública) e a fila formata no fuso da cidade.
+- H33-05: a janela é fechada na origem: o `ReportShow` recusa com 404 `events.show_not_found` a denúncia de show que o próprio `Moderation` já decidiu ocultar (há denúncia `hidden` do show), mesmo antes de o consumidor do `Events` gravar `hidden_at_utc`. O `HideShow` continua marcando como `hidden` as pendentes que existirem numa decisão nova (`no_pending_reports` para o show sem pendentes).
+- H33-06: `ShowHeadline` ganha `TimeZone` (contrato interno do `Events`); o item da fila `GET /api/v1/admin/reports` ganha o campo aditivo `timeZone` (rota só do admin, compatível com o cliente atual; a lista de chaves do §6 da SPEC-0033 passa a incluí-lo), e a fila formata a data do show nesse fuso.
 - H33-07: anotar o enum de `reason` no OpenAPI e regenerar o cliente.
-- **Não muda:** o limite por tentativa (ADR-0003; aceito na revisão), rotas, códigos e textos das telas.
+- **Não muda:** o limite por tentativa (ADR-0003; aceito na revisão), rotas, códigos e textos das telas. A única mudança de contrato é o campo aditivo `timeZone` do H33-06.
 
-**Padrão seguido:** testes e endpoints da SPEC-0033; `MyShowResponse.timeZone` (SPEC-0024, H23-06); foco após remover item como no `ProfileRequestsQueue` (SPEC-0021).
+**Padrão seguido:** testes e endpoints da SPEC-0033; `MyShowResponse.timeZone` (SPEC-0024, H23-06); o foco após a decisão é novo (o `ProfileRequestsQueue` da SPEC-0021 não move o foco).
 
 **Rollback:** reverter o merge commit.
 
@@ -61,7 +61,9 @@ Achados menores da revisão G4 da SPEC-0033 (itens `H33-NN`):
 - **UT-02** — Dada a página `/admin/fila` com a leitura de denúncias falhando, quando renderizada, então a aba "Pedidos de perfil" aparece com os pedidos e o painel de denúncias mostra o aviso de indisponível. (H33-03)
 - **IT-01** — Dado um fã e um show, quando três denúncias chegam ao mesmo tempo, então uma resposta é 201, as outras 409 `moderation.already_reported`, e há uma linha; e `/hide` com nota de 201 caracteres dá 400 `moderation.invalid_note`. (H33-01)
 - **IT-02** — Dado um show oculto com uma denúncia pendente que chegou depois da decisão, quando o admin decide de novo, então a pendente vira `hidden`; e `IShowHeadlines` devolve o fuso da cidade. (H33-05, H33-06)
-- **CT-01** — Dado o snapshot OpenAPI, quando lido, então `ReportShowRequest.reason` é o enum dos quatro motivos e o `security.csrf_invalid` do `keep` aparece uma vez. (H33-04, H33-07)
+- **CT-01** — Dado o snapshot OpenAPI, quando lido, então `ReportShowRequest.reason` é o enum dos quatro motivos e o `security.csrf_invalid` do `keep` aparece uma vez; o item da fila tem `timeZone` string obrigatório. (H33-04, H33-06, H33-07)
+- **UT-03** — Dada a fila com um show em `America/Manaus` às 23h30 UTC, quando renderizada, então a data e a hora do cartão saem no fuso de Manaus (19h30), não no de São Paulo. (H33-06)
+- **IT-03** — Dado um show com denúncia já decidida como `hidden` no `Moderation` e ainda visível no `Events` (consumidor não rodou), quando outro fã denuncia, então 404 `events.show_not_found` e nenhuma linha nova; e o item da fila traz `timeZone` da cidade. (H33-05, H33-06)
 - E2E: N/A — sem jornada nova; a E2E-01 da SPEC-0033 segue cobrindo a fila.
 
 ## 5. Questões em Aberto
@@ -133,3 +135,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 | 2026-10-24 | H33-05 fechado na origem (o `ReportShow` recusa show já ocultado pelo `Moderation`); H33-06 com o campo aditivo `timeZone` no item da fila do admin; padrão do foco corrigido; UT-03 e IT-03 novos, CT-01 cobre `timeZone`. | SPEC_DEFECTs 1–3 do Test-writer | SPEC-0033 (lista de chaves do item da fila) | piloto automático do Thomas (2026-10-24) |
