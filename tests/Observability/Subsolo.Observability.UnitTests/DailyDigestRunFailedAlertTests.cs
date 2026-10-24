@@ -9,11 +9,12 @@ namespace Subsolo.Observability.UnitTests;
 /// minutos e não pega um job diário), <c>infra/seq/alerts.json</c> tem o alerta próprio "Resumo diário falhou": seleciona
 /// pelo nome do evento (<c>event.name = 'DailyDigestRunFailed'</c>, por igualdade, sem texto da mensagem), janela de 1
 /// hora, dispara com um evento (<c>count &gt;= 1</c>) e cita o runbook <c>docs/runbooks/outbox-parada.md</c>, que existe
-/// no repositório (no padrão do <see cref="NoticeDeliveryFailedAlertTests"/>).
+/// no repositório (no padrão do <see cref="NoticeDeliveryFailedAlertTests"/>). SPEC-0036 (H32-01): o alerta passou a cobrir
+/// os três jobs agendados e se chama "Job agendado falhou" (<see cref="ScheduledJobFailedAlertTests"/>).
 /// </summary>
 public sealed partial class DailyDigestRunFailedAlertTests
 {
-    private const string Title = "Resumo diário falhou";
+    private const string Title = "Job agendado falhou";
 
     private static readonly string[] TextDerivedProperties = ["@Message", "@MessageTemplate", "@Exception", "@EventType"];
 
@@ -39,7 +40,7 @@ public sealed partial class DailyDigestRunFailedAlertTests
             .ShouldBe(TimeSpan.FromHours(1), "a janela do alerta é de 1 hora");
         var having = alert.GetProperty("having").GetString().ShouldNotBeNull("o alerta não tem limite (having)");
         Regex.Replace(having, @"\s+", " ", RegexOptions.None, TimeSpan.FromSeconds(1)).Trim()
-            .ShouldBe("count >= 1", "o resumo roda uma vez por dia: uma falha basta");
+            .ShouldBe("count >= 1", "uma falha de job agendado basta");
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public sealed partial class DailyDigestRunFailedAlertTests
             .ShouldBeTrue($"o runbook {match.Value} não existe no repositório");
     }
 
-    /// <summary>O único alerta "Resumo diário falhou" de <c>infra/seq/alerts.json</c>.</summary>
+    /// <summary>O único alerta "Job agendado falhou" de <c>infra/seq/alerts.json</c>.</summary>
     private static JsonElement Alert()
     {
         using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(RepositoryRoot(), "infra", "seq", "alerts.json")));
