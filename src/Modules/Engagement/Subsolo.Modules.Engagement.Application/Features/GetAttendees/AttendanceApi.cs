@@ -24,4 +24,9 @@ internal sealed class AttendanceApi(IAttendanceRepository attendances) : IAttend
 
     public async Task<IReadOnlyCollection<Guid>> GetAttendeesAsync(Guid showId, CancellationToken ct) =>
         (await attendances.GetAttendeeIdsAsync(showId, ct)).ToHashSet();
+
+    /// <summary>SPEC-0036 (H32-04) — esqueleto; implementado na fase Green.</summary>
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>> GetAttendeesAsync(
+        IReadOnlyCollection<Guid> showIds, CancellationToken ct) =>
+        throw new NotImplementedException();
 }
