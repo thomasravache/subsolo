@@ -1831,7 +1831,7 @@
           "Avisos"
         ],
         "summary": "Mudar preferências de aviso",
-        "description": "Grava os quatro interruptores e devolve as preferências. Exige o cabeçalho X-CSRF.",
+        "description": "Grava os quatro interruptores (todos obrigatórios, booleanos) e devolve as preferências. Exige o cabeçalho X-CSRF.",
         "operationId": "UpdateNotificationPreferences",
         "requestBody": {
           "content": {
@@ -1875,7 +1875,7 @@
             }
           },
           "400": {
-            "description": "Bad Request (code=security.csrf_invalid)",
+            "description": "Bad Request (code=security.csrf_invalid) (code=notifications.invalid_preferences)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1890,6 +1890,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationPreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unsubscribe/one-click": {
+      "post": {
+        "tags": [
+          "Avisos"
+        ],
+        "summary": "Descadastrar e-mail de aviso em um clique",
+        "description": "Descadastro em um clique (RFC 8058) do cabeçalho List-Unsubscribe dos e-mails de aviso: desliga o tipo de e-mail do token (resumo diário ou lembrete na véspera), sem login nem X-CSRF. Corpo List-Unsubscribe=One-Click.",
+        "operationId": "UnsubscribeNoticeEmailOneClick",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OneClickUnsubscribeForm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests (code=security.rate_limited)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request (code=notifications.invalid_token)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4474,6 +4528,17 @@
           }
         }
       },
+      "OneClickUnsubscribeForm": {
+        "required": [
+          "List-Unsubscribe"
+        ],
+        "type": "object",
+        "properties": {
+          "List-Unsubscribe": {
+            "type": "string"
+          }
+        }
+      },
       "OwnerlessProfileCreated": {
         "required": [
           "profileId"
@@ -4839,6 +4904,7 @@
       "ProfileShowResponse": {
         "required": [
           "city",
+          "flyerId",
           "id",
           "slug",
           "title",
@@ -4854,6 +4920,12 @@
         "properties": {
           "city": {
             "$ref": "#/components/schemas/ProfileShowCityResponse"
+          },
+          "flyerId": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "id": {
             "type": "string",

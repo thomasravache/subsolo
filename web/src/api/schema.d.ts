@@ -438,10 +438,30 @@ export interface paths {
     get: operations["GetNotificationPreferences"];
     /**
      * Mudar preferências de aviso
-     * @description Grava os quatro interruptores e devolve as preferências. Exige o cabeçalho X-CSRF.
+     * @description Grava os quatro interruptores (todos obrigatórios, booleanos) e devolve as preferências. Exige o cabeçalho X-CSRF.
      */
     put: operations["UpdateNotificationPreferences"];
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/notifications/unsubscribe/one-click": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Descadastrar e-mail de aviso em um clique
+     * @description Descadastro em um clique (RFC 8058) do cabeçalho List-Unsubscribe dos e-mails de aviso: desliga o tipo de e-mail do token (resumo diário ou lembrete na véspera), sem login nem X-CSRF. Corpo List-Unsubscribe=One-Click.
+     */
+    post: operations["UnsubscribeNoticeEmailOneClick"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1110,6 +1130,9 @@ export interface components {
       /** Format: int32 */
       pushDevices: number;
     };
+    OneClickUnsubscribeForm: {
+      "List-Unsubscribe": string;
+    };
     OwnerlessProfileCreated: {
       /** Format: uuid */
       profileId: string;
@@ -1207,6 +1230,7 @@ export interface components {
     };
     ProfileShowResponse: {
       city: components["schemas"]["ProfileShowCityResponse"];
+      flyerId: null | string;
       /** Format: uuid */
       id: string;
       slug: string;
@@ -2942,7 +2966,7 @@ export interface operations {
           "application/json": components["schemas"]["NotificationPreferencesResponse"];
         };
       };
-      /** @description Bad Request (code=security.csrf_invalid) */
+      /** @description Bad Request (code=security.csrf_invalid) (code=notifications.invalid_preferences) */
       400: {
         headers: {
           [name: string]: unknown;
@@ -2971,6 +2995,48 @@ export interface operations {
       };
       /** @description Service Unavailable (code=service.unavailable) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  UnsubscribeNoticeEmailOneClick: {
+    parameters: {
+      query?: {
+        token?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/x-www-form-urlencoded": components["schemas"]["OneClickUnsubscribeForm"];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request (code=notifications.invalid_token) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too Many Requests (code=security.rate_limited) */
+      429: {
         headers: {
           [name: string]: unknown;
         };
