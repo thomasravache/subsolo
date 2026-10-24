@@ -10,7 +10,7 @@ namespace Subsolo.Modules.Events.Application.Features.ChangeShowStatus;
 
 /// <summary>
 /// SPEC-0023 — situação desconhecida → <c>events.invalid_status</c>; show inexistente → <c>events.show_not_found</c>;
-/// não dono (salvo o admin) → <c>auth.forbidden</c>; senão grava a situação com o <c>ShowChanged</c> na outbox.
+/// não dono (salvo o admin) → <c>auth.forbidden</c>; oculto pela moderação → <c>events.show_hidden</c> (SPEC-0033); senão grava a situação com o <c>ShowChanged</c> na outbox.
 /// </summary>
 internal sealed partial class ChangeShowStatusCommandHandler(
     IShowRepository shows,
@@ -38,6 +38,12 @@ internal sealed partial class ChangeShowStatusCommandHandler(
         if (authorized.IsFailure)
         {
             return authorized;
+        }
+
+        // SPEC-0033: show oculto pela moderação não muda mais de situação.
+        if (show.IsHidden)
+        {
+            return Result.Failure(EventsErrors.ShowHiddenError());
         }
 
         if (show.Status == status)

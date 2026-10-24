@@ -15,7 +15,8 @@ namespace Subsolo.Modules.Events.Infrastructure.Shows;
 /// <summary>
 /// SPEC-0023 — leituras de <c>events.shows</c> sem rastreamento (agenda, "Meus shows" e a tela de edição). SPEC-0024: a
 /// página pública do show (com as medidas do flyer) e o fuso da cidade em "Meus shows". SPEC-0026: os shows de um
-/// perfil.
+/// perfil. SPEC-0033: o show oculto pela moderação fica fora de toda leitura pública (agenda, página e shows do perfil);
+/// só "Meus shows" e a tela de edição do dono o devolvem, com <c>hidden</c>.
 /// </summary>
 internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
 {
@@ -30,6 +31,7 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
         CancellationToken cancellationToken)
     {
         var query = db.Shows.AsNoTracking()
+            .Where(show => show.HiddenAtUtc == null)
             .Where(show => show.City == city && show.StartsAtUtc >= fromUtc && show.StartsAtUtc < toUtc);
         if (styles.Count > 0)
         {
@@ -79,7 +81,8 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
                 item.Show.Venue.Name,
                 ShowStatusMapping.ToResponse(item.Show.Status),
                 ThumbUrl(item.Show.FlyerId),
-                item.Show.OrganizerProfileId)),
+                item.Show.OrganizerProfileId,
+                item.Show.HiddenAtUtc != null)),
         ];
     }
 
@@ -101,6 +104,7 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
                     $"""
                     SELECT id AS "Value" FROM events.shows
                     WHERE (organizer_profile_id = {profileId} OR venue_profile_id = {profileId} OR lineup @> CAST({lineup} AS jsonb))
+                      AND hidden_at_utc IS NULL
                       AND starts_at_utc >= {boundaryUtc}
                     ORDER BY starts_at_utc, id
                     LIMIT {limit}
@@ -109,6 +113,7 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
                     $"""
                     SELECT id AS "Value" FROM events.shows
                     WHERE (organizer_profile_id = {profileId} OR venue_profile_id = {profileId} OR lineup @> CAST({lineup} AS jsonb))
+                      AND hidden_at_utc IS NULL
                       AND starts_at_utc < {boundaryUtc}
                     ORDER BY starts_at_utc DESC, id DESC
                     LIMIT {limit}
@@ -141,7 +146,7 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
     public async Task<PublicShowDetails?> GetBySlugAsync(string city, string slug, CancellationToken cancellationToken)
     {
         var found = await db.Shows.AsNoTracking()
-            .Where(show => show.City == city && show.Slug == slug)
+            .Where(show => show.City == city && show.Slug == slug && show.HiddenAtUtc == null)
             .Join(
                 db.Flyers.AsNoTracking(),
                 show => show.FlyerId,
@@ -177,7 +182,8 @@ internal sealed class ShowsReadModel(EventsDbContext db) : IShowsReadModel
         show.Price,
         show.TicketUrl,
         show.FlyerId,
-        show.Status);
+        show.Status,
+        show.HiddenAtUtc != null);
 
     private static string ThumbUrl(string flyerId) => MediaPaths.PublicUrl(Flyer.VariantPath(flyerId, Flyer.Thumb));
 }

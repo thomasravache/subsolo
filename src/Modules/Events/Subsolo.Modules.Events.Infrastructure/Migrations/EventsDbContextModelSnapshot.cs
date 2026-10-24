@@ -253,6 +253,10 @@ namespace Subsolo.Modules.Events.Infrastructure.Migrations
                         .HasColumnName("flyer_id")
                         .IsFixedLength();
 
+                    b.Property<DateTimeOffset?>("HiddenAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hidden_at_utc");
+
                     b.Property<string>("Lineup")
                         .IsRequired()
                         .HasColumnType("jsonb")

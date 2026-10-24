@@ -65,6 +65,9 @@ public static class EventsErrors
     /// </summary>
     public const string InvalidQuery = "events.invalid_query";
 
+    /// <summary>SPEC-0033 — 409: o show foi ocultado pela moderação e não pode ser editado nem mudar de situação.</summary>
+    public const string ShowHidden = "events.show_hidden";
+
     /// <summary>Mensagem do campo para um slug gerado fora do formato.</summary>
     internal const string GeneratedSlugMessage = "O nome precisa ter ao menos duas letras ou dígitos para gerar o endereço.";
 
@@ -120,6 +123,9 @@ public static class EventsErrors
         FieldError(InvalidQuery, "Consulta de shows inválida.", field, message);
 
     internal static Error ShowNotFoundError() => Error.NotFound(ShowNotFound, "Show não encontrado.");
+
+    internal static Error ShowHiddenError() =>
+        Error.Conflict(ShowHidden, "Este show foi ocultado pela moderação e não pode mais ser alterado.");
 
     internal static Error InvalidStatusError() =>
         FieldError(InvalidStatus, "Situação do show inválida.", "Status", "Use scheduled, cancelled ou postponed.");

@@ -61,7 +61,10 @@ internal sealed class ShowConfiguration : IEntityTypeConfiguration<Show>
         builder.Property(show => show.CreatedBy).HasColumnName("created_by");
         builder.Property(show => show.CreatedAtUtc).HasColumnName("created_at_utc");
         builder.Property(show => show.UpdatedAtUtc).HasColumnName("updated_at_utc");
+        // SPEC-0033: oculto pela moderação (nulo = visível).
+        builder.Property(show => show.HiddenAtUtc).HasColumnName("hidden_at_utc");
         builder.Ignore(show => show.ProfileIds);
+        builder.Ignore(show => show.IsHidden);
 
         builder.HasOne<Flyer>().WithMany().HasForeignKey(show => show.FlyerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(show => new { show.City, show.Slug }).IsUnique().HasDatabaseName(CitySlugIndex);
