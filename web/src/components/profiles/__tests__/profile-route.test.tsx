@@ -39,6 +39,8 @@ function show(
     styles: ["death"],
     status,
     flyerThumbUrl: `/media/flyers/flyer${id}-thumb.webp`,
+    // SPEC-0031 (H26-03b): a og:image vem do flyerId do item, não da miniatura.
+    flyerId: `flyer${id}`,
     attendingCount: 0,
     city: {
       slug: "curitiba",
