@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 19 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 2, implemented 30
+- Validação (G0): **1 erro(s), 18 aviso(s)** — rode `spec_graph.py validate`
+- Specs: approved 1, in-progress 1, implemented 30
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** —  
+**Em andamento:** SPEC-0032  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0032
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0032 | Lembrete na véspera | full/S | approved | ✅ pronta |  |
+| 1 | SPEC-0032 | Lembrete na véspera | full/S | in-progress | 🔄 em andamento |  |
 | 2 | SPEC-0033 | Denúncia de show e fila de moderação | full/M | approved | ✅ pronta | saiu da onda 1: arquivos em comum com SPEC-0032 |
 
 ## Épicos
@@ -73,7 +73,7 @@ flowchart LR
     S0029["SPEC-0029<br/>Vou com contagem"]:::implemented
     S0030["SPEC-0030<br/>Inscrição de push, preferências de avis…"]:::implemented
     S0031["SPEC-0031<br/>Aviso de show novo (push imediato e res…"]:::implemented
-    S0032["SPEC-0032<br/>Lembrete na véspera"]:::approved
+    S0032["SPEC-0032<br/>Lembrete na véspera"]:::inprogress
     S0033["SPEC-0033<br/>Denúncia de show e fila de moderação"]:::approved
   end
   S0019 --> S0021
@@ -128,7 +128,7 @@ flowchart LR
 | [SPEC-0029](SPEC-0029-vou-com-contagem.md) | Vou com contagem | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0027 | — |
 | [SPEC-0030](SPEC-0030-inscricao-de-push-preferencias-de-aviso-e-canal-de-e-mail.md) | Inscrição de push, preferências de aviso e canal de e-mail | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0027 | — |
 | [SPEC-0031](SPEC-0031-aviso-de-show-novo-push-imediato-e-resumo-diario-por-e-mail.md) | Aviso de show novo (push imediato e resumo diário por e-mail) | full | feature | implemented | 2026-10-18 | SPEC-0002 | SPEC-0023, SPEC-0027, SPEC-0030 | — |
-| [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
+| [SPEC-0032](SPEC-0032-lembrete-na-vespera.md) | Lembrete na véspera | full | feature | in-progress | 2026-10-18 | SPEC-0002 | SPEC-0029, SPEC-0030, SPEC-0031 | — |
 | [SPEC-0033](SPEC-0033-denuncia-de-show-e-fila-de-moderacao.md) | Denúncia de show e fila de moderação | full | feature | approved | 2026-10-18 | SPEC-0002 | SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031 | — |
 | [SPEC-0034](SPEC-0034-atualizar-o-next-js-para-corrigir-avisos-de-seguranca.md) | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |
 | [SPEC-0035](SPEC-0035-ci-no-runner-ubuntu-26-04-runner-fixo-cache-do-playwright-po.md) | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | implemented | 2026-10-23 | SPEC-0002 | — | — |

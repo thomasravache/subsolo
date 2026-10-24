@@ -4,14 +4,14 @@ title: Lembrete na véspera
 tier: full
 type: feature
 user_facing: true
-status: approved
+status: in-progress
 created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0029, SPEC-0030, SPEC-0031]
 consumes_contract: []
-contract_version: 1
+contract_version: 2
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
-touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Common/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**]
+touches: [src/Modules/Engagement/**, tests/Modules/Engagement/**, src/Modules/Events/**, tests/Modules/Events/**, src/Subsolo.Api/appsettings.json, src/Subsolo.Api/appsettings.Development.json, tests/**/packages.lock.json, src/Subsolo.AppHost/**, e2e/tests/avisos/**, e2e/tests/fixtures.ts, web/src/components/shows/**, src/Modules/Notifications/**, tests/Modules/Notifications/**, src/Common/Subsolo.Common.Presentation/Security/**, tests/Common/**, tests/Security/**, tests/Subsolo.ArchitectureTests/**, infra/seq/alerts.json, docs/runbooks/**, tests/Observability/Subsolo.Observability.UnitTests/**, tools/compose-up.sh, web/src/components/notifications/**]
 adrs: [ADR-0001, ADR-0014]
 external: []
 size: S
@@ -76,6 +76,25 @@ Task<IReadOnlyList<ShowSummary>> ListScheduledShowsStartingAsync(DateTimeOffset 
 Janela por execução: shows scheduled com início entre agora e agora + 48 h; filtra os que começam "amanhã" no fuso da cidade e cuja cidade já passou de ReminderHour hoje
 Aviso reminder: título "Amanhã: {Lineup separado por ' + '}" ; corpo "{HH'h'mm no fuso} · {VenueName}, {CityName}" ; url "/{CitySlug}/{Slug}" ; chave "reminder:{ShowId}:{StartsAtUtc yyyyMMddHHmm}"
 Config: Engagement:ReminderCron (padrão "0 0 * * * ?") ; Engagement:ReminderHour (padrão 10)
+```
+
+**Ajustes de contrato (Emenda 2, contrato v2):**
+```csharp
+// IEventsCatalog ganha também (H29-01): estados em lote, só dos ids encontrados
+Task<IReadOnlyDictionary<Guid, ShowState>> GetShowStatesAsync(IReadOnlyCollection<Guid> showIds, CancellationToken ct);
+```
+```text
+Resumo diário com recuperação (H31-01):
+  tabela engagement.digest_runs (digest_date date PK, completed_at_utc timestamptz) — uma linha por dia (America/Sao_Paulo) com resumo concluído
+  gatilho DigestCron (padrão "0 0 9 * * ?"): janela (horário agendado − 24 h, horário agendado]; ao concluir grava digest_runs do dia
+  gatilho de recuperação Engagement:DigestCatchUpCron (padrão "0 0/15 * * * ?"): se a hora em São Paulo ≥ 9 e não há digest_runs do dia,
+    roda com a janela (9h de hoje − 24 h, 9h de hoje]; senão não faz nada. A chave digest:{data} por fã evita e-mail duplicado.
+  falha em qualquer gatilho: DailyDigestRunFailed (como hoje); a recuperação seguinte tenta de novo. Runbook outbox-parada.md descreve a recuperação.
+Contadores (H31-05): subsolo.engagement.digest_recipients e subsolo.engagement.new_show_notices passam a ter a descrição "seguidores considerados (inclui reexecuções)"; o log DailyDigestCompleted diz "fã(s) considerado(s)".
+NoticesRetention (H31-04): falha vira NoticesRetentionRunFailed (Error), incluído no filtro do alerta "Falha de job" e no runbook.
+Retenção (H31-07): índice ix_deliveries_created_at_utc em notifications.deliveries(created_at_utc), por migração do Notifications.
+CSRF (H31-03): lista permitida de endpoints com CsrfExemptMetadata = { UnsubscribeNoticeEmailOneClick }, todos AllowAnonymous.
+Pilha local (E2E-01): tools/compose-up.sh e o AppHost passam Engagement__ReminderCron="0 * * * * ?" e Engagement__ReminderHour="0"; os padrões de produção não mudam.
 ```
 
 **Design:** N/A — push do sistema e e-mail no modelo da SPEC-0030; sem tela nova.
@@ -230,3 +249,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-17, "siga no pi
 | Versão do contrato | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 1 (sem mudança de contrato) | 2026-10-24 | `touches` e §7.6 ganham os itens H31-01..08 herdados da revisão G4 da SPEC-0031 (Notifications, Common.Presentation/Security, alertas do Seq, runbooks e testes correspondentes). | revisão G4 da SPEC-0031 | — | piloto automático do Thomas (2026-10-24) |
+| 2 | 2026-10-24 | Decisões concretas dos itens herdados: `IEventsCatalog.GetShowStatesAsync` (H29-01); resumo com recuperação por `engagement.digest_runs` e gatilho `Engagement:DigestCatchUpCron` a cada 15 min (H31-01); descrição dos contadores (H31-05); `NoticesRetentionRunFailed` (H31-04); índice da retenção (H31-07); lista permitida de isenção de CSRF (H31-03); cron e hora do lembrete na pilha local; `touches` ganha `tools/compose-up.sh` e `web/src/components/notifications/**`. | despacho do Test-writer: itens herdados sem decisão concreta | SPEC-0031 (implementada; nenhum consumidor externo) | piloto automático do Thomas (2026-10-24) |
