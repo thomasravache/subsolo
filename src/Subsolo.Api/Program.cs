@@ -25,6 +25,7 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi(options => options
     .AddSchemaTransformer<ProblemDetailsCodeSchemaTransformer>()
+    .AddSchemaTransformer<AllowedValuesSchemaTransformer>()
     .AddOperationTransformer<ProblemCodeOperationTransformer>());
 
 // Números só como números no JSON: o contrato (e o cliente TypeScript gerado) não aceita inteiros em string.

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +10,7 @@ using Subsolo.Common.Presentation;
 using Subsolo.Common.Presentation.Security;
 using Subsolo.Modules.Moderation.Application;
 using Subsolo.Modules.Moderation.Application.Features.ReportShow;
+using Subsolo.Modules.Moderation.Domain.Reports;
 
 namespace Subsolo.Modules.Moderation.Presentation.Features;
 
@@ -58,5 +60,12 @@ internal sealed class ReportShowEndpoint : IEndpoint
     }
 }
 
-/// <summary>SPEC-0033 — corpo da denúncia: o motivo e o detalhe opcional.</summary>
-internal sealed record ReportShowRequest(string? Reason, string? Details);
+/// <summary>
+/// SPEC-0033 — corpo da denúncia: o motivo e o detalhe opcional. SPEC-0037 (H33-07): <see cref="AllowedValuesAttribute"/>
+/// só documenta no OpenAPI o enum dos quatro motivos; quem recusa o motivo fora da lista (400
+/// <c>moderation.invalid_report</c>) é o validador.
+/// </summary>
+internal sealed record ReportShowRequest(
+    [property: AllowedValues(ReportReasons.Fake, ReportReasons.CancelledUnannounced, ReportReasons.WrongInfo, ReportReasons.Other)]
+    string? Reason,
+    string? Details);
