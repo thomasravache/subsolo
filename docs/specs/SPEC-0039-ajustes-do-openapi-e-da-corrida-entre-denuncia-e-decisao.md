@@ -4,7 +4,7 @@ title: Ajustes do OpenAPI e da corrida entre denúncia e decisão
 tier: lite
 type: fix
 user_facing: false
-status: approved
+status: in-progress
 created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0037]

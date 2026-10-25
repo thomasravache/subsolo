@@ -42,7 +42,9 @@ public static class EngagementModule
     /// SPEC-0032: os dias com resumo concluído (<see cref="IDigestRuns"/>, base da recuperação
     /// <c>Engagement:DigestCatchUpCron</c>), o seletor do lembrete e o job <see cref="DayBeforeReminderJob"/>
     /// (<c>Engagement:ReminderCron</c> e <c>Engagement:ReminderHour</c>). SPEC-0036 (H32-02): <c>Engagement:DigestCron</c>
-    /// validado na subida (<see cref="DigestScheduleOptionsValidator"/>: tem de disparar às 9h de São Paulo).
+    /// validado na subida (<see cref="DigestScheduleOptionsValidator"/>: tem de disparar às 9h de São Paulo). SPEC-0038
+    /// (H36-03, H36-04): basta disparar às 9h de São Paulo em pelo menos um dos próximos 7 dias; uma expressão cron
+    /// inválida também impede a subida da API.
     /// </summary>
     public static IServiceCollection AddEngagementModule(this IServiceCollection services, IConfiguration configuration)
     {

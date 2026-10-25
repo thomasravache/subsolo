@@ -168,13 +168,20 @@ internal sealed class InMemoryAttendances : IAttendanceRepository, IAttendancesR
     public Task<IReadOnlyList<Guid>> GetAttendeeIdsAsync(Guid showId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<Guid>>([.. _saved.Where(attendance => attendance.ShowId == showId).Select(attendance => attendance.UserId)]);
 
+    /// <summary>SPEC-0038 (H36-02) — cada leitura em lote de <see cref="GetAttendeeIdsAsync(IReadOnlyCollection{Guid}, CancellationToken)"/> (os ids pedidos).</summary>
+    public List<IReadOnlyCollection<Guid>> AttendeesQueries { get; } = [];
+
     /// <summary>SPEC-0036 (H32-04) — os ids de quem marcou "vou" em cada show pedido (sem "vou", fora do dicionário).</summary>
     public Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> GetAttendeeIdsAsync(
-        IReadOnlyCollection<Guid> showIds, CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>>(
+        IReadOnlyCollection<Guid> showIds, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(showIds);
+        AttendeesQueries.Add([.. showIds]);
+        return Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>>(
             _saved.Where(attendance => showIds.Contains(attendance.ShowId))
                 .GroupBy(attendance => attendance.ShowId)
                 .ToDictionary(group => group.Key, group => (IReadOnlyList<Guid>)[.. group.Select(attendance => attendance.UserId)]));
+    }
 
     public void AddSaved(Attendance attendance) => _saved.Add(attendance);
 
