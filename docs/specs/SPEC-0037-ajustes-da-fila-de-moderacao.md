@@ -64,7 +64,7 @@ Achados menores da revisão G4 da SPEC-0033 (itens `H33-NN`):
 - **CT-01** — Dado o snapshot OpenAPI, quando lido, então `ReportShowRequest.reason` é o enum dos quatro motivos e o `security.csrf_invalid` do `keep` aparece uma vez; o item da fila tem `timeZone` string obrigatório. (H33-04, H33-06, H33-07)
 - **UT-03** — Dada a fila com um show em `America/Manaus` às 23h30 UTC, quando renderizada, então a data e a hora do cartão saem no fuso de Manaus (19h30), não no de São Paulo. (H33-06)
 - **IT-03** — Dado um show com denúncia já decidida como `hidden` no `Moderation` e ainda visível no `Events` (consumidor não rodou), quando outro fã denuncia, então 404 `events.show_not_found` e nenhuma linha nova; e o item da fila traz `timeZone` da cidade. (H33-05, H33-06)
-- E2E: N/A — sem jornada nova; a E2E-01 da SPEC-0033 segue cobrindo a fila.
+- E2E: N/A — sem jornada nova; o E2E da denúncia na SPEC-0033 segue cobrindo a fila.
 
 ## 5. Questões em Aberto
 <!-- Dúvidas que impedem fechar a spec, respondidas ANTES do H1. Aberta: `- [ ] pergunta (quem responde)`. Respondida: `- [x] pergunta — resposta (quem, data)`. Com alguma aberta o G0 reprova. Sem dúvidas: escreva "Nenhuma". Dúvida que surge depois da aprovação vira impedimento (seção Registro de Impedimentos). -->
@@ -90,7 +90,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — d74b734 (árvore suja) | 2026-10-24 |
-| G1 Red | PENDING | | |
+| G1 Red | FAIL | verify G1: FAIL — testes do plano sem tag no código versionado: SPEC-0037:E2E-01 — 5ebc0d0 | 2026-10-24 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
