@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ShowDetail } from "@/api/show-detail";
 import { ShowPage } from "@/components/shows/ShowPage";
+
+// SPEC-0038 UT-01 — o show agendado desenha o `AttendButton`, que lê o "vou" do fã pelo navegador ao montar: aqui a
+// leitura fica pendente (o botão segue carregando), sem rede; os outros testes não desenham o botão.
+vi.mock("@/api/attendances", () => ({
+  getMyAttendances: () => new Promise(() => {}),
+  setAttending: () => new Promise(() => {}),
+}));
 
 /**
  * SPEC-0032 H29-03 (item herdado da revisão da SPEC-0029) — na parte "Ingresso" da página do show, a contagem do "vou"
@@ -14,6 +21,10 @@ import { ShowPage } from "@/components/shows/ShowPage";
  * SPEC-0036 UT-03 (H32-03) — o espaço que separa a contagem do texto seguinte fica dentro do parágrafo da contagem: em
  * nenhum bloco da seção "Ingresso" (a seção e todos os elementos dentro dela) há nó de texto só com espaço, e no
  * parágrafo da contagem "3 vão" vem seguido de espaço.
+ *
+ * SPEC-0038 UT-01 (H36-01) — o mesmo para o show agendado, em que a contagem é desenhada pelo `AttendButton` (o UT-03
+ * da SPEC-0036 só renderiza o show cancelado): nenhum nó de texto só com espaço na seção "Ingresso" e o parágrafo da
+ * contagem do botão "Vou" casa `/3 vão\s/`.
  */
 function showDetail(status: ShowDetail["status"]): ShowDetail {
   return {
@@ -101,6 +112,35 @@ describe("SPEC-0036:UT-03 espaço da contagem dentro do parágrafo", () => {
     );
 
     const section = ticketSection();
+    expect(
+      whitespaceOnlyTextNodes(section).map((node) =>
+        (node.parentElement?.outerHTML ?? "").slice(0, 120),
+      ),
+    ).toEqual([]);
+    const paragraph = screen.getByText("3 vão").closest("p");
+    expect(paragraph, "a contagem não está num parágrafo").not.toBeNull();
+    expect(section.contains(paragraph)).toBe(true);
+    expect(paragraph?.textContent ?? "").toMatch(/3 vão\s/);
+  });
+});
+
+describe("SPEC-0038:UT-01 espaço da contagem do botão Vou dentro do parágrafo", () => {
+  it('SPEC-0038:UT-01 show agendado com 3 "vou": nenhum bloco da seção "Ingresso" tem nó de texto só com espaço e o parágrafo da contagem do botão "Vou" casa /3 vão\\s/', () => {
+    render(
+      <ShowPage
+        show={showDetail("scheduled")}
+        url="https://localhost/curitiba/noite-da-peste-ii-2026-10-24"
+        attendingCount={3}
+      />,
+    );
+
+    const section = ticketSection();
+    const button = screen.getByRole("button", {
+      name: "Vou ao show Noite da Peste II",
+    });
+    expect(section.contains(button), "o botão Vou fora da seção Ingresso").toBe(
+      true,
+    );
     expect(
       whitespaceOnlyTextNodes(section).map((node) =>
         (node.parentElement?.outerHTML ?? "").slice(0, 120),
