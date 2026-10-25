@@ -38,6 +38,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- Ambiente local (SPEC-0040): `aspire run` ou `dotnet run` no AppHost sobe a aplicação inteira em https://localhost:8443 com o Caddy de produção, com login e depuração pela IDE; o Compose publicado não muda.
 - Moderação (SPEC-0039): denúncia e ocultação do mesmo show se serializam (bloqueio por show no banco), e o OpenAPI preserva o `null` de campos opcionais com valores permitidos.
 - Horário do resumo diário (SPEC-0038): `Engagement:DigestCron` aceito se dispara às 9h de São Paulo em algum dia da semana (por exemplo, só nos dias úteis) e mensagem própria para expressão cron inválida.
 - Fila de moderação (SPEC-0037): foco no próximo cartão depois da decisão, falha das denúncias isolada da aba de perfis, data e hora do show no fuso da cidade, denúncia de show já ocultado recusada na origem, e OpenAPI com o enum do motivo e o código de CSRF do `keep` uma vez.
