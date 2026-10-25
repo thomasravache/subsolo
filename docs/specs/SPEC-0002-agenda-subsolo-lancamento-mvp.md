@@ -3,7 +3,7 @@ id: SPEC-0002
 title: Agenda Subsolo — lançamento (MVP)
 tier: epic
 type: feature
-status: approved
+status: implemented
 created: 2026-10-13
 depends_on: [SPEC-0001]
 adrs: []
@@ -107,6 +107,12 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 | SPEC-0032 | Lembrete na véspera | full | feature | S | Inscrição de push | "Vou" |
 | SPEC-0033 | Denúncia de show e fila de moderação | full | feature | M | Contas | Cadastro de show |
 | SPEC-0028 | Páginas Apoie (Pix), privacidade e termos | full | feature | S | fundação | — |
+| SPEC-0034 | Atualizar o Next.js para corrigir avisos de segurança | lite | fix | S | — | — |
+| SPEC-0035 | CI no runner Ubuntu 26.04: runner fixo, cache do Playwright por imagem e imagens Docker | lite | fix | S | — | — |
+| SPEC-0036 | Ajustes dos jobs agendados de avisos | lite | fix | S | SPEC-0032 | — |
+| SPEC-0037 | Ajustes da fila de moderação | lite | fix | S | SPEC-0033 | — |
+| SPEC-0038 | Ajustes da validação do resumo e do lembrete em lote | lite | fix | S | SPEC-0036 | — |
+| SPEC-0039 | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | S | SPEC-0037 | — |
 
 ## 5. Estratégia de Entrega
 - **Ambientes:** local e CI até o go-live (SPEC-0003); depois, staging automático a cada merge e produção com confirmação por release.
@@ -124,13 +130,13 @@ Planejamento inicial. As specs filhas são criadas e detalhadas quando a fundaç
 
 ## 7. Critérios de Aceite do Épico
 Os IDs de teste são definidos quando as filhas forem criadas; cada critério abaixo vai citar o E2E que o prova.
-- [ ] Produtor aprovado cadastra um show com flyer, line-up, casa, preço e link de ingresso em menos de 2 minutos [jornada: cadastro-show]
-- [ ] O fã vê a agenda da cidade e filtra por data e estilo [jornada: agenda]
-- [ ] O link do show compartilhado no WhatsApp mostra o flyer na prévia [jornada: compartilhar-show]
-- [ ] O fã segue cidade, banda ou casa, recebe o aviso de show novo e o lembrete na véspera do show em que marcou "vou" [jornada: seguir-e-avisar]
-- [ ] Perfil de banda, casa e produtor lista os shows futuros e passados, com links para as redes
-- [ ] Denúncia de show falso ou cancelado chega à fila do admin, que resolve
-- [ ] Nenhum anúncio na agenda; a página "Apoie" fica acessível pelo rodapé
+- [x] Produtor aprovado cadastra um show com flyer, line-up, casa, preço e link de ingresso em menos de 2 minutos [jornada: cadastro-show] — SPEC-0023:E2E-01 (mede do toque em "+ Novo show" a "Show publicado." < 2 min)
+- [x] O fã vê a agenda da cidade e filtra por data e estilo [jornada: agenda] — SPEC-0025:E2E-01
+- [x] O link do show compartilhado no WhatsApp mostra o flyer na prévia [jornada: compartilhar-show] — SPEC-0024:IT-02 no E2E HTTP (`og:image` absoluta 1200×630) e SPEC-0024:E2E-01
+- [x] O fã segue cidade, banda ou casa, recebe o aviso de show novo e o lembrete na véspera do show em que marcou "vou" [jornada: seguir-e-avisar] — SPEC-0027:E2E-01, SPEC-0031:E2E-01 (aviso de show novo pelo resumo por e-mail), SPEC-0029:E2E-01 e SPEC-0032:E2E-01 (lembrete na véspera); push coberto pelos IT da SPEC-0031/0032 com o serviço de push falso
+- [x] Perfil de banda, casa e produtor lista os shows futuros e passados, com links para as redes — SPEC-0026:E2E-01
+- [x] Denúncia de show falso ou cancelado chega à fila do admin, que resolve — SPEC-0033:E2E-01
+- [x] Nenhum anúncio na agenda; a página "Apoie" fica acessível pelo rodapé — SPEC-0028:E2E-02 (rodapé → Apoie); a agenda não carrega script nem bloco de anúncio (CSP da SPEC-0010 só permite a própria origem, provado em SPEC-0010:E2E-01)
 
 ## 8. Questões em Aberto
 - [x] Nome do produto? — "Subsolo", nome da família de produtos (Thomas, 2026-10-13)
@@ -156,6 +162,25 @@ Uma aprovação humana cobre o épico e as specs filhas apresentadas junto com e
 
 ## 11. Relatório de Entrega
 <!-- Preenchido ao fechar o épico: o que foi entregue, como (ondas e deploys com versão/data), resultado dos critérios de aceite com os testes que os provam, métricas pós-release, pendências como novas specs. `spec_graph.py report SPEC-0002` ajuda a montar. -->
+### O que foi entregue
+A agenda Subsolo completa para o lançamento, rodando local e no CI: contas (link mágico e Google), cidades e estilos pelo admin, perfis com aprovação e reivindicação, cadastro de show com flyer em menos de 2 minutos, agenda com filtros, página do show com prévia no WhatsApp, perfis públicos, seguir, "vou", push e e-mail (aviso de show novo, resumo diário e lembrete na véspera), denúncia e moderação, Apoie/privacidade/termos, Minha conta com exportação e exclusão (LGPD).
+
+### Como foi feito
+- 26 filhas (SPEC-0014 a SPEC-0039) nas ondas 7 a 23, cada uma com Test-writer → Implementer → Reviewer independente, G1–G5 e H2 pela política auto-on-green; achados menores das revisões e da segurança viraram filhas lite (SPEC-0034 a SPEC-0039).
+- Telas pelo Stitch (projeto 15194126668426659178) antes de cada H1 com tela.
+- Entregas na `main` pelos PRs #22 a #50 (merge commits citados em cada filha).
+
+### Critérios de aceite
+Todos marcados na seção 7, cada um com o teste que o prova.
+
+### Deploy
+Sem ambiente implantado: G6 das filhas N/A apontando para a SPEC-0003 (go-live, guiado pelo Thomas). Tudo validado localmente pelo Compose e pelo CI.
+
+### Métricas pós-release
+Pendentes até o go-live (SPEC-0003): % de shows da cidade cadastrados, seguidores da cidade, produtores cadastrando sem convite.
+
+### Pendências
+- SPEC-0003 (go-live): domínio, hospedagem, SMTP e push reais, cliente OAuth do Google, criptografia em repouso, DKIM cobrindo `List-Unsubscribe`, remoção da flag `avisos-email` duas semanas depois.
 
 ## 12. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->

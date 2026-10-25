@@ -4,7 +4,7 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 24 aviso(s)** — rode `spec_graph.py validate`
+- Validação (G0): **1 erro(s), 9 aviso(s)** — rode `spec_graph.py validate`
 - Specs: implemented 36
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
@@ -50,7 +50,7 @@ Nenhuma spec aberta.
 | Épico | Título | Status | Progresso |
 |---|---|---|---|
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
-| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | approved | 26/26 implementadas |
+| SPEC-0002 | Agenda Subsolo — lançamento (MVP) | implemented | 26/26 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
 
 ## Todas as Specs
@@ -58,7 +58,7 @@ Nenhuma spec aberta.
 | ID | Título | Tier | Tipo | Status | Criada | Épico | Depende de | Consome contrato |
 |---|---|---|---|---|---|---|---|---|
 | [SPEC-0001](SPEC-0001-fundacao-do-subsolo.md) | Fundação do Subsolo | epic | foundation | implemented | 2026-10-13 | — | — | — |
-| [SPEC-0002](SPEC-0002-agenda-subsolo-lancamento-mvp.md) | Agenda Subsolo — lançamento (MVP) | epic | feature | approved | 2026-10-13 | — | SPEC-0001 | — |
+| [SPEC-0002](SPEC-0002-agenda-subsolo-lancamento-mvp.md) | Agenda Subsolo — lançamento (MVP) | epic | feature | implemented | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0003](SPEC-0003-go-live-producao-na-vps-e-servicos-pagos.md) | Go-live: produção na VPS e serviços pagos | epic | foundation | proposed | 2026-10-13 | — | SPEC-0001 | — |
 | [SPEC-0004](SPEC-0004-repositorio-e-ferramentas.md) | Repositório e ferramentas | full | foundation | implemented | 2026-10-13 | SPEC-0001 | — | — |
 | [SPEC-0005](SPEC-0005-harness-de-testes.md) | Harness de testes | full | foundation | implemented | 2026-10-13 | SPEC-0001 | SPEC-0004 | — |
