@@ -32,7 +32,7 @@ Pastas ainda vazias são criadas pela spec que as usa pela primeira vez.
 - [Docker](https://docs.docker.com/get-docker/) — usado pelo gitleaks no hook de pre-commit (quando o binário `gitleaks` não está no `PATH`) e pelos testes de integração.
 - [Aspire CLI](https://aspire.dev) 13.6 — `dotnet tool install -g Aspire.Cli --version 13.6.1` (ambiente local com `aspire run`).
 - Python 3.8+ — para `tools/sdd/spec_graph.py`.
-- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) (opcional) — só para abrir o ambiente local pelo celular (`tools/tunnel.sh`, SPEC-0041); sem conta e sem custo.
+- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) (opcional) — só para abrir o ambiente local pelo celular (`tools/tunnel.sh`, SPEC-0041, que exige bash 5.1+); sem conta e sem custo.
 
 ## Como rodar
 
@@ -69,12 +69,12 @@ Login (SPEC-0016, SPEC-0040): `aspire run` (ou `dotnet run --project src/Subsolo
 
 ### Pelo celular
 
-SPEC-0041: o `tools/tunnel.sh` abre um túnel rápido do Cloudflare (sem conta e sem custo; precisa do `cloudflared`) para o Caddy do `aspire run` em https://localhost:8443 e mostra um endereço `https://xxx.trycloudflare.com`, com certificado válido, para abrir no navegador do celular. O AppHost recebe esse endereço em `--Subsolo:PublicUrl` (o link mágico do e-mail aponta para o túnel e o `next dev` libera os scripts de desenvolvimento para essa origem); sem a opção, nada muda. O Compose publicado e a produção não usam nada disso.
+SPEC-0041: o `tools/tunnel.sh` abre um túnel rápido do Cloudflare (sem conta e sem custo; precisa do `cloudflared` e do bash 5.1 ou mais novo) para o Caddy do `aspire run` em https://localhost:8443 e mostra um endereço `https://xxx.trycloudflare.com`, com certificado válido, para abrir no navegador do celular. O AppHost recebe esse endereço em `--Subsolo:PublicUrl` (o link mágico do e-mail aponta para o túnel e o `next dev` libera os scripts de desenvolvimento para essa origem); sem a opção, nada muda. O Compose publicado e a produção não usam nada disso.
 
 - **Jeito simples:** `./tools/tunnel.sh --run` abre o túnel, sobe o AppHost com o endereço e mostra o endereço; o Ctrl+C encerra os dois.
 - **Para depurar:** num terminal, `./tools/tunnel.sh` (só o túnel; fica aberto até o Ctrl+C) mostra o endereço e o comando `dotnet run --project src/Subsolo.AppHost -- --Subsolo:PublicUrl=https://xxx.trycloudflare.com`; rode o AppHost pela IDE, com o depurador, passando o mesmo argumento `--Subsolo:PublicUrl=...` (ou `aspire run -- --Subsolo:PublicUrl=...`).
 
-Limites: o "Continuar com Google" só funciona no computador (o Google falso escuta em http://127.0.0.1:8090); pelo celular, entre com o link mágico. Todos os acessos pelo túnel contam como um só IP no rate limit da API. O Mailpit (onde chega o link mágico) e o dashboard do Aspire ficam só no computador. **O endereço do túnel é público enquanto ele estiver aberto:** qualquer um que o tenha acessa o seu ambiente local; não o divulgue e encerre o túnel quando terminar.
+Limites: o "Continuar com Google" só funciona no computador (o Google falso escuta em http://127.0.0.1:8090); pelo celular, entre com o link mágico. Todos os acessos pelo túnel contam como um só IP no rate limit da API. O Mailpit (onde chega o link mágico) e o dashboard do Aspire ficam só no computador. Os redirecionamentos do web (por exemplo, um anônimo em /admin indo para /entrar) apontam para https://localhost:8443, que o celular não alcança: abra /entrar pelo endereço do túnel. **O endereço do túnel é público enquanto ele estiver aberto:** qualquer um que o tenha acessa o seu ambiente local; não o divulgue e encerre o túnel quando terminar.
 
 Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos.
 

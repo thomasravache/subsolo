@@ -7,9 +7,10 @@
 #   tools/tunnel.sh          só o túnel: rode o AppHost (pela IDE, para depurar) com o argumento mostrado
 #   tools/tunnel.sh --run    o túnel e o AppHost com o endereço (`dotnet run --project src/Subsolo.AppHost`)
 #
-# Fica em primeiro plano até receber SIGINT/SIGTERM (Ctrl+C) e então encerra o cloudflared (e o AppHost, com --run);
-# se um dos dois sair sozinho, encerra o outro. O endereço do túnel é público enquanto ele está aberto. Exige o
-# cloudflared (e, com --run, o .NET SDK, Node.js/pnpm e o Docker, como o `aspire run`).
+# Fica em primeiro plano até receber SIGINT/SIGTERM/SIGHUP (Ctrl+C, ou o terminal fechado) e então encerra o
+# cloudflared na hora e depois o AppHost (com --run); se um dos dois sair sozinho, encerra o outro. O endereço do túnel
+# é público enquanto ele está aberto. Exige bash 5.1 ou mais novo (`wait -n` com PIDs) e o cloudflared (e, com --run, o
+# .NET SDK, Node.js/pnpm e o Docker, como o `aspire run`).
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -23,7 +24,7 @@ case "${1:-}" in
   "") ;;
   --run) run_apphost=true ;;
   -h | --help)
-    sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
@@ -45,27 +46,30 @@ log_file=$(mktemp "${TMPDIR:-/tmp}/subsolo-tunnel.XXXXXX")
 cloudflared_pid=""
 apphost_pid=""
 
-# Manda o sinal ao grupo do processo e espera até $3 segundos; se ainda estiver no ar, SIGKILL.
+# Manda o sinal ao grupo do processo e espera até $3 segundos o grupo inteiro sair; se ainda houver alguém, SIGKILL.
 stop_group() {
   local pid=$1 signal=$2 timeout=$3 i
   [[ -n "$pid" ]] || return 0
   kill "-$signal" -- "-$pid" 2>/dev/null || return 0
   for ((i = 0; i < timeout * 5; i++)); do
-    kill -0 "$pid" 2>/dev/null || break
+    kill -0 -- "-$pid" 2>/dev/null || break
     sleep 0.2
   done
   kill -KILL -- "-$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
 }
 
+# Uma vez só: um segundo Ctrl+C (ou SIGTERM/SIGHUP) durante o encerramento é ignorado, para não interromper a limpeza.
+# O túnel primeiro (o endereço é público: a exposição fecha na hora); depois o AppHost, com SIGINT (como o Ctrl+C do
+# `aspire run`), que derruba os contêineres antes de sair.
 cleanup() {
-  trap - INT TERM EXIT
-  # O AppHost primeiro, com SIGINT (como o Ctrl+C do `aspire run`): ele derruba os contêineres antes de sair.
-  stop_group "$apphost_pid" INT 60
+  trap '' INT TERM HUP
+  trap - EXIT
   stop_group "$cloudflared_pid" TERM 10
+  stop_group "$apphost_pid" INT 60
   rm -f "$log_file"
 }
-trap 'cleanup; exit 0' INT TERM
+trap 'cleanup; exit 0' INT TERM HUP
 trap cleanup EXIT
 
 # O log do cloudflared (o endereço sai no stderr) vai para o arquivo temporário.
@@ -97,7 +101,7 @@ echo "    $apphost_command"
 
 if $run_apphost; then
   echo ">>> $apphost_command"
-  MSBUILDDISABLENODEREUSE=1 dotnet run --project src/Subsolo.AppHost -- "--Subsolo:PublicUrl=$url" &
+  MSBUILDDISABLENODEREUSE=1 dotnet run --project src/Subsolo.AppHost -- "--Subsolo:PublicUrl=$url" </dev/null &
   apphost_pid=$!
   # Primeiro plano até um dos dois sair (ou o sinal de parada); o trap de EXIT encerra o outro.
   wait -n "$cloudflared_pid" "$apphost_pid" || true
