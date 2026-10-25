@@ -48,7 +48,7 @@ Só no modo run (`!IsPublishMode`):
 
 ## 4. Plano de Testes (TDD)
 - Caracterização: N/A — o modo de publicação já é fixado pelos testes de publicação do Compose (`ComposePublishTests`, `MediaComposePublishTests`, `NotificationsComposePublishTests`), que rodam sem mudança.
-- **UT-01** — Dado o modelo do AppHost em modo run (montado sem subir os recursos), quando se leem os recursos, então existe o `caddy` com o Caddyfile do repositório montado só leitura, o endpoint HTTPS fixo em 8443 sem proxy, `API_UPSTREAM` e `WEB_UPSTREAM` referenciando os endpoints `http` da `api` e do `web`; e `App__PublicUrl` da `api` e `SUBSOLO_PUBLIC_URL` do `web` valem `https://localhost:8443`. (Substitui a asserção de SPEC-0016:IT-10 e da SPEC-0024 sobre o endpoint do web, que deixa de valer no run.)
+- **UT-01** — Dado o modelo do AppHost em modo run (montado sem subir os recursos), quando se leem os recursos, então existe o `caddy` com o Caddyfile do repositório montado só leitura, o endpoint HTTPS fixo em 8443 sem proxy, `API_UPSTREAM` e `WEB_UPSTREAM` referenciando os endpoints `http` da `api` e do `web`; e `App__PublicUrl` da `api` e `SUBSOLO_PUBLIC_URL` do `web` valem `https://localhost:8443`. (Substitui a asserção do teste do endereço público da SPEC-0016, Emenda 4, que apontava para o endpoint do web no run.)
 - **IT-01** — Dado o AppHost no ar em modo run (`DistributedApplicationTestingBuilder`, banco descartável), quando se pede um link mágico por `https://localhost:8443/api/v1/auth/magic-link` (com o CSRF), se abre o link que chegou ao Mailpit e se chama `GET https://localhost:8443/api/v1/me` com o cookie recebido, então a resposta é 200 com a conta; e `GET https://localhost:8443/` devolve a página do web. Hoje falha: não há nada em 8443.
 - E2E: N/A — sem jornada nova; o E2E continua na pilha do Compose.
 
@@ -76,7 +76,7 @@ Pedido do Thomas em 2026-10-25: "Eu preciso que local eu consigo rodar apenas co
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — e26ae3a | 2026-10-25 |
-| G1 Red | PENDING | | |
+| G1 Red | FAIL | verify G1: FAIL — testes do plano sem tag no código versionado: SPEC-0040:IT-10 — 7f99980 | 2026-10-25 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
