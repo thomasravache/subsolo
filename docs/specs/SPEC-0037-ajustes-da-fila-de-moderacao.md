@@ -9,7 +9,7 @@ created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0033]
 consumes_contract: []
-touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/moderacao/**]
+touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, docs/api/**, web/src/api/**, src/Subsolo.Api/OpenApi/**, src/Subsolo.Api/Program.cs, web/src/app/admin/**, web/src/components/admin/**, e2e/tests/moderacao/**]
 adrs: [ADR-0001, ADR-0003]
 external: []
 size: S
@@ -46,7 +46,7 @@ Achados menores da revisão G4 da SPEC-0033 (itens `H33-NN`):
 - H33-04: remover a declaração repetida e regenerar o snapshot.
 - H33-05: a janela é fechada na origem: o `ReportShow` recusa com 404 `events.show_not_found` a denúncia de show que o próprio `Moderation` já decidiu ocultar (há denúncia `hidden` do show), mesmo antes de o consumidor do `Events` gravar `hidden_at_utc`. O `HideShow` continua marcando como `hidden` as pendentes que existirem numa decisão nova (`no_pending_reports` para o show sem pendentes).
 - H33-06: `ShowHeadline` ganha `TimeZone` (contrato interno do `Events`); o item da fila `GET /api/v1/admin/reports` ganha o campo aditivo `timeZone` (rota só do admin, compatível com o cliente atual; a lista de chaves do §6 da SPEC-0033 passa a incluí-lo), e a fila formata a data do show nesse fuso.
-- H33-07: anotar o enum de `reason` no OpenAPI e regenerar o cliente.
+- H33-07: `ReportShowRequest.Reason` com `[AllowedValues]` (BCL, sem efeito em tempo de execução: a validação continua no validador do módulo) e um transformador genérico de esquema em `src/Subsolo.Api/OpenApi/` que o publica como `enum`, registrado no `Program.cs`; os módulos continuam sem pacote de OpenAPI. Depois, regenerar o snapshot e o cliente.
 - **Não muda:** o limite por tentativa (ADR-0003; aceito na revisão), rotas, códigos e textos das telas. A única mudança de contrato é o campo aditivo `timeZone` do H33-06.
 
 **Padrão seguido:** testes e endpoints da SPEC-0033; `MyShowResponse.timeZone` (SPEC-0024, H23-06); o foco após a decisão é novo (o `ProfileRequestsQueue` da SPEC-0021 não move o foco).
@@ -136,3 +136,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
 | 1 | 2026-10-24 | H33-05 fechado na origem (o `ReportShow` recusa show já ocultado pelo `Moderation`); H33-06 com o campo aditivo `timeZone` no item da fila do admin; padrão do foco corrigido; UT-03 e IT-03 novos, CT-01 cobre `timeZone`. | SPEC_DEFECTs 1–3 do Test-writer | SPEC-0033 (lista de chaves do item da fila) | piloto automático do Thomas (2026-10-24) |
+| 1 (sem mudança adicional de contrato) | 2026-10-24 | H33-07: `touches` inclui `src/Subsolo.Api/OpenApi/**` e `src/Subsolo.Api/Program.cs` para o transformador genérico de `[AllowedValues]` → `enum` (o pacote de OpenAPI fica só na API). | relatório do Implementer (alternativa no módulo exigiria 13 lock files) | — | piloto automático do Thomas (2026-10-24) |
