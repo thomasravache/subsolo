@@ -4,7 +4,7 @@ title: Ambiente local pelo celular com túnel, sem mudar produção
 tier: lite
 type: fix
 user_facing: false
-status: proposed
+status: in-progress
 created: 2026-10-25
 parent:
 depends_on: [SPEC-0040]
@@ -13,8 +13,8 @@ touches: [src/Subsolo.AppHost/**, tests/Common/Subsolo.AppHost.IntegrationTests/
 adrs: [ADR-0004, ADR-0008]
 external: []
 size: S
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-25
 ---
 
 # SPEC-0041 — Ambiente local pelo celular com túnel, sem mudar produção
@@ -66,6 +66,13 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
+- [ ] Red: UT-01, UT-02, UT-03 e IT-01 com a tag `SPEC-0041:<ID>`, falhando pelo motivo certo
+- [ ] Green: opção `Subsolo:PublicUrl` no AppHost, `allowedDevOrigins` no `next.config.ts`, `tools/tunnel.sh` e README
+- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
