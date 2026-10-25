@@ -66,8 +66,21 @@ public sealed class RunModePublicUrlModelTests
             () => EnvironmentsAsync(["--Subsolo:EphemeralDatabase=true", $"--Subsolo:PublicUrl={value}"], ct),
             $"o AppHost aceitou --Subsolo:PublicUrl={value} (deveria parar na montagem)");
 
-        exception.ToString().ShouldContain(
-            "Subsolo:PublicUrl", Case.Sensitive, $"a mensagem do erro deve citar a opção:\n{exception}");
+        // H41-07 — o erro da montagem é um InvalidOperationException cuja mensagem cita a opção. Ele pode vir
+        // embrulhado pelo teste do Aspire, por isso a busca percorre a cadeia de exceções.
+        var chain = new List<Exception>();
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            chain.Add(current);
+            if (current is AggregateException aggregate)
+            {
+                chain.AddRange(aggregate.Flatten().InnerExceptions);
+            }
+        }
+
+        chain.OfType<InvalidOperationException>()
+            .Any(invalid => invalid.Message.Contains("Subsolo:PublicUrl", StringComparison.Ordinal))
+            .ShouldBeTrue($"nenhum InvalidOperationException com 'Subsolo:PublicUrl' na mensagem:\n{exception}");
     }
 
     private static async Task<(
