@@ -89,11 +89,14 @@ export function untilSaoPauloMidnight(now = Date.now()): number {
 }
 
 /**
- * SPEC-0036:H32-05 — se faltar menos de `margin` (3 min) para a meia-noite de São Paulo, espera passar dela (com 5 s de
- * folga), para o show "de amanhã" não virar "de hoje" no meio da jornada. Devolve quanto esperou (ms).
+ * SPEC-0036:H32-05 — se faltar menos de `margin` para a meia-noite de São Paulo, espera passar dela (com 5 s de folga),
+ * para o show "de amanhã" não virar "de hoje" no meio da jornada. Devolve quanto esperou (ms).
+ *
+ * SPEC-0038:H36-05 — `margin` é obrigatória e deve ser o tempo limite da jornada (o mesmo valor do `test.setTimeout`):
+ * com uma margem fixa menor (3 min), uma jornada de até 6 min que começa antes dela ainda cruzaria a virada do dia.
  */
 export async function waitPastSaoPauloMidnight(
-  margin = 180_000,
+  margin: number,
 ): Promise<number> {
   const remaining = untilSaoPauloMidnight();
   if (remaining >= margin) {

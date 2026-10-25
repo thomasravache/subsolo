@@ -28,6 +28,9 @@ import { linkPath } from "./resumo";
  * - em até 2 minutos chega ao Mailpit um e-mail só, "Amanhã: {atrações}", com "22h00 · {casa}, {cidade}" e o link do
  *   show (url "/{cidade}/{slug}" do aviso, absoluta pelo `App:PublicUrl`), que abre a página dele.
  */
+/** O tempo limite da jornada (`test.setTimeout`); SPEC-0038:H36-05: também a margem antes da meia-noite. */
+const journeyTimeout = 360_000;
+
 // SPEC-0010: o Caddy do Compose serve HTTPS com o certificado local (`tls internal`), não confiável.
 test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
@@ -41,13 +44,16 @@ test.describe("avisos: lembrete na véspera por e-mail", () => {
       testInfo.project.name !== "mobile-chrome",
       "verificação em um projeto (mobile-chrome)",
     );
-    test.setTimeout(360_000);
+    test.setTimeout(journeyTimeout);
 
     // SPEC-0036:H32-05 — perto da meia-noite de São Paulo o show "de amanhã" viraria "de hoje" antes do lembrete: com
-    // menos de 3 min para ela, espera passar (e o tempo do teste cresce na mesma medida).
-    if (untilSaoPauloMidnight() < 180_000) {
-      test.setTimeout(360_000 + untilSaoPauloMidnight() + 10_000);
-      await waitPastSaoPauloMidnight();
+    // menos tempo para ela que a margem, espera passar (e o tempo do teste cresce na mesma medida).
+    // SPEC-0038:H36-05 — a margem é o tempo limite da jornada (o mesmo do `test.setTimeout`), não 3 min fixos: a jornada
+    // inteira cabe antes da virada do dia, ou começa depois dela.
+    const margin = journeyTimeout;
+    if (untilSaoPauloMidnight() < margin) {
+      test.setTimeout(journeyTimeout + untilSaoPauloMidnight() + 10_000);
+      await waitPastSaoPauloMidnight(margin);
     }
 
     // O artista e a cidade "Curitiba <sufixo>" (num contexto só dele).

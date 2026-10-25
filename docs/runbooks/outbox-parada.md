@@ -50,8 +50,10 @@ Enquanto a outbox está parada, os eventos de domínio ficam gravados (nada se p
 
 ### Job agendado falhou: resumo diário
 1. No Seq, filtre `event.name = 'DailyDigestRunFailed'` e abra a exceção: banco fora do ar (`entries.postgres` do
-   `/health`) é a causa mais comum; erro do Notifications ou de configuração (`Engagement:DigestCron` inválido impede a
-   API de subir) aparece na pilha.
+   `/health`) é a causa mais comum; erro do Notifications ou de configuração aparece na pilha. O `Engagement:DigestCron`
+   tem de disparar às 09h00 de São Paulo em pelo menos um dia da semana (ex.: `0 0 9 ? * MON-FRI`); um cron que não
+   dispara às 9h em nenhum dos próximos 7 dias, ou uma expressão cron inválida ("não é uma expressão cron válida"),
+   impede a API de subir.
 2. Veja se o resumo do dia saiu para parte dos fãs: `select count(*) from notifications.deliveries where dedupe_key =
    'digest:<aaaa-mm-dd>'`.
 3. Veja se o resumo do dia foi concluído (SPEC-0032): `select * from engagement.digest_runs order by digest_date desc
