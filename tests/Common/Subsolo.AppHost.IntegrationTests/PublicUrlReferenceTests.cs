@@ -8,8 +8,8 @@ namespace Subsolo.AppHost.IntegrationTests;
 /// <summary>
 /// SPEC-0016 IT-10 (Emenda 4, §7.6 j) — no modelo do <c>Subsolo.AppHost</c> em modo run (montado pelo
 /// <see cref="DistributedApplicationTestingBuilder"/>, sem subir os recursos), a <c>api</c> recebe
-/// <c>App__PublicUrl</c> com o endereço do recurso <c>web</c> (a base do link mágico no <c>aspire run</c>), lido das
-/// anotações de ambiente como expressão (<c>{web.bindings.…}</c>), sem alocar portas.
+/// <c>App__PublicUrl</c> (a base do link mágico no <c>aspire run</c>), lido das anotações de ambiente sem alocar portas.
+/// SPEC-0040 substitui o valor: era o endpoint do <c>web</c>; passa a ser o Caddy do modo run, <c>https://localhost:8443</c>.
 /// </summary>
 public sealed class PublicUrlReferenceTests
 {
@@ -18,7 +18,7 @@ public sealed class PublicUrlReferenceTests
     [Fact]
     [Trait("Spec", "SPEC-0016:IT-10")]
     [Trait("Kind", "Integration")]
-    public async Task ApiGetsAppPublicUrlWithTheWebEndpointInRunMode()
+    public async Task ApiGetsAppPublicUrlWithTheCaddyAddressInRunMode()
     {
         var ct = TestContext.Current.CancellationToken;
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Subsolo_AppHost>(
@@ -34,7 +34,8 @@ public sealed class PublicUrlReferenceTests
 
         var publicUrl = environment.GetValueOrDefault("App__PublicUrl");
         publicUrl.ShouldNotBeNull($"a api não recebe App__PublicUrl no modo run:\n{listing}");
-        publicUrl.ShouldContain("{web.bindings.", Case.Sensitive, $"App__PublicUrl não aponta para o endpoint do web:\n{listing}");
+        // SPEC-0040 substitui: no run, o link mágico sai pelo Caddy em https://localhost:8443 (não mais pelo endpoint do web).
+        publicUrl.ShouldBe("https://localhost:8443", $"App__PublicUrl não aponta para o Caddy do modo run:\n{listing}");
     }
 
     /// <summary>

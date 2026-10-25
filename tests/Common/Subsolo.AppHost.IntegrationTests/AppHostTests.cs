@@ -9,6 +9,7 @@ namespace Subsolo.AppHost.IntegrationTests;
 /// sobe os recursos (PostgreSQL, Seq, Mailpit, api, web); <c>api</c> e <c>web</c> ficam saudáveis e
 /// <c>GET /health</c> da API responde 200. Exige Docker, Node.js e pnpm.
 /// </summary>
+[Collection(nameof(AppHostRunTests))]
 public sealed class AppHostTests
 {
     /// <summary>Folga para baixar imagens e instalar as dependências do front na primeira execução.</summary>
