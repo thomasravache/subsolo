@@ -4,7 +4,7 @@ title: Ajustes do OpenAPI e da corrida entre denúncia e decisão
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0037]
@@ -59,13 +59,13 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
-- [ ] Red: UT-01 e IT-01 com a tag `SPEC-0039:<ID>`, falhando pelo motivo certo
-- [ ] Green: nulo preservado no transformador; bloqueio por show na denúncia e na decisão
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Red: UT-01 e IT-01 com a tag `SPEC-0039:<ID>`, falhando pelo motivo certo
+- [x] Green: nulo preservado no transformador; bloqueio por show na denúncia e na decisão
+- [x] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -78,8 +78,8 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H39-01 reason omitido e H39-02 espera no bloqueio provada por pg_stat_activity, testes em af102af; H39-03 tag Kind=Unit mantida pela convenção do plano) — af102af | 2026-10-25 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 09s 252ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 968ms) — 2ef2dd1 | 2026-10-25 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-25 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-25 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 59090f2 (árvore suja) | 2026-10-25 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -90,29 +90,38 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- O transformador genérico do OpenAPI mantém o `null` de propriedades anuláveis; o documento publicado não muda.
+- Denúncia e decisão de ocultar se serializam por show: uma denúncia que chega durante a ocultação espera e recebe 404, sem ficar `pending` para trás.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (bd95871, d68d8f3; itens da revisão H39-01/02 em af102af) → Implementer (b4de042, 8776b06) → Reviewer: APPROVED WITH MINOR ITEMS.
+- Anulabilidade lida do `JsonPropertyInfo` (`IsGetNullable`/`IsSetNullable`); `ReportShowRequest.Reason` passa a `string` não anulável (Emenda 1), sem efeito em tempo de execução.
+- `IShowLocks`/`ShowLocks` no molde do `FlyerLocks` do `Events`: transação explícita com `pg_advisory_xact_lock(hashtextextended('moderation.show:' || show_id::text, 0))` antes de qualquer leitura, cobrindo o `SaveChanges` e a outbox.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: no G1 o UT-01 falhou (tipo `string` em vez de `["null","string"]`) e o IT-01 respondeu 201 sem esperar a decisão em curso. Depois: passam em 8776b06 (G2) e na integração (15ffdd5, G5).
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | propriedade `string?` com `[AllowedValues("a","b")]` sai `string \| null` com `null` no enum; `string` sai só `string`; `reason` da denúncia segue `string` com os quatro valores, sem nulo | PASS | `gate G2 --run` em 8776b06; `gate G5 --run` na integração (15ffdd5); CI do PR #50 (run 40176707506, checks verdes em 59090f2) |
+| IT-01 | denúncia durante uma ocultação em curso espera o bloqueio do show (visto em `pg_stat_activity`) e, depois do commit, é 404 `events.show_not_found` sem linha nova; `reason` omitido → 400 `moderation.invalid_report` | PASS | `gate G2 --run` em 8776b06; `gate G5 --run` na integração (15ffdd5); CI do PR #50 (run 40176707506, checks verdes em 59090f2) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5) — CI verde no PR #50 (run 40176707506)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #50 (https://github.com/thomasravache/subsolo/pull/50), merge commit 8a3d9d4 em 2026-10-25, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- Nenhuma (H39-01 e H39-02 resolvidos nesta spec; H39-03 mantido pela convenção dos IDs do plano).
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
