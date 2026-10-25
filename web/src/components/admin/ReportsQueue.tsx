@@ -15,6 +15,7 @@ import {
   reportMessages,
   reportReasons,
 } from "@/components/moderation/messages";
+import { cityTimeParts } from "@/components/shows/city-time";
 import { Button, buttonClasses } from "@/components/ui/Button";
 
 import { fieldControl } from "./Field";
@@ -29,6 +30,7 @@ export interface ReportsQueueProps {
 /** Tamanho máximo da nota interna do "Ocultar show" (§6). */
 const noteMaxLength = 200;
 
+/** O dia da primeira denúncia ("Desde …"), no horário de Brasília. */
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",
@@ -47,6 +49,15 @@ function reasonsOf(
   return reportReasons
     .map(({ value }) => ({ reason: value, count: item.counts[value] }))
     .filter((entry) => entry.count > 0);
+}
+
+/** SPEC-0037 (H33-06) — data e hora do show no fuso da cidade ("20 de nov de 2026, 19:30"). */
+function showWhen(item: ReportQueueItem): string {
+  const { day, month, year, hour, minute } = cityTimeParts(
+    item.startsAtUtc,
+    item.timeZone,
+  );
+  return `${day} de ${month} de ${year}, ${hour}:${minute}`;
 }
 
 function total(item: ReportQueueItem): number {
@@ -88,7 +99,8 @@ function decisionError(result: Extract<ApiResult, { ok: false }>): string {
  * um cartão (`article`) por show denunciado, mais antigo primeiro, com o título, "data • casa", "{n} denúncias" com os
  * motivos e os detalhes mais recentes (texto, nunca HTML), sem quem denunciou; "Manter" decide na hora e "Ocultar show"
  * pede confirmação num `dialog` modal (com a nota interna opcional). O cartão decidido sai da fila e a decisão é
- * anunciada.
+ * anunciada. SPEC-0037: a data e a hora do show saem no fuso da cidade (H33-06) e, depois da decisão, o foco vai para o
+ * título do próximo cartão ou para a mensagem de fila vazia (H33-02).
  */
 export function ReportsQueue({
   initialItems,
@@ -106,6 +118,9 @@ export function ReportsQueue({
   const [note, setNote] = useState("");
   const confirm = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const emptyMessage = useRef<HTMLParagraphElement>(null);
+  /** SPEC-0037 (H33-02) — depois de uma decisão, o show cujo título recebe o foco (`null` = a fila vazia). */
+  const focusAfter = useRef<{ showId: string | null } | undefined>(undefined);
 
   const confirmTitleId = `${id}-ocultar-titulo`;
   const confirmTextId = `${id}-ocultar-texto`;
@@ -115,8 +130,26 @@ export function ReportsQueue({
     onCountChange?.(items.length);
   }, [items.length, onCountChange]);
 
+  useEffect(() => {
+    const target = focusAfter.current;
+    if (!target) {
+      return;
+    }
+    focusAfter.current = undefined;
+    const element = target.showId
+      ? document.getElementById(`${id}-show-${target.showId}`)
+      : emptyMessage.current;
+    element?.focus();
+  }, [items, id]);
+
   function decided(showId: string, message: string) {
-    setItems((current) => current.filter((item) => item.showId !== showId));
+    setItems((current) => {
+      // O foco vai para o título do próximo cartão (ou do anterior, se era o último) ou para a mensagem de fila vazia.
+      const index = current.findIndex((item) => item.showId === showId);
+      const next = current[index + 1] ?? current[index - 1];
+      focusAfter.current = { showId: next?.showId ?? null };
+      return current.filter((item) => item.showId !== showId);
+    });
     setCardError(null);
     setStatus(message);
   }
@@ -156,6 +189,10 @@ export function ReportsQueue({
     setStatus("");
     const result = await hideReportedShow(item.showId, note.trim() || null);
     setBusy(null);
+    if (result.ok) {
+      // O botão que abriu a confirmação sai com o cartão: o foco segue a decisão, não volta para ele.
+      opener.current = null;
+    }
     closeConfirm();
     if (result.ok) {
       decided(item.showId, reportMessages.hidden);
@@ -258,7 +295,11 @@ export function ReportsQueue({
       </p>
 
       {items.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border px-4 py-10 text-center text-base text-text-muted">
+        <p
+          ref={emptyMessage}
+          tabIndex={-1}
+          className="rounded-md border border-dashed border-border px-4 py-10 text-center text-base text-text-muted"
+        >
           {reportMessages.empty}
         </p>
       ) : (
@@ -284,6 +325,7 @@ export function ReportsQueue({
                   <div className="flex flex-col gap-1">
                     <h2
                       id={titleId}
+                      tabIndex={-1}
                       className="font-display text-2xl uppercase leading-none tracking-wide text-text"
                     >
                       <a
@@ -294,8 +336,7 @@ export function ReportsQueue({
                       </a>
                     </h2>
                     <p className="text-sm text-text-muted">
-                      {dateFormat.format(new Date(item.startsAtUtc))} •{" "}
-                      {item.venueName}
+                      {showWhen(item)} • {item.venueName}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 rounded-xs border border-border bg-surface-raised p-3 text-sm">
