@@ -42,6 +42,7 @@ const items: ReportQueueItem[] = [
     counts: { fake: 1, cancelled_unannounced: 0, wrong_info: 0, other: 1 },
     latestDetails: ["<b>Essa banda nem existe</b>"],
     firstReportedAtUtc: "2026-10-20T12:00:00Z",
+    timeZone: "America/Sao_Paulo",
   },
   {
     showId: hiddenId,
@@ -53,6 +54,7 @@ const items: ReportQueueItem[] = [
     counts: { fake: 0, cancelled_unannounced: 1, wrong_info: 0, other: 0 },
     latestDetails: [],
     firstReportedAtUtc: "2026-10-21T12:00:00Z",
+    timeZone: "America/Sao_Paulo",
   },
 ];
 
