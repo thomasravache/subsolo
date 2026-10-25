@@ -35,7 +35,8 @@ Esperado (pedido do Thomas, 2026-10-25): `aspire run` ou `dotnet run` no AppHost
 Só no modo run (`!IsPublishMode`):
 - O AppHost sobe o mesmo Caddy (imagem `caddy:2.11.7-alpine`, o mesmo `infra/caddy/Caddyfile` montado só leitura) em `https://localhost:8443` (porta fixa, sem proxy do Aspire, como o Google falso), com `API_UPSTREAM` e `WEB_UPSTREAM` apontando para a API e o web que rodam na máquina (túnel de contêiner do Aspire 13.6). O HTTP do Caddy (`HTTP_PORT`) fica em 8080, redirecionando para o HTTPS, como no Compose. Certificado da CA interna do Caddy (`tls internal`, `skip_install_trust`): o navegador mostra o aviso uma vez, como hoje no `compose-up.sh`.
 - `App__PublicUrl` da API e `SUBSOLO_PUBLIC_URL` do web passam a ser `https://localhost:8443` (o link mágico, o retorno do Google e o Open Graph saem pelo Caddy).
-- `/media/*` no run continua saindo da API (o Caddy não tem o volume no run; o rewrite do `next.config.ts` segue valendo).
+- `/media/*` no run sai do Caddy, como em produção: `artifacts/media` (o `Media__Root` do run, criado pelo AppHost) montado só leitura em `/srv/media`. A API continua servindo `/media/flyers/*` na porta dela e o rewrite do `next.config.ts` não muda. (Emenda 1)
+- O Caddy do run guarda a CA interna no volume `subsolo-caddy-data` (`/data`): o aviso de certificado aparece uma vez, não a cada subida. (Emenda 1)
 - O README troca o aviso "pelo `aspire run` o login não funciona" pelo caminho novo, com como depurar (rodar o AppHost pela IDE com o depurador; a API e o web são processos da máquina).
 
 **Não muda:** nada do modo de publicação. O Compose gerado por `aspire publish` sai idêntico (os testes de publicação existentes continuam passando sem alteração), o Caddyfile, o `compose-up.sh`, o E2E (que usa a pilha do Compose) e o código da API e do web. `aspire run` e `compose-up.sh` continuam não rodando ao mesmo tempo (já disputavam a porta 8090 do Google falso; agora também a 8443).
@@ -76,7 +77,7 @@ Pedido do Thomas em 2026-10-25: "Eu preciso que local eu consigo rodar apenas co
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — e26ae3a | 2026-10-25 |
-| G1 Red | FAIL | verify G1: FAIL — testes do plano sem tag no código versionado: SPEC-0040:IT-10 — 7f99980 | 2026-10-25 |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — f8cf142 | 2026-10-25 |
 | G2 Green | PENDING | | |
 | G3 Arquitetura | PENDING | | |
 | G4 Review | PENDING | | |
@@ -121,3 +122,4 @@ Pedido do Thomas em 2026-10-25: "Eu preciso que local eu consigo rodar apenas co
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato) | 2026-10-25 | `/media/*` no run sai do Caddy (`artifacts/media` só leitura em `/srv/media`); volume `subsolo-caddy-data` para a CA interna; os testes do AppHost que sobem a aplicação (portas fixas 8090/8443/8080 e `next dev` único por pasta) rodam sem paralelismo entre si | Implementer: pelo Caddyfile o `/media/*` que passa pelo Caddy sempre vai para `/srv/media` (sem a montagem, flyers 404 em 8443); TEST_DEFECT: `RunModeCaddyTests` e `AppHostTests` subiam o AppHost ao mesmo tempo | SPEC-0040 | thomas (piloto automático, 2026-10-23) |
