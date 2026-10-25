@@ -19,7 +19,7 @@ public static class ModerationModule
 
     /// <summary>
     /// Chama <c>AddModule&lt;ModerationDbContext&gt;</c> e <c>AddEndpoints</c> com os assemblies do módulo e registra o
-    /// repositório, a unidade de trabalho, as leituras, a seção <c>reports</c> do export (<see cref="IPersonalDataSection"/>)
+    /// repositório, a unidade de trabalho, a trava por show, as leituras, a seção <c>reports</c> do export (<see cref="IPersonalDataSection"/>)
     /// e a política de rate limit <c>moderation-report</c> (10 denúncias por fã por dia).
     /// </summary>
     public static IServiceCollection AddModerationModule(this IServiceCollection services, IConfiguration configuration)
@@ -27,6 +27,7 @@ public static class ModerationModule
         ArgumentNullException.ThrowIfNull(configuration);
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IModerationUnitOfWork>(provider => provider.GetRequiredService<ModerationDbContext>());
+        services.AddScoped<IShowLocks, ShowLocks>();
         services.AddScoped<IReportsReadModel, ReportsReadModel>();
         services.AddScoped<IPersonalDataSection, ModerationPersonalDataSection>();
         services.AddModerationRateLimit(configuration);

@@ -12,11 +12,14 @@ namespace Subsolo.Modules.Moderation.Application.Features.ReportShow;
 /// SPEC-0037 (H33-05) — também o show que o próprio Moderation já decidiu ocultar (há denúncia <c>hidden</c>), antes de o
 /// Events consumir a decisão;
 /// o fã já tem denúncia pendente dele → <see cref="ModerationErrors.AlreadyReported"/>; senão grava a denúncia pendente.
+/// SPEC-0039 (H37-02): as leituras e a gravação acontecem sob a trava do show (<see cref="IShowLocks"/>), a
+/// mesma do <c>HideShow</c>: a denúncia que chega durante a decisão espera o commit dela e vê o show oculto.
 /// </summary>
 internal sealed partial class ReportShowCommandHandler(
     IEventsCatalog catalog,
     IReportRepository reports,
     IModerationUnitOfWork unitOfWork,
+    IShowLocks locks,
     TimeProvider clock,
     ILogger<ReportShowCommandHandler> logger)
     : ICommandHandler<ReportShowCommand, ReportCreated>
@@ -24,6 +27,7 @@ internal sealed partial class ReportShowCommandHandler(
     public async Task<Result<ReportCreated>> Handle(ReportShowCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+        await using var held = await locks.AcquireAsync(command.ShowId, cancellationToken);
         if (await catalog.GetShowSummaryAsync(command.ShowId, cancellationToken) is null
             || await reports.IsHiddenAsync(command.ShowId, cancellationToken))
         {
@@ -40,6 +44,7 @@ internal sealed partial class ReportShowCommandHandler(
         try
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
+            await held.CommitAsync(cancellationToken);
         }
         catch (ModerationConflictException exception) when (exception.Conflict == ModerationConflict.AlreadyReported)
         {
