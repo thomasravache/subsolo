@@ -227,6 +227,8 @@ describe("OpenAPI de denúncias fiel ao contrato §6", () => {
         "counts",
         "latestDetails",
         "firstReportedAtUtc",
+        // SPEC-0037 (Emenda 1, H33-06): o fuso da cidade, campo aditivo.
+        "timeZone",
       ],
       `GET ${queuePath} item`,
     );
@@ -305,7 +307,8 @@ function enumValues(schema: Schema): unknown[] {
 
 /**
  * SPEC-0037 CT-01 (H33-04, H33-07) — no snapshot, `ReportShowRequest.reason` é o enum dos quatro motivos do §6 da
- * SPEC-0033 (não `string|null` livre) e o 400 do `POST …/{showId}/keep` cita `security.csrf_invalid` uma vez só.
+ * SPEC-0033 (não `string|null` livre), o 400 do `POST …/{showId}/keep` cita `security.csrf_invalid` uma vez só e
+ * (Emenda 1, H33-06) o item de `GET /api/v1/admin/reports` tem `timeZone`, string obrigatório.
  */
 describe("OpenAPI da fila de moderação sem as sobras da revisão da SPEC-0033", () => {
   it("SPEC-0037:CT-01 ReportShowRequest.reason é o enum dos quatro motivos", () => {
@@ -314,6 +317,14 @@ describe("OpenAPI da fila de moderação sem as sobras da revisão da SPEC-0033"
     expect([...new Set(enumValues(reason ?? {}))].sort()).toEqual(
       [...reasons].sort(),
     );
+  });
+
+  it("SPEC-0037:CT-01 o item da fila tem timeZone, string obrigatório", () => {
+    const item = jsonResponse(queuePath, "get", "200").items ?? {};
+    const timeZone = property(item, "timeZone");
+    expect(timeZone, `GET ${queuePath} item sem timeZone`).toBeDefined();
+    expect(types(timeZone ?? {})).toEqual(["string"]);
+    expect(resolve(item).required ?? []).toContain("timeZone");
   });
 
   it("SPEC-0037:CT-01 o 400 do keep cita security.csrf_invalid uma vez", () => {

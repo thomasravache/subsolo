@@ -205,3 +205,31 @@ describe("foco depois de decidir na aba Denúncias", () => {
     });
   });
 });
+
+/**
+ * SPEC-0037 UT-03 (H33-06, Emenda 1) — o item da fila traz o fuso da cidade (`timeZone`) e o cartão mostra a data e a
+ * hora do show nesse fuso: 23h30 UTC em Manaus (UTC−4) é 19h30, não as 20h30 de São Paulo (UTC−3).
+ */
+describe("data do show no fuso da cidade", () => {
+  it("SPEC-0037:UT-03 o cartão de um show em America/Manaus às 23h30 UTC mostra 19h30", () => {
+    const manaus = {
+      ...items[0]!,
+      title: "Noite do Norte",
+      citySlug: "manaus",
+      slug: "noite-do-norte-2026-11-20",
+      startsAtUtc: "2026-11-20T23:30:00Z",
+      timeZone: "America/Manaus",
+    } as ReportQueueItem;
+
+    render(<ReportsQueue initialItems={[manaus]} />);
+
+    const text = cardOf("Noite do Norte").textContent ?? "";
+    expect(text).toMatch(/20 de nov|20\/11/i);
+    expect(text, "o cartão não mostra a hora no fuso de Manaus").toMatch(
+      /19[:h]30/,
+    );
+    expect(text, "o cartão formatou no fuso de São Paulo").not.toMatch(
+      /20[:h]30/,
+    );
+  });
+});
