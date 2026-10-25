@@ -2,6 +2,7 @@
 // SPEC-0008 — `aspire publish -o artifacts/compose` gera o Docker Compose da mesma aplicação, com o Caddy na frente.
 // SPEC-0022 — mídia (ADR-0015): no `aspire run`, Media__Root é um diretório local (artifacts/media) servido pela API; no
 // Compose, o volume `media`, montado na API e no Caddy (que serve /media/*).
+// SPEC-0040 — o `aspire run` também sobe o Caddy: a aplicação inteira (login incluído) em https://localhost:8443.
 using System.Buffers.Text;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -57,9 +58,13 @@ if (!builder.ExecutionContext.IsPublishMode)
 const string MediaVolume = "media";
 const string MediaMount = "/srv/media";
 const string ApiContainerUser = "1654";
+// No `aspire run`, os flyers ficam em artifacts/media (servidos pela API e, montados só leitura, pelo Caddy, SPEC-0040).
+// O diretório é criado aqui para o Docker não criar a origem da montagem como root.
+var runMediaRoot = Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "../../artifacts/media"));
 if (!builder.ExecutionContext.IsPublishMode)
 {
-    api.WithEnvironment("Media__Root", Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "../../artifacts/media")));
+    Directory.CreateDirectory(runMediaRoot);
+    api.WithEnvironment("Media__Root", runMediaRoot);
 }
 
 var web = builder.AddJavaScriptApp("web", "../../web", "dev")
@@ -70,14 +75,40 @@ var web = builder.AddJavaScriptApp("web", "../../web", "dev")
     .WaitFor(api)
     .WithHttpHealthCheck("/");
 
-// SPEC-0016 (Emenda 4, §7.6 j) — no `aspire run`, o link mágico do e-mail aponta para o web (a API valida
+// Caddy na frente (ADR-0004), nos dois modos: /api/* e /health → api; /media/* → /srv/media (SPEC-0022); o resto → web.
+// Mesmo Caddyfile do deploy na VPS. SPEC-0010: HTTPS em :8443 (certificado local `tls internal`, HSTS); o HTTP em :8080
+// redireciona com 308. Cada modo acrescenta as portas e a mídia (`configure`) entre o Caddyfile e os upstreams.
+IResourceBuilder<ContainerResource> AddCaddy(Action<IResourceBuilder<ContainerResource>> configure)
+{
+    var caddy = builder.AddContainer("caddy", "caddy", "2.11.7-alpine")
+        .WithBindMount("../../infra/caddy/Caddyfile", "/etc/caddy/Caddyfile", isReadOnly: true);
+    configure(caddy);
+    return caddy
+        .WithEnvironment("API_UPSTREAM", api.GetEndpoint("http").Property(EndpointProperty.HostAndPort))
+        .WithEnvironment("WEB_UPSTREAM", web.GetEndpoint("http").Property(EndpointProperty.HostAndPort))
+        .WaitFor(api)
+        .WaitFor(web);
+}
+
+// SPEC-0040 — no `aspire run`, a aplicação inteira responde pelo mesmo Caddy em https://localhost:8443 (porta fixa no
+// host, sem proxy do Aspire, como o Google falso; o HTTP em 8080), com a API e o web rodando na máquina (túnel de
+// contêiner do Aspire). Os flyers de artifacts/media (o Media__Root da API no run) ficam montados só leitura em
+// /srv/media, como o volume `media` no Compose. A CA interna do Caddy fica no volume `subsolo-caddy-data`: o navegador
+// acusa o certificado uma vez, não a cada subida. Não roda junto com o tools/compose-up.sh (as mesmas portas).
+// SPEC-0016 (Emenda 4, §7.6 j) — o link mágico do e-mail (e o retorno do Google) aponta para o Caddy (a API valida
 // App:PublicUrl na inicialização). No Compose publicado, o operador define App__PublicUrl (a pilha local, pelo
 // tools/compose-up.sh). SPEC-0024 (Emenda v2, a) — o web recebe o mesmo endereço em SUBSOLO_PUBLIC_URL (só do servidor,
 // sem NEXT_PUBLIC_: nunca chega ao navegador), para as URLs absolutas do Open Graph e o canonical da página do show.
 if (!builder.ExecutionContext.IsPublishMode)
 {
-    api.WithEnvironment("App__PublicUrl", web.GetEndpoint("http"));
-    web.WithEnvironment("SUBSOLO_PUBLIC_URL", web.GetEndpoint("http"));
+    const string RunPublicUrl = "https://localhost:8443";
+    AddCaddy(caddy => caddy
+        .WithBindMount(runMediaRoot, MediaMount, isReadOnly: true)
+        .WithVolume("subsolo-caddy-data", "/data")
+        .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http", isProxied: false)
+        .WithHttpsEndpoint(port: 8443, targetPort: 8443, name: "https", isProxied: false));
+    api.WithEnvironment("App__PublicUrl", RunPublicUrl);
+    web.WithEnvironment("SUBSOLO_PUBLIC_URL", RunPublicUrl);
 }
 
 // SPEC-0020 — no `aspire run`, o provedor OpenID Connect falso (mock-oauth2-server, login interativo) faz o papel do
@@ -190,24 +221,17 @@ if (builder.ExecutionContext.IsPublishMode)
         .WithArgs("-c", $"chown {ApiContainerUser}:{ApiContainerUser} {MediaMount}");
     api.WaitForCompletion(mediaInit);
 
-    // Caddy na frente (ADR-0004): /api/* e /health → api; /media/* → volume media (SPEC-0022); o resto → web. Mesmo
-    // Caddyfile do deploy na VPS.
-    // SPEC-0010: HTTPS em :8443 (certificado local `tls internal`, HSTS); o HTTP em :8080 redireciona com 308.
     // No Compose, o contêiner do web roda `next start` sobre o build de produção (Dockerfile gerado pelo Aspire).
 #pragma warning disable ASPIREJAVASCRIPT001 // API em avaliação no Aspire 13.6; é o modo de publicação do Next.js sem `output: "standalone"`.
     web.PublishAsPackageScript("start");
 #pragma warning restore ASPIREJAVASCRIPT001
 
-    builder.AddContainer("caddy", "caddy", "2.11.7-alpine")
-        .WithBindMount("../../infra/caddy/Caddyfile", "/etc/caddy/Caddyfile", isReadOnly: true)
+    // O Caddy serve /media/* do volume `media` (SPEC-0022) e publica 8080 e 8443 no host.
+    AddCaddy(caddy => caddy
         .WithVolume(MediaVolume, MediaMount, isReadOnly: true)
         .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http")
         .WithHttpsEndpoint(port: 8443, targetPort: 8443, name: "https")
-        .WithExternalHttpEndpoints()
-        .WithEnvironment("API_UPSTREAM", api.GetEndpoint("http").Property(EndpointProperty.HostAndPort))
-        .WithEnvironment("WEB_UPSTREAM", web.GetEndpoint("http").Property(EndpointProperty.HostAndPort))
-        .WaitFor(api)
-        .WaitFor(web);
+        .WithExternalHttpEndpoints());
 }
 
 await builder.Build().RunAsync();

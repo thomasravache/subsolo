@@ -46,7 +46,7 @@ dotnet test tests/Subsolo.ArchitectureTests            # regras de arquitetura
 (cd e2e && pnpm install && pnpm exec playwright install && pnpm test)   # E2E com Playwright (mobile e desktop)
 ./tools/coverage.sh       # cobertura das linhas alteradas em relação à main
 
-aspire run                # sobe PostgreSQL 18, Seq, Mailpit, API e front (dashboard do Aspire com logs e traces)
+aspire run                # sobe PostgreSQL 18, Seq, Mailpit, API, front e o Caddy em https://localhost:8443 (dashboard do Aspire com logs e traces)
 ./tools/compose-up.sh     # sobe a pilha de produção local (Compose gerado pelo Aspire + Caddy) em https://localhost:8443 — a agenda de exemplo fica em /cidade-exemplo
 (cd web && pnpm dev)      # front em modo desenvolvimento (http://localhost:3000)
 (cd web && pnpm format)   # formata o front com o Prettier
@@ -57,13 +57,13 @@ O `tools/lint.sh` roda todas as verificações e lista no fim as que falharam, e
 
 Os módulos de teste rodam um de cada vez (`--max-parallel-test-modules 1`): o Next.js 16 aceita um só `next dev` por pasta (os testes do AppHost sobem o front) e isso mantém a suíte dentro de 8 GB de RAM.
 
-Na pilha local do `compose-up.sh` o certificado HTTPS é o da CA interna do Caddy (`tls internal`), que o navegador acusa como não confiável; `http://localhost:8080` só redireciona para o HTTPS. Logs e traces da API e do front vão para o Seq; no `compose-up.sh` ele fica em http://127.0.0.1:5341 (`SEQ_PORT` muda a porta). Os runbooks dos alertas ficam em `docs/runbooks/`, e o checklist de segurança (OWASP Top 10) em `docs/runbooks/checklist-seguranca.md`. O design system está em [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
+No `aspire run` e na pilha local do `compose-up.sh` o certificado HTTPS é o da CA interna do Caddy (`tls internal`), que o navegador acusa como não confiável; `http://localhost:8080` só redireciona para o HTTPS. Logs e traces da API e do front vão para o Seq; no `compose-up.sh` ele fica em http://127.0.0.1:5341 (`SEQ_PORT` muda a porta). Os runbooks dos alertas ficam em `docs/runbooks/`, e o checklist de segurança (OWASP Top 10) em `docs/runbooks/checklist-seguranca.md`. O design system está em [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
 
 Contas (SPEC-0014): o admin inicial vem da configuração `Users:AdminEmails` (ex.: variável `Users__AdminEmails__0`); a sessão é guardada no banco, vale 30 dias sem uso e no máximo 90 dias, e o rate limit da API conta por visitante — na pilha do `compose-up.sh` o limite `default` sobe para 10000/min (`DEFAULT_RATE_LIMIT`), porque toda a E2E sai de um IP só.
 
 E-mail (SPEC-0018): só o módulo `Notifications` envia, por SMTP; no `aspire run` os e-mails caem no Mailpit (dashboard do Aspire), e fora de desenvolvimento o TLS é obrigatório (`Notifications:Smtp:Security`).
 
-Login (SPEC-0016): para testar entrar e sair, use a pilha do `./tools/compose-up.sh` (https://localhost:8443) — o link chega no Mailpit em http://127.0.0.1:8025. Pelo `aspire run` o login não funciona (o cookie `__Host-` exige HTTPS e o `/api` passa pelo Caddy).
+Login (SPEC-0016, SPEC-0040): `aspire run` (ou `dotnet run --project src/Subsolo.AppHost`) sobe a aplicação inteira atrás do mesmo Caddy da produção em https://localhost:8443 — aceite o aviso do certificado (CA interna do Caddy, guardada no volume `subsolo-caddy-data`, então o aviso aparece uma vez) e entre por lá; o link mágico chega no Mailpit (o endereço está no dashboard do Aspire). Para depurar, rode o AppHost pela IDE com o depurador: a API e o web são processos da máquina, e os breakpoints da API valem nas requisições que passam pelo Caddy. Na pilha do `./tools/compose-up.sh` o link chega no Mailpit em http://127.0.0.1:8025. Os dois não rodam ao mesmo tempo (disputam as portas 8443, 8080 e 8090).
 
 Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos.
 
@@ -71,7 +71,7 @@ Google (SPEC-0020): na pilha do `compose-up.sh` e no `aspire run` o "Continuar c
 
 Perfis (SPEC-0021): o fã pede o perfil em https://localhost:8443/conta/perfis; com `admin@subsolo.test`, a fila fica em https://localhost:8443/admin/fila e o perfil sem dono em https://localhost:8443/admin/perfis/novo.
 
-Flyers (SPEC-0022): no `aspire run` os flyers ficam em `artifacts/media` e são servidos pela API em `/media/flyers/*`; na pilha do `compose-up.sh` ficam no volume `media` e o Caddy os serve em https://localhost:8443/media/flyers/.
+Flyers (SPEC-0022): no `aspire run` os flyers ficam em `artifacts/media`, servidos pela API em `/media/flyers/*` e, montado só leitura no Caddy, em https://localhost:8443/media/flyers/; na pilha do `compose-up.sh` ficam no volume `media` e o Caddy os serve em https://localhost:8443/media/flyers/.
 
 Shows (SPEC-0023): quem tem perfil aprovado cadastra shows em https://localhost:8443/conta/shows (o admin também, em qualquer perfil).
 
