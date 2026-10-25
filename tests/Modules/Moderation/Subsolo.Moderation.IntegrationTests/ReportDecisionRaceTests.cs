@@ -16,6 +16,9 @@ public sealed class ReportDecisionRaceTests(PostgresFixture postgres)
     /// <summary>Quanto a denúncia precisa continuar esperando enquanto a decisão segura o bloqueio.</summary>
     private static readonly TimeSpan HeldFor = TimeSpan.FromSeconds(2);
 
+    /// <summary>Prazo para aparecer no <c>pg_stat_activity</c> o backend da denúncia esperando o bloqueio.</summary>
+    private static readonly TimeSpan LockWaitTimeout = TimeSpan.FromSeconds(10);
+
     /// <summary>Prazo para a denúncia responder depois do commit da decisão.</summary>
     private static readonly TimeSpan AfterCommit = TimeSpan.FromSeconds(30);
 
@@ -59,6 +62,13 @@ public sealed class ReportDecisionRaceTests(PostgresFixture postgres)
                         $"a denúncia respondeu {(int)early.StatusCode} sem esperar a decisão em curso sobre o show " +
                         "(sem pg_advisory_xact_lock pela chave do show)");
                 }
+
+                // A espera é mesmo no bloqueio do show: um backend deste database parado em Lock/advisory.
+                (await Timing.EventuallyAsync(
+                        async () => await ModerationDatabase.AdvisoryLockWaitersAsync(api.ConnectionString, ct) > 0,
+                        LockWaitTimeout,
+                        ct))
+                    .ShouldBeTrue("nenhum backend esperou no pg_advisory_xact_lock enquanto a decisão o segurava");
 
                 await decision.CommitAsync(ct);
             }

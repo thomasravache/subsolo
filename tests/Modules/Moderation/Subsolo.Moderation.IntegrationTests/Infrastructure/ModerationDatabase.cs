@@ -255,6 +255,22 @@ internal static class ModerationDatabase
     }
 
     /// <summary>
+    /// SPEC-0039 (H39-02) — quantos backends do database da conexão estão parados esperando um bloqueio advisory
+    /// (<c>pg_stat_activity</c> com <c>wait_event_type = 'Lock'</c> e <c>wait_event = 'advisory'</c>).
+    /// </summary>
+    public static async Task<long> AdvisoryLockWaitersAsync(string connectionString, CancellationToken ct)
+    {
+        await using var connection = await OpenAsync(connectionString, ct);
+        await using var command = new NpgsqlCommand(
+            """
+            select count(*) from pg_stat_activity
+            where datname = current_database() and wait_event_type = 'Lock' and wait_event = 'advisory'
+            """,
+            connection);
+        return (long)(await command.ExecuteScalarAsync(ct))!;
+    }
+
+    /// <summary>
     /// Copia <paramref name="copies"/> vezes o show <paramref name="templateId"/> em <c>events.shows</c> (id novo e slug com
     /// sufixo; o resto igual); devolve os ids das cópias (copiado do <c>ReminderRequests</c> da SPEC-0032).
     /// </summary>
