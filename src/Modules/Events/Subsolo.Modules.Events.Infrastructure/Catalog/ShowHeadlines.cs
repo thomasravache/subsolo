@@ -5,7 +5,7 @@ namespace Subsolo.Modules.Events.Infrastructure.Catalog;
 
 /// <summary>
 /// SPEC-0033 (Emenda 2) — <see cref="IShowHeadlines"/> sobre <c>events.shows</c>: título, cidade, slug, início e casa dos
-/// shows pedidos numa consulta só (só essas colunas), apenas dos encontrados e visíveis (o oculto pela moderação fica de
+/// shows pedidos numa consulta só (só essas colunas; SPEC-0037: mais o fuso da cidade), apenas dos encontrados e visíveis (o oculto pela moderação fica de
 /// fora); ids repetidos contam uma vez.
 /// </summary>
 internal sealed class ShowHeadlines(EventsDbContext db) : IShowHeadlines
@@ -21,11 +21,14 @@ internal sealed class ShowHeadlines(EventsDbContext db) : IShowHeadlines
 
         return await db.Shows.AsNoTracking()
             .Where(show => wanted.Contains(show.Id) && show.HiddenAtUtc == null)
-            .Select(show => new { show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, VenueName = show.Venue.Name })
+            .Join(
+                db.Cities.AsNoTracking(),
+                show => show.City,
+                city => city.Slug,
+                (show, city) => new { show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, VenueName = show.Venue.Name, city.TimeZone })
             .ToDictionaryAsync(
                 show => show.Id,
-                // SPEC-0037 (H33-06) — esqueleto: o fuso da cidade chega na fase Green.
-                show => new ShowHeadline(show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, show.VenueName, string.Empty),
+                show => new ShowHeadline(show.Id, show.Title, show.City, show.Slug, show.StartsAtUtc, show.VenueName, show.TimeZone),
                 ct);
     }
 }

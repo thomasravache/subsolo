@@ -9,6 +9,8 @@ namespace Subsolo.Modules.Moderation.Application.Features.ReportShow;
 
 /// <summary>
 /// SPEC-0033 — show inexistente ou oculto (o <see cref="IEventsCatalog"/> não o devolve) → <c>events.show_not_found</c>;
+/// SPEC-0037 (H33-05) — também o show que o próprio Moderation já decidiu ocultar (há denúncia <c>hidden</c>), antes de o
+/// Events consumir a decisão;
 /// o fã já tem denúncia pendente dele → <see cref="ModerationErrors.AlreadyReported"/>; senão grava a denúncia pendente.
 /// </summary>
 internal sealed partial class ReportShowCommandHandler(
@@ -22,7 +24,8 @@ internal sealed partial class ReportShowCommandHandler(
     public async Task<Result<ReportCreated>> Handle(ReportShowCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
-        if (await catalog.GetShowSummaryAsync(command.ShowId, cancellationToken) is null)
+        if (await catalog.GetShowSummaryAsync(command.ShowId, cancellationToken) is null
+            || await reports.IsHiddenAsync(command.ShowId, cancellationToken))
         {
             return Result.Failure<ReportCreated>(ModerationErrors.ShowNotFoundError());
         }

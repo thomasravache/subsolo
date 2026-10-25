@@ -13,6 +13,9 @@ internal sealed class ReportRepository(ModerationDbContext db) : IReportReposito
                 && report.Status == ReportStatuses.Pending,
             cancellationToken);
 
+    public Task<bool> IsHiddenAsync(Guid showId, CancellationToken cancellationToken) =>
+        db.Reports.AnyAsync(report => report.ShowId == showId && report.Status == ReportStatuses.Hidden, cancellationToken);
+
     public async Task<IReadOnlyList<Report>> ListPendingOfShowAsync(Guid showId, CancellationToken cancellationToken) =>
         await db.Reports
             .Where(report => report.ShowId == showId && report.Status == ReportStatuses.Pending)
