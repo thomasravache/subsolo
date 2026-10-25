@@ -120,10 +120,12 @@ public sealed class RunModeCaddyModelTests
 /// SPEC-0040 IT-01 — com o <c>Subsolo.AppHost</c> no ar em modo run (banco descartável), a aplicação inteira responde
 /// pelo Caddy em <c>https://localhost:8443</c>: o link mágico pedido por lá (com o CSRF) chega ao Mailpit apontando para
 /// o 8443, é consumido pelo 8443, e <c>GET /api/v1/me</c> com o cookie de sessão (<c>__Host-subsolo</c>, Secure)
-/// responde 200 com a conta; <c>GET /</c> devolve a página do web. O certificado é da CA interna do Caddy
-/// (<c>tls internal</c>): o cliente do teste o aceita só para <c>localhost</c>. Exige Docker, Node.js e pnpm, e as
-/// portas 8443, 8080 e 8090 livres (não roda junto com o <c>tools/compose-up.sh</c>).
+/// responde 200 com a conta; <c>GET /media/flyers/&lt;inexistente&gt;</c> dá o 404 do Caddy (Emenda 1); <c>GET /</c>
+/// devolve a página do web. O certificado é da CA interna do Caddy (<c>tls internal</c>): o cliente do teste o aceita só
+/// para <c>localhost</c>. Exige Docker, Node.js e pnpm, e as portas 8443, 8080 e 8090 livres (não roda junto com o
+/// <c>tools/compose-up.sh</c>); roda na coleção <see cref="AppHostRunTests"/>, sem paralelismo.
 /// </summary>
+[Collection(nameof(AppHostRunTests))]
 public sealed partial class RunModeCaddyTests
 {
     private const string PublicUrl = "https://localhost:8443";
@@ -206,6 +208,19 @@ public sealed partial class RunModeCaddyTests
             me.StatusCode.ShouldBe(HttpStatusCode.OK, $"GET {PublicUrl}/api/v1/me: {body}");
             using var account = JsonDocument.Parse(body);
             account.RootElement.GetProperty("email").GetString().ShouldBe(email, StringCompareShould.IgnoreCase);
+        }
+
+        // Emenda 1 — /media/* sai do Caddy (artifacts/media montado só leitura em /srv/media), não da API: um flyer
+        // inexistente dá o 404 do file_server do Caddy (sem corpo de ProblemDetails da API).
+        using (var media = await client.GetAsync(
+            new Uri($"/media/flyers/spec0040-inexistente-{Guid.NewGuid():N}.webp", UriKind.Relative), ct))
+        {
+            var body = await media.Content.ReadAsStringAsync(ct);
+            media.StatusCode.ShouldBe(HttpStatusCode.NotFound, $"GET {PublicUrl}/media/flyers/<inexistente>: {body}");
+            media.Headers.Server.ToString().ShouldContain("Caddy", Case.Sensitive);
+            media.Content.Headers.ContentType?.MediaType.ShouldNotBe(
+                "application/problem+json", "o 404 de /media/* veio da API, não do Caddy");
+            body.ShouldBeEmpty("o 404 de /media/* deveria ser o do file_server do Caddy, sem corpo");
         }
 
         // O resto vai para o web: a página inicial em HTML.
