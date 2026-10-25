@@ -23,10 +23,12 @@ internal sealed partial class DailyDigestJob(IServiceScopeFactory scopes, ILogge
     public const string Name = "Engagement.DailyDigest";
 
     /// <summary>
-    /// Chave da configuração com a expressão cron do Quartz. SPEC-0036 (H32-02): a expressão tem de disparar às 9h de São
-    /// Paulo (<see cref="Application.Features.DailyDigest.CatchUpDailyDigestCommandHandler.DigestHour"/>, a hora em que a
-    /// recuperação fecha a janela); outra hora impede a subida (<see cref="DigestScheduleOptionsValidator"/>). Expressões
-    /// mais frequentes que também disparam às 9h (a cada minuto, na pilha local) valem.
+    /// Chave da configuração com a expressão cron do Quartz. SPEC-0036 (H32-02) e SPEC-0038 (H36-03): a expressão tem de
+    /// disparar às 9h de São Paulo (<see cref="Application.Features.DailyDigest.CatchUpDailyDigestCommandHandler.DigestHour"/>,
+    /// a hora em que a recuperação fecha a janela) em pelo menos um dia da semana (dias úteis valem); se não dispara às 9h
+    /// em nenhum dos próximos 7 dias, ou se a expressão é inválida (SPEC-0038, H36-04), a API não sobe
+    /// (<see cref="DigestScheduleOptionsValidator"/>). Expressões mais frequentes que também disparam às 9h (a cada minuto,
+    /// na pilha local) valem.
     /// </summary>
     public const string CronSetting = "Engagement:DigestCron";
 
