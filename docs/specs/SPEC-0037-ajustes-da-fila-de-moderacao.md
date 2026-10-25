@@ -4,7 +4,7 @@ title: Ajustes da fila de moderação
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-24
 parent: SPEC-0002
 depends_on: [SPEC-0033]
@@ -77,13 +77,13 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
-- [ ] Red: UT-01, UT-02, IT-01, IT-02 e CT-01 com a tag `SPEC-0037:<ID>`, falhando pelo motivo certo
-- [ ] Green: testes de corrida e nota, foco, painel isolado, declaração única, pendentes tardias, fuso e enum
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Red: UT-01, UT-02, IT-01, IT-02 e CT-01 com a tag `SPEC-0037:<ID>`, falhando pelo motivo certo
+- [x] Green: testes de corrida e nota, foco, painel isolado, declaração única, pendentes tardias, fuso e enum
+- [x] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -95,9 +95,9 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 472ms) — 5da13a5 | 2026-10-24 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H37-01 nulo no transformador genérico e H37-02 janela de milissegundos entre ocultar e denunciar vão para a SPEC-0038; H37-03 resolvido com a Emenda 5 da SPEC-0033) — 17bb540 | 2026-10-24 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 52s 965ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 216ms) — 6612ce9 | 2026-10-24 |
-| H2 Integração aprovada | PENDING | | |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-25 |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-25 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — acfa2f1 (árvore suja) | 2026-10-25 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -108,29 +108,47 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- Na fila do admin, depois de "Manter" ou "Ocultar show" o foco vai para o próximo cartão (ou para a mensagem de fila vazia).
+- Se as denúncias não carregam, a aba "Pedidos de perfil" continua funcionando e só o painel de denúncias mostra o aviso de indisponível.
+- O cartão mostra a data e a hora do show no fuso da cidade (`timeZone` aditivo no item de `GET /api/v1/admin/reports`).
+- A denúncia de um show que o `Moderation` já decidiu ocultar é recusada com 404 mesmo antes de o `Events` registrar a ocultação.
+- OpenAPI: `reason` publicado como enum dos quatro motivos e o código de CSRF do `keep` uma vez só.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (c512ebd scaffold, 92829e1, 01e3e23; Emenda 1: 9e0b93d, 5ebc0d0; fixture 7321541) → Implementer (ae4c89e, 024ce1f, 950b6fb, 92b2e9f, 5da13a5) → Reviewer: APPROVED WITH MINOR ITEMS.
+- `IReportRepository.IsHiddenAsync` no `ReportShow`; `ShowHeadlines` com junção em lote nas cidades, no molde do `ShowsReadModel`; data no fuso da cidade com o `cityTimeParts` existente.
+- `AllowedValuesSchemaTransformer` genérico em `src/Subsolo.Api/OpenApi/` lendo o `[AllowedValues]` da BCL: os módulos seguem sem pacote de OpenAPI e sem efeito em tempo de execução.
+- Emenda 1: H33-05 fechado na origem, `timeZone` aditivo (Emenda 5 da SPEC-0033), `touches` do OpenAPI da API. O primeiro G1 falhou porque a linha "E2E: N/A" citava um ID de teste da SPEC-0033; reescrita e o G1 seguinte passou.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: no G1 a suíte saiu com código 2 — UT-01 (foco em `<body>`), UT-02 (página inteira "Painel indisponível"), UT-03 (sem 19h30), IT-02 (`TimeZone` vazio), IT-03 (201 em vez de 404; item sem `timeZone`) e CT-01 (`reason` `string|null`, CSRF duas vezes). IT-01 e a denúncia tardia do IT-02 já passavam (cobrem comportamento existente). Depois: todos passam em 5da13a5 (G2) e na integração (1fa93c9, G5).
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | depois de "Manter" o foco vai para o título do próximo cartão; ao decidir o último, para a mensagem de fila vazia | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| UT-02 | `/admin/fila` com a leitura de denúncias falhando mostra a aba "Pedidos de perfil" e o aviso de indisponível só no painel de denúncias | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| UT-03 | show em `America/Manaus` às 23h30 UTC aparece às 19h30 no cartão da fila | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| IT-01 | três denúncias simultâneas do mesmo fã: uma 201, duas 409 `moderation.already_reported`, uma linha; `/hide` com nota de 201 caracteres → 400 `moderation.invalid_note` | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| IT-02 | denúncia pendente tardia de show oculto vira `hidden` numa decisão nova; `IShowHeadlines` devolve o fuso da cidade | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| IT-03 | denúncia de show que o `Moderation` já ocultou, antes do consumidor do `Events`, → 404 `events.show_not_found` sem linha nova; item da fila com `timeZone` | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
+| CT-01 | snapshot OpenAPI: `reason` como enum dos quatro motivos, `security.csrf_invalid` do `keep` uma vez, `timeZone` obrigatório no item da fila | PASS | `gate G2 --run` em 5da13a5; `gate G5 --run` na integração (1fa93c9); CI do PR #48 (run 40157140981, checks verdes em acfa2f1) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5) — CI verde no PR #48 (run 40157140981)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG atualizado
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — ver Pendências (SPEC-0039)
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #48 (https://github.com/thomasravache/subsolo/pull/48), merge commit 0bbf84b em 2026-10-24, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- SPEC-0039: H37-01 (nulo preservado no transformador genérico) e H37-02 (bloqueio por show entre denúncia e decisão). H37-03 resolvido na Emenda 5 da SPEC-0033.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
