@@ -48,6 +48,22 @@ public sealed class RunModeCaddyModelTests
         Path.GetFullPath(mount.Source!).ShouldBe(Path.GetFullPath(caddyfile));
         mount.IsReadOnly.ShouldBeTrue("o Caddyfile deve ser montado só leitura");
 
+        // Emenda 1 — /media/* sai do Caddy: o Media__Root do run (artifacts/media) montado só leitura em /srv/media.
+        var media = mounts.SingleOrDefault(candidate => candidate.Target == "/srv/media");
+        media.ShouldNotBeNull(
+            $"o caddy não monta /srv/media (montagens: {string.Join(", ", mounts.Select(m => $"{m.Source}→{m.Target}"))})");
+        media.Type.ShouldBe(ContainerMountType.BindMount);
+        Path.GetFullPath(media.Source!).TrimEnd(Path.DirectorySeparatorChar)
+            .ShouldBe(Path.GetFullPath(Path.Combine(RepositoryRoot(), "artifacts", "media")));
+        media.IsReadOnly.ShouldBeTrue("artifacts/media deve ser montado só leitura no caddy");
+
+        // Emenda 1 — a CA interna do Caddy persiste no volume subsolo-caddy-data (o aviso de certificado aparece uma vez).
+        var data = mounts.SingleOrDefault(candidate => candidate.Target == "/data");
+        data.ShouldNotBeNull(
+            $"o caddy não monta /data (montagens: {string.Join(", ", mounts.Select(m => $"{m.Source}→{m.Target}"))})");
+        data.Type.ShouldBe(ContainerMountType.Volume);
+        data.Source.ShouldBe("subsolo-caddy-data");
+
         // HTTPS fixo em 8443, sem o proxy do Aspire (como o Google falso): o endereço do navegador e do link mágico.
         var https = caddy.Annotations.OfType<EndpointAnnotation>().SingleOrDefault(endpoint => endpoint.Name == "https");
         https.ShouldNotBeNull("o caddy não tem o endpoint https");
@@ -55,6 +71,14 @@ public sealed class RunModeCaddyModelTests
         https.Port.ShouldBe(8443);
         https.TargetPort.ShouldBe(8443);
         https.IsProxied.ShouldBeFalse("o endpoint https do caddy deve ficar fora do proxy do Aspire (porta fixa no host)");
+
+        // HTTP fixo em 8080 (redireciona para o HTTPS), também sem proxy, como no Compose.
+        var http = caddy.Annotations.OfType<EndpointAnnotation>().SingleOrDefault(endpoint => endpoint.Name == "http");
+        http.ShouldNotBeNull("o caddy não tem o endpoint http");
+        http.UriScheme.ShouldBe("http");
+        http.Port.ShouldBe(8080);
+        http.TargetPort.ShouldBe(8080);
+        http.IsProxied.ShouldBeFalse("o endpoint http do caddy deve ficar fora do proxy do Aspire (porta fixa no host)");
 
         var (caddyEnvironment, caddyListing) = await EnvironmentOfAsync(caddy, executionContext, ct);
         caddyEnvironment.GetValueOrDefault("API_UPSTREAM").ShouldNotBeNull($"o caddy não recebe API_UPSTREAM:\n{caddyListing}");
@@ -122,8 +146,10 @@ public sealed class RunModeCaddyModelTests
 /// o 8443, é consumido pelo 8443, e <c>GET /api/v1/me</c> com o cookie de sessão (<c>__Host-subsolo</c>, Secure)
 /// responde 200 com a conta; <c>GET /media/flyers/&lt;inexistente&gt;</c> dá o 404 do Caddy (Emenda 1); <c>GET /</c>
 /// devolve a página do web. O certificado é da CA interna do Caddy (<c>tls internal</c>): o cliente do teste o aceita só
-/// para <c>localhost</c>. Exige Docker, Node.js e pnpm, e as portas 8443, 8080 e 8090 livres (não roda junto com o
-/// <c>tools/compose-up.sh</c>); roda na coleção <see cref="AppHostRunTests"/>, sem paralelismo.
+/// para <c>localhost</c> e com o emissor "Caddy Local Authority". Exige Docker, Node.js e pnpm, e as portas 8443, 8080
+/// e 8090 livres: conflita com o <c>tools/compose-up.sh</c> e com um <c>aspire run</c> aberto. Usa o mesmo volume
+/// <c>subsolo-caddy-data</c> (a CA interna) do <c>aspire run</c> do desenvolvedor. Roda na coleção
+/// <see cref="AppHostRunTests"/>, sem paralelismo.
 /// </summary>
 [Collection(nameof(AppHostRunTests))]
 public sealed partial class RunModeCaddyTests
@@ -154,9 +180,10 @@ public sealed partial class RunModeCaddyTests
             CookieContainer = new CookieContainer(),
             UseCookies = true,
             // Só o certificado da CA interna do Caddy em localhost; qualquer outro host segue a validação normal.
-            ServerCertificateCustomValidationCallback = (message, _, _, errors) =>
+            ServerCertificateCustomValidationCallback = (message, _, chain, errors) =>
                 errors == System.Net.Security.SslPolicyErrors.None
-                || string.Equals(message.RequestUri?.Host, "localhost", StringComparison.OrdinalIgnoreCase),
+                || (string.Equals(message.RequestUri?.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                    && IssuedByCaddyLocalAuthority(chain)),
         };
         using var client = new HttpClient(handler) { BaseAddress = new Uri(PublicUrl), Timeout = TimeSpan.FromSeconds(60) };
 
@@ -254,12 +281,23 @@ public sealed partial class RunModeCaddyTests
             {
                 last = exception.Message;
             }
+            catch (TaskCanceledException exception) when (!ct.IsCancellationRequested)
+            {
+                // Timeout do HttpClient (o Caddy aceitou a conexão mas ainda não respondeu): tenta de novo.
+                last = exception.Message;
+            }
 
             await Task.Delay(TimeSpan.FromSeconds(2), ct);
         }
 
         throw new ShouldAssertException($"nada responde 200 em {PublicUrl}/health em {ReadyTimeout} (último: {last})");
     }
+
+    /// <summary>A cadeia do certificado vem da CA interna do Caddy (emissor "Caddy Local Authority").</summary>
+    private static bool IssuedByCaddyLocalAuthority(System.Security.Cryptography.X509Certificates.X509Chain? chain) =>
+        chain is not null
+        && chain.ChainElements.Any(element =>
+            element.Certificate.Issuer.Contains("Caddy Local Authority", StringComparison.Ordinal));
 
     /// <summary><c>GET /api/v1/antiforgery</c>: grava o cookie do anti-forgery e devolve o token do cabeçalho X-CSRF.</summary>
     private static async Task<string> AntiforgeryTokenAsync(HttpClient client, CancellationToken ct)
