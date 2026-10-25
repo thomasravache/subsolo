@@ -4,7 +4,7 @@ title: Aplicação completa no aspire run, com o Caddy em HTTPS
 tier: lite
 type: fix
 user_facing: false
-status: proposed
+status: in-progress
 created: 2026-10-25
 parent:
 depends_on: []
@@ -13,8 +13,8 @@ touches: [src/Subsolo.AppHost/**, tests/Common/Subsolo.AppHost.IntegrationTests/
 adrs: [ADR-0004, ADR-0003]
 external: []
 size: S
-approved_by:
-approved_at:
+approved_by: thomas
+approved_at: 2026-10-25
 ---
 
 # SPEC-0040 — Aplicação completa no aspire run, com o Caddy em HTTPS
@@ -63,6 +63,13 @@ Pedido do Thomas em 2026-10-25: "Eu preciso que local eu consigo rodar apenas co
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
+- [ ] Red: UT-01 e IT-01 com a tag `SPEC-0040:<ID>`, falhando pelo motivo certo
+- [ ] Green: Caddy no modo run em https://localhost:8443 e endereço público apontando para ele; README atualizado
+- [ ] Validar: build + suíte + arquitetura (G2/G3)
+- [ ] Review independente (G4)
+- [ ] Integração + CI verde (G5) e aprovação (H2)
+- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
