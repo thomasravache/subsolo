@@ -5615,10 +5615,13 @@
         "type": "object",
         "properties": {
           "reason": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "enum": [
+              "fake",
+              "cancelled_unannounced",
+              "wrong_info",
+              "other"
+            ],
+            "type": "string"
           },
           "details": {
             "type": [

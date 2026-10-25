@@ -1398,7 +1398,8 @@ export interface components {
       timeZone: string;
     };
     ReportShowRequest: {
-      reason: null | string;
+      /** @enum {string} */
+      reason: "fake" | "cancelled_unannounced" | "wrong_info" | "other";
       details: null | string;
     };
     RequestMagicLinkRequest: {
