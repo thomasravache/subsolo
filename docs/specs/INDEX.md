@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 9 aviso(s)** — rode `spec_graph.py validate`
-- Specs: implemented 36
+- Specs: proposed 1, implemented 36
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,7 +43,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-Nenhuma spec aberta.
+**Em andamento:** —  
+**Paradas por impedimento:** —  
+**Próximo lote:** —
+
+| Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
+|---|---|---|---|---|---|---|
+| 1 | SPEC-0040 | Aplicação completa no aspire run, com o Caddy em HTTPS | lite/S | proposed | ⏳ aguardando aprovação (H1) |  |
 
 ## Épicos
 
@@ -52,6 +58,20 @@ Nenhuma spec aberta.
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | implemented | 26/26 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
+
+## Grafo de Dependências
+
+Seta contínua: depende da implementação. Seta tracejada: consome contrato.
+
+```mermaid
+flowchart LR
+  S0040["SPEC-0040<br/>Aplicação completa no aspire run, com o…"]:::proposed
+  classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
+  classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
+  classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
+  classDef implemented fill:#dcfce7,stroke:#16a34a,color:#111
+  classDef deprecated fill:#f3f4f6,stroke:#9ca3af,color:#6b7280
+```
 
 ## Todas as Specs
 
@@ -96,6 +116,7 @@ Nenhuma spec aberta.
 | [SPEC-0037](SPEC-0037-ajustes-da-fila-de-moderacao.md) | Ajustes da fila de moderação | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0033 | — |
 | [SPEC-0038](SPEC-0038-ajustes-da-validacao-do-resumo-e-do-lembrete-em-lote.md) | Ajustes da validação do resumo e do lembrete em lote | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0036 | — |
 | [SPEC-0039](SPEC-0039-ajustes-do-openapi-e-da-corrida-entre-denuncia-e-decisao.md) | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0037 | — |
+| [SPEC-0040](SPEC-0040-aplicacao-completa-no-aspire-run-com-o-caddy-em-https.md) | Aplicação completa no aspire run, com o Caddy em HTTPS | lite | fix | proposed | 2026-10-25 | — | — | — |
 
 ## ADRs
 
