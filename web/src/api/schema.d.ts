@@ -1395,6 +1395,7 @@ export interface components {
       latestDetails: string[];
       /** Format: date-time */
       firstReportedAtUtc: string;
+      timeZone: string;
     };
     ReportShowRequest: {
       reason: null | string;
@@ -4892,7 +4893,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Bad Request (code=security.csrf_invalid) (code=security.csrf_invalid) */
+      /** @description Bad Request (code=security.csrf_invalid) */
       400: {
         headers: {
           [name: string]: unknown;

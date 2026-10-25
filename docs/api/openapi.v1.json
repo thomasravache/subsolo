@@ -4071,7 +4071,7 @@
             "description": "No Content"
           },
           "400": {
-            "description": "Bad Request (code=security.csrf_invalid) (code=security.csrf_invalid)",
+            "description": "Bad Request (code=security.csrf_invalid)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5564,7 +5564,8 @@
           "venueName",
           "counts",
           "latestDetails",
-          "firstReportedAtUtc"
+          "firstReportedAtUtc",
+          "timeZone"
         ],
         "type": "object",
         "properties": {
@@ -5600,6 +5601,9 @@
           "firstReportedAtUtc": {
             "type": "string",
             "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string"
           }
         }
       },
