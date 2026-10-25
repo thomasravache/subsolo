@@ -76,7 +76,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 8776b06 | 2026-10-25 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 064ms) — 8776b06 | 2026-10-25 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H39-01 reason omitido e H39-02 espera no bloqueio provada por pg_stat_activity, testes em af102af; H39-03 tag Kind=Unit mantida pela convenção do plano) — af102af | 2026-10-25 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 09s 252ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 968ms) — 2ef2dd1 | 2026-10-25 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
