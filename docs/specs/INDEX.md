@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 22 aviso(s)** — rode `spec_graph.py validate`
-- Specs: approved 1, in-progress 1, implemented 34
+- Specs: in-progress 2, implemented 34
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,14 +43,14 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0038  
+**Em andamento:** SPEC-0038, SPEC-0039  
 **Paradas por impedimento:** —  
-**Próximo lote:** SPEC-0039
+**Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
 | 1 | SPEC-0038 | Ajustes da validação do resumo e do lembrete em lote | lite/S | in-progress | 🔄 em andamento |  |
-| 1 | SPEC-0039 | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite/S | approved | ✅ pronta |  |
+| 1 | SPEC-0039 | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite/S | in-progress | 🔄 em andamento |  |
 
 ## Épicos
 
@@ -70,7 +70,7 @@ flowchart LR
     S0036["SPEC-0036<br/>Ajustes dos jobs agendados de avisos"]:::implemented
     S0037["SPEC-0037<br/>Ajustes da fila de moderação"]:::implemented
     S0038["SPEC-0038<br/>Ajustes da validação do resumo e do lem…"]:::inprogress
-    S0039["SPEC-0039<br/>Ajustes do OpenAPI e da corrida entre d…"]:::approved
+    S0039["SPEC-0039<br/>Ajustes do OpenAPI e da corrida entre d…"]:::inprogress
   end
   S0036 --> S0038
   S0037 --> S0039
@@ -123,7 +123,7 @@ flowchart LR
 | [SPEC-0036](SPEC-0036-ajustes-dos-jobs-agendados-de-avisos.md) | Ajustes dos jobs agendados de avisos | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0032 | — |
 | [SPEC-0037](SPEC-0037-ajustes-da-fila-de-moderacao.md) | Ajustes da fila de moderação | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0033 | — |
 | [SPEC-0038](SPEC-0038-ajustes-da-validacao-do-resumo-e-do-lembrete-em-lote.md) | Ajustes da validação do resumo e do lembrete em lote | lite | fix | in-progress | 2026-10-24 | SPEC-0002 | SPEC-0036 | — |
-| [SPEC-0039](SPEC-0039-ajustes-do-openapi-e-da-corrida-entre-denuncia-e-decisao.md) | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | approved | 2026-10-24 | SPEC-0002 | SPEC-0037 | — |
+| [SPEC-0039](SPEC-0039-ajustes-do-openapi-e-da-corrida-entre-denuncia-e-decisao.md) | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | in-progress | 2026-10-24 | SPEC-0002 | SPEC-0037 | — |
 
 ## ADRs
 
