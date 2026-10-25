@@ -99,16 +99,26 @@ IResourceBuilder<ContainerResource> AddCaddy(Action<IResourceBuilder<ContainerRe
 // App:PublicUrl na inicialização). No Compose publicado, o operador define App__PublicUrl (a pilha local, pelo
 // tools/compose-up.sh). SPEC-0024 (Emenda v2, a) — o web recebe o mesmo endereço em SUBSOLO_PUBLIC_URL (só do servidor,
 // sem NEXT_PUBLIC_: nunca chega ao navegador), para as URLs absolutas do Open Graph e o canonical da página do show.
+// SPEC-0041 — `Subsolo:PublicUrl` (só no run; o endereço do túnel do tools/tunnel.sh, para abrir pelo celular) troca
+// esse endereço e dá ao web SUBSOLO_DEV_ORIGINS com o host dela (o allowedDevOrigins do `next dev`, que bloqueia os
+// scripts de desenvolvimento para outras origens). Só URL absoluta https sem caminho; no Compose publicado, ignorada.
 if (!builder.ExecutionContext.IsPublishMode)
 {
-    const string RunPublicUrl = "https://localhost:8443";
+    const string CaddyPublicUrl = "https://localhost:8443";
+    var tunnelPublicUrl = builder.Configuration["Subsolo:PublicUrl"];
+    var tunnelUri = string.IsNullOrWhiteSpace(tunnelPublicUrl) ? null : TunnelUri(tunnelPublicUrl);
+    var runPublicUrl = tunnelUri?.GetLeftPart(UriPartial.Authority) ?? CaddyPublicUrl;
     AddCaddy(caddy => caddy
         .WithBindMount(runMediaRoot, MediaMount, isReadOnly: true)
         .WithVolume("subsolo-caddy-data", "/data")
         .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http", isProxied: false)
         .WithHttpsEndpoint(port: 8443, targetPort: 8443, name: "https", isProxied: false));
-    api.WithEnvironment("App__PublicUrl", RunPublicUrl);
-    web.WithEnvironment("SUBSOLO_PUBLIC_URL", RunPublicUrl);
+    api.WithEnvironment("App__PublicUrl", runPublicUrl);
+    web.WithEnvironment("SUBSOLO_PUBLIC_URL", runPublicUrl);
+    if (tunnelUri is not null)
+    {
+        web.WithEnvironment("SUBSOLO_DEV_ORIGINS", tunnelUri.Host);
+    }
 }
 
 // SPEC-0020 — no `aspire run`, o provedor OpenID Connect falso (mock-oauth2-server, login interativo) faz o papel do
@@ -235,3 +245,16 @@ if (builder.ExecutionContext.IsPublishMode)
 }
 
 await builder.Build().RunAsync();
+
+// SPEC-0041 — o `Subsolo:PublicUrl` aceito: URL absoluta https, sem caminho (a barra final basta), consulta ou fragmento.
+static Uri TunnelUri(string value) =>
+    Uri.TryCreate(value, UriKind.Absolute, out var uri)
+    && uri.Scheme == Uri.UriSchemeHttps
+    && uri.AbsolutePath == "/"
+    && string.IsNullOrEmpty(uri.Query)
+    && string.IsNullOrEmpty(uri.Fragment)
+    && string.IsNullOrEmpty(uri.UserInfo)
+        ? uri
+        : throw new InvalidOperationException(
+            $"Subsolo:PublicUrl inválido: '{value}'. Use uma URL absoluta https sem caminho, como " +
+            "https://xxx.trycloudflare.com (o endereço mostrado pelo tools/tunnel.sh).");

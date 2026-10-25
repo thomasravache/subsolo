@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
+// SPEC-0041: no `next dev` (aspire run) aberto pelo túnel (tools/tunnel.sh, para o celular), os scripts de
+// desenvolvimento (`/_next/*`) só saem para as origens de localhost e as de `allowedDevOrigins`. O AppHost define
+// SUBSOLO_DEV_ORIGINS (hosts separados por vírgula; só do servidor, nunca chega ao navegador) quando recebe
+// Subsolo:PublicUrl. Vazia ou ausente (o build e o `next start` de produção), a chave não é declarada.
+const devOrigins = (process.env.SUBSOLO_DEV_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
+
 const nextConfig: NextConfig = {
+  ...(devOrigins.length > 0 ? { allowedDevOrigins: devOrigins } : {}),
   cacheComponents: true,
   partialPrefetching: true,
   // SPEC-0015: metadados (o `<title>`) bloqueantes para todos os agentes; o padrão faz streaming do título para
