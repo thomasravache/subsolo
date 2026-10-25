@@ -81,7 +81,7 @@ Pedido do Thomas em 2026-10-25: "Eu preciso que local eu consigo rodar apenas co
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 3329706 | 2026-10-25 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 605ms) — 3329706 | 2026-10-25 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H40-01..05 corrigidos em d8f2b4e e 4c83631) — 4c83631 | 2026-10-25 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 18m 15s 509ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 843ms) — 0f40b2d | 2026-10-25 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
