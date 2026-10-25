@@ -191,6 +191,25 @@ internal static class ModerationDatabase
     }
 
     /// <summary>
+    /// SPEC-0037 (H33-05, Emenda 1) — marca direto em <c>moderation.reports</c> as denúncias pendentes do show como
+    /// <c>hidden</c> (decididas por <paramref name="adminId"/>), sem mensagem na outbox: o Moderation já decidiu ocultar,
+    /// mas o Events ainda não soube (o show segue visível). Devolve quantas linhas mudaram.
+    /// </summary>
+    public static async Task<int> MarkReportsHiddenAsync(string connectionString, Guid showId, Guid adminId, CancellationToken ct)
+    {
+        await using var connection = await OpenAsync(connectionString, ct);
+        await using var command = new NpgsqlCommand(
+            """
+            update moderation.reports set status = 'hidden', decided_at_utc = now(), decided_by = @admin
+            where show_id = @show and status = 'pending'
+            """,
+            connection);
+        command.Parameters.AddWithValue("show", showId);
+        command.Parameters.AddWithValue("admin", adminId);
+        return await command.ExecuteNonQueryAsync(ct);
+    }
+
+    /// <summary>
     /// Copia <paramref name="copies"/> vezes o show <paramref name="templateId"/> em <c>events.shows</c> (id novo e slug com
     /// sufixo; o resto igual); devolve os ids das cópias (copiado do <c>ReminderRequests</c> da SPEC-0032).
     /// </summary>

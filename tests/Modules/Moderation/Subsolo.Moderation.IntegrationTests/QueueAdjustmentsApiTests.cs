@@ -14,7 +14,10 @@ namespace Subsolo.Moderation.IntegrationTests;
 /// de 201 caracteres dá 400 <c>moderation.invalid_note</c> (Emenda 4) e não decide nada;</item>
 /// <item>IT-02 (H33-05) — show oculto com uma denúncia <c>pending</c> que chegou depois da decisão: denunciar o show oculto
 /// dá 404 <c>events.show_not_found</c>; uma decisão nova (ocultar) vira a pendente <c>hidden</c>;</item>
-/// <item>IT-02 (H33-06) — o <c>IShowHeadlines</c> devolve o fuso da cidade do show (<c>ShowHeadline.TimeZone</c>).</item>
+/// <item>IT-02 (H33-06) — o <c>IShowHeadlines</c> devolve o fuso da cidade do show (<c>ShowHeadline.TimeZone</c>);</item>
+/// <item>IT-03 (H33-05, H33-06, Emenda 1) — show com denúncia já decidida como <c>hidden</c> no Moderation e ainda
+/// visível no Events (o consumidor não rodou): outro fã denuncia e recebe 404 <c>events.show_not_found</c>, sem linha
+/// nova; e o item da fila traz o <c>timeZone</c> da cidade.</item>
 /// </list>
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -184,5 +187,60 @@ public sealed class QueueAdjustmentsApiTests(PostgresFixture postgres)
         headlines[north.Id].CitySlug.ShouldBe(manaus);
         headlines[north.Id].TimeZone.ShouldBe("America/Manaus", "ShowHeadline sem o fuso da cidade do show");
         headlines[south.Id].TimeZone.ShouldBe("America/Sao_Paulo", "ShowHeadline sem o fuso da cidade do show");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0037:IT-03")]
+    [Trait("Kind", "Integration")]
+    public async Task ReportingAShowModerationAlreadyHidIs404BeforeEventsKnows()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await FactoryAsync(ct);
+        var (admin, adminId) = await api.SignedInAsync(ModerationApiFactory.AdminEmail, ct);
+        var (fan, _) = await api.SignedInAsync("fa.antes.do.events@subsolo.test", ct);
+        var (other, _) = await api.SignedInAsync("outro.fa.antes.do.events@subsolo.test", ct);
+        using var _ = admin;
+        using var __ = fan;
+        using var ___ = other;
+        var show = await admin.CreateShowAsync("Noite Quase Oculta", ct);
+        await fan.ReportAsync(show.Id, "fake", ct);
+
+        // O Moderation decidiu ocultar; o Events ainda não soube (sem outbox, sem hidden_at_utc).
+        (await ModerationDatabase.MarkReportsHiddenAsync(api.ConnectionString, show.Id, adminId, ct)).ShouldBe(1);
+        (await ModerationDatabase.HiddenAtAsync(api.ConnectionString, show.Id, ct)).ShouldBeNull("o show já está oculto no Events");
+        var before = (await ModerationDatabase.ReportsAsync(api.ConnectionString, ct)).Count;
+
+        using var response = await other.PostAsync(ModerationRequests.Reports(show.Id), ModerationRequests.ReportBody("wrong_info"), ct);
+
+        await response.ShouldBeProblemAsync(HttpStatusCode.NotFound, "events.show_not_found", ct);
+        (await ModerationDatabase.ReportsAsync(api.ConnectionString, ct)).Count
+            .ShouldBe(before, "a denúncia do show já ocultado pelo Moderation foi gravada");
+    }
+
+    [Fact]
+    [Trait("Spec", "SPEC-0037:IT-03")]
+    [Trait("Kind", "Integration")]
+    public async Task TheQueueItemCarriesTheTimeZoneOfTheShowsCity()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await FactoryAsync(ct);
+        var (admin, _) = await api.SignedInAsync(ModerationApiFactory.AdminEmail, ct);
+        var (fan, _) = await api.SignedInAsync("fa.fuso.da.fila@subsolo.test", ct);
+        using var _ = admin;
+        using var __ = fan;
+        var manaus = await admin.CreateCityAsync("Manaus", "AM", "America/Manaus", ct);
+        var north = await admin.CreateShowAsync("Noite do Norte", ct, city: manaus);
+        var south = await admin.CreateShowAsync("Noite do Sul", ct);
+        await fan.ReportAsync(north.Id, "fake", ct);
+        await fan.ReportAsync(south.Id, "fake", ct);
+
+        var queue = await admin.QueueAsync(ct);
+
+        var northItem = queue.ById("showId", north.Id).ShouldNotBeNull(queue.ToString());
+        northItem.EnumerateObject().Select(property => property.Name).ShouldBe(ModerationRequests.QueueItemKeys, ignoreOrder: true);
+        northItem.TryGetProperty("timeZone", out var northZone).ShouldBeTrue($"item da fila sem timeZone: {northItem}");
+        northZone.GetString().ShouldBe("America/Manaus");
+        var southItem = queue.ById("showId", south.Id).ShouldNotBeNull(queue.ToString());
+        southItem.GetProperty("timeZone").GetString().ShouldBe("America/Sao_Paulo");
     }
 }

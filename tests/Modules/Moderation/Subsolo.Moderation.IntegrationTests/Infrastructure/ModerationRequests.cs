@@ -24,10 +24,13 @@ internal static class ModerationRequests
 
     public const string Agenda = $"/api/v1/cities/{ModerationApiFactory.City}/agenda";
 
-    /// <summary>As chaves de cada item da fila (§6) — nada de quem denunciou.</summary>
+    /// <summary>As chaves de cada item da fila (§6; SPEC-0037 Emenda 1: mais <c>timeZone</c>) — nada de quem denunciou.</summary>
     public static readonly string[] QueueItemKeys =
     [
         "showId", "title", "citySlug", "slug", "startsAtUtc", "venueName", "counts", "latestDetails", "firstReportedAtUtc",
+
+        // SPEC-0037 (Emenda 1, H33-06): o fuso da cidade do show, campo aditivo.
+        "timeZone",
     ];
 
     /// <summary>As chaves de <c>counts</c> (§6).</summary>
