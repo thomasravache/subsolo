@@ -93,7 +93,7 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-24, "pode segui
 | G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — 4775103 | 2026-10-24 |
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 5da13a5 | 2026-10-24 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 472ms) — 5da13a5 | 2026-10-24 |
-| G4 Review | PENDING | | |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H37-01 nulo no transformador genérico e H37-02 janela de milissegundos entre ocultar e denunciar vão para a SPEC-0038; H37-03 resolvido com a Emenda 5 da SPEC-0033) — 17bb540 | 2026-10-24 |
 | G5 Integração & CI | PENDING | | |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |

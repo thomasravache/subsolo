@@ -9,7 +9,7 @@ created: 2026-10-18
 parent: SPEC-0002
 depends_on: [SPEC-0019, SPEC-0021, SPEC-0024, SPEC-0031]
 consumes_contract: []
-contract_version: 4
+contract_version: 5
 # breaking: "o que quebra para consumidores e como migrar"   # só se houver quebra; vai para o PR e pede `!` no título
 touches: [src/Modules/Moderation/**, tests/Modules/Moderation/**, src/Modules/Events/**, tests/Modules/Events/**, src/Modules/Users/**, tests/Modules/Users/**, src/Subsolo.Api/Program.cs, src/Subsolo.Api/Subsolo.Api.csproj, src/Subsolo.Api/packages.lock.json, src/Subsolo.Api/appsettings.json, Subsolo.slnx, tests/Subsolo.ArchitectureTests/**, tests/**/packages.lock.json, tests/Common/Subsolo.Api.IntegrationTests/**, docs/api/**, web/src/api/**, web/src/app/(public)/[cidade]/**, web/src/components/shows/**, web/src/components/moderation/**, web/src/app/admin/**, web/src/components/admin/**, web/src/app/(public)/conta/**, e2e/tests/moderacao/**, e2e/tests/fixtures.ts, docs/design/**, .github/workflows/ci.yml]
 adrs: [ADR-0001, ADR-0003, ADR-0008, ADR-0016]
@@ -74,7 +74,7 @@ POST /api/v1/shows/{id}/reports:            # fan + X-CSRF + limite moderation-r
   body: { reason: fake|cancelled_unannounced|wrong_info|other, details: string(0–500)|null }
   201: { id } ; 400 moderation.invalid_report ; 404 events.show_not_found ; 409 moderation.already_reported ; 429
 GET /api/v1/admin/reports:                  # admin + default ; no-store
-  200: [{ showId, title, citySlug, slug, startsAtUtc, venueName, counts: { fake, cancelled_unannounced, wrong_info, other }, latestDetails: [string] (até 3), firstReportedAtUtc }]
+  200: [{ showId, title, citySlug, slug, startsAtUtc, venueName, counts: { fake, cancelled_unannounced, wrong_info, other }, latestDetails: [string] (até 3), firstReportedAtUtc, timeZone }]   # timeZone: Emenda 5, SPEC-0037
 POST /api/v1/admin/reports/{showId}/keep:   # admin + X-CSRF ; 204 ; 404 moderation.no_pending_reports
 POST /api/v1/admin/reports/{showId}/hide:   # admin + X-CSRF ; body { note: string(0–200)|null } (corpo obrigatório) ; 204 ; 400 moderation.invalid_note ; 404 moderation.no_pending_reports
 ```
@@ -294,3 +294,4 @@ Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `
 | 4 | 2026-10-24 | Retorno do Implementer: `/hide` com corpo obrigatório e 400 `moderation.invalid_note` (nota > 200); `hidden` obrigatório em "Meus shows" e opcional no esquema do formulário de edição; limite `moderation-report` com a chave do usuário lida do ticket do cookie de sessão (o rate limiter roda antes da autenticação); testes `SPEC-0024:H23-06` e `EveryModuleAssemblyBesideTheTestsIsEvaluated` acompanham o contrato. | relatório do Implementer | — | piloto automático do Thomas (2026-10-24) |
 | 4 (sem mudança de contrato) | 2026-10-24 | Achados menores da revisão G4 (H33-01..07) vão para a SPEC-0037. | revisão G4 | SPEC-0037 | piloto automático do Thomas (2026-10-24) |
 | 4 (sem mudança de contrato) | 2026-10-24 | `touches` inclui `.github/workflows/ci.yml`: os testes desta spec levaram o job `test` a ~51 min e o limite de 50 min cancelou o CI do PR #46; o limite sobe para 75 min (commit 221ff85). | CI do PR #46 (run 40113362896) | — | piloto automático do Thomas (2026-10-24) |
+| 5 | 2026-10-24 | Item da fila `GET /api/v1/admin/reports` ganha `timeZone` (fuso da cidade, aditivo, obrigatório) e `ShowHeadline` ganha `TimeZone`. | H33-06, entregue pela SPEC-0037 | SPEC-0037 | piloto automático do Thomas (2026-10-24) |
