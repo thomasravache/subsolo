@@ -63,9 +63,10 @@ internal sealed class ReportShowEndpoint : IEndpoint
 /// <summary>
 /// SPEC-0033 — corpo da denúncia: o motivo e o detalhe opcional. SPEC-0037 (H33-07): <see cref="AllowedValuesAttribute"/>
 /// só documenta no OpenAPI o enum dos quatro motivos; quem recusa o motivo fora da lista (400
-/// <c>moderation.invalid_report</c>) é o validador.
+/// <c>moderation.invalid_report</c>) é o validador. SPEC-0039 (H37-01): <c>Reason</c> não é anulável em C# (o validador já
+/// recusa o nulo, e o OpenAPI o documenta sem <c>null</c>); ausente ou nulo no JSON ainda chega nulo e dá o mesmo 400.
 /// </summary>
 internal sealed record ReportShowRequest(
     [property: AllowedValues(ReportReasons.Fake, ReportReasons.CancelledUnannounced, ReportReasons.WrongInfo, ReportReasons.Other)]
-    string? Reason,
+    string Reason,
     string? Details);
