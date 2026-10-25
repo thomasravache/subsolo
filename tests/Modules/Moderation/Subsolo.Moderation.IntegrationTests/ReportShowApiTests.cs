@@ -94,6 +94,30 @@ public sealed class ReportShowApiTests(PostgresFixture postgres)
         (await ModerationDatabase.ReportsAsync(api.ConnectionString, ct)).ShouldBeEmpty("a denúncia inválida foi gravada");
     }
 
+    /// <summary>
+    /// SPEC-0039 (H39-01) — o corpo sem a propriedade <c>reason</c> (não só com <c>reason: null</c>) chega ao validador e dá
+    /// 400 <c>moderation.invalid_report</c> com o campo, não um erro de leitura do corpo.
+    /// </summary>
+    [Fact]
+    [Trait("Spec", "SPEC-0039:IT-01")]
+    [Trait("Kind", "Integration")]
+    public async Task AReportWithoutTheReasonPropertyIs400WithTheField()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var api = await FactoryAsync(ct);
+        var (admin, _) = await api.SignedInAsync(ModerationApiFactory.AdminEmail, ct);
+        var (fan, _) = await api.SignedInAsync("fa.sem.motivo@subsolo.test", ct);
+        using var _ = admin;
+        using var __ = fan;
+        var show = await admin.CreateShowAsync("Noite Sem Motivo", ct);
+
+        using var response = await fan.PostAsync(ModerationRequests.Reports(show.Id), new { details = "x" }, ct);
+
+        var problem = await response.ShouldBeProblemAsync(HttpStatusCode.BadRequest, "moderation.invalid_report", ct);
+        problem.ShouldHaveFieldError("reason");
+        (await ModerationDatabase.ReportsAsync(api.ConnectionString, ct)).ShouldBeEmpty("a denúncia sem motivo foi gravada");
+    }
+
     [Fact]
     [Trait("Spec", "SPEC-0033:IT-01")]
     [Trait("Kind", "Integration")]

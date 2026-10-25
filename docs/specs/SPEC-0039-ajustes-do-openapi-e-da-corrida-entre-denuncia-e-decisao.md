@@ -31,8 +31,8 @@ Achados menores da revisão G4 da SPEC-0037 (itens `H37-NN`):
 - H37-02: `ReportShowCommandHandler.cs:27` e o `HideShow` não se serializam por show.
 
 ## 3. Mudança Proposta
-- H37-01: o transformador mantém o `null` quando a propriedade é anulável (tipo `string | null` e `null` no `enum`); o `reason` do `ReportShowRequest` continua `string` sem nulo no documento (o snapshot não muda).
-- H37-02: `ReportShow` e `HideShow` tomam `pg_advisory_xact_lock` pela chave do show na mesma transação; a denúncia espera a decisão em curso e vê o show já oculto (404 `events.show_not_found`).
+- H37-01: o transformador mantém o `null` quando a propriedade é anulável (tipo `string | null` e `null` no `enum`); o `reason` do `ReportShowRequest` passa a ser `string` não anulável em C# (o contrato honesto: o validador já recusa nulo), então continua `string` sem nulo no documento e o snapshot não muda; `reason` ausente ou nulo continua dando 400 `moderation.invalid_report` com o campo.
+- H37-02: `ReportShow` e `HideShow` tomam `pg_advisory_xact_lock(hashtextextended('moderation.show:' || show_id::text, 0))` na mesma transação, antes das leituras; a denúncia espera a decisão em curso e vê o show já oculto (404 `events.show_not_found`).
 - **Não muda:** rotas, códigos, textos, o limite por tentativa (ADR-0003) e o documento OpenAPI atual.
 
 **Padrão seguido:** `ProblemDetailsCodeSchemaTransformer` e seus testes; `QueueAdjustmentsApiTests` e `ModerationDatabase` (SPEC-0037).
@@ -72,12 +72,12 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 | Gate | Status | Evidência | Data |
 |---|---|---|---|
 | G0 Spec | PASS | validate: 0 erro(s) — 7ed7690 (árvore suja) | 2026-10-24 |
-| G1 Red | PENDING | | |
-| G2 Green | PENDING | | |
-| G3 Arquitetura | PENDING | | |
-| G4 Review | PENDING | | |
-| G5 Integração & CI | PENDING | | |
-| H2 Integração aprovada | PENDING | | |
+| G1 Red | PASS | verify G1: PASS; `dotnet test Subsolo.slnx --filter "Category!=Architecture&Kind!=GitHubVerification&Kind!=CommandContract" --max-parallel-test-modules 1 && (cd web && pnpm test)` exit 2 (red: Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exit) — d68d8f3 | 2026-10-25 |
+| G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — 8776b06 | 2026-10-25 |
+| G3 Arquitetura | PASS | arch_test exit 0 (duration: 11s 064ms) — 8776b06 | 2026-10-25 |
+| G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED WITH MINOR ITEMS (H39-01 reason omitido e H39-02 espera no bloqueio provada por pg_stat_activity, testes em af102af; H39-03 tag Kind=Unit mantida pela convenção do plano) — af102af | 2026-10-25 |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 17m 09s 252ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 968ms) — 2ef2dd1 | 2026-10-25 |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-25 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
@@ -117,3 +117,4 @@ H1 delegado: piloto automático do Thomas até o deploy (2026-10-23, "pode conti
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
 |---|---|---|---|---|---|
+| 1 (sem mudança de contrato público) | 2026-10-25 | H37-01: `ReportShowRequest.Reason` vira `string` não anulável (o transformador usa a anulabilidade do tipo); H37-02: fórmula da chave do bloqueio fixada. | SPEC_DEFECT do Test-writer (nulo do `reason` × nulo preservado) | — | piloto automático do Thomas (2026-10-25) |

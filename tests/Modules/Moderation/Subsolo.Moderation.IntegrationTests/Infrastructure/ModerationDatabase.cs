@@ -210,6 +210,67 @@ internal static class ModerationDatabase
     }
 
     /// <summary>
+    /// SPEC-0039 (H37-02) — a chave do <c>pg_advisory_xact_lock</c> por show que o <c>ReportShow</c> e o <c>HideShow</c>
+    /// tomam na transação deles: <c>hashtextextended('moderation.show:' || show_id::text, 0)</c> (bigint), com o id do
+    /// show no texto canônico do PostgreSQL (minúsculo, com hífens). O parâmetro <c>@show</c> é o id do show (uuid).
+    /// </summary>
+    public const string ShowLockKeySql = "hashtextextended('moderation.show:' || @show::text, 0)";
+
+    /// <summary>
+    /// SPEC-0039 (H37-02) — abre uma transação separada que faz o que o <c>HideShow</c> faz no meio do caminho: toma o
+    /// bloqueio do show (<see cref="ShowLockKeySql"/>) e marca as denúncias pendentes dele como <c>hidden</c>, sem
+    /// commit. O bloqueio e a mudança ficam presos até <see cref="ShowDecisionInFlight.CommitAsync"/> (ou o descarte,
+    /// que desfaz).
+    /// </summary>
+    public static async Task<ShowDecisionInFlight> BeginHideInFlightAsync(
+        string connectionString, Guid showId, Guid adminId, CancellationToken ct)
+    {
+        var connection = await OpenAsync(connectionString, ct);
+        try
+        {
+            var transaction = await connection.BeginTransactionAsync(ct);
+            await using (var lockCommand = new NpgsqlCommand($"select pg_advisory_xact_lock({ShowLockKeySql})", connection, transaction))
+            {
+                lockCommand.Parameters.AddWithValue("show", showId);
+                await lockCommand.ExecuteNonQueryAsync(ct);
+            }
+
+            await using var update = new NpgsqlCommand(
+                """
+                update moderation.reports set status = 'hidden', decided_at_utc = now(), decided_by = @admin
+                where show_id = @show and status = 'pending'
+                """,
+                connection,
+                transaction);
+            update.Parameters.AddWithValue("show", showId);
+            update.Parameters.AddWithValue("admin", adminId);
+            var hidden = await update.ExecuteNonQueryAsync(ct);
+            return new ShowDecisionInFlight(connection, transaction, hidden);
+        }
+        catch
+        {
+            await connection.DisposeAsync();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// SPEC-0039 (H39-02) — quantos backends do database da conexão estão parados esperando um bloqueio advisory
+    /// (<c>pg_stat_activity</c> com <c>wait_event_type = 'Lock'</c> e <c>wait_event = 'advisory'</c>).
+    /// </summary>
+    public static async Task<long> AdvisoryLockWaitersAsync(string connectionString, CancellationToken ct)
+    {
+        await using var connection = await OpenAsync(connectionString, ct);
+        await using var command = new NpgsqlCommand(
+            """
+            select count(*) from pg_stat_activity
+            where datname = current_database() and wait_event_type = 'Lock' and wait_event = 'advisory'
+            """,
+            connection);
+        return (long)(await command.ExecuteScalarAsync(ct))!;
+    }
+
+    /// <summary>
     /// Copia <paramref name="copies"/> vezes o show <paramref name="templateId"/> em <c>events.shows</c> (id novo e slug com
     /// sufixo; o resto igual); devolve os ids das cópias (copiado do <c>ReminderRequests</c> da SPEC-0032).
     /// </summary>
@@ -270,3 +331,20 @@ internal sealed record ReportRow(
 
 /// <summary>Uma mensagem da inbox: id, processada em e erro.</summary>
 internal sealed record InboxRow(Guid Id, DateTime? ProcessedOnUtc, string? Error);
+
+/// <summary>
+/// SPEC-0039 (H37-02) — a decisão de ocultar em curso numa transação aberta (bloqueio do show tomado, denúncias já
+/// <c>hidden</c> e sem commit). <see cref="Hidden"/> é quantas denúncias pendentes ela marcou.
+/// </summary>
+internal sealed class ShowDecisionInFlight(NpgsqlConnection connection, NpgsqlTransaction transaction, int hidden) : IAsyncDisposable
+{
+    public int Hidden { get; } = hidden;
+
+    public Task CommitAsync(CancellationToken ct) => transaction.CommitAsync(ct);
+
+    public async ValueTask DisposeAsync()
+    {
+        await transaction.DisposeAsync();
+        await connection.DisposeAsync();
+    }
+}
