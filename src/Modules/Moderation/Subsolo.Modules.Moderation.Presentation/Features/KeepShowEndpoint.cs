@@ -26,7 +26,8 @@ internal sealed class KeepShowEndpoint : IEndpoint
                 "Mantém o show na agenda e arquiva todas as denúncias pendentes dele (saem da fila). Exige o cabeçalho " +
                 "X-CSRF.")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblemCode(StatusCodes.Status400BadRequest, SecurityProblems.CsrfInvalid)
+            // SPEC-0037 (H33-04): o código security.csrf_invalid do 400 vem do RequireModerationAdmin(mutation: true).
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblemCode(StatusCodes.Status404NotFound, ModerationErrors.NoPendingReports);
 
     private static async Task<IResult> HandleAsync(

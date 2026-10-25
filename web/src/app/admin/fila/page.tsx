@@ -14,7 +14,8 @@ import { adminAccess } from "../admin-access";
 /**
  * SPEC-0021 — `/admin/fila` (tela "Fila do Admin - Subsolo" do Stitch): os pedidos de perfil e as reivindicações
  * pendentes, com "Aprovar" e "Recusar". SPEC-0033: a aba "Denúncias (n)", com os shows denunciados, "Manter" e "Ocultar
- * show" (a fila sai de `GET /api/v1/admin/reports`, `no-store`). O `proxy`
+ * show" (a fila sai de `GET /api/v1/admin/reports`, `no-store`; SPEC-0037: se essa leitura falhar, só a aba de denúncias
+ * avisa). O `proxy`
  * decide o status (anônimo → 307 para `/entrar`, sem o papel admin → 403, API fora do ar → 503) e serve com
  * `no-store`; as decisões saem do navegador, com o cookie de sessão e o X-CSRF.
  */
@@ -46,7 +47,9 @@ export default async function QueuePage() {
           getReportQueue(),
         ])
       : [undefined, undefined, undefined];
-  if (!queue || !form || !reports) {
+  // SPEC-0037 (H33-03): sem a fila de denúncias, a página segue com os pedidos de perfil e só o painel de denúncias
+  // avisa; sem os pedidos de perfil (ou sem o acesso), o painel inteiro fica indisponível.
+  if (!queue || !form) {
     return <AdminUnavailable />;
   }
 

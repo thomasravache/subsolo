@@ -38,6 +38,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- Jobs agendados de avisos (SPEC-0036): alerta "Job agendado falhou" cobrindo resumo, lembrete e limpeza; a API recusa um `Engagement:DigestCron` que não dispara às 9h de São Paulo; o lembrete lê quem vai em lote, com índice para os shows agendados; espaço da contagem de "vou" no mesmo nó de texto.
 - CI no runner fixo `ubuntu-24.04` (SPEC-0035): o `ubuntu-latest` passou para o Ubuntu 26.04 e quebrou o WebKit em cache do Playwright; a chave do cache dos navegadores agora leva a imagem do runner, e o cache das imagens Docker dos testes ignora imagens que já sumiram sem reprovar o job.
 - Título da página na navegação no cliente (SPEC-0015): metadados entregues de forma bloqueante para todo navegador (`htmlLimitedBots`).
 - Ajustes do harness e do CI (SPEC-0013): `coverage.sh` compatível com bash 3.2 e checando a base no início, servidor estático do E2E resistente a URL malformada, lint do TypeScript de `e2e/`, concorrência e cache do pnpm por lockfile no CI, `OccurredOnUtc` pelo `TimeProvider`, regra `OnlyReferences` alinhada ao ADR-0001 e guardas de CODEOWNERS, Aspire CLI e testes de contrato de comandos.

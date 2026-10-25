@@ -12,6 +12,7 @@ public sealed record ListReportsQuery : IQuery<IReadOnlyList<ReportQueueItem>>;
 /// <summary>
 /// SPEC-0033 — um show na fila (§6): título, cidade, slug, início e casa (do Events), as contagens por motivo, até três
 /// detalhes mais recentes (texto puro, mostrado escapado) e a primeira denúncia. Nada de quem denunciou (ADR-0008).
+/// SPEC-0037 (H33-06) — mais o fuso (IANA) da cidade do show, para a fila mostrar a data e a hora locais.
 /// </summary>
 public sealed record ReportQueueItem(
     Guid ShowId,
@@ -22,7 +23,8 @@ public sealed record ReportQueueItem(
     string VenueName,
     ReportCountsResponse Counts,
     IReadOnlyList<string> LatestDetails,
-    DateTimeOffset FirstReportedAtUtc);
+    DateTimeOffset FirstReportedAtUtc,
+    string TimeZone);
 
 /// <summary>SPEC-0033 — as denúncias pendentes do show por motivo (as chaves são os motivos do §6).</summary>
 public sealed record ReportCountsResponse(

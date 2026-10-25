@@ -18,8 +18,13 @@ import { ReportsQueue } from "./ReportsQueue";
 export interface AdminQueueTabsProps {
   profileRequests: QueueItem[];
   cities: CitySummary[];
-  reports: ReportQueueItem[];
+  /** A fila de denúncias; `undefined` quando a leitura falhou (só o painel de denúncias avisa, SPEC-0037 H33-03). */
+  reports: ReportQueueItem[] | undefined;
 }
+
+/** SPEC-0037 (H33-03) — o painel de denúncias sem a fila (a leitura falhou); a aba de pedidos de perfil segue. */
+const reportsUnavailable =
+  "As denúncias estão indisponíveis por alguns instantes. Tente de novo.";
 
 type Tab = "profiles" | "reports";
 
@@ -39,7 +44,7 @@ export function AdminQueueTabs({
   const [tab, setTab] = useState<Tab>("profiles");
   const [counts, setCounts] = useState<Record<Tab, number>>({
     profiles: profileRequests.length,
-    reports: reports.length,
+    reports: reports?.length ?? 0,
   });
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({
     profiles: null,
@@ -58,7 +63,7 @@ export function AdminQueueTabs({
 
   const labels: Record<Tab, string> = {
     profiles: `Pedidos de perfil (${counts.profiles})`,
-    reports: `Denúncias (${counts.reports})`,
+    reports: reports ? `Denúncias (${counts.reports})` : "Denúncias",
   };
   const tabId = (key: Tab) => `${id}-aba-${key}`;
   const panelId = (key: Tab) => `${id}-painel-${key}`;
@@ -124,7 +129,13 @@ export function AdminQueueTabs({
         aria-labelledby={tabId("reports")}
         hidden={tab !== "reports"}
       >
-        <ReportsQueue initialItems={reports} onCountChange={onReports} />
+        {reports ? (
+          <ReportsQueue initialItems={reports} onCountChange={onReports} />
+        ) : (
+          <p role="alert" className="text-base text-text-muted">
+            {reportsUnavailable}
+          </p>
+        )}
       </div>
     </div>
   );

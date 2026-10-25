@@ -9,6 +9,8 @@ namespace Subsolo.Events.UnitTests;
 /// GetAsync(IReadOnlyCollection&lt;Guid&gt; showIds, CancellationToken ct); }</c>, interface própria (fora do
 /// <see cref="IEventsCatalog"/>), e <c>public sealed record ShowHeadline(Guid ShowId, string Title, string CitySlug,
 /// string Slug, DateTimeOffset StartsAtUtc, string VenueName)</c>, ambos em <c>Subsolo.Modules.Events.IntegrationEvents</c>.
+/// SPEC-0037 (H33-06): o <c>ShowHeadline</c> ganha <c>string TimeZone</c> (o fuso da cidade; contrato interno entre
+/// módulos, sem rota pública).
 /// </summary>
 public sealed class ShowHeadlinesContractTests
 {
@@ -52,6 +54,7 @@ public sealed class ShowHeadlinesContractTests
                 "Slug:String",
                 "StartsAtUtc:DateTimeOffset",
                 "VenueName:String",
+                "TimeZone:String",
             ]);
     }
 }

@@ -41,7 +41,8 @@ internal sealed class ListReportsQueryHandler(IReportsReadModel reports, IShowHe
                             group.Counts.WrongInfo,
                             group.Counts.Other),
                         group.LatestDetails,
-                        group.FirstReportedAtUtc);
+                        group.FirstReportedAtUtc,
+                        show.TimeZone);
                 }),
         ]);
     }
