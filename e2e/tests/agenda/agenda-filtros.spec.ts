@@ -1,6 +1,11 @@
 import { expect, test } from "../fixtures";
 import { appURL } from "./environment";
-import { dayMonth, daysUntilSunday, publishAgenda } from "./filters";
+import {
+  dayMonth,
+  daysUntilSunday,
+  publishAgenda,
+  weekShowTimes,
+} from "./filters";
 import { announcements, card, localDate, press } from "../shows/journey";
 
 /**
@@ -31,18 +36,27 @@ test.describe("filtros da agenda", () => {
       "jornada do celular (mobile-chrome e mobile-safari)",
     );
     test.setTimeout(300_000);
+    const times = weekShowTimes(new Date());
+    test.skip(
+      times === null,
+      "últimos 20 minutos de domingo: não há horário futuro dentro da semana",
+    );
+    if (times === null) {
+      return;
+    }
+    const [earlier, later] = times;
     const sunday = daysUntilSunday();
     const setup = await publishAgenda(browser, "agenda01", (suffix) => [
       {
         title: `Ritual Death ${suffix}`,
         day: sunday,
-        time: "23:30",
+        time: later,
         styles: ["death"],
       },
       {
         title: `Grind na Semana ${suffix}`,
         day: sunday,
-        time: "23:00",
+        time: earlier,
         styles: ["grind"],
       },
       {
