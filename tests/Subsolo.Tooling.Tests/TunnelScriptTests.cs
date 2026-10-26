@@ -397,11 +397,11 @@ public sealed class TunnelScriptTests
     /// <summary>O diretório do teste com o <c>cloudflared</c> e o <c>dotnet</c> falsos à frente do <c>PATH</c>.</summary>
     private sealed class Fakes : IDisposable
     {
-        private readonly TempDirectory temp = new("subsolo-tunnel-");
+        private readonly TempDirectory _temp = new("subsolo-tunnel-");
 
         public Fakes()
         {
-            var bin = temp.Combine("bin");
+            var bin = _temp.Combine("bin");
             Directory.CreateDirectory(bin);
             Write(Path.Combine(bin, "cloudflared"), FakeCloudflared);
             Write(Path.Combine(bin, "dotnet"), FakeDotnet);
@@ -414,15 +414,15 @@ public sealed class TunnelScriptTests
             };
         }
 
-        public string CloudflaredArgs => temp.Combine("cloudflared.args");
+        public string CloudflaredArgs => _temp.Combine("cloudflared.args");
 
-        public string CloudflaredPid => temp.Combine("cloudflared.pid");
+        public string CloudflaredPid => _temp.Combine("cloudflared.pid");
 
-        public string DotnetPid => temp.Combine("dotnet.pid");
+        public string DotnetPid => _temp.Combine("dotnet.pid");
 
         public IReadOnlyDictionary<string, string> Environment { get; }
 
-        public void Dispose() => temp.Dispose();
+        public void Dispose() => _temp.Dispose();
 
         private static void Write(string path, string content)
         {
