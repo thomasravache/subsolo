@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 10 aviso(s)** — rode `spec_graph.py validate`
-- Specs: in-progress 1, implemented 38
+- Validação (G0): **1 erro(s), 13 aviso(s)** — rode `spec_graph.py validate`
+- Specs: in-progress 2, implemented 39
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,14 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0042  
+**Em andamento:** SPEC-0043, SPEC-0044  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0042 | E2E dos filtros da agenda independente do horário de domingo | lite/S | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0043 | Admin local no aspire run | lite/S | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0044 | Página inicial dentro da moldura do site | lite/S | in-progress | 🔄 em andamento |  |
 
 ## Épicos
 
@@ -65,7 +66,10 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 
 ```mermaid
 flowchart LR
-  S0042["SPEC-0042<br/>E2E dos filtros da agenda independente …"]:::inprogress
+  S0041["SPEC-0041<br/>Ambiente local pelo celular com túnel, …"]:::implemented
+  S0043["SPEC-0043<br/>Admin local no aspire run"]:::inprogress
+  S0044["SPEC-0044<br/>Página inicial dentro da moldura do site"]:::inprogress
+  S0041 --> S0043
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -118,7 +122,9 @@ flowchart LR
 | [SPEC-0039](SPEC-0039-ajustes-do-openapi-e-da-corrida-entre-denuncia-e-decisao.md) | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0037 | — |
 | [SPEC-0040](SPEC-0040-aplicacao-completa-no-aspire-run-com-o-caddy-em-https.md) | Aplicação completa no aspire run, com o Caddy em HTTPS | lite | fix | implemented | 2026-10-25 | — | — | — |
 | [SPEC-0041](SPEC-0041-ambiente-local-pelo-celular-com-tunel-sem-mudar-producao.md) | Ambiente local pelo celular com túnel, sem mudar produção | lite | fix | implemented | 2026-10-25 | — | SPEC-0040 | — |
-| [SPEC-0042](SPEC-0042-e2e-dos-filtros-da-agenda-independente-do-horario-de-domingo.md) | E2E dos filtros da agenda independente do horário de domingo | lite | fix | in-progress | 2026-10-26 | — | — | — |
+| [SPEC-0042](SPEC-0042-e2e-dos-filtros-da-agenda-independente-do-horario-de-domingo.md) | E2E dos filtros da agenda independente do horário de domingo | lite | fix | implemented | 2026-10-26 | — | — | — |
+| [SPEC-0043](SPEC-0043-admin-local-no-aspire-run.md) | Admin local no aspire run | lite | feature | in-progress | 2026-10-26 | — | SPEC-0041 | — |
+| [SPEC-0044](SPEC-0044-pagina-inicial-dentro-da-moldura-do-site.md) | Página inicial dentro da moldura do site | lite | fix | in-progress | 2026-10-26 | — | — | — |
 
 ## ADRs
 
