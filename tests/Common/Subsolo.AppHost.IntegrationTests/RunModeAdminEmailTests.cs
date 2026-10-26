@@ -36,7 +36,9 @@ public sealed class RunModeAdminEmailModelTests
     public async Task WithoutTheOptionTheApiHasNoAdminEmail()
     {
         var ct = TestContext.Current.CancellationToken;
-        var api = await ApiEnvironmentAsync(["--Subsolo:EphemeralDatabase=true"], ct);
+        // O teste do Aspire carrega os user-secrets do AppHost, onde quem roda localmente pode ter definido a opção
+        // (como o README ensina). A linha de comando vence os user-secrets, e o valor vazio é o mesmo que não ter admin.
+        var api = await ApiEnvironmentAsync(["--Subsolo:EphemeralDatabase=true", "--Subsolo:AdminEmail="], ct);
 
         api.Environment.ContainsKey(AdminVariable).ShouldBeFalse(
             $"sem Subsolo:AdminEmail a api não deve receber {AdminVariable}:\n{api.Listing}");
