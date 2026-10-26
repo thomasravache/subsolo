@@ -4,7 +4,7 @@ title: Ambiente local pelo celular com túnel, sem mudar produção
 tier: lite
 type: fix
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-25
 parent:
 depends_on: [SPEC-0040]
@@ -66,13 +66,13 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
-- [ ] Red: UT-01, UT-02, UT-03 e IT-01 com a tag `SPEC-0041:<ID>`, falhando pelo motivo certo
-- [ ] Green: opção `Subsolo:PublicUrl` no AppHost, `allowedDevOrigins` no `next.config.ts`, `tools/tunnel.sh` e README
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Red: UT-01, UT-02, UT-03 e IT-01 com a tag `SPEC-0041:<ID>`, falhando pelo motivo certo
+- [x] Green: opção `Subsolo:PublicUrl` no AppHost, `allowedDevOrigins` no `next.config.ts`, `tools/tunnel.sh` e README
+- [x] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -85,8 +85,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (H41-01..07 resolvidos em 5d5abdd e c9274a8, após CHANGES REQUESTED) — c9274a8 | 2026-10-25 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 18m 44s 632ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 11s 768ms) — a8a1089 | 2026-10-25 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-26 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-26 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 9c972fa (árvore suja) | 2026-10-26 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -97,29 +97,41 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- `./tools/tunnel.sh --run` abre um túnel rápido do Cloudflare (sem conta e sem custo), mostra o endereço `https://….trycloudflare.com` e sobe o AppHost com ele: pelo celular a página funciona (scripts do `next dev` liberados para o host do túnel) e o link mágico chega com o endereço do túnel. Sem `--run`, só o túnel, para rodar o AppHost pela IDE e depurar.
+- Opção `Subsolo:PublicUrl` do AppHost, só no modo run e validada (https, sem caminho).
+- Produção não muda: a opção é ignorada no publish, `allowedDevOrigins` só é lido pelo servidor de desenvolvimento do Next e nenhuma variável chega ao navegador.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (76c08e9; regressões da revisão em 5d5abdd) → Implementer (b8c59b7; correções da revisão em c9274a8) → Reviewer: CHANGES REQUESTED (H41-01, túnel órfão num segundo Ctrl+C) e depois APPROVED.
+- `tools/tunnel.sh` no estilo do `compose-up.sh`: cada filho num grupo de processos próprio; no encerramento ignora novos sinais, para o `cloudflared` primeiro (fecha a exposição na hora) e depois o AppHost; trata INT, TERM e HUP.
+- O `cloudflared` reescreve `Host` e o nome TLS para `localhost:8443`, então o Caddy e o certificado locais não mudam.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: no G1 a IT-01 recebeu 403 do `next dev` no script pedido com a origem do túnel, o link saiu `https://localhost:8443`, o `tools/tunnel.sh` não existia e o UT-02 viu `allowedDevOrigins` indefinido; na revisão, o UT-03 com `--run` mostrou o `cloudflared` vivo 5 s após dois sinais. Depois: passam em c9274a8 e na integração (bfa1dde, G5).
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | com `--Subsolo:PublicUrl=https://celular.example` a `api` e o `web` recebem o endereço e o `web` recebe `SUBSOLO_DEV_ORIGINS=celular.example`; sem a opção, `https://localhost:8443` e sem `SUBSOLO_DEV_ORIGINS`; `http://…` ou com caminho → `InvalidOperationException` citando `Subsolo:PublicUrl` | PASS | `gate G2 --run` em b8c59b7; `gate G5 --run` na integração (bfa1dde); CI do PR #52 (run 40263800093, checks verdes em 9c972fa) |
+| UT-02 | `SUBSOLO_DEV_ORIGINS="a.example,b.example"` vira `allowedDevOrigins` `["a.example","b.example"]`; ausente ou vazia, a chave não é declarada | PASS | `gate G2 --run` em b8c59b7; `gate G5 --run` na integração (bfa1dde); CI do PR #52 (run 40263800093, checks verdes em 9c972fa) |
+| UT-03 | `tools/tunnel.sh` chama o `cloudflared` com `--url https://localhost:8443 --http-host-header localhost:8443 --origin-server-name localhost`, mostra o endereço e o comando com `--Subsolo:PublicUrl`; sem `cloudflared` sai 1 com o link de instalação; SIGTERM, SIGHUP e dois sinais seguidos com `--run` encerram o túnel em até 5 s | PASS | `gate G2 --run` em b8c59b7; `gate G5 --run` na integração (bfa1dde); CI do PR #52 (run 40263800093, checks verdes em 9c972fa) |
+| IT-01 | AppHost no ar com `--Subsolo:PublicUrl=https://celular.example`: o script de desenvolvimento pedido com `Origin: https://celular.example` responde 200 (antes 403) e o link mágico chega ao Mailpit com `https://celular.example/entrar/confirmar` | PASS | `gate G2 --run` em b8c59b7; `gate G5 --run` na integração (bfa1dde); CI do PR #52 (run 40263800093, checks verdes em 9c972fa) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5) — CI verde no PR #52 (run 40263800093)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG e README atualizados
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas); mudança só do ambiente local. Entrega na `main` pelo PR #52 (https://github.com/thomasravache/subsolo/pull/52), merge commit 2f54a7f em 2026-10-25, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- Nenhuma. Limites documentados no README: Google falso, Mailpit e dashboard só no computador; limite de requisições compartilhado pelo túnel; redirecionamentos do web apontam para `localhost:8443`.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
