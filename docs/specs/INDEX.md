@@ -5,7 +5,7 @@
 ## Saúde
 
 - Validação (G0): **1 erro(s), 9 aviso(s)** — rode `spec_graph.py validate`
-- Specs: in-progress 1, implemented 36
+- Specs: in-progress 1, implemented 37
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -43,13 +43,13 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0040  
+**Em andamento:** SPEC-0041  
 **Paradas por impedimento:** —  
 **Próximo lote:** —
 
 | Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
 |---|---|---|---|---|---|---|
-| 1 | SPEC-0040 | Aplicação completa no aspire run, com o Caddy em HTTPS | lite/S | in-progress | 🔄 em andamento |  |
+| 1 | SPEC-0041 | Ambiente local pelo celular com túnel, sem mudar produção | lite/S | in-progress | 🔄 em andamento |  |
 
 ## Épicos
 
@@ -65,7 +65,9 @@ Seta contínua: depende da implementação. Seta tracejada: consome contrato.
 
 ```mermaid
 flowchart LR
-  S0040["SPEC-0040<br/>Aplicação completa no aspire run, com o…"]:::inprogress
+  S0040["SPEC-0040<br/>Aplicação completa no aspire run, com o…"]:::implemented
+  S0041["SPEC-0041<br/>Ambiente local pelo celular com túnel, …"]:::inprogress
+  S0040 --> S0041
   classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
   classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
   classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
@@ -116,7 +118,8 @@ flowchart LR
 | [SPEC-0037](SPEC-0037-ajustes-da-fila-de-moderacao.md) | Ajustes da fila de moderação | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0033 | — |
 | [SPEC-0038](SPEC-0038-ajustes-da-validacao-do-resumo-e-do-lembrete-em-lote.md) | Ajustes da validação do resumo e do lembrete em lote | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0036 | — |
 | [SPEC-0039](SPEC-0039-ajustes-do-openapi-e-da-corrida-entre-denuncia-e-decisao.md) | Ajustes do OpenAPI e da corrida entre denúncia e decisão | lite | fix | implemented | 2026-10-24 | SPEC-0002 | SPEC-0037 | — |
-| [SPEC-0040](SPEC-0040-aplicacao-completa-no-aspire-run-com-o-caddy-em-https.md) | Aplicação completa no aspire run, com o Caddy em HTTPS | lite | fix | in-progress | 2026-10-25 | — | — | — |
+| [SPEC-0040](SPEC-0040-aplicacao-completa-no-aspire-run-com-o-caddy-em-https.md) | Aplicação completa no aspire run, com o Caddy em HTTPS | lite | fix | implemented | 2026-10-25 | — | — | — |
+| [SPEC-0041](SPEC-0041-ambiente-local-pelo-celular-com-tunel-sem-mudar-producao.md) | Ambiente local pelo celular com túnel, sem mudar produção | lite | fix | in-progress | 2026-10-25 | — | SPEC-0040 | — |
 
 ## ADRs
 

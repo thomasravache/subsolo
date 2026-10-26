@@ -101,7 +101,7 @@ public sealed class RunModeCaddyModelTests
     /// Variáveis de ambiente de <paramref name="resource"/> como o orquestrador as montaria no modo run: cada valor
     /// que não é texto vira a expressão de manifesto (<see cref="IManifestExpressionProvider.ValueExpression"/>).
     /// </summary>
-    private static async Task<(Dictionary<string, string> Environment, string Listing)> EnvironmentOfAsync(
+    internal static async Task<(Dictionary<string, string> Environment, string Listing)> EnvironmentOfAsync(
         IResource resource, DistributedApplicationExecutionContext executionContext, CancellationToken ct)
     {
         var values = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -261,7 +261,7 @@ public sealed partial class RunModeCaddyTests
     }
 
     /// <summary>Espera o Caddy responder em 8443 (o contêiner pode subir depois de api e web saudáveis).</summary>
-    private static async Task WaitForCaddyAsync(HttpClient client, CancellationToken ct)
+    internal static async Task WaitForCaddyAsync(HttpClient client, CancellationToken ct)
     {
         var deadline = DateTimeOffset.UtcNow + ReadyTimeout;
         string? last = null;
@@ -294,13 +294,13 @@ public sealed partial class RunModeCaddyTests
     }
 
     /// <summary>A cadeia do certificado vem da CA interna do Caddy (emissor "Caddy Local Authority").</summary>
-    private static bool IssuedByCaddyLocalAuthority(System.Security.Cryptography.X509Certificates.X509Chain? chain) =>
+    internal static bool IssuedByCaddyLocalAuthority(System.Security.Cryptography.X509Certificates.X509Chain? chain) =>
         chain is not null
         && chain.ChainElements.Any(element =>
             element.Certificate.Issuer.Contains("Caddy Local Authority", StringComparison.Ordinal));
 
     /// <summary><c>GET /api/v1/antiforgery</c>: grava o cookie do anti-forgery e devolve o token do cabeçalho X-CSRF.</summary>
-    private static async Task<string> AntiforgeryTokenAsync(HttpClient client, CancellationToken ct)
+    internal static async Task<string> AntiforgeryTokenAsync(HttpClient client, CancellationToken ct)
     {
         using var response = await client.GetAsync(new Uri("/api/v1/antiforgery", UriKind.Relative), ct);
         var body = await response.Content.ReadAsStringAsync(ct);
@@ -312,7 +312,7 @@ public sealed partial class RunModeCaddyTests
     }
 
     /// <summary>O link mágico do e-mail mandado para <paramref name="email"/>, lido na API HTTP do Mailpit.</summary>
-    private static async Task<string> ReadMagicLinkAsync(HttpClient mailpit, string email, CancellationToken ct)
+    internal static async Task<string> ReadMagicLinkAsync(HttpClient mailpit, string email, CancellationToken ct)
     {
         var deadline = DateTimeOffset.UtcNow + ReadyTimeout;
         var query = Uri.EscapeDataString($"to:\"{email}\"");

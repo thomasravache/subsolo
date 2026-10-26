@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import nextConfig from "../next.config";
 
@@ -26,4 +26,52 @@ describe("next.config — metadados bloqueantes", () => {
       expect((bots as RegExp).test(userAgent)).toBe(true);
     },
   );
+});
+
+/**
+ * SPEC-0041 UT-02 — o `next dev` só serve os recursos de desenvolvimento (`/_next/*`) para as origens de `localhost` e
+ * as de `allowedDevOrigins`. A lista vem de `SUBSOLO_DEV_ORIGINS` (hosts separados por vírgula, só do servidor), que o
+ * AppHost define quando recebe `Subsolo:PublicUrl` (o endereço do túnel). Sem a variável, ou vazia, a chave não é
+ * declarada. O `next.config.ts` lê o ambiente na importação: cada caso recarrega o módulo depois de definir a variável.
+ */
+describe("next.config — origens do next dev (SUBSOLO_DEV_ORIGINS)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function loadConfig() {
+    vi.resetModules();
+    return (await import("../next.config")).default;
+  }
+
+  it("SPEC-0041:UT-02 declara allowedDevOrigins com os hosts de SUBSOLO_DEV_ORIGINS", async () => {
+    vi.stubEnv("SUBSOLO_DEV_ORIGINS", "a.example,b.example");
+
+    const config = await loadConfig();
+
+    expect(config.allowedDevOrigins).toEqual(["a.example", "b.example"]);
+  });
+
+  it("SPEC-0041:UT-02 não declara allowedDevOrigins sem SUBSOLO_DEV_ORIGINS", async () => {
+    vi.stubEnv("SUBSOLO_DEV_ORIGINS", undefined);
+
+    const config = await loadConfig();
+
+    expect(
+      Object.hasOwn(config, "allowedDevOrigins"),
+      "allowedDevOrigins declarado sem a variável",
+    ).toBe(false);
+  });
+
+  it("SPEC-0041:UT-02 não declara allowedDevOrigins com SUBSOLO_DEV_ORIGINS vazia", async () => {
+    vi.stubEnv("SUBSOLO_DEV_ORIGINS", "");
+
+    const config = await loadConfig();
+
+    expect(
+      Object.hasOwn(config, "allowedDevOrigins"),
+      "allowedDevOrigins declarado com a variável vazia",
+    ).toBe(false);
+  });
 });
