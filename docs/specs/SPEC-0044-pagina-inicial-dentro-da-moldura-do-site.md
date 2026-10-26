@@ -4,7 +4,7 @@ title: Página inicial dentro da moldura do site
 tier: lite
 type: fix
 user_facing: true
-status: in-progress
+status: implemented
 created: 2026-10-26
 parent:
 depends_on: []
@@ -54,13 +54,13 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
-- [ ] Red: E2E-01 com a tag `SPEC-0044:E2E-01`, falhando porque `/` não tem cabeçalho nem rodapé
-- [ ] Green: `web/src/app/page.tsx` movida para `web/src/app/(public)/page.tsx`
-- [ ] Validar: build + suíte + arquitetura (G2/G3) e E2E-01 passando
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Red: E2E-01 com a tag `SPEC-0044:E2E-01`, falhando porque `/` não tem cabeçalho nem rodapé
+- [x] Green: `web/src/app/page.tsx` movida para `web/src/app/(public)/page.tsx`
+- [x] Validar: build + suíte + arquitetura (G2/G3) e E2E-01 passando
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -73,8 +73,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (sem blocker/major; H44-01 Emenda v2 aprovada pelo Thomas em 2026-10-26; H44-02 e H44-03 nits não aplicados) — c07e65d | 2026-10-26 |
 | G5 Integração & CI | PASS | MANUAL: mesma execução do G5 da SPEC-0043 no mesmo commit da integração (6e1a9cd, que contém as duas specs): build exit 0; test exit 0; test_integration exit 0; test_e2e exit 0 (inclui SPEC-0044:E2E-01); arch_test exit 0 | 2026-10-26 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-26 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-26 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 8fdbef6 (árvore suja) | 2026-10-26 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -85,29 +85,36 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- A página inicial (`/`) passou a usar a moldura do site: cabeçalho com o seletor de cidade, rodapé com "Apoie" e "Privacidade" e, no celular, a navegação inferior com a aba "Conta" levando a `/entrar`. Antes era uma página solta, sem saída.
+- O conteúdo do meio e o aviso "Sua conta foi excluída." em `/?conta=excluida` não mudaram.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (b5b2be4; ajuste da Emenda v2 em c07e65d) → Implementer (1892e07) → Reviewer: APPROVED (H44-01 Emenda v2 aprovada pelo Thomas; nits H44-02 e H44-03 não aplicados).
+- `git mv` de `web/src/app/page.tsx` para `web/src/app/(public)/page.tsx`, no padrão das páginas públicas que herdam o `AppShell` do `(public)/layout.tsx`; o `main` ganhou `id={mainContentId}` para o link "pular para o conteúdo". Moldura do Stitch já aprovada na SPEC-0011.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+- Antes: no G1 a E2E-01 falhou em b5b2be4 (sem banner nem navegação em `/`). Depois: passa em c07e65d e na integração (6e1a9cd, G5).
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| E2E-01 | visitante anônimo no celular abre `/` e vê "Subsolo", o seletor de cidade, a aba "Conta" → `/entrar` e o rodapé com "Apoie"; escolhendo a cidade chega à agenda; sem violações do axe | PASS | E2E-01 em c07e65d (`playwright test tests/home/home-shell.spec.ts`); `gate G2 --run` em c07e65d; `gate G5 --run` na integração (6e1a9cd); CI do PR #55 (run 40403493189, checks verdes em 8fdbef6) (job e2e) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5) — CI verde no PR #55 (run 40403493189)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG e README atualizados
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #55 (https://github.com/thomasravache/subsolo/pull/55), merge commit 37982d3 em 2026-10-26, com H2 pela política auto-on-green.
 
 ### Pendências
-
+- Uma página inicial própria ("Escolha sua cidade") fica para outra spec, com desenho no Stitch.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |
