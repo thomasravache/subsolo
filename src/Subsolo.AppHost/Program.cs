@@ -5,6 +5,7 @@
 // SPEC-0040 — o `aspire run` também sobe o Caddy: a aplicação inteira (login incluído) em https://localhost:8443.
 using System.Buffers.Text;
 using System.Globalization;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
@@ -118,6 +119,18 @@ if (!builder.ExecutionContext.IsPublishMode)
     if (tunnelUri is not null)
     {
         web.WithEnvironment("SUBSOLO_DEV_ORIGINS", tunnelUri.Host);
+    }
+}
+
+// SPEC-0043 — `Subsolo:AdminEmail` (só no run; pela linha de comando ou pelos user-secrets do AppHost) dá o papel admin
+// a quem roda localmente: vira o Users__AdminEmails__0 da API. Só um e-mail, sem nome de exibição; sem a opção, nenhum
+// admin. No Compose publicado, ignorada: o operador define Users__AdminEmails__N.
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    var adminEmail = builder.Configuration["Subsolo:AdminEmail"];
+    if (!string.IsNullOrWhiteSpace(adminEmail))
+    {
+        api.WithEnvironment("Users__AdminEmails__0", AdminEmail(adminEmail));
     }
 }
 
@@ -258,3 +271,10 @@ static Uri TunnelUri(string value) =>
         : throw new InvalidOperationException(
             $"Subsolo:PublicUrl inválido: '{value}'. Use uma URL absoluta https sem caminho, como " +
             "https://xxx.trycloudflare.com (o endereço mostrado pelo tools/tunnel.sh).");
+
+// SPEC-0043 — o `Subsolo:AdminEmail` aceito: um único e-mail, sem nome de exibição (o endereço lido é o texto inteiro).
+static string AdminEmail(string value) =>
+    MailAddress.TryCreate(value, out var address) && address.Address == value
+        ? value
+        : throw new InvalidOperationException(
+            $"Subsolo:AdminEmail inválido: '{value}'. Use um único e-mail, sem nome de exibição, como voce@exemplo.com.");

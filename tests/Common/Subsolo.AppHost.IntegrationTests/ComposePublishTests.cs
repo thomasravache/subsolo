@@ -64,7 +64,12 @@ public sealed partial class ComposePublishTests
         }
     }
 
-    internal static async Task PublishAsync(string output, CancellationToken ct)
+    /// <summary>
+    /// Roda <c>aspire publish</c> em <paramref name="output"/>. <paramref name="configuration"/> são opções do AppHost
+    /// passadas como variáveis de ambiente do processo (<c>Subsolo__AdminEmail</c> = <c>Subsolo:AdminEmail</c>).
+    /// </summary>
+    internal static async Task PublishAsync(
+        string output, CancellationToken ct, IReadOnlyDictionary<string, string>? configuration = null)
     {
         var root = RepositoryRoot();
         var start = new ProcessStartInfo("aspire")
@@ -73,6 +78,11 @@ public sealed partial class ComposePublishTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        foreach (var (name, value) in configuration ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
+        }
+
         foreach (var argument in new[]
         {
             "publish", "--apphost", Path.Combine(root, "src", "Subsolo.AppHost", "Subsolo.AppHost.csproj"),
