@@ -6,15 +6,16 @@ import { chooseCity } from "../shows/journey";
  * SPEC-0044 — a página inicial (`/`) dentro da moldura das páginas públicas (shell da SPEC-0011), na aplicação completa
  * (pilha do Compose). O visitante é a página do teste, anônima; a cidade é a do seed de desenvolvimento.
  *
- * - E2E-01 (mobile-chrome): o anônimo abre `/` e vê o título "Subsolo", o seletor de cidade no cabeçalho, o link
- *   "Entrar" e o rodapé com "Apoie"; escolhe a cidade no seletor e chega à agenda em `/{cidade}`. Sem violações do axe.
+ * - E2E-01 (mobile-chrome): o anônimo abre `/` e vê o título "Subsolo", o seletor de cidade no cabeçalho, a aba
+ *   "Conta" da navegação inferior levando a `/entrar` e o rodapé com "Apoie"; escolhe a cidade no seletor e chega à
+ *   agenda em `/{cidade}`. Sem violações do axe.
  */
 test.use({ baseURL: appURL, ignoreHTTPSErrors: true });
 
 const city = { slug: "cidade-exemplo", name: "Cidade Exemplo" };
 
 test.describe("página inicial na moldura do site", () => {
-  test("SPEC-0044:E2E-01 anônimo abre a página inicial, vê cabeçalho, entrar e rodapé, e chega à agenda pelo seletor de cidade [jornada: agenda]", async ({
+  test("SPEC-0044:E2E-01 anônimo abre a página inicial, vê cabeçalho, a aba conta e rodapé, e chega à agenda pelo seletor de cidade [jornada: agenda]", async ({
     page,
     axe,
   }, testInfo) => {
@@ -34,10 +35,15 @@ test.describe("página inicial na moldura do site", () => {
     await expect(header, "página inicial sem cabeçalho").toBeVisible();
     const switcher = header.getByRole("combobox", { name: /cidade/i });
     await expect(switcher, "cabeçalho sem seletor de cidade").toBeVisible();
+    // No celular, a entrada é a aba "Conta" da navegação inferior (o "Entrar" do cabeçalho só aparece no desktop).
+    const accountTab = page
+      .getByRole("navigation", { name: /navegação inferior/i })
+      .getByRole("link", { name: /^conta$/i });
     await expect(
-      page.getByRole("link", { name: /^entrar$/i }),
-      "página inicial sem o link Entrar",
+      accountTab,
+      "página inicial sem a aba Conta na navegação inferior",
     ).toBeVisible();
+    await expect(accountTab).toHaveAttribute("href", "/entrar");
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: /apoie/i }),
       "página inicial sem rodapé com Apoie",
