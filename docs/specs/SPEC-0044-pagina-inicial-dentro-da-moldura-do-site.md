@@ -72,7 +72,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 694ms) — c07e65d | 2026-10-26 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (sem blocker/major; H44-01 Emenda v2 aprovada pelo Thomas em 2026-10-26; H44-02 e H44-03 nits não aplicados) — c07e65d | 2026-10-26 |
 | G5 Integração & CI | PASS | MANUAL: mesma execução do G5 da SPEC-0043 no mesmo commit da integração (6e1a9cd, que contém as duas specs): build exit 0; test exit 0; test_integration exit 0; test_e2e exit 0 (inclui SPEC-0044:E2E-01); arch_test exit 0 | 2026-10-26 |
-| H2 Integração aprovada | PENDING | | |
+| H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-26 |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
 
