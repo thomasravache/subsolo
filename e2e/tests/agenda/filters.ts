@@ -82,10 +82,45 @@ export async function publishAgenda(
   }
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** O dia da semana (0 = domingo) e os minutos desde a meia-noite de `now` no relógio de São Paulo. */
+function saoPauloClock(now: Date): { weekday: number; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    weekday: WEEKDAYS.indexOf(part("weekday")),
+    minutes: Number(part("hour")) * 60 + Number(part("minute")),
+  };
+}
+
 /** Dias de hoje (São Paulo) até o próximo domingo (0 no domingo). */
-export function daysUntilSunday(): number {
-  const weekday = new Date(`${localDate(0)}T12:00:00Z`).getUTCDay();
-  return (7 - weekday) % 7;
+export function daysUntilSunday(now: Date = new Date()): number {
+  return (7 - saoPauloClock(now).weekday) % 7;
+}
+
+/**
+ * SPEC-0042 — os horários (`hh:mm`, São Paulo) dos dois shows de domingo da jornada "Esta semana" (SPEC-0025:E2E-01),
+ * para nunca caírem no passado (a API recusa show no passado): fora do domingo e no domingo antes das 22:30, 23:00 e
+ * 23:30; no domingo de 22:30 até 23:39, 23:58 e 23:59; a partir das 23:40, `null` (não há horário futuro dentro da
+ * semana com margem para a preparação e o teste é pulado).
+ */
+export function weekShowTimes(now: Date): [string, string] | null {
+  const { weekday, minutes } = saoPauloClock(now);
+  if (weekday !== 0 || minutes < 22 * 60 + 30) {
+    return ["23:00", "23:30"];
+  }
+  if (minutes < 23 * 60 + 40) {
+    return ["23:58", "23:59"];
+  }
+  return null;
 }
 
 /** A data local (São Paulo) daqui a `days` dias no formato do cabeçalho da agenda (`dd/MM`). */
