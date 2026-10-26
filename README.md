@@ -16,7 +16,7 @@ O projeto é desenvolvido com Spec-Driven Development (SDD), por uma pessoa com 
 | `web/` | front-end Next.js 16 (App Router, TypeScript strict, Tailwind CSS 4) e seus testes |
 | `e2e/` | testes ponta a ponta (Playwright) |
 | `infra/` | infraestrutura e deploy |
-| `docs/` | specs (`docs/specs`), ADRs (`docs/adr`) e runbooks |
+| `docs/` | specs (`docs/specs`), ADRs (`docs/adr`), runbooks e o [guia de jornadas por perfil](docs/jornadas.md) |
 | `tools/` | scripts de build e lint e o controle SDD vendorizado (`tools/sdd`) |
 
 Pastas ainda vazias são criadas pela spec que as usa pela primeira vez.
@@ -89,7 +89,7 @@ Shows (SPEC-0023): quem tem perfil aprovado cadastra shows em https://localhost:
 
 Página do show (SPEC-0024): cada show tem a página https://localhost:8443/{cidade}/{slug} (toque no card da agenda), com prévia Open Graph e "Compartilhar"; o web lê o endereço público de `SUBSOLO_PUBLIC_URL`, variável só do servidor definida pelo AppHost e pelo `compose-up.sh`.
 
-Filtros da agenda (SPEC-0025): https://localhost:8443/curitiba?periodo=semana&estilo=death (também `periodo=mes` e `de`/`ate` em aaaa-mm-dd); a API aceita `from`, `to` e `styles` e devolve `period` e `total`.
+Filtros da agenda (SPEC-0025): https://localhost:8443/cidade-exemplo?periodo=semana&estilo=death (também `periodo=mes` e `de`/`ate` em aaaa-mm-dd); a API aceita `from`, `to` e `styles` e devolve `period` e `total`.
 
 Perfil público (SPEC-0026): https://localhost:8443/banda/{slug}, /casa/{slug} e /produtor/{slug} (toque no nome da banda ou da casa na página do show), com redes, próximos shows e shows passados; a API expõe `GET /api/v1/profiles/{type}/{slug}`, `GET /api/v1/shows?profileId=&period=upcoming|past` e a busca `GET /api/v1/profiles/lookup` (artistas e admins).
 
@@ -99,7 +99,7 @@ Apoie, privacidade e termos (SPEC-0028): https://localhost:8443/apoie (QR e chav
 
 Vou (SPEC-0029): logado, toque em "Vou" na página do show; a contagem "{n} vão" aparece na página, nos cards da agenda e no perfil, mas quem vai nunca aparece. A API fica em `/api/v1/me/attendances` (CSRF) e a contagem pública em `GET /api/v1/attendances/counts?showIds=…` (até 100 ids).
 
-Avisos (SPEC-0030): logado, abra https://localhost:8443/seguindo e toque em "Ativar avisos" na região "Avisos" para receber push neste aparelho; os interruptores escolhem push de show novo, resumo diário por e-mail e lembrete na véspera (por push ou e-mail). As chaves VAPID e a de descadastro de desenvolvimento são geradas pelo AppHost e pelo `tools/compose-up.sh`; em produção entram como segredos no go-live (SPEC-0003). Os e-mails de aviso trazem link de descadastro (`/avisos/descadastro`). Runbook: `docs/runbooks/avisos-sem-envio.md`.
+Avisos (SPEC-0030): logado, abra https://localhost:8443/seguindo e toque em "Ativar avisos" na região "Avisos" para receber push neste aparelho; os interruptores escolhem push de show novo, resumo diário por e-mail e lembrete na véspera (por push ou e-mail). As chaves VAPID e a de descadastro de desenvolvimento são geradas pelo AppHost e pelo `tools/compose-up.sh`; em produção entram como segredos no go-live (SPEC-0003). Os e-mails de aviso trazem link de descadastro (`/avisos/descadastrar`). Runbook: `docs/runbooks/avisos-sem-envio.md`.
 
 Show novo e resumo diário (SPEC-0031): quem segue a cidade ou um perfil do show recebe push na hora quando o show é publicado; quem ligou "Resumo diário por e-mail" recebe às 9h (America/Sao_Paulo) os shows novos de quem segue. Na pilha local (`tools/compose-up.sh` e AppHost) o resumo roda a cada minuto (`Engagement__DigestCron`) e chega ao Mailpit; o horário de produção fica em `appsettings.json`. Os e-mails de aviso trazem descadastro em um clique (RFC 8058).
 
