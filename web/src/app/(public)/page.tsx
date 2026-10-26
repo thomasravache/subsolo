@@ -1,11 +1,18 @@
+import { mainContentId } from "@/components/ui/shell";
+
 /**
  * Página inicial. SPEC-0019 — depois de excluir a conta, o fã chega em `/?conta=excluida` e vê o aviso "Sua conta foi
- * excluída." (`role="status"`); o resto da página não muda.
+ * excluída." (`role="status"`); o resto da página não muda. SPEC-0044 — fica no grupo `(public)` para herdar a moldura
+ * do site (`AppShell`: cabeçalho com o seletor de cidade, rodapé e navegação inferior no celular); a URL continua `/`; o
+ * `<main>` leva o `id` alvo do "Pular para o conteúdo" do shell, como nas outras páginas públicas.
  */
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { conta } = await searchParams;
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
+    <main
+      id={mainContentId}
+      className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center"
+    >
       {conta === "excluida" && (
         <p
           role="status"
