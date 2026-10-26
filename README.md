@@ -73,10 +73,11 @@ SPEC-0041: o `tools/tunnel.sh` abre um túnel rápido do Cloudflare (sem conta e
 
 - **Jeito simples:** `./tools/tunnel.sh --run` abre o túnel, sobe o AppHost com o endereço e mostra o endereço; o Ctrl+C encerra os dois.
 - **Para depurar:** num terminal, `./tools/tunnel.sh` (só o túnel; fica aberto até o Ctrl+C) mostra o endereço e o comando `dotnet run --project src/Subsolo.AppHost -- --Subsolo:PublicUrl=https://xxx.trycloudflare.com`; rode o AppHost pela IDE, com o depurador, passando o mesmo argumento `--Subsolo:PublicUrl=...` (ou `aspire run -- --Subsolo:PublicUrl=...`).
+- **Para ser admin pelo celular:** defina `Subsolo:AdminEmail` uma vez nos user-secrets do AppHost (ver "Admin" abaixo); o `./tools/tunnel.sh --run` passa a subir com ele.
 
 Limites: o "Continuar com Google" só funciona no computador (o Google falso escuta em http://127.0.0.1:8090); pelo celular, entre com o link mágico. Todos os acessos pelo túnel contam como um só IP no rate limit da API. O Mailpit (onde chega o link mágico) e o dashboard do Aspire ficam só no computador. Os redirecionamentos do web (por exemplo, um anônimo em /admin indo para /entrar) apontam para https://localhost:8443, que o celular não alcança: abra /entrar pelo endereço do túnel. **O endereço do túnel é público enquanto ele estiver aberto:** qualquer um que o tenha acessa o seu ambiente local; não o divulgue e encerre o túnel quando terminar.
 
-Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos.
+Admin (SPEC-0017): na pilha do `compose-up.sh`, `admin@subsolo.test` é admin; depois de entrar com ele, o painel fica em https://localhost:8443/admin/cidades-e-estilos. No `aspire run` (SPEC-0043), ninguém é admin por padrão: `dotnet user-secrets set Subsolo:AdminEmail voce@exemplo.com --project src/Subsolo.AppHost` (uma vez; fica fora do repositório) ou `--Subsolo:AdminEmail=voce@exemplo.com` na linha de comando torna esse e-mail admin; só vale no `aspire run`, sem efeito no Compose nem na produção.
 
 Google (SPEC-0020): na pilha do `compose-up.sh` e no `aspire run` o "Continuar com Google" usa um provedor falso em http://127.0.0.1:8090 (digite o e-mail e, nas claims, `{"email": "...", "email_verified": true}`).
 
