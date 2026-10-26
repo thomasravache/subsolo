@@ -76,7 +76,7 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G2 Green | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); lint exit 0 ($ tsc --noEmit); coverage exit 0 (coverage: relatórios em coverage/ (index.html, Summary.txt, Cobertura.xml, changed-lines.m) — b5f2a86 | 2026-10-26 |
 | G3 Arquitetura | PASS | arch_test exit 0 (duration: 10s 376ms) — b5f2a86 | 2026-10-26 |
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (sem blocker/major; nits H42-01 resolvido no texto da spec, H42-02 opcional não aplicado, H42-03 pré-existente fora do escopo) — b5f2a86 | 2026-10-26 |
-| G5 Integração & CI | PENDING | | |
+| G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 18m 43s 903ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 10s 887ms) — 16d10ef | 2026-10-26 |
 | H2 Integração aprovada | PENDING | | |
 | G6 Deploy | PENDING | | |
 | G7 Pronto & Docs | PENDING | | |
