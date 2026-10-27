@@ -145,7 +145,12 @@ pr_title_max: 100
 root_docs:
   - CLAUDE.md
   - README.md
-  - docs/jornadas.md   # guia de jornadas por perfil: atualizar quando uma jornada muda
 changelog: CHANGELOG.md
+# Documentos vivos: guia de jornadas e mapa do sistema, escritos para pessoas e atualizados no G7.
+# `living-docs --init` cria os ausentes a partir dos templates; validate avisa (WARN) quando ficam para trás das
+# jornadas críticas e dos ADRs aceitos. "" desliga um documento. Nunca contam como fora do escopo.
+living_docs:
+  journeys: docs/jornadas.md        # guia de jornadas: uma seção por jornada crítica com [jornada: <id>]
+  system_map: docs/arquitetura.md   # mapa do sistema: componentes por camada, ambientes, caminho até produção, ADRs
 # Itens extras de Definição de Pronto do projeto, anexados a cada spec no PLAN.
 dod_extra: []

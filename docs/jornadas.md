@@ -1,5 +1,9 @@
 # Subsolo — guia de jornadas por perfil
 
+> Documento vivo: atualize no fechamento (G7) de toda spec que mudar uma jornada. Cada jornada crítica do
+> `sdd-config.yml` (`critical_journeys`) aparece marcada com `[jornada: <id>]`; `tools/sdd/spec_graph.py living-docs`
+> mostra a cobertura.
+>
 > O que cada tipo de pessoa faz no Subsolo, passo a passo, e como reproduzir cada jornada na sua máquina. Fonte: o
 > código e as specs em `docs/specs/` (atualizado em 2026-10-26).
 
@@ -49,7 +53,7 @@ Observações:
 
 ### 3.1 Visitante
 
-**Ver a agenda da cidade**
+**Ver a agenda da cidade** [jornada: agenda]
 
 1. Abre `/{cidade}` (ex.: `/cidade-exemplo`), por link direto ou pelo seletor "Cidade" do cabeçalho.
    Hoje a página inicial `/` mostra só "Agenda de shows de metal underground por cidade. Em construção.", sem
@@ -69,7 +73,7 @@ O que pode dar errado:
 - Cidade inexistente: 404 com "Cidade não encontrada" / "Ainda não temos agenda para essa cidade." e "Voltar para o início".
 - API fora do ar: 503 com "Agenda indisponível" / "A agenda está fora do ar por alguns instantes. Tente de novo."
 
-**Abrir o show e compartilhar**
+**Abrir o show e compartilhar** [jornada: compartilhar-show]
 
 1. Toca no card: abre `/{cidade}/{slug}` com o flyer inteiro, data e horário, "Entrada"/"Ingresso", line-up e casa.
 2. "Compartilhar": no celular abre o compartilhamento do sistema (Web Share); sem ele, copia o link e anuncia
@@ -104,7 +108,7 @@ flowchart TD
 
 ### 3.2 Fã (logado)
 
-**Entrar e sair**
+**Entrar e sair** [jornada: entrar]
 
 1. `/entrar`: "Digite seu e-mail e mandamos um link para você entrar no Subsolo." Campo "Seu e-mail", botão "Mandar
    link de acesso" ("Sem senha: o link vale por 15 minutos."). Acima, "Continuar com Google" quando o Google está
@@ -126,7 +130,7 @@ por e-mail.".
 {show}."). Tocar de novo desmarca. Show cancelado não tem o botão. Erro: "Não foi possível marcar agora. Tente de
 novo em instantes."
 
-**Seguir**: na agenda, "Seguir {Cidade}"; no perfil, "Seguir". O botão vira "Seguindo" ("Você agora segue
+**Seguir**: [jornada: seguir-e-avisar] na agenda, "Seguir {Cidade}"; no perfil, "Seguir". O botão vira "Seguindo" ("Você agora segue
 {nome}."). A aba "Seguindo" (`/seguindo`) lista "Cidades", "Bandas", "Casas" e "Produtores", cada item com
 "Deixar de seguir". Vazio: "Você ainda não segue ninguém. Siga sua cidade na agenda e as bandas e casas nos
 perfis." Erros: "Não foi possível mudar agora…", "Não foi possível carregar o que você segue agora…".
@@ -149,13 +153,13 @@ avisos."; iPhone fora da tela de início → "Adicione o Subsolo à tela de iní
 inválido → "Este link de descadastro é inválido.". Shows cancelados ficam fora do lembrete; adiados ganham lembrete
 na nova véspera.
 
-**Denunciar um show**: na página do show, "Reportar show falso ou cancelado" abre a folha "Reportar show" com o
+**Denunciar um show**: [jornada: moderacao] na página do show, "Reportar show falso ou cancelado" abre a folha "Reportar show" com o
 "Motivo da denúncia" ("Show falso", "Cancelado ou adiado e não avisaram", "Informação errada", "Outro") e o detalhe;
 "Enviar denúncia" → "Obrigado. A moderação vai olhar.". Erros: "Escolha o motivo da denúncia.", "Conte o que está
 errado no show." (obrigatório em "Outro"), "Conte em até 500 caracteres.", "Você já denunciou este show.", "Você já
 fez muitas denúncias hoje. Tente de novo amanhã.", "Este show não está mais na agenda.".
 
-**Minha conta** (`/conta`)
+**Minha conta** (`/conta`) [jornada: conta]
 
 - "Seus dados": e-mail cadastrado e "Nome de exibição" com "Salvar" (erro: "Use de 1 a 60 caracteres.").
 - "Perfis": link "Meus perfis" (`/conta/perfis`).
@@ -166,7 +170,7 @@ fez muitas denúncias hoje. Tente de novo amanhã.", "Este show não está mais 
   confirmar" e "Excluir para sempre". Vai para `/?conta=excluida` com "Sua conta foi excluída.". E-mail errado: "O
   e-mail não confere.". Os perfis do usuário ficam sem dono.
 
-**Pedir ou reivindicar perfil** (`/conta/perfis`)
+**Pedir ou reivindicar perfil** (`/conta/perfis`) [jornada: perfis]
 
 1. Sem perfil: "Você ainda não tem perfil. Toca uma banda, tem uma casa ou produz shows? Peça o seu."
 2. "Pedir novo perfil" (`/conta/perfis/novo`): "Tipo" (Banda | Casa / Local | Produtor), "Nome", "Cidade",
@@ -202,7 +206,7 @@ flowchart TD
 Quando o admin aprova o pedido, o perfil fica "Aprovado" em "Meus perfis" e a conta ganha o papel `artist`. Em
 `/conta` aparece a seção "Shows" ("Cadastre, edite, adie ou cancele os shows dos seus perfis.") com "Meus shows".
 
-**Cadastrar um show** (meta: menos de 2 minutos)
+**Cadastrar um show** (meta: menos de 2 minutos) [jornada: cadastro-show]
 
 1. `/conta/shows` ("Meus shows") → "+ Novo show" (`/conta/shows/novo`), ou "Cadastrar evento na agenda" no fim da
    agenda.
@@ -245,7 +249,7 @@ O painel não tem o seletor de cidade nem a navegação do site: só o wordmark 
 e o menu "Fila", "Novo perfil", "Cidades e estilos", "Apoiadores". Anônimo em `/admin/*` vai para `/entrar`; fã sem
 o papel vê 403 "Acesso negado" / "Você não tem acesso a esta página."; API fora do ar: 503 "Painel indisponível".
 
-**Cidades e estilos** (`/admin/cidades-e-estilos`)
+**Cidades e estilos** (`/admin/cidades-e-estilos`) [jornada: admin-cidades]
 
 - "Nova cidade": "Nome", "UF", "Fuso", "Endereço" (slug) → "Criar cidade" → "Cidade criada.". A cidade ganha agenda
   e entra no seletor. "Editar" → "Salvar" → "Cidade atualizada.".
