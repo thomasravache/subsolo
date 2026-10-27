@@ -4,7 +4,7 @@ title: Admin local no aspire run
 tier: lite
 type: feature
 user_facing: false
-status: in-progress
+status: implemented
 created: 2026-10-26
 parent:
 depends_on: [SPEC-0041]
@@ -57,13 +57,13 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 
 ## 7. Checklist de Implementação
 <!-- Preenchido na fase PLAN, após a aprovação. -->
-- [ ] Red: UT-01, UT-02 e UT-03 com a tag `SPEC-0043:<ID>`, falhando pelo motivo certo
-- [ ] Green: opção `Subsolo:AdminEmail` no AppHost (só run, validada antes do `Build()`) e README
-- [ ] Validar: build + suíte + arquitetura (G2/G3)
-- [ ] Review independente (G4)
-- [ ] Integração + CI verde (G5) e aprovação (H2)
-- [ ] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
-- [ ] Relatório de Entrega, docs raiz e CHANGELOG (G7)
+- [x] Red: UT-01, UT-02 e UT-03 com a tag `SPEC-0043:<ID>`, falhando pelo motivo certo
+- [x] Green: opção `Subsolo:AdminEmail` no AppHost (só run, validada antes do `Build()`) e README
+- [x] Validar: build + suíte + arquitetura (G2/G3)
+- [x] Review independente (G4)
+- [x] Integração + CI verde (G5) e aprovação (H2)
+- [x] Deploy: N/A até o go-live — G6 = N/A apontando para SPEC-0003
+- [x] Relatório de Entrega, docs raiz e CHANGELOG (G7)
 
 ## 8. Registro de Gates
 <!-- Status: PENDING | PASS | FAIL | N/A. PASS e N/A exigem evidência. -->
@@ -76,8 +76,8 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 | G4 Review | PASS | verify G1+G4: PASS; revisão: Reviewer independente: APPROVED (sem blocker/major; H43-01 corrigido em 78f7609; H43-04 mutação confirmou a guarda do publish; H43-02 menor vai para Pendências: o AppHost aceita a@localhost e "a b"@c.d, que o EmailAddress.Normalize da API recusa; H43-03 aceito) — 78f7609 | 2026-10-26 |
 | G5 Integração & CI | PASS | build exit 0 ($ next build); test exit 0 (Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.); test_integration exit 0 (duration: 18m 37s 663ms); test_e2e exit 0 ([WebServer]  Network subsolo-local_aspire Removed); arch_test exit 0 (duration: 12s 725ms) — 6e1a9cd | 2026-10-26 |
 | H2 Integração aprovada | PASS | política auto-on-green (aprovada por thomas em 2026-10-17); G5 PASS | 2026-10-26 |
-| G6 Deploy | PENDING | | |
-| G7 Pronto & Docs | PENDING | | |
+| G6 Deploy | N/A | sem ambiente implantado até o go-live — SPEC-0003 (deploy guiado pelo Thomas) | 2026-10-26 |
+| G7 Pronto & Docs | PASS | Relatório de Entrega e Definição de Pronto: ok — 8fdbef6 (árvore suja) | 2026-10-26 |
 
 ## 9. Registro de Impedimentos
 <!-- Toda parada é registrada pelo Architect com `spec_graph.py impede` e fechada com `resolve` — não edite à mão. Tipos: spec (spec errada/incompleta → resolve com Emenda) | decisão (só o humano decide → resposta ou ADR) | trabalho (falta algo que exige código → SPEC-NNNN nova) | externo (acesso, ambiente, terceiro → ação tomada) | falha (3 FAILs seguidos no mesmo gate → diagnóstico e decisão). Com impedimento aberto a spec aparece como parada no INDEX e não pode ser fechada. -->
@@ -88,29 +88,39 @@ Registrada no frontmatter (`approved_by`, `approved_at`) somente depois que o hu
 <!-- Preenchido no CLOSE (G7). Para status implemented o validate exige tudo preenchido, todo teste do plano com PASS + evidência e a Definição de Pronto marcada. -->
 
 ### O que foi entregue
+- Opção `Subsolo:AdminEmail` do AppHost, só no `aspire run`: o e-mail escolhido vira admin na API local (`Users__AdminEmails__0`). Configurada uma vez nos user-secrets (`dotnet user-secrets set Subsolo:AdminEmail voce@exemplo.com --project src/Subsolo.AppHost`), vale também para o `tools/tunnel.sh --run`.
+- E-mail inválido para o AppHost com mensagem explicando o formato. O papel é aplicado na entrada: quem já estava logado sai e entra de novo.
+- Produção não muda: a opção é ignorada no publish e o operador segue definindo `Users__AdminEmails__N`.
 
 ### Como foi feito
+- TDD com papéis separados: Test-writer (9aff7a4; regressão da revisão em 78f7609) → Implementer (d46dd42) → Reviewer: APPROVED (H43-01 corrigido; H43-04 mutação sem a guarda do publish fez o UT-03 falhar; H43-02 em Pendências; H43-03 aceito).
+- No molde de `Subsolo:PublicUrl` (SPEC-0041): função `AdminEmail()` em `src/Subsolo.AppHost/Program.cs`, validada com `MailAddress.TryCreate` antes do `Build()`; `ComposePublishTests.PublishAsync` ganhou configuração opcional para o UT-03.
 
 ### Prova de Correção
 <!-- type fix: teste de regressão falhou antes (commit red + saída) e passa depois (commit green + execução). Outros tipos: "N/A". -->
+N/A
 
 ### Verificação
 | Teste | Comportamento | Resultado | Evidência |
 |---|---|---|---|
+| UT-01 | run com `Subsolo:AdminEmail=admin@local.test` → a API recebe `Users__AdminEmails__0=admin@local.test`; sem a opção (inclusive com `--Subsolo:AdminEmail=` sobre user-secrets locais), a API não recebe a variável | PASS | `gate G2 --run` em 78f7609; `gate G5 --run` na integração (6e1a9cd); CI do PR #55 (run 40403493189, checks verdes em 8fdbef6) |
+| UT-02 | `nao-e-email`, `Fulano <a@b.c>` e dois e-mails separados por vírgula → `InvalidOperationException` citando `Subsolo:AdminEmail` | PASS | `gate G2 --run` em 78f7609; `gate G5 --run` na integração (6e1a9cd); CI do PR #55 (run 40403493189, checks verdes em 8fdbef6) |
+| UT-03 | publish com `Subsolo:AdminEmail` definido → nenhum serviço do Compose recebe `Users__AdminEmails__0` da opção | PASS | `gate G2 --run` em 78f7609; `gate G5 --run` na integração (6e1a9cd); CI do PR #55 (run 40403493189, checks verdes em 8fdbef6) |
 
 ### Definição de Pronto
-- [ ] Teste de regressão falhou antes e passa depois da correção
-- [ ] Suíte completa, arquitetura e CI verdes (G2, G3, G5)
-- [ ] Review independente sem achados blocker/major (G4)
-- [ ] Padrão existente mantido
-- [ ] Disponível no ambiente-alvo via pipeline (G6)
-- [ ] Documentação/CHANGELOG atualizados quando aplicável (G7)
-- [ ] Outras ocorrências registradas como novas specs (ou nenhuma)
+- [x] Teste de regressão falhou antes e passa depois da correção
+- [x] Suíte completa, arquitetura e CI verdes (G2, G3, G5) — CI verde no PR #55 (run 40403493189)
+- [x] Review independente sem achados blocker/major (G4)
+- [x] Padrão existente mantido
+- [x] Disponível no ambiente-alvo via pipeline (G6) — G6 N/A até a SPEC-0003
+- [x] Documentação/CHANGELOG atualizados quando aplicável (G7) — CHANGELOG e README atualizados
+- [x] Outras ocorrências registradas como novas specs (ou nenhuma) — nenhuma
 
 ### Deploy
+Sem ambiente implantado (G6 N/A → SPEC-0003, guiado pelo Thomas). Entrega na `main` pelo PR #55 (https://github.com/thomasravache/subsolo/pull/55), merge commit 37982d3 em 2026-10-26, com H2 pela política auto-on-green. Mudança só do ambiente local.
 
 ### Pendências
-
+- H43-02 (menor): o AppHost aceita e-mails como `a@localhost` e `"a b"@c.d`, que o `EmailAddress.Normalize` da API recusa; com eles a pessoa não consegue entrar, mas nada quebra. Vira spec se incomodar.
 ## 11. Emendas
 <!-- Mudança em spec aprovada: uma linha por emenda, aprovada pelo humano. -->
 | Versão | Data | Mudança | Motivo | Specs impactadas | Aprovado por |

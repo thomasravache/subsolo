@@ -4,8 +4,8 @@
 
 ## Saúde
 
-- Validação (G0): **1 erro(s), 12 aviso(s)** — rode `spec_graph.py validate`
-- Specs: in-progress 2, implemented 39
+- Validação (G0): **1 erro(s), 14 aviso(s)** — rode `spec_graph.py validate`
+- Specs: implemented 41
 - Impedimentos: **0 aberto(s)**, 19 resolvido(s)
 
 ## Cobertura de Pilares
@@ -31,7 +31,7 @@ Perfil: **padrao**
 
 | Jornada | Situação | Specs |
 |---|---|---|
-| Fã vê a agenda da cidade no celular | provada | SPEC-0008, SPEC-0008, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0024, SPEC-0025, SPEC-0025, SPEC-0028, SPEC-0028 |
+| Fã vê a agenda da cidade no celular | provada | SPEC-0008, SPEC-0008, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0024, SPEC-0025, SPEC-0025, SPEC-0028, SPEC-0028, SPEC-0044 |
 | Produtor ou banda aprovados cadastram um show em menos de 2 minutos | provada | SPEC-0023, SPEC-0023 |
 | Fã abre a página do show e compartilha com o flyer na prévia | provada | SPEC-0024, SPEC-0024, SPEC-0024, SPEC-0026, SPEC-0026 |
 | Fã segue cidade, banda ou casa e recebe o aviso de show novo e o lembrete na véspera | provada | SPEC-0027, SPEC-0027, SPEC-0029, SPEC-0029, SPEC-0030, SPEC-0030, SPEC-0031, SPEC-0032 |
@@ -43,14 +43,7 @@ Perfil: **padrao**
 
 ## Plano de Execução
 
-**Em andamento:** SPEC-0043, SPEC-0044  
-**Paradas por impedimento:** —  
-**Próximo lote:** —
-
-| Onda | Spec | Título | Tier/Tam. | Status | Prontidão | Observação |
-|---|---|---|---|---|---|---|
-| 1 | SPEC-0043 | Admin local no aspire run | lite/S | in-progress | 🔄 em andamento |  |
-| 1 | SPEC-0044 | Página inicial dentro da moldura do site | lite/S | in-progress | 🔄 em andamento |  |
+Nenhuma spec aberta.
 
 ## Épicos
 
@@ -59,23 +52,6 @@ Perfil: **padrao**
 | SPEC-0001 | Fundação do Subsolo | implemented | 10/10 implementadas |
 | SPEC-0002 | Agenda Subsolo — lançamento (MVP) | implemented | 26/26 implementadas |
 | SPEC-0003 | Go-live: produção na VPS e serviços pagos | proposed | 0/0 implementadas |
-
-## Grafo de Dependências
-
-Seta contínua: depende da implementação. Seta tracejada: consome contrato.
-
-```mermaid
-flowchart LR
-  S0041["SPEC-0041<br/>Ambiente local pelo celular com túnel, …"]:::implemented
-  S0043["SPEC-0043<br/>Admin local no aspire run"]:::inprogress
-  S0044["SPEC-0044<br/>Página inicial dentro da moldura do site"]:::inprogress
-  S0041 --> S0043
-  classDef proposed fill:#fef3c7,stroke:#d97706,color:#111
-  classDef approved fill:#dbeafe,stroke:#2563eb,color:#111
-  classDef inprogress fill:#ede9fe,stroke:#7c3aed,color:#111
-  classDef implemented fill:#dcfce7,stroke:#16a34a,color:#111
-  classDef deprecated fill:#f3f4f6,stroke:#9ca3af,color:#6b7280
-```
 
 ## Todas as Specs
 
@@ -123,8 +99,8 @@ flowchart LR
 | [SPEC-0040](SPEC-0040-aplicacao-completa-no-aspire-run-com-o-caddy-em-https.md) | Aplicação completa no aspire run, com o Caddy em HTTPS | lite | fix | implemented | 2026-10-25 | — | — | — |
 | [SPEC-0041](SPEC-0041-ambiente-local-pelo-celular-com-tunel-sem-mudar-producao.md) | Ambiente local pelo celular com túnel, sem mudar produção | lite | fix | implemented | 2026-10-25 | — | SPEC-0040 | — |
 | [SPEC-0042](SPEC-0042-e2e-dos-filtros-da-agenda-independente-do-horario-de-domingo.md) | E2E dos filtros da agenda independente do horário de domingo | lite | fix | implemented | 2026-10-26 | — | — | — |
-| [SPEC-0043](SPEC-0043-admin-local-no-aspire-run.md) | Admin local no aspire run | lite | feature | in-progress | 2026-10-26 | — | SPEC-0041 | — |
-| [SPEC-0044](SPEC-0044-pagina-inicial-dentro-da-moldura-do-site.md) | Página inicial dentro da moldura do site | lite | fix | in-progress | 2026-10-26 | — | — | — |
+| [SPEC-0043](SPEC-0043-admin-local-no-aspire-run.md) | Admin local no aspire run | lite | feature | implemented | 2026-10-26 | — | SPEC-0041 | — |
+| [SPEC-0044](SPEC-0044-pagina-inicial-dentro-da-moldura-do-site.md) | Página inicial dentro da moldura do site | lite | fix | implemented | 2026-10-26 | — | — | — |
 
 ## ADRs
 

@@ -9,6 +9,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 ## [Unreleased]
 
 ### Added
+- Admin local no `aspire run` (SPEC-0043): opção `Subsolo:AdminEmail` do AppHost (linha de comando ou user-secrets) torna o e-mail escolhido admin na API local; ignorada no publish.
 - Denúncia de show e fila de moderação (SPEC-0033): "Reportar show" na página do show, aba "Denúncias" na fila do admin com "Manter" e "Ocultar show", show oculto fora da agenda, das páginas e dos avisos, selo "Oculto pela moderação" em "Meus shows", e denúncias na exportação e na exclusão da conta.
 - Lembrete na véspera (SPEC-0032): aviso às 10h do fuso da cidade para quem marcou "vou", sem lembrete de cancelado e com lembrete na nova véspera de adiado; recuperação do resumo diário quando a execução das 9h falha; alertas das falhas de lembrete e de retenção; índice da retenção de entregas.
 - Aviso de show novo e resumo diário (SPEC-0031): push imediato para quem segue a cidade ou um perfil do show, resumo diário por e-mail às 9h com os shows novos, descadastro em um clique (RFC 8058), WNS do Edge no Windows, retenção de 90 dias de entregas e avisos, alertas "Falha de job" e "Resumo diário falhou", e `og:image` do perfil a partir do flyer.
@@ -38,6 +39,7 @@ Cada entrada cita a spec de origem (`SPEC-NNNN`); gere-as com `spec_graph.py rep
 - Repositório e ferramentas (SPEC-0004): solution .NET 10 com Central Package Management, app Next.js 16.4 vazio, `tools/build.sh` e `tools/lint.sh`, hooks de commit (Conventional Commits + referência à spec) e de segredos (gitleaks), Dependabot, CODEOWNERS, ferramenta SDD vendorizada e proteção da `main` (PR obrigatório, somente merge commit).
 
 ### Fixed
+- Página inicial dentro da moldura do site (SPEC-0044): `/` ganhou cabeçalho com seletor de cidade, rodapé e navegação inferior; antes não tinha saída.
 - E2E dos filtros da agenda (SPEC-0042): o teste "Esta semana" usa horários ainda futuros no domingo à noite e é pulado, com o motivo, nos últimos 20 minutos de domingo; antes falhava depois das 23:00.
 - Ambiente local pelo celular (SPEC-0041): `./tools/tunnel.sh --run` abre um túnel do Cloudflare e sobe o AppHost com o endereço dele (opção `Subsolo:PublicUrl`), com os scripts do `next dev` liberados para esse host; o produto publicado não muda.
 - Ambiente local (SPEC-0040): `aspire run` ou `dotnet run` no AppHost sobe a aplicação inteira em https://localhost:8443 com o Caddy de produção, com login e depuração pela IDE; o Compose publicado não muda.
