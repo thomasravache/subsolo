@@ -26,7 +26,7 @@
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
     <!-- SPEC-0018 (ADR-0014): e-mail por SMTP no módulo Notifications (4.18.1, publicado em 2026-09-27; traz o MimeKit). -->
-    <PackageVersion Include="MailKit" Version="4.18.1" />
+    <PackageVersion Include="MailKit" Version="5.0.0" />
     <!-- SPEC-0030 (ADR-0014, ADR-0009): canal Web Push (VAPID direto, aes128gcm) no módulo Notifications.
          Lib.Net.Http.WebPush 3.3.1 (MIT, publicado em 2025-03-09; traz o Lib.Net.Http.EncryptedContentEncoding 2.1.1,
          MIT, sem dependências no net10.0), verificados em nuget.org em 2026-10-23. -->
